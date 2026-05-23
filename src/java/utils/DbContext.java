@@ -20,8 +20,8 @@ public class DbContext {
             Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
             
             String user = "sa";
-            String pass = "1234567890";
-            String url = "jdbc:sqlserver://localhost:1433;"
+            String pass = "123";
+            String url = "jdbc:sqlserver://localhost\\SQLEXPRESS;"
            + "databaseName=FruitShopSystem;"
            + "encrypt=true;"
            + "trustServerCertificate=true";
@@ -29,18 +29,15 @@ public class DbContext {
             connection = DriverManager.getConnection(url, user, pass);
             System.out.println("Database connection established successfully.");
         } catch (ClassNotFoundException ex) {
-            System.err.println("SQL Server JDBC Driver not found. Please add mssql-jdbc.jar to your classpath.");
-            ex.printStackTrace();
-            connection = null;
+            throw new RuntimeException(
+                "SQL Server JDBC Driver not found! Please add mssql-jdbc.jar to your classpath.", ex);
         } catch (Exception ex) {
-            System.err.println("Connection Error: " + ex.getMessage());
-            System.err.println("Please check:");
-            System.err.println("1. SQL Server is running");
-            System.err.println("2. Database 'ITServiceFlow' exists");
-            System.err.println("3. Username and password are correct");
-            System.err.println("4. SQL Server is listening on port 1433");
-            ex.printStackTrace();
-            connection = null;
+            throw new RuntimeException(
+                "DB Connection FAILED! " + ex.getMessage()
+                + " | Check: 1) SQL Server is running, "
+                + "2) Database 'FruitShopSystem' exists, "
+                + "3) sa password='123' is correct, "
+                + "4) SQL Server is listening on port 1433", ex);
         }
     }
 
@@ -48,6 +45,16 @@ public class DbContext {
         return connection != null;
     }
     
+    public void close() {
+        try {
+            if (connection != null && !connection.isClosed()) {
+                connection.close();
+            }
+        } catch (Exception e) {
+            // silently ignore
+        }
+    }
+
     public static void main(String[] args) {
         DbContext dbContext = new DbContext();
         try{
