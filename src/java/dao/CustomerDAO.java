@@ -1,12 +1,13 @@
 package dao;
 
 import model.Customer;
+import Utils.DbContext;
 import java.sql.*;
 
 /**
  * CustomerDAO - Handles all DB operations for Customers table.
  */
-public class CustomerDAO extends DBContext {
+public class CustomerDAO extends Utils.DbContext {
 
     /**
      * Find a customer by username or email (for login).

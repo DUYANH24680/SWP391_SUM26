@@ -1,14 +1,15 @@
 package dao;
 
 import model.DeliveryAddress;
-import java.sql.*;
+import Utils.DbContext;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * DeliveryAddressDAO - Handles all DB operations for DeliveryAddresses table.
  */
-public class DeliveryAddressDAO extends DBContext {
+
+public class DeliveryAddressDAO extends Utils.DbContext {
 
     /**
      * Get all addresses for a customer.
