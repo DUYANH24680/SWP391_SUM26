@@ -1,55 +1,15 @@
 package service;
 
 import dao.CustomerDAO;
-import dao.DBContext;
-import dao.StaffDAO;
 import model.Customer;
-import model.Staff;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Base64;
 
 /**
- * UserService - All business logic for User authentication and profile management.
+ * UserService - All business logic for User profile management.
  * No request/response dependencies here.
  */
 public class UserService {
-
-    // ---- Authentication ----
-
-    /**
-     * Login validation. Returns the Customer if credentials match, null otherwise.
-     * Also checks that account status = 1 (active) and not deleted.
-     */
-    public Customer login(String usernameOrEmail, String plainPassword) {
-        CustomerDAO dao = new CustomerDAO();
-        try {
-            Customer c = dao.findByUsernameOrEmail(usernameOrEmail);
-            if (c == null) return null;
-            if (c.getStatus() != 1) return null;        // blocked / inactive
-            if (!plainPassword.equals(c.getPasswordHash())) return null;
-            return c;
-        } finally {
-            dao.close();
-        }
-    }
-
-    /**
-     * Staff Login validation. Returns the Staff if credentials match, null otherwise.
-     * Also checks that account status = 1 (active) and not deleted.
-     */
-    public Staff loginStaff(String usernameOrEmail, String plainPassword) {
-        StaffDAO dao = new StaffDAO();
-        try {
-            Staff s = dao.findByUsernameOrEmail(usernameOrEmail);
-            if (s == null) return null;
-            if (s.getStatus() != 1) return null;        // blocked / inactive
-            if (!plainPassword.equals(s.getPasswordHash())) return null;
-            return s;
-        } finally {
-            dao.close();
-        }
-    }
 
     // ---- Profile ----
 
