@@ -13,10 +13,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
+import jakarta.servlet.annotation.WebServlet;
+
 /**
  *
  * @author Doan PC
  */
+@WebServlet(name="LogoutServlet", urlPatterns={"/logout"})
 public class LogoutServlet extends HttpServlet {
    
     /** 

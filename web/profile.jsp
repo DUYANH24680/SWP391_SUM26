@@ -654,7 +654,7 @@
 
 <!-- ====== TOPNAV ====== -->
 <nav class="topnav">
-    <a href="home.html" class="nav-logo">
+    <a href="home.jsp" class="nav-logo">
         <i class="fa-solid fa-apple-whole"></i> Sena Shop
     </a>
     <div class="nav-links">
@@ -692,6 +692,9 @@
             <button id="nav-security" onclick="showPanel('security')">
                 <i class="fa-solid fa-shield-halved"></i> Bảo Mật
             </button>
+            <a href="logout" style="text-decoration:none; display:flex; align-items:center; gap:0.75rem; padding:12px 16px; border-radius:12px; color:#e53e3e; font-weight:600; font-size:0.95rem; margin-bottom:8px; border:1px solid transparent; transition:all 0.2s;" onmouseover="this.style.background='#fff5f5'; this.style.borderColor='#fed7d7';" onmouseout="this.style.background='transparent'; this.style.borderColor='transparent';">
+                <i class="fa-solid fa-right-from-bracket" style="width:20px;text-align:center;"></i> Đăng Xuất
+            </a>
         </div>
     </aside>
 
@@ -836,7 +839,7 @@
 
 <!-- ====== FOOTER ====== -->
 <footer class="footer">
-    <a href="home.html" class="footer-logo"><i class="fa-solid fa-apple-whole"></i> Sena Shop</a>
+    <a href="home.jsp" class="footer-logo"><i class="fa-solid fa-apple-whole"></i> Sena Shop</a>
     <span class="footer-copy">&copy; 2024 Sena Shop. Trái cây tươi ngon mỗi ngày.</span>
     <div class="footer-links">
         <a href="#">Privacy</a>
@@ -923,7 +926,15 @@
 
     // Restore last panel
     window.addEventListener('DOMContentLoaded', function() {
-        var saved = localStorage.getItem('senaPanel') || 'profile';
+        var urlParams = new URLSearchParams(window.location.search);
+        var tabFromUrl = urlParams.get('tab');
+        var saved = tabFromUrl || localStorage.getItem('senaPanel') || 'profile';
+        
+        // Remove param from URL to prevent sticking on reload
+        if (tabFromUrl) {
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+        
         showPanel(saved);
     });
 

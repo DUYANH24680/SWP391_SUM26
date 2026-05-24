@@ -25,7 +25,14 @@ public class CustomerService {
             return null;
         }
 
-        // (Sau này có thể hash password ở đây)
-        return dao.login(username, password);
+        // Lấy dữ liệu từ DB (DAO)
+        Customer customer = dao.findByUsernameOrEmail(username);
+        
+        // Kiểm tra (Logic)
+        if (customer != null && customer.getPasswordHash().equals(password)) {
+            return customer;
+        }
+        
+        return null;
     }
 }
