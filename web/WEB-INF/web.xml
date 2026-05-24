@@ -1,25 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<<<<<<< HEAD
-<web-app version="4.0"
-         xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+<web-app xmlns="https://jakarta.ee/xml/ns/jakartaee"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee
-                             http://xmlns.jcp.org/xml/ns/javaee/web-app_4_0.xsd">
+         xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee
+                             https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
+         version="6.0">
 
-    <display-name>SWP391 Fruit Shop System</display-name>
+    <display-name>Sena Shop - Fruit Store</display-name>
 
-    <!-- Session Configuration -->
+    <!-- Session timeout: 30 minutes -->
     <session-config>
         <session-timeout>30</session-timeout>
     </session-config>
 
-    <!-- Welcome File List -->
+    <!-- Welcome file -->
     <welcome-file-list>
+        <welcome-file>home.html</welcome-file>
         <welcome-file>index.html</welcome-file>
-        <welcome-file>index.jsp</welcome-file>
     </welcome-file-list>
 
-    <!-- Character Encoding Filter -->
+    <!-- UTF-8 Encoding Filter -->
     <filter>
         <filter-name>EncodingFilter</filter-name>
         <filter-class>org.apache.catalina.filters.SetCharacterEncodingFilter</filter-class>
@@ -37,15 +36,4 @@
         <url-pattern>/*</url-pattern>
     </filter-mapping>
 
-=======
-<web-app version="6.0" xmlns="https://jakarta.ee/xml/ns/jakartaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd">
-    <servlet>
-        <servlet-name>LogoutServlet</servlet-name>
-        <servlet-class>controller.LogoutServlet</servlet-class>
-    </servlet>
-    <servlet-mapping>
-        <servlet-name>LogoutServlet</servlet-name>
-        <url-pattern>/logout</url-pattern>
-    </servlet-mapping>
->>>>>>> 851a23d5c8adece6c9421844a5b518864e74ff14
 </web-app>
