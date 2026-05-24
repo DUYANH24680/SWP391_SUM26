@@ -13,8 +13,10 @@ public class CustomerDAO extends Utils.DbContext {
      * Find a customer by username or email (for login).
      */
     public Customer findByUsernameOrEmail(String usernameOrEmail) {
-        String sql = "SELECT id, fullname, username, password_hash, email, phone, address, gender, avatar, status, isDelete, created_at "
-                   + "FROM Customers WHERE (username = ? OR email = ?) AND isDelete = 0";
+        String sql = "SELECT a.id, a.role_id, r.name AS role_name, a.fullname, a.username, a.password_hash, a.email, a.phone, a.address, a.gender, a.avatar, a.status, a.created_at "
+                   + "FROM Accounts a "
+                   + "JOIN Roles r ON a.role_id = r.id "
+                   + "WHERE (a.username = ? OR a.email = ?) AND a.status = 1";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, usernameOrEmail);
             ps.setString(2, usernameOrEmail);
@@ -33,8 +35,10 @@ public class CustomerDAO extends Utils.DbContext {
      * Find a customer by id.
      */
     public Customer findById(int id) {
-        String sql = "SELECT id, fullname, username, password_hash, email, phone, address, gender, avatar, status, isDelete, created_at "
-                   + "FROM Customers WHERE id = ? AND isDelete = 0";
+        String sql = "SELECT a.id, a.role_id, r.name AS role_name, a.fullname, a.username, a.password_hash, a.email, a.phone, a.address, a.gender, a.avatar, a.status, a.created_at "
+                   + "FROM Accounts a "
+                   + "JOIN Roles r ON a.role_id = r.id "
+                   + "WHERE a.id = ? AND a.status = 1";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, id);
             try (ResultSet rs = ps.executeQuery()) {
@@ -49,7 +53,7 @@ public class CustomerDAO extends Utils.DbContext {
     }
 
     public boolean updateProfile(int id, String fullname, String email, String phone, String address, Boolean gender, String avatar) {
-        String sql = "UPDATE Customers SET fullname = ?, email = ?, phone = ?, address = ?, gender = ?, avatar = ? WHERE id = ?";
+        String sql = "UPDATE Accounts SET fullname = ?, email = ?, phone = ?, address = ?, gender = ?, avatar = ? WHERE id = ?";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, fullname);
             ps.setString(2, email);
@@ -72,7 +76,7 @@ public class CustomerDAO extends Utils.DbContext {
      * Update password hash.
      */
     public boolean updatePassword(int id, String newPasswordHash) {
-        String sql = "UPDATE Customers SET password_hash = ? WHERE id = ?";
+        String sql = "UPDATE Accounts SET password_hash = ? WHERE id = ?";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, newPasswordHash);
             ps.setInt(2, id);
@@ -86,7 +90,7 @@ public class CustomerDAO extends Utils.DbContext {
      * Check if email is already used by another customer (for uniqueness validation).
      */
     public boolean isEmailTaken(String email, int excludeId) {
-        String sql = "SELECT COUNT(1) FROM Customers WHERE email = ? AND id <> ? AND isDelete = 0";
+        String sql = "SELECT COUNT(1) FROM Accounts WHERE email = ? AND id <> ? AND status = 1";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, email);
             ps.setInt(2, excludeId);
@@ -103,6 +107,8 @@ public class CustomerDAO extends Utils.DbContext {
     private Customer mapRow(ResultSet rs) throws SQLException {
         Customer c = new Customer();
         c.setId(rs.getInt("id"));
+        c.setRoleId(rs.getInt("role_id"));
+        c.setRoleName(rs.getString("role_name"));
         c.setFullname(rs.getString("fullname"));
         c.setUsername(rs.getString("username"));
         c.setPasswordHash(rs.getString("password_hash"));
@@ -113,7 +119,6 @@ public class CustomerDAO extends Utils.DbContext {
         c.setGender(rs.wasNull() ? null : genderBit);
         c.setAvatar(rs.getString("avatar"));
         c.setStatus(rs.getInt("status"));
-        c.setIsDelete(rs.getBoolean("isDelete"));
         c.setCreatedAt(rs.getTimestamp("created_at"));
         return c;
     }

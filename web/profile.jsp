@@ -1,45 +1,41 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="model.Customer" %>
-<%@ page import="model.DeliveryAddress" %>
-<%@ page import="java.util.List" %>
 <%
-    // Ensure user is logged in
     Customer user = (Customer) session.getAttribute("user");
-    String role = (String) session.getAttribute("role");
-    
+    String role   = (String) session.getAttribute("role");
+
     if (user == null) {
         response.sendRedirect(request.getContextPath() + "/profile");
         return;
     }
 
-    String fullname = user.getFullname();
-    String username = user.getUsername();
-    String email = user.getEmail();
-    String phone = user.getPhone();
-    String address = user.getAddress();
-    String genderStr = "Chưa cập nhật";
-    if (user.getGender() != null) {
-        genderStr = user.getGender() ? "Nam" : "Nữ";
-    }
+    String roleDisplay = "Member";
+    if ("admin".equalsIgnoreCase(role))         roleDisplay = "Quản Trị Viên";
+    else if ("seller".equalsIgnoreCase(role))   roleDisplay = "Nhân Viên Bán Hàng";
+    else if ("delivery".equalsIgnoreCase(role)) roleDisplay = "Nhân Viên Giao Hàng";
+
+    String fullname    = user.getFullname();
+    String username    = user.getUsername();
+    String email       = user.getEmail();
+    String phone       = user.getPhone();
+    String address     = user.getAddress();
+    String genderStr   = "Chưa cập nhật";
+    if (user.getGender() != null) genderStr = user.getGender() ? "Nam" : "Nu";
+
     String avatarUrl = user.getAvatar();
     String createdAtStr = "";
-    if (user.getCreatedAt() != null) {
-        createdAtStr = new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(user.getCreatedAt());
-    }
+    if (user.getCreatedAt() != null)
+        createdAtStr = new java.text.SimpleDateFormat("dd/MM/yyyy").format(user.getCreatedAt());
 
-    // Default values if empty
-    if (phone == null || phone.trim().isEmpty()) phone = "Chưa cập nhật";
+    if (phone   == null || phone.trim().isEmpty())   phone   = "Chưa cập nhật";
     if (address == null || address.trim().isEmpty()) address = "Chưa cập nhật";
-    if (avatarUrl == null || avatarUrl.trim().isEmpty()) {
-        avatarUrl = "https://ui-avatars.com/api/?name=" + java.net.URLEncoder.encode(fullname, "UTF-8") + "&background=10b981&color=020617&size=128&bold=true";
-    }
+    if (avatarUrl == null || avatarUrl.trim().isEmpty())
+        avatarUrl = "https://ui-avatars.com/api/?name="
+                  + java.net.URLEncoder.encode(fullname, "UTF-8")
+                  + "&background=4caf50&color=fff&size=160&bold=true&rounded=true";
 
-    // Load addresses from request attribute
-    List<DeliveryAddress> addresses = (List<DeliveryAddress>) request.getAttribute("addresses");
-
-    // Flash messages
     String message = (String) session.getAttribute("message");
-    String error = (String) session.getAttribute("error");
+    String error   = (String) session.getAttribute("error");
     session.removeAttribute("message");
     session.removeAttribute("error");
 %>
@@ -48,1047 +44,909 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bảo Mật Thông Tin & Quản Lý Địa Chỉ | FreshBasket Portal</title>
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- FontAwesome for Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+    <title>Hồ Sơ Cá Nhân | Sena Shop</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
         :root {
-            --primary: #10b981; /* Fresh Emerald */
-            --primary-hover: #059669;
-            --accent: #f59e0b; /* Sunny Amber */
-            --background: #020617; /* Deep Space Blue/Black */
-            --card-bg: rgba(255, 255, 255, 0.03);
-            --card-border: rgba(255, 255, 255, 0.07);
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --badge-default: rgba(16, 185, 129, 0.15);
-            --badge-normal: rgba(255, 255, 255, 0.05);
-            --danger: #ef4444;
-            --danger-hover: #dc2626;
+            --green:       #4caf50;
+            --green-dark:  #388e3c;
+            --green-light: #e8f5e9;
+            --green-mid:   #c8e6c9;
+            --bg:          #f0f4f1;
+            --white:       #ffffff;
+            --gray-50:     #f8fafb;
+            --gray-100:    #eef1ee;
+            --gray-200:    #dde5dd;
+            --gray-400:    #9aaa9a;
+            --gray-600:    #5a6a5a;
+            --gray-800:    #2d3d2d;
+            --shadow-sm:   0 1px 3px rgba(0,0,0,.08);
+            --shadow:      0 4px 12px rgba(0,0,0,.08);
+            --shadow-md:   0 8px 24px rgba(0,0,0,.10);
+            --radius:      14px;
+            --radius-sm:   8px;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Outfit', sans-serif;
-            transition: all 0.3s ease;
+        html, body {
+            min-height: 100vh;
+            font-family: 'Inter', sans-serif;
+            color: var(--gray-800);
+            background: var(--bg);
         }
 
         body {
-            background: radial-gradient(circle at 90% 10%, rgba(16, 185, 129, 0.12) 0%, rgba(2, 6, 23, 0) 45%), 
-                        radial-gradient(circle at 10% 90%, rgba(245, 158, 11, 0.08) 0%, rgba(2, 6, 23, 0) 45%),
-                        #020617;
-            color: var(--text-main);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow-x: hidden;
-            padding: 2rem 1rem;
-        }
-
-        /* Ambient glow background spheres */
-        .glow-sphere-1 {
-            position: absolute;
-            width: 400px;
-            height: 400px;
-            background: var(--primary);
-            filter: blur(180px);
-            opacity: 0.12;
-            top: 10%;
-            right: 10%;
-            border-radius: 50%;
-            pointer-events: none;
-            animation: float 12s ease-in-out infinite alternate;
-        }
-
-        .glow-sphere-2 {
-            position: absolute;
-            width: 350px;
-            height: 350px;
-            background: var(--accent);
-            filter: blur(150px);
-            opacity: 0.08;
-            bottom: 10%;
-            left: 10%;
-            border-radius: 50%;
-            pointer-events: none;
-            animation: float 10s ease-in-out infinite alternate-reverse;
-        }
-
-        @keyframes float {
-            0% { transform: translateY(0px) scale(1); }
-            100% { transform: translateY(40px) scale(1.1); }
-        }
-
-        /* Glassmorphism Dashboard Container */
-        .profile-container {
-            width: 100%;
-            max-width: 850px;
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 28px;
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.6);
-            z-index: 10;
-            position: relative;
-            overflow: hidden;
-            animation: slideUp 0.7s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(40px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Top decorative banner */
-        .banner-glow {
-            height: 120px;
-            background: linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(245, 158, 11, 0.15) 100%);
-            border-bottom: 1px solid var(--card-border);
-            position: relative;
-        }
-
-        /* Profile Header Area */
-        .profile-header {
-            padding: 0 2.5rem;
-            position: relative;
-            margin-top: -60px;
             display: flex;
             flex-direction: column;
+        }
+
+        /* ======= TOPNAV ======= */
+        .topnav {
+            background: var(--white);
+            border-bottom: 1px solid var(--gray-200);
+            height: 60px;
+            display: flex;
             align-items: center;
-            text-align: center;
-            margin-bottom: 1.5rem;
+            padding: 0 2rem;
+            gap: 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow-sm);
         }
 
-        .avatar-wrapper {
-            position: relative;
-            width: 128px;
-            height: 128px;
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--green-dark);
+            text-decoration: none;
+            white-space: nowrap;
+            letter-spacing: -0.01em;
+        }
+
+        .nav-logo i { color: var(--green); font-size: 1.15rem; }
+
+        .nav-links {
+            display: flex;
+            gap: 0.25rem;
+            margin-left: 1rem;
+        }
+
+        .nav-links a {
+            padding: 0.4rem 0.85rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--gray-600);
+            text-decoration: none;
+            transition: all 0.15s;
+        }
+
+        .nav-links a:hover { background: var(--green-light); color: var(--green-dark); }
+
+        .nav-right {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .nav-icon-btn {
+            width: 38px; height: 38px;
             border-radius: 50%;
-            padding: 5px;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-            margin-bottom: 1rem;
+            background: var(--gray-100);
+            border: none;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--gray-600);
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: background 0.15s;
         }
 
-        .avatar-img {
-            width: 100%;
-            height: 100%;
+        .nav-icon-btn:hover { background: var(--green-light); color: var(--green-dark); }
+
+        .nav-avatar {
+            width: 38px; height: 38px;
             border-radius: 50%;
             object-fit: cover;
-            border: 4px solid #040d21;
-        }
-
-        .user-name {
-            font-size: 2rem;
-            font-weight: 700;
-            margin-top: 0.5rem;
-            background: linear-gradient(135deg, #ffffff 60%, var(--text-muted) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .user-meta-sub {
-            color: var(--text-muted);
-            font-size: 0.95rem;
-            margin-top: 0.2rem;
-        }
-
-        /* Tabs System */
-        .profile-tabs {
-            display: flex;
-            justify-content: center;
-            gap: 0.5rem;
-            border-bottom: 1px solid var(--card-border);
-            padding: 0 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .tab-btn {
-            background: transparent;
-            border: none;
-            color: var(--text-muted);
-            padding: 1rem 1.5rem;
-            font-size: 1rem;
-            font-weight: 600;
+            border: 2px solid var(--green);
             cursor: pointer;
-            position: relative;
+        }
+
+        /* ======= MAIN LAYOUT ======= */
+        .layout {
+            display: flex;
+            flex: 1;
+            max-width: 1080px;
+            width: 100%;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+            gap: 1.5rem;
+            align-items: flex-start;
+        }
+
+        /* ======= SIDEBAR ======= */
+        .sidebar {
+            width: 200px;
+            flex-shrink: 0;
+            background: var(--white);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--gray-200);
+            overflow: hidden;
+            position: sticky;
+            top: 76px;
+        }
+
+        .sidebar-user {
+            padding: 1.25rem 1rem;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .sidebar-user-row {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.65rem;
+            margin-bottom: 0.3rem;
         }
 
-        .tab-btn:hover {
-            color: var(--text-main);
+        .sidebar-user-avatar {
+            width: 34px; height: 34px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--green);
         }
 
-        .tab-btn.active {
-            color: var(--primary);
+        .sidebar-welcome {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--gray-800);
+            line-height: 1.2;
         }
 
-        .tab-btn.active::after {
-            content: '';
-            position: absolute;
-            bottom: -1px;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: var(--primary);
-            border-radius: 3px 3px 0 0;
-            box-shadow: 0 -2px 10px var(--primary);
+        .sidebar-role-text {
+            font-size: 0.72rem;
+            color: var(--gray-400);
+            padding-left: 0.1rem;
         }
 
-        /* Tab Content */
-        .tab-pane {
-            display: none;
-            padding: 0 2.5rem 2.5rem 2.5rem;
-            animation: fadeIn 0.4s ease;
+        .sidebar-nav { padding: 0.5rem; }
+
+        .sidebar-nav button {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            width: 100%;
+            padding: 0.65rem 0.9rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--gray-600);
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            text-align: left;
+            transition: all 0.15s;
         }
 
-        .tab-pane.active {
-            display: block;
+        .sidebar-nav button:hover { background: var(--green-light); color: var(--green-dark); }
+
+        .sidebar-nav button.active {
+            background: var(--green);
+            color: #fff;
+            font-weight: 600;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        /* ======= MAIN CONTENT ======= */
+        .main { flex: 1; display: flex; flex-direction: column; gap: 1.25rem; min-width: 0; }
 
-        /* Alerts */
+        /* ======= ALERTS ======= */
         .alert {
             display: flex;
             align-items: center;
-            gap: 0.8rem;
-            padding: 1rem 1.5rem;
-            border-radius: 12px;
-            margin-bottom: 1.5rem;
+            gap: 0.75rem;
+            padding: 0.9rem 1.2rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.875rem;
             font-weight: 500;
         }
 
-        .alert-success {
-            background: rgba(16, 185, 129, 0.1);
-            border: 1px solid rgba(16, 185, 129, 0.2);
-            color: var(--primary);
-        }
+        .alert-success { background: #dcfce7; border: 1px solid #bbf7d0; color: #166534; }
+        .alert-danger  { background: #fee2e2; border: 1px solid #fecaca; color: #991b1b; }
 
-        .alert-danger {
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid rgba(239, 68, 68, 0.2);
-            color: var(--danger);
-        }
-
-        /* Profile details grid & cards */
-        .info-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .info-card {
-            background: rgba(255, 255, 255, 0.015);
-            border: 1px solid rgba(255, 255, 255, 0.04);
-            border-radius: 16px;
-            padding: 1.2rem;
+        /* ======= HERO CARD ======= */
+        .hero-card {
+            background: linear-gradient(135deg, #e8f5e9 0%, #f1f8f1 60%, #ffffff 100%);
+            border-radius: var(--radius);
+            border: 1px solid var(--green-mid);
+            padding: 2rem 2rem 1.75rem;
             display: flex;
-            align-items: flex-start;
-            gap: 1rem;
-        }
-
-        .info-icon {
-            width: 42px;
-            height: 42px;
-            border-radius: 10px;
-            background: rgba(255, 255, 255, 0.03);
-            display: flex;
-            justify-content: center;
             align-items: center;
-            font-size: 1.2rem;
-            color: var(--primary);
-            flex-shrink: 0;
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            gap: 2rem;
+            box-shadow: var(--shadow-sm);
+            position: relative;
+            overflow: hidden;
         }
 
-        .info-content {
-            display: flex;
-            flex-direction: column;
+        .hero-card::before {
+            content: '';
+            position: absolute;
+            top: -50px; right: -50px;
+            width: 180px; height: 180px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(76,175,80,0.1) 0%, transparent 70%);
         }
 
-        .info-label {
-            font-size: 0.8rem;
-            color: var(--text-muted);
+        .hero-avatar-wrap { position: relative; flex-shrink: 0; }
+
+        .hero-avatar {
+            width: 120px; height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid var(--white);
+            box-shadow: var(--shadow-md);
+            display: block;
+        }
+
+        .hero-avatar-edit {
+            position: absolute;
+            bottom: 4px; right: 4px;
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            background: var(--green);
+            color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.7rem;
+            border: 2px solid #fff;
+            cursor: pointer;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .hero-info { flex: 1; }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            font-size: 0.68rem;
+            font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 0.2rem;
-            font-weight: 500;
+            letter-spacing: 0.07em;
+            color: var(--green-dark);
+            border: 1.5px solid var(--green);
+            border-radius: 100px;
+            padding: 0.2rem 0.7rem;
+            margin-bottom: 0.5rem;
         }
 
-        .info-value {
-            font-size: 1rem;
-            color: var(--text-main);
-            font-weight: 500;
-            word-break: break-word;
+        .hero-name {
+            font-size: 1.9rem;
+            font-weight: 800;
+            color: var(--gray-800);
+            line-height: 1.1;
+            margin-bottom: 0.35rem;
+            letter-spacing: -0.02em;
         }
 
-        /* Forms styling */
-        .form-section-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            margin-bottom: 1.2rem;
-            color: #ffffff;
+        .hero-sub {
+            font-size: 0.85rem;
+            color: var(--gray-600);
+            margin-bottom: 1.25rem;
+        }
+
+        .hero-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+
+        /* ======= CARD ======= */
+        .card {
+            background: var(--white);
+            border-radius: var(--radius);
+            border: 1px solid var(--gray-200);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.1rem 1.5rem;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .card-title {
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            padding-bottom: 0.5rem;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--gray-800);
+        }
+
+        .card-title i { color: var(--green); }
+
+        .card-body { padding: 1.25rem 1.5rem; }
+
+        /* ======= FIELD GRID (view mode) ======= */
+        .field-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.85rem;
+        }
+
+        .field-box {
+            background: var(--gray-50);
+            border: 1px solid var(--gray-100);
+            border-radius: var(--radius-sm);
+            padding: 0.85rem 1rem;
+            transition: border-color 0.15s;
+        }
+
+        .field-box:hover { border-color: var(--green-mid); }
+        .field-box.full  { grid-column: span 2; }
+
+        .field-lbl {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--gray-400);
+            margin-bottom: 0.3rem;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .field-val {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--gray-800);
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .field-val i { color: var(--green); font-size: 0.78rem; }
+
+        /* ======= FORM ======= */
+        .form-section-lbl {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--gray-400);
+            margin-bottom: 1rem;
         }
 
         .form-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 1.2rem;
-            margin-bottom: 1.5rem;
+            gap: 0.85rem;
         }
 
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.4rem;
+        .form-group { display: flex; flex-direction: column; gap: 0.35rem; }
+        .form-group.full { grid-column: span 2; }
+
+        .form-label {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--gray-600);
         }
 
-        .form-group.full-width {
-            grid-column: span 2;
-        }
-
-        label {
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            font-weight: 500;
-        }
-
-        input[type="text"], input[type="email"], input[type="password"], textarea, select {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            padding: 0.8rem 1rem;
-            color: #ffffff;
-            font-size: 0.95rem;
+        .form-control {
+            background: var(--gray-50);
+            border: 1.5px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            padding: 0.7rem 0.9rem;
+            font-size: 0.875rem;
+            font-family: 'Inter', sans-serif;
+            color: var(--gray-800);
             outline: none;
-        }
-
-        input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focus, textarea:focus, select:focus {
-            border-color: var(--primary);
-            background: rgba(16, 185, 129, 0.03);
-            box-shadow: 0 0 10px rgba(16, 185, 129, 0.15);
-        }
-
-        /* View / Edit modes for in-place edit */
-        .view-mode {
-            display: inline-block;
-        }
-        .edit-mode {
-            display: none;
+            transition: all 0.18s;
             width: 100%;
         }
-        .edit-mode input, .edit-mode select, .edit-mode textarea {
-            width: 100%;
-            margin-top: 0.3rem;
-            padding: 0.5rem 0.8rem;
-            font-size: 0.9rem;
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: #ffffff;
-            border-radius: 8px;
+
+        .form-control:focus {
+            border-color: var(--green);
+            background: var(--white);
+            box-shadow: 0 0 0 3px rgba(76,175,80,0.12);
         }
 
-        /* Addresses cards list */
-        .address-list {
+        .form-control::placeholder { color: var(--gray-400); }
+
+        textarea.form-control { resize: vertical; min-height: 72px; }
+        select.form-control option { background: var(--white); }
+
+        .form-actions {
             display: flex;
-            flex-direction: column;
-            gap: 1.2rem;
-            margin-bottom: 2rem;
+            justify-content: flex-end;
+            gap: 0.65rem;
+            margin-top: 1.25rem;
+            padding-top: 1.25rem;
+            border-top: 1px solid var(--gray-100);
         }
 
-        .address-item {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 16px;
-            padding: 1.2rem 1.5rem;
-            position: relative;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+        .pw-hint { font-size: 0.72rem; color: var(--gray-400); margin-top: 0.2rem; }
 
-        .address-item:hover {
-            border-color: rgba(16, 185, 129, 0.3);
-            background: rgba(16, 185, 129, 0.01);
-        }
-
-        .address-info {
-            display: flex;
-            flex-direction: column;
-            gap: 0.4rem;
-        }
-
-        .address-header {
-            display: flex;
-            align-items: center;
-            gap: 0.8rem;
-            flex-wrap: wrap;
-        }
-
-        .recipient-name {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #ffffff;
-        }
-
-        .recipient-phone {
-            font-size: 0.95rem;
-            color: var(--text-muted);
-            font-weight: 500;
-        }
-
-        .badge {
-            font-size: 0.75rem;
-            font-weight: 600;
-            padding: 0.2rem 0.6rem;
-            border-radius: 100px;
-            text-transform: uppercase;
-        }
-
-        .badge-default {
-            background: var(--badge-default);
-            color: var(--primary);
-            border: 1px solid rgba(16, 185, 129, 0.3);
-        }
-
-        .address-detail {
-            font-size: 0.95rem;
-            color: var(--text-main);
-        }
-
-        .address-note {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            font-style: italic;
-            display: flex;
-            align-items: center;
-            gap: 0.3rem;
-        }
-
-        .address-actions {
-            display: flex;
-            gap: 0.6rem;
-            align-items: center;
-        }
-
-        /* Buttons */
+        /* ======= BUTTONS ======= */
         .btn {
-            padding: 0.75rem 1.25rem;
-            border-radius: 10px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            cursor: pointer;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 0.4rem;
+            gap: 0.45rem;
+            padding: 0.65rem 1.3rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.875rem;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
             border: none;
             text-decoration: none;
+            transition: all 0.18s ease;
+            white-space: nowrap;
         }
 
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary) 0%, #10b981d0 100%);
-            color: #020617;
-            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2);
+        .btn-green {
+            background: var(--green);
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(76,175,80,0.3);
         }
 
-        .btn-primary:hover {
-            background: linear-gradient(135deg, var(--primary-hover) 0%, var(--primary) 100%);
+        .btn-green:hover {
+            background: var(--green-dark);
+            box-shadow: 0 4px 14px rgba(56,142,60,0.35);
             transform: translateY(-1px);
         }
 
-        .btn-secondary {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: var(--text-main);
+        .btn-outline {
+            background: var(--white);
+            color: var(--gray-600);
+            border: 1.5px solid var(--gray-200);
         }
 
-        .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.08);
-            border-color: rgba(255, 255, 255, 0.2);
+        .btn-outline:hover {
+            background: var(--gray-50);
+            border-color: var(--gray-400);
+            color: var(--gray-800);
         }
 
-        .btn-danger {
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid rgba(239, 68, 68, 0.2);
-            color: #f87171;
+        .btn-sm { padding: 0.5rem 1rem; font-size: 0.82rem; }
+
+        /* ======= SECURITY ACTION ======= */
+        .security-desc {
+            font-size: 0.85rem;
+            color: var(--gray-600);
+            line-height: 1.6;
+            margin-bottom: 1.25rem;
         }
 
-        .btn-danger:hover {
-            background: rgba(239, 68, 68, 0.2);
-            border-color: var(--danger);
-            color: #ffffff;
-        }
-
-        .btn-sm {
-            padding: 0.4rem 0.8rem;
+        .security-join {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
             font-size: 0.8rem;
-            border-radius: 8px;
+            color: var(--gray-600);
+            padding-top: 1.25rem;
+            margin-top: 1.25rem;
+            border-top: 1px solid var(--gray-100);
         }
 
-        /* Modal Overlay & Card */
-        .modal {
+        .security-join i { color: #e53935; }
+
+        /* ======= MODAL ======= */
+        .modal-overlay {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(2, 6, 23, 0.7);
-            backdrop-filter: blur(8px);
-            z-index: 100;
-            justify-content: center;
+            inset: 0;
+            background: rgba(0,0,0,0.3);
+            backdrop-filter: blur(4px);
+            z-index: 200;
             align-items: center;
+            justify-content: center;
         }
 
-        .modal.active {
-            display: flex;
-        }
+        .modal-overlay.open { display: flex; animation: fadeBg 0.2s ease; }
 
-        .modal-content {
-            background: #091124;
-            border: 1px solid var(--card-border);
-            border-radius: 20px;
-            width: 90%;
-            max-width: 550px;
+        @keyframes fadeBg { from { opacity: 0; } to { opacity: 1; } }
+
+        .modal-box {
+            background: var(--white);
+            border-radius: var(--radius);
             padding: 2rem;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
-            animation: modalSlideUp 0.3s ease;
+            width: 90%;
+            max-width: 480px;
+            box-shadow: var(--shadow-md);
+            animation: slideUp 0.25s cubic-bezier(0.34,1.56,0.64,1);
         }
 
-        @keyframes modalSlideUp {
-            from { transform: translateY(30px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px) scale(0.97); }
+            to   { opacity: 1; transform: translateY(0)   scale(1); }
         }
 
         .modal-header {
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            justify-content: space-between;
             margin-bottom: 1.5rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            padding-bottom: 0.8rem;
         }
 
         .modal-title {
-            font-size: 1.3rem;
+            font-size: 1.05rem;
             font-weight: 700;
-            color: #ffffff;
+            color: var(--gray-800);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
-        .close-btn {
-            background: transparent;
+        .modal-title i { color: var(--green); }
+
+        .modal-close {
+            width: 30px; height: 30px;
+            border-radius: 50%;
             border: none;
-            color: var(--text-muted);
-            font-size: 1.4rem;
+            background: var(--gray-100);
+            color: var(--gray-600);
             cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.85rem;
+            transition: all 0.15s;
         }
 
-        .close-btn:hover {
-            color: var(--danger);
+        .modal-close:hover { background: #fee2e2; color: #ef4444; }
+
+        /* ======= FOOTER ======= */
+        .footer {
+            background: var(--white);
+            border-top: 1px solid var(--gray-200);
+            padding: 1.2rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: auto;
         }
 
-        /* Responsive */
+        .footer-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--green-dark);
+            text-decoration: none;
+        }
+
+        .footer-logo i { color: var(--green); }
+
+        .footer-copy { font-size: 0.78rem; color: var(--gray-400); }
+
+        .footer-links { display: flex; gap: 1.25rem; }
+
+        .footer-links a {
+            font-size: 0.78rem;
+            color: var(--gray-400);
+            text-decoration: none;
+            transition: color 0.15s;
+        }
+
+        .footer-links a:hover { color: var(--green-dark); }
+
+        /* ======= RESPONSIVE ======= */
         @media (max-width: 768px) {
-            .info-grid, .form-grid {
-                grid-template-columns: 1fr;
-                gap: 1.2rem;
-            }
-            .form-group.full-width {
-                grid-column: span 1;
-            }
-            .tab-btn {
-                padding: 0.8rem 1rem;
-                font-size: 0.9rem;
-            }
-            .address-item {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 1.2rem;
-            }
-            .address-actions {
-                width: 100%;
-                justify-content: flex-end;
-            }
+            .layout { flex-direction: column; padding: 0 1rem; }
+            .sidebar { width: 100%; position: static; }
+            .field-grid, .form-grid { grid-template-columns: 1fr; }
+            .field-box.full, .form-group.full { grid-column: span 1; }
+            .hero-card { flex-direction: column; text-align: center; }
+            .hero-actions { justify-content: center; }
+            .topnav { padding: 0 1rem; }
+            .nav-links { display: none; }
         }
     </style>
 </head>
 <body>
-    <div class="glow-sphere-1"></div>
-    <div class="glow-sphere-2"></div>
 
-    <div class="profile-container">
-        <!-- Top banner decoration -->
-        <div class="banner-glow"></div>
+<!-- ====== TOPNAV ====== -->
+<nav class="topnav">
+    <a href="home.html" class="nav-logo">
+        <i class="fa-solid fa-apple-whole"></i> Sena Shop
+    </a>
+    <div class="nav-links">
+        <a href="#">Trái Cây</a>
+        <a href="#">Rau Củ</a>
+        <a href="#">Nhập Khẩu</a>
+        <a href="#">Huu Co</a>
+        <a href="#">Khuyến Mãi</a>
+    </div>
+    <div class="nav-right">
+        <button class="nav-icon-btn" title="Gio hang"><i class="fa-solid fa-basket-shopping"></i></button>
+        <img class="nav-avatar" src="<%= avatarUrl %>" alt="avatar">
+    </div>
+</nav>
 
-        <!-- Header details -->
-        <div class="profile-header">
-            <div class="avatar-wrapper">
-                <img class="avatar-img" src="<%= avatarUrl %>" alt="Ảnh đại diện">
+<!-- ====== LAYOUT ====== -->
+<div class="layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar-user">
+            <div class="sidebar-user-row">
+                <img class="sidebar-user-avatar" src="<%= avatarUrl %>" alt="avatar">
+                <div>
+                    <div class="sidebar-welcome"><%= fullname.split(" ")[fullname.split(" ").length - 1] %></div>
+                </div>
             </div>
-            
-            <h1 class="user-name"><%= fullname %></h1>
-            <p class="user-meta-sub">@<%= username %> | Khách Hàng Thân Thiết</p>
+            <div class="sidebar-role-text"><%= roleDisplay %></div>
         </div>
 
-        <!-- Tab Controls -->
-        <div class="profile-tabs">
-            <button class="tab-btn active" onclick="switchTab('profile-info', this)">
-                <i class="fa-regular fa-user"></i> Hồ Sơ Cá Nhân
+        <div class="sidebar-nav">
+            <button class="active" id="nav-profile" onclick="showPanel('profile')">
+                <i class="fa-regular fa-user"></i> Ho So
             </button>
-            <button class="tab-btn" onclick="switchTab('address-book', this)">
-                <i class="fa-solid fa-map-location-dot"></i> Sổ Địa Chỉ
-            </button>
-            <button class="tab-btn" onclick="switchTab('security-settings', this)">
-                <i class="fa-solid fa-shield-halved"></i> Bảo Mật Tài Khoản
+            <button id="nav-security" onclick="showPanel('security')">
+                <i class="fa-solid fa-shield-halved"></i> Bảo Mật
             </button>
         </div>
+    </aside>
 
-        <!-- Alerts -->
-        <div style="padding: 0 2.5rem;">
-            <% if (message != null) { %>
-                <div class="alert alert-success">
-                    <i class="fa-solid fa-circle-check"></i>
-                    <span><%= message %></span>
-                </div>
-            <% } %>
-            <% if (error != null) { %>
-                <div class="alert alert-danger">
-                    <i class="fa-solid fa-circle-exclamation"></i>
-                    <span><%= error %></span>
-                </div>
-            <% } %>
+    <!-- MAIN -->
+    <main class="main">
+
+        <!-- Flash messages -->
+        <% if (message != null) { %>
+        <div class="alert alert-success">
+            <i class="fa-solid fa-circle-check"></i>
+            <span><%= message %></span>
         </div>
-
-        <!-- ================= TAB 1: PROFILE INFO ================= -->
-        <div id="profile-info" class="tab-pane active">
-            <form id="profile-form" action="profile" method="POST">
-                <input type="hidden" name="action" value="updateProfile">
-                
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-                    <h3 class="form-section-title" style="margin-bottom:0; border:none; padding:0;">
-                        <i class="fa-regular fa-user"></i> Thông Tin Cá Nhân
-                    </h3>
-                    <button type="button" id="edit-profile-btn" class="btn btn-primary btn-sm" onclick="toggleProfileEdit()">
-                        <i class="fa-regular fa-pen-to-square"></i> Chỉnh sửa
-                    </button>
-                </div>
-
-                <div class="info-grid">
-                    <!-- Fullname Card -->
-                    <div class="info-card">
-                        <div class="info-icon"><i class="fa-regular fa-address-card"></i></div>
-                        <div class="info-content" style="width: 100%;">
-                            <span class="info-label">Họ và tên</span>
-                            <span class="info-value view-mode"><%= fullname %></span>
-                            <div class="edit-mode">
-                                <input type="text" name="fullname" value="<%= fullname %>" required>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Email Card -->
-                    <div class="info-card">
-                        <div class="info-icon"><i class="fa-regular fa-envelope"></i></div>
-                        <div class="info-content" style="width: 100%;">
-                            <span class="info-label">Địa chỉ Email</span>
-                            <span class="info-value view-mode"><%= email %></span>
-                            <div class="edit-mode">
-                                <input type="email" name="email" value="<%= email %>" required>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Phone Card -->
-                    <div class="info-card">
-                        <div class="info-icon"><i class="fa-solid fa-phone"></i></div>
-                        <div class="info-content" style="width: 100%;">
-                            <span class="info-label">Số điện thoại</span>
-                            <span class="info-value view-mode"><%= phone %></span>
-                            <div class="edit-mode">
-                                <input type="text" name="phone" value="<%= "Chưa cập nhật".equals(phone) ? "" : phone %>">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Gender Card -->
-                    <div class="info-card">
-                        <div class="info-icon"><i class="fa-solid fa-venus-mars"></i></div>
-                        <div class="info-content" style="width: 100%;">
-                            <span class="info-label">Giới tính</span>
-                            <span class="info-value view-mode"><%= genderStr %></span>
-                            <div class="edit-mode">
-                                <select name="gender">
-                                    <option value="" <%= user.getGender() == null ? "selected" : "" %>>Chưa chọn</option>
-                                    <option value="1" <%= (user.getGender() != null && user.getGender()) ? "selected" : "" %>>Nam</option>
-                                    <option value="0" <%= (user.getGender() != null && !user.getGender()) ? "selected" : "" %>>Nữ</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Date Joined Card -->
-                    <div class="info-card">
-                        <div class="info-icon"><i class="fa-regular fa-calendar-check"></i></div>
-                        <div class="info-content">
-                            <span class="info-label">Ngày tham gia</span>
-                            <span class="info-value"><%= createdAtStr %></span>
-                        </div>
-                    </div>
-
-                    <!-- Avatar Card -->
-                    <div class="info-card">
-                        <div class="info-icon"><i class="fa-regular fa-image"></i></div>
-                        <div class="info-content" style="width: 100%;">
-                            <span class="info-label">Ảnh đại diện (Avatar URL)</span>
-                            <span class="info-value view-mode" style="font-size:0.85rem; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"><%= user.getAvatar() != null ? user.getAvatar() : "Mặc định" %></span>
-                            <div class="edit-mode">
-                                <input type="text" name="avatar" value="<%= user.getAvatar() != null ? user.getAvatar() : "" %>" placeholder="https://...">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Full Address Card -->
-                    <div class="info-card" style="grid-column: span 2;">
-                        <div class="info-icon"><i class="fa-solid fa-map-location-dot"></i></div>
-                        <div class="info-content" style="width: 100%;">
-                            <span class="info-label">Địa chỉ chi tiết</span>
-                            <span class="info-value view-mode"><%= address %></span>
-                            <div class="edit-mode">
-                                <textarea name="address" rows="2"><%= "Chưa cập nhật".equals(address) ? "" : address %></textarea>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Submit / Cancel actions -->
-                <div id="profile-edit-actions" style="display:none; justify-content:flex-end; gap:0.8rem; margin-top:1.5rem;">
-                    <button type="button" class="btn btn-secondary" onclick="cancelProfileEdit()"><i class="fa-solid fa-xmark"></i> Hủy bỏ</button>
-                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Lưu thay đổi</button>
-                </div>
-            </form>
+        <% } %>
+        <% if (error != null) { %>
+        <div class="alert alert-danger">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            <span><%= error %></span>
         </div>
+        <% } %>
 
-        <!-- ================= TAB 2: ADDRESS BOOK ================= -->
-        <div id="address-book" class="tab-pane">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-                <h3 class="form-section-title" style="margin-bottom:0; border:none; padding:0;">
-                    <i class="fa-regular fa-address-book"></i> Địa Chỉ Giao Hàng Đã Lưu
-                </h3>
-                <button class="btn btn-primary btn-sm" onclick="openAddModal()">
-                    <i class="fa-solid fa-plus"></i> Thêm Địa Chỉ
+        <!-- ====== PANEL: HO SO ====== -->
+        <div id="panel-profile" style="display:flex; flex-direction:column; gap:1.25rem;">
+
+            <!-- Hero card -->
+            <div class="hero-card">
+                <div class="hero-avatar-wrap">
+                    <img class="hero-avatar" src="<%= avatarUrl %>" alt="Avatar">
+                    <div class="hero-avatar-edit" onclick="openEdit()" title="Chinh sua anh dai dien">
+                        <i class="fa-solid fa-gear"></i>
+                    </div>
+                </div>
+                <div class="hero-info">
+                    <div class="hero-badge">
+                        <i class="fa-solid fa-circle-dot" style="font-size:0.5rem;"></i>
+                        <%= roleDisplay.toUpperCase() %>
+                    </div>
+                    <h1 class="hero-name"><%= fullname %></h1>
+                    <div class="hero-sub">
+                        @<%= username %>
+                        <% if (!createdAtStr.isEmpty()) { %>
+                          &nbsp;&bull;&nbsp; Tham gia tu <%= createdAtStr %>
+                        <% } %>
+                    </div>
+                    <div class="hero-actions">
+                        <button class="btn btn-green btn-sm" onclick="openEdit()">
+                            <i class="fa-solid fa-pencil"></i> Chinh Sua Ho So
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Personal Information card (full width, no security card here) -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fa-regular fa-address-card"></i> Thong Tin Ca Nhan
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="field-grid">
+                        <div class="field-box">
+                            <div class="field-lbl"><i class="fa-regular fa-user"></i> Ho va Ten</div>
+                            <div class="field-val"><%= fullname %></div>
+                        </div>
+                        <div class="field-box">
+                            <div class="field-lbl"><i class="fa-solid fa-venus-mars"></i> Gioi Tinh</div>
+                            <div class="field-val"><%= genderStr %></div>
+                        </div>
+                        <div class="field-box">
+                            <div class="field-lbl"><i class="fa-regular fa-envelope"></i> Dia Chi Email</div>
+                            <div class="field-val"><%= email %></div>
+                        </div>
+                        <div class="field-box">
+                            <div class="field-lbl"><i class="fa-solid fa-phone"></i> So Dien Thoai</div>
+                            <div class="field-val"><%= phone %></div>
+                        </div>
+                        <div class="field-box full">
+                            <div class="field-lbl"><i class="fa-solid fa-location-dot"></i> Dia Chi Mac Dinh</div>
+                            <div class="field-val"><i class="fa-solid fa-map-pin"></i> <%= address %></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /panel-profile -->
+
+        <!-- ====== PANEL: BAO MAT ====== -->
+        <div id="panel-security" style="display:none; flex-direction:column; gap:1.25rem;">
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fa-solid fa-shield-halved"></i> Bảo Mật Tai Khoan
+                    </div>
+                </div>
+                <div class="card-body">
+                    <p class="security-desc">
+                        Giu tai khoan cua ban luon an toan bang cach cap nhat mat khau dinh ky.
+                        Su dung mat khau manh voi it nhat 6 ky tu.
+                    </p>
+                    <form action="profile" method="POST">
+                        <input type="hidden" name="action" value="changePassword">
+                        <div class="form-section-lbl">Thay Đổi Mật Khẩu</div>
+                        <div class="form-grid">
+                            <div class="form-group full">
+                                <label class="form-label">Mật khẩu hiện tại</label>
+                                <input type="password" name="currentPassword" class="form-control"
+                                       placeholder="Nhap mat khau hien tai" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Mật khẩu mới</label>
+                                <input type="password" name="newPassword" class="form-control"
+                                       placeholder="Mật khẩu mới" required>
+                                <span class="pw-hint">Toi thieu 6 ky tu</span>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Xác nhận mật khẩu mới</label>
+                                <input type="password" name="confirmPassword" class="form-control"
+                                       placeholder="Nhap lai mat khau moi" required>
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-green">
+                                <i class="fa-solid fa-shield-halved"></i> Cập Nhật Mật Khẩu
+                            </button>
+                        </div>
+                    </form>
+
+                    <% if (!createdAtStr.isEmpty()) { %>
+                    <div class="security-join">
+                        <i class="fa-regular fa-calendar"></i>
+                        Tham gia Sena Shop tu ngay <strong style="margin-left:0.2rem;"><%= createdAtStr %></strong>
+                    </div>
+                    <% } %>
+                </div>
+            </div>
+
+        </div><!-- /panel-security -->
+
+    </main>
+</div><!-- /layout -->
+
+<!-- ====== FOOTER ====== -->
+<footer class="footer">
+    <a href="home.html" class="footer-logo"><i class="fa-solid fa-apple-whole"></i> Sena Shop</a>
+    <span class="footer-copy">&copy; 2024 Sena Shop. Trái cây tươi ngon mỗi ngày.</span>
+    <div class="footer-links">
+        <a href="#">Privacy</a>
+        <a href="#">Terms</a>
+        <a href="#">Lien He</a>
+    </div>
+</footer>
+
+<!-- ====== MODAL: CHINH SUA HO SO ====== -->
+<div class="modal-overlay" id="editModal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <div class="modal-title"><i class="fa-regular fa-pen-to-square"></i> Chinh Sua Ho So</div>
+            <button class="modal-close" onclick="closeEdit()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <form action="profile" method="POST">
+            <input type="hidden" name="action" value="updateProfile">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">Ho va ten</label>
+                    <input type="text" name="fullname" class="form-control" value="<%= fullname %>" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" name="email" class="form-control" value="<%= email %>" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Số điện thoại</label>
+                    <input type="text" name="phone" class="form-control"
+                           value="<%= "Chưa cập nhật".equals(phone) ? "" : phone %>"
+                           placeholder="Nhap so dien thoai">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Giới tính</label>
+                    <select name="gender" class="form-control">
+                        <option value="" <%= user.getGender() == null ? "selected" : "" %>>Chua chon</option>
+                        <option value="1" <%= (user.getGender() != null && user.getGender())  ? "selected" : "" %>>Nam</option>
+                        <option value="0" <%= (user.getGender() != null && !user.getGender()) ? "selected" : "" %>>Nữ</option>
+                    </select>
+                </div>
+                <div class="form-group full">
+                    <label class="form-label">Dia chi</label>
+                    <textarea name="address" class="form-control"
+                              placeholder="Nhap dia chi"><%= "Chưa cập nhật".equals(address) ? "" : address %></textarea>
+                </div>
+                <div class="form-group full">
+                    <label class="form-label">Avatar URL</label>
+                    <input type="text" name="avatar" class="form-control"
+                           value="<%= user.getAvatar() != null ? user.getAvatar() : "" %>"
+                           placeholder="https://...">
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-outline" onclick="closeEdit()">Huy</button>
+                <button type="submit" class="btn btn-green">
+                    <i class="fa-solid fa-floppy-disk"></i> Lưu Thay Đổi
                 </button>
             </div>
-
-            <div class="address-list">
-                <% if (addresses == null || addresses.isEmpty()) { %>
-                    <div style="text-align:center; padding:3rem 1rem; color:var(--text-muted); background:rgba(255,255,255,0.01); border-radius:16px; border:1px dashed var(--card-border);">
-                        <i class="fa-solid fa-map-location" style="font-size:3rem; margin-bottom:1rem; opacity:0.5;"></i>
-                        <p>Bạn chưa lưu địa chỉ nhận hàng nào.</p>
-                    </div>
-                <% } else { %>
-                    <% for (DeliveryAddress addr : addresses) { %>
-                        <div class="address-item">
-                            <div class="address-info">
-                                <div class="address-header">
-                                    <span class="recipient-name"><%= addr.getRecipientName() %></span>
-                                    <span class="recipient-phone"><i class="fa-solid fa-phone" style="font-size:0.8rem;"></i> <%= addr.getRecipientPhone() %></span>
-                                    <% if (addr.isIsDefault()) { %>
-                                        <span class="badge badge-default"><i class="fa-solid fa-star"></i> Mặc định</span>
-                                    <% } %>
-                                </div>
-                                <div class="address-detail"><%= addr.getAddress() %></div>
-                                <% if (addr.getNote() != null && !addr.getNote().trim().isEmpty()) { %>
-                                    <div class="address-note"><i class="fa-regular fa-comment-dots"></i> Ghi chú: <%= addr.getNote() %></div>
-                                <% } %>
-                            </div>
-                            <div class="address-actions">
-                                <% if (!addr.isIsDefault()) { %>
-                                    <a href="profile?action=setDefault&id=<%= addr.getId() %>" class="btn btn-secondary btn-sm" title="Đặt làm mặc định">
-                                        Mặc định
-                                    </a>
-                                <% } %>
-                                <button class="btn btn-secondary btn-sm" onclick="openEditModal(<%= addr.getId() %>, '<%= addr.getRecipientName().replace("'", "\\'") %>', '<%= addr.getRecipientPhone().replace("'", "\\'") %>', '<%= addr.getAddress().replace("'", "\\'") %>', '<%= addr.getNote() != null ? addr.getNote().replace("'", "\\'") : "" %>', <%= addr.isIsDefault() ? 1 : 0 %>)">
-                                    <i class="fa-regular fa-pen-to-square"></i> Sửa
-                                </button>
-                                <a href="profile?action=delete&id=<%= addr.getId() %>" class="btn btn-danger btn-sm" onclick="return confirm('Bạn chắc chắn muốn xóa địa chỉ này?')" title="Xóa địa chỉ">
-                                    <i class="fa-regular fa-trash-can"></i>
-                                </a>
-                            </div>
-                        </div>
-                    <% } %>
-                <% } %>
-            </div>
-        </div>
-
-        <!-- ================= TAB 3: ACCOUNT SECURITY ================= -->
-        <div id="security-settings" class="tab-pane">
-            
-            <!-- Change Password -->
-            <form action="profile" method="POST" style="margin-bottom: 3rem;">
-                <input type="hidden" name="action" value="changePassword">
-                <h3 class="form-section-title"><i class="fa-solid fa-key"></i> Thay Đổi Mật Khẩu</h3>
-                
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="currentPassword">Mật khẩu hiện tại</label>
-                        <input type="password" id="currentPassword" name="currentPassword" required>
-                    </div>
-                    <div style="grid-column: span 1;"></div>
-                    
-                    <div class="form-group">
-                        <label for="newPassword">Mật khẩu mới</label>
-                        <input type="password" id="newPassword" name="newPassword" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="confirmPassword">Xác nhận mật khẩu mới</label>
-                        <input type="password" id="confirmPassword" name="confirmPassword" required>
-                    </div>
-                </div>
-
-                <div style="display:flex; justify-content:flex-end;">
-                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-arrows-rotate"></i> Cập nhật mật khẩu</button>
-                </div>
-            </form>
-
-            <!-- Forgot / Reset Password Widget -->
-            <div style="border-top:1px solid var(--card-border); padding-top:2rem; display:grid; grid-template-columns: 1fr 1fr; gap:2rem;">
-                <!-- Forgot Password -->
-                <form action="profile" method="POST">
-                    <input type="hidden" name="action" value="forgotPassword">
-                    <h3 class="form-section-title" style="font-size:1.1rem; border:none; padding-bottom:0;"><i class="fa-regular fa-circle-question"></i> Bạn Quên Mật Khẩu?</h3>
-                    <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem;">Nhập email đăng ký để tạo mã khôi phục mật khẩu ngay lập tức.</p>
-                    
-                    <div class="form-group" style="margin-bottom:1rem;">
-                        <label for="forgotEmail">Email khôi phục</label>
-                        <input type="email" id="forgotEmail" name="email" placeholder="example@gmail.com" required>
-                    </div>
-                    <button type="submit" class="btn btn-secondary" style="width:100%;"><i class="fa-solid fa-paper-plane"></i> Lấy Mã Khôi Phục</button>
-                </form>
-
-                <!-- Reset Password -->
-                <form action="profile" method="POST">
-                    <input type="hidden" name="action" value="resetPassword">
-                    <h3 class="form-section-title" style="font-size:1.1rem; border:none; padding-bottom:0;"><i class="fa-solid fa-lock-open"></i> Đặt Lại Mật Khẩu</h3>
-                    <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem;">Nhập mã khôi phục nhận được cùng mật khẩu mới của bạn.</p>
-                    
-                    <div class="form-group" style="margin-bottom:0.8rem;">
-                        <input type="email" name="email" placeholder="Email đăng ký" required>
-                    </div>
-                    <div class="form-group" style="margin-bottom:0.8rem;">
-                        <input type="text" name="token" placeholder="Nhập Mã Khôi Phục (Token)" required>
-                    </div>
-                    <div class="form-group" style="margin-bottom:0.8rem;">
-                        <input type="password" name="newPassword" placeholder="Mật khẩu mới (ít nhất 6 ký tự)" required>
-                    </div>
-                    <div class="form-group" style="margin-bottom:1rem;">
-                        <input type="password" name="confirmPassword" placeholder="Xác nhận mật khẩu mới" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary" style="width:100%;"><i class="fa-solid fa-key"></i> Đặt Lại Mật Khẩu</button>
-                </form>
-            </div>
-
-        </div>
+        </form>
     </div>
+</div>
 
-    <!-- ================= ADD ADDRESS MODAL ================= -->
-    <div id="addAddressModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <span class="modal-title"><i class="fa-solid fa-map-pin"></i> Thêm Địa Chỉ Giao Hàng</span>
-                <button class="close-btn" onclick="closeAddModal()">&times;</button>
-            </div>
-            <form action="profile" method="POST">
-                <input type="hidden" name="action" value="addAddress">
-                
-                <div class="form-group" style="margin-bottom:1rem;">
-                    <label for="add_recipientName">Tên người nhận</label>
-                    <input type="text" id="add_recipientName" name="recipientName" required>
-                </div>
-                
-                <div class="form-group" style="margin-bottom:1rem;">
-                    <label for="add_recipientPhone">Số điện thoại</label>
-                    <input type="text" id="add_recipientPhone" name="recipientPhone" required>
-                </div>
-                
-                <div class="form-group" style="margin-bottom:1rem;">
-                    <label for="add_address">Địa chỉ chi tiết</label>
-                    <textarea id="add_address" name="address" rows="3" required placeholder="Số nhà, Tên đường, Phường/Xã, Quận/Huyện, Tỉnh/Thành phố"></textarea>
-                </div>
-                
-                <div class="form-group" style="margin-bottom:1.5rem;">
-                    <label for="add_note">Ghi chú giao hàng</label>
-                    <input type="text" id="add_note" name="note" placeholder="Ví dụ: Giao giờ hành chính, gọi trước khi giao...">
-                </div>
+<script>
+    // Panel switching
+    function showPanel(name) {
+        var profile  = document.getElementById('panel-profile');
+        var security = document.getElementById('panel-security');
+        var btnP     = document.getElementById('nav-profile');
+        var btnS     = document.getElementById('nav-security');
 
-                <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:1.5rem;">
-                    <input type="checkbox" id="add_isDefault" name="isDefault" value="1" style="width:18px; height:18px; cursor:pointer;">
-                    <label for="add_isDefault" style="cursor:pointer; font-weight:600; color:#ffffff;">Đặt làm địa chỉ nhận hàng mặc định</label>
-                </div>
-
-                <div style="display:flex; justify-content:flex-end; gap:0.8rem;">
-                    <button type="button" class="btn btn-secondary" onclick="closeAddModal()">Hủy bỏ</button>
-                    <button type="submit" class="btn btn-primary">Lưu địa chỉ</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- ================= EDIT ADDRESS MODAL ================= -->
-    <div id="editAddressModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <span class="modal-title"><i class="fa-regular fa-pen-to-square"></i> Sửa Địa Chỉ Giao Hàng</span>
-                <button class="close-btn" onclick="closeEditModal()">&times;</button>
-            </div>
-            <form action="profile" method="POST">
-                <input type="hidden" name="action" value="editAddress">
-                <input type="hidden" id="edit_id" name="id">
-                
-                <div class="form-group" style="margin-bottom:1rem;">
-                    <label for="edit_recipientName">Tên người nhận</label>
-                    <input type="text" id="edit_recipientName" name="recipientName" required>
-                </div>
-                
-                <div class="form-group" style="margin-bottom:1rem;">
-                    <label for="edit_recipientPhone">Số điện thoại</label>
-                    <input type="text" id="edit_recipientPhone" name="recipientPhone" required>
-                </div>
-                
-                <div class="form-group" style="margin-bottom:1rem;">
-                    <label for="edit_address">Địa chỉ chi tiết</label>
-                    <textarea id="edit_address" name="address" rows="3" required></textarea>
-                </div>
-                
-                <div class="form-group" style="margin-bottom:1.5rem;">
-                    <label for="edit_note">Ghi chú giao hàng</label>
-                    <input type="text" id="edit_note" name="note">
-                </div>
-
-                <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:1.5rem;">
-                    <input type="checkbox" id="edit_isDefault" name="isDefault" value="1" style="width:18px; height:18px; cursor:pointer;">
-                    <label for="edit_isDefault" style="cursor:pointer; font-weight:600; color:#ffffff;">Đặt làm địa chỉ nhận hàng mặc định</label>
-                </div>
-
-                <div style="display:flex; justify-content:flex-end; gap:0.8rem;">
-                    <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Hủy bỏ</button>
-                    <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Scripts -->
-    <script>
-        function switchTab(tabId, button) {
-            // Hide all tab content panes
-            const panes = document.querySelectorAll('.tab-pane');
-            panes.forEach(pane => pane.classList.remove('active'));
-
-            // Deactivate all tab buttons
-            const buttons = document.querySelectorAll('.tab-btn');
-            buttons.forEach(btn => btn.classList.remove('active'));
-
-            // Show current active tab content pane & button
-            document.getElementById(tabId).classList.add('active');
-            button.classList.add('active');
-
-            // Save tab preference to local storage
-            localStorage.setItem('activeTab', tabId);
+        if (name === 'profile') {
+            profile.style.display  = 'flex';
+            security.style.display = 'none';
+            btnP.classList.add('active');
+            btnS.classList.remove('active');
+        } else {
+            profile.style.display  = 'none';
+            security.style.display = 'flex';
+            btnP.classList.remove('active');
+            btnS.classList.add('active');
         }
+        localStorage.setItem('senaPanel', name);
+    }
 
-        // Keep active tab on reload
-        window.addEventListener('DOMContentLoaded', () => {
-            const activeTab = localStorage.getItem('activeTab');
-            if (activeTab && document.getElementById(activeTab)) {
-                const btn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick').includes(activeTab));
-                if (btn) switchTab(activeTab, btn);
-            }
-        });
+    // Restore last panel
+    window.addEventListener('DOMContentLoaded', function() {
+        var saved = localStorage.getItem('senaPanel') || 'profile';
+        showPanel(saved);
+    });
 
-        // Add Modal actions
-        function openAddModal() {
-            document.getElementById('addAddressModal').classList.add('active');
-        }
-        function closeAddModal() {
-            document.getElementById('addAddressModal').classList.remove('active');
-        }
+    // Edit profile modal
+    function openEdit() {
+        document.getElementById('editModal').classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
 
-        // Edit Modal actions
-        function openEditModal(id, name, phone, address, note, isDefault) {
-            document.getElementById('edit_id').value = id;
-            document.getElementById('edit_recipientName').value = name;
-            document.getElementById('edit_recipientPhone').value = phone;
-            document.getElementById('edit_address').value = address;
-            document.getElementById('edit_note').value = note;
-            document.getElementById('edit_isDefault').checked = (isDefault === 1);
-            document.getElementById('editAddressModal').classList.add('active');
-        }
-        function closeEditModal() {
-            document.getElementById('editAddressModal').classList.remove('active');
-        }
+    function closeEdit() {
+        document.getElementById('editModal').classList.remove('open');
+        document.body.style.overflow = '';
+    }
 
-        // Close modal when clicking outside content card
-        window.onclick = function(event) {
-            const addModal = document.getElementById('addAddressModal');
-            const editModal = document.getElementById('editAddressModal');
-            if (event.target === addModal) closeAddModal();
-            if (event.target === editModal) closeEditModal();
-        }
+    // Close on overlay click
+    document.getElementById('editModal').addEventListener('click', function(e) {
+        if (e.target === this) closeEdit();
+    });
 
-        // Toggle in-place profile edit
-        let isProfileEditing = false;
-        function toggleProfileEdit() {
-            isProfileEditing = !isProfileEditing;
-            const viewModes = document.querySelectorAll('#profile-info .view-mode');
-            const editModes = document.querySelectorAll('#profile-info .edit-mode');
-            const actions = document.getElementById('profile-edit-actions');
-            const editBtn = document.getElementById('edit-profile-btn');
-
-            if (isProfileEditing) {
-                viewModes.forEach(el => el.style.display = 'none');
-                editModes.forEach(el => el.style.display = 'block');
-                actions.style.display = 'flex';
-                editBtn.innerHTML = '<i class="fa-solid fa-xmark"></i> Hủy chỉnh sửa';
-                editBtn.classList.replace('btn-primary', 'btn-secondary');
-            } else {
-                viewModes.forEach(el => el.style.display = 'inline-block');
-                editModes.forEach(el => el.style.display = 'none');
-                actions.style.display = 'none';
-                editBtn.innerHTML = '<i class="fa-regular fa-pen-to-square"></i> Chỉnh sửa';
-                editBtn.classList.replace('btn-secondary', 'btn-primary');
-            }
-        }
-
-        function cancelProfileEdit() {
-            document.getElementById('profile-form').reset();
-            toggleProfileEdit();
-        }
-    </script>
+    // Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeEdit();
+    });
+</script>
 </body>
 </html>

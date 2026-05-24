@@ -5,7 +5,7 @@
                              https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
          version="6.0">
 
-    <display-name>FreshBasket - Fruit Shop</display-name>
+    <display-name>Sena Shop - Fruit Store</display-name>
 
     <!-- Session timeout: 30 minutes -->
     <session-config>
@@ -14,6 +14,7 @@
 
     <!-- Welcome file -->
     <welcome-file-list>
+        <welcome-file>home.html</welcome-file>
         <welcome-file>index.html</welcome-file>
     </welcome-file-list>
 
