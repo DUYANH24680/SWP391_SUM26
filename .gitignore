@@ -1,1 +1,20 @@
-/dist/
+# NetBeans
+nbproject/private/
+nbproject/ant-deploy.xml
+nbbuild/
+dist/
+
+# Build output
+build/
+*.html
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE khác
+.idea/
+*.iml
+.vscode/
+
+.cursor/
