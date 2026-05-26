@@ -22,26 +22,23 @@ public class ProfileServlet extends HttpServlet {
             throws ServletException, IOException {
         HttpSession session = req.getSession(true);
         
-        // Auto-login if no user session exists (bypassing login page)
-        if (session.getAttribute("user") == null) {
-            CustomerDAO customerDAO = new CustomerDAO();
-            try {
-                Customer defaultCust = customerDAO.findById(1);
-                if (defaultCust != null) {
-                    session.setAttribute("user", defaultCust);
-                    session.setAttribute("userId", defaultCust.getId());
-                    session.setAttribute("role", defaultCust.getRoleName());
-                }
-            } finally {
-                customerDAO.close();
-            }
-        }
-
-        Customer user = (Customer) session.getAttribute("user");
-        if (user == null) {
-            resp.getWriter().println("No customer found in the database. Please add sample data to Customers table first.");
+        Customer sessionUser = (Customer) session.getAttribute("user");
+        if (sessionUser == null) {
+            resp.sendRedirect(req.getContextPath() + "/login.jsp");
             return;
         }
+
+        // Always fetch the freshest user data from the DB for View Profile
+        Customer freshUser = userService.getCustomerById(sessionUser.getId());
+        if (freshUser == null) {
+            // User might have been deleted or banned
+            session.invalidate();
+            resp.sendRedirect(req.getContextPath() + "/login.jsp");
+            return;
+        }
+
+        // Update the session with fresh data
+        session.setAttribute("user", freshUser);
 
         req.getRequestDispatcher("/profile.jsp").forward(req, resp);
     }
@@ -53,7 +50,7 @@ public class ProfileServlet extends HttpServlet {
         Customer user = (Customer) session.getAttribute("user");
 
         if (user == null) {
-            resp.sendRedirect(req.getContextPath() + "/profile");
+            resp.sendRedirect(req.getContextPath() + "/login.jsp");
             return;
         }
 
