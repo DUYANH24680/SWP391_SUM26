@@ -3,12 +3,12 @@ package dao;
 import Utils.DbContext;
 import java.sql.*;
 
-public class PasswordResetTokenDAO extends DbContext {
+public class PasswordResetTokenDAO {
 
     public boolean createToken(String email, String token, Timestamp expiryTime) {
-        // First invalidate any existing tokens for this email
         String deleteSql = "UPDATE PasswordResetTokens SET is_used = 1 WHERE email = ?";
-        try (PreparedStatement ps = connection.prepareStatement(deleteSql)) {
+        try (Connection conn = DbContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(deleteSql)) {
             ps.setString(1, email);
             ps.executeUpdate();
         } catch (SQLException e) {
@@ -16,7 +16,8 @@ public class PasswordResetTokenDAO extends DbContext {
         }
 
         String sql = "INSERT INTO PasswordResetTokens (email, token, expiry_time, is_used) VALUES (?, ?, ?, 0)";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection conn = DbContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, email);
             ps.setString(2, token);
             ps.setTimestamp(3, expiryTime);
@@ -28,7 +29,8 @@ public class PasswordResetTokenDAO extends DbContext {
 
     public boolean validateToken(String email, String token) {
         String sql = "SELECT COUNT(1) FROM PasswordResetTokens WHERE email = ? AND token = ? AND expiry_time > GETDATE() AND is_used = 0";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection conn = DbContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, email);
             ps.setString(2, token);
             try (ResultSet rs = ps.executeQuery()) {
@@ -44,7 +46,8 @@ public class PasswordResetTokenDAO extends DbContext {
 
     public boolean markTokenAsUsed(String token) {
         String sql = "UPDATE PasswordResetTokens SET is_used = 1 WHERE token = ?";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection conn = DbContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, token);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {

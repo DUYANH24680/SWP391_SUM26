@@ -1,0 +1,42 @@
+/* ============================================
+   CSS CUSTOM PROPERTIES — Sena Shop
+   ============================================ */
+
+:root {
+    /* Brand colors */
+    --green:        #4caf50;
+    --green-dark:   #388e3c;
+    --green-light:  #e8f5e9;
+    --green-mid:    #c8e6c9;
+    --green-deep:   #2e7d32;
+
+    /* Background */
+    --bg:           #f0f4f1;
+    --white:        #ffffff;
+
+    /* Grays */
+    --gray-50:      #f8fafb;
+    --gray-100:     #eef1ee;
+    --gray-200:     #dde5dd;
+    --gray-400:     #9aaa9a;
+    --gray-600:     #5a6a5a;
+    --gray-800:     #2d3d2d;
+
+    /* Semantic */
+    --danger:       #ef4444;
+    --orange:       #ff9800;
+    --orange-light: #fff3e0;
+    --blue:         #1976d2;
+    --purple:       #7b1fa2;
+    --yellow:       #ffc107;
+
+    /* Shadows */
+    --shadow-sm:    0 1px 3px rgba(0,0,0,.08);
+    --shadow:       0 4px 12px rgba(0,0,0,.08);
+    --shadow-md:    0 8px 24px rgba(0,0,0,.10);
+
+    /* Radius */
+    --radius:       14px;
+    --radius-sm:   8px;
+    --radius-xs:   6px;
+}

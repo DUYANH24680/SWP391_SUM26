@@ -6,21 +6,14 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * DeliveryAddressDAO - Handles all DB operations for DeliveryAddresses table.
- */
-public class DeliveryAddressDAO extends DbContext {
+public class DeliveryAddressDAO {
 
-    /**
-     * Get all addresses for a customer.
-     * @param customerId
-     * @return 
-     */
     public List<DeliveryAddress> findByCustomerId(int customerId) {
         List<DeliveryAddress> list = new ArrayList<>();
         String sql = "SELECT id, customer_id, recipient_name, recipient_phone, address, note, isDefault, created_at "
                    + "FROM DeliveryAddresses WHERE customer_id = ? ORDER BY isDefault DESC, created_at DESC";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection conn = DbContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, customerId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -33,16 +26,11 @@ public class DeliveryAddressDAO extends DbContext {
         return list;
     }
 
-    /**
-     * Find a single address by id and customer id (ownership check).
-     * @param id
-     * @param customerId
-     * @return 
-     */
     public DeliveryAddress findByIdAndCustomer(int id, int customerId) {
         String sql = "SELECT id, customer_id, recipient_name, recipient_phone, address, note, isDefault, created_at "
                    + "FROM DeliveryAddresses WHERE id = ? AND customer_id = ?";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection conn = DbContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
             ps.setInt(2, customerId);
             try (ResultSet rs = ps.executeQuery()) {
@@ -54,15 +42,11 @@ public class DeliveryAddressDAO extends DbContext {
         return null;
     }
 
-    /**
-     * Insert a new address.
-     * @param da
-     * @return 
-     */
     public boolean insert(DeliveryAddress da) {
         String sql = "INSERT INTO DeliveryAddresses (customer_id, recipient_name, recipient_phone, address, note, isDefault) "
                    + "VALUES (?, ?, ?, ?, ?, ?)";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection conn = DbContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, da.getCustomerId());
             ps.setString(2, da.getRecipientName());
             ps.setString(3, da.getRecipientPhone());
@@ -75,15 +59,11 @@ public class DeliveryAddressDAO extends DbContext {
         }
     }
 
-    /**
-     * Update an existing address.
-     * @param da
-     * @return 
-     */
     public boolean update(DeliveryAddress da) {
         String sql = "UPDATE DeliveryAddresses SET recipient_name = ?, recipient_phone = ?, address = ?, note = ?, isDefault = ? "
                    + "WHERE id = ? AND customer_id = ?";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection conn = DbContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, da.getRecipientName());
             ps.setString(2, da.getRecipientPhone());
             ps.setString(3, da.getAddress());
@@ -97,15 +77,10 @@ public class DeliveryAddressDAO extends DbContext {
         }
     }
 
-    /**
-     * Delete an address.
-     * @param id
-     * @param customerId
-     * @return 
-     */
     public boolean delete(int id, int customerId) {
         String sql = "DELETE FROM DeliveryAddresses WHERE id = ? AND customer_id = ?";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection conn = DbContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
             ps.setInt(2, customerId);
             return ps.executeUpdate() > 0;
@@ -114,37 +89,36 @@ public class DeliveryAddressDAO extends DbContext {
         }
     }
 
-    /**
-     * Unset all default addresses for a customer, then set the given one as default.
-     * @param id
-     * @param customerId
-     * @return 
-     */
     public boolean setDefault(int id, int customerId) {
-        try {
-            connection.setAutoCommit(false);
-            String clearSql = "UPDATE DeliveryAddresses SET isDefault = 0 WHERE customer_id = ?";
-            try (PreparedStatement ps = connection.prepareStatement(clearSql)) {
-                ps.setInt(1, customerId);
-                ps.executeUpdate();
-            }
-            String setSql = "UPDATE DeliveryAddresses SET isDefault = 1 WHERE id = ? AND customer_id = ?";
-            try (PreparedStatement ps = connection.prepareStatement(setSql)) {
-                ps.setInt(1, id);
-                ps.setInt(2, customerId);
-                int rows = ps.executeUpdate();
-                connection.commit();
+        String clearSql = "UPDATE DeliveryAddresses SET isDefault = 0 WHERE customer_id = ?";
+        String setSql = "UPDATE DeliveryAddresses SET isDefault = 1 WHERE id = ? AND customer_id = ?";
+
+        try (Connection conn = DbContext.getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                try (PreparedStatement ps = conn.prepareStatement(clearSql)) {
+                    ps.setInt(1, customerId);
+                    ps.executeUpdate();
+                }
+                int rows;
+                try (PreparedStatement ps = conn.prepareStatement(setSql)) {
+                    ps.setInt(1, id);
+                    ps.setInt(2, customerId);
+                    rows = ps.executeUpdate();
+                }
+                conn.commit();
                 return rows > 0;
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
+            } finally {
+                conn.setAutoCommit(true);
             }
         } catch (SQLException e) {
-            try { connection.rollback(); } catch (SQLException ex) { /* ignore */ }
             throw new RuntimeException("DeliveryAddressDAO.setDefault error: " + e.getMessage(), e);
-        } finally {
-            try { connection.setAutoCommit(true); } catch (SQLException e) { /* ignore */ }
         }
     }
 
-    // ---- helper ----
     private DeliveryAddress mapRow(ResultSet rs) throws SQLException {
         DeliveryAddress da = new DeliveryAddress();
         da.setId(rs.getInt("id"));

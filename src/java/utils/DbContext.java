@@ -1,72 +1,50 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package Utils;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.SQLException;
 
-/**
- *
- * @author DELL
- */
 public class DbContext {
-    
-    protected Connection connection;
-    public DbContext() {
-        try {
-            // Load SQL Server JDBC Driver
-            Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
-            
-            String user = "sa";
-            String pass = "123";
-            String url = "jdbc:sqlserver://localhost\\SQLEXPRESS;"
-           + "databaseName=FruitShopSystem;"
-           + "encrypt=true;"
-           + "trustServerCertificate=true";
 
-            connection = DriverManager.getConnection(url, user, pass);
-            System.out.println("Database connection established successfully.");
-        } catch (ClassNotFoundException ex) {
+    private static final String USER = "sa";
+    private static final String PASS = "123";
+    private static final String URL = "jdbc:sqlserver://localhost:1433;"
+            + "databaseName=FruitShopSystem;"
+            + "encrypt=false;"
+            + "trustServerCertificate=true;"
+            + "loginTimeout=30";
+
+    static {
+        try {
+            Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
+        } catch (ClassNotFoundException e) {
             throw new RuntimeException(
-                "SQL Server JDBC Driver not found! Please add mssql-jdbc.jar to your classpath.", ex);
-        } catch (Exception ex) {
-            throw new RuntimeException(
-                "DB Connection FAILED! " + ex.getMessage()
-                + " | Check: 1) SQL Server is running, "
-                + "2) Database 'FruitShopSystem' exists, "
-                + "3) sa password='123' is correct, "
-                + "4) SQL Server is listening on port 1433", ex);
+                "SQL Server JDBC Driver not found! Please add mssql-jdbc.jar to your classpath.", e);
         }
     }
 
-    public boolean isConnected() {
-        return connection != null;
+    public static Connection getConnection() throws SQLException {
+        return DriverManager.getConnection(URL, USER, PASS);
     }
-    
-    public void close() {
-        try {
-            if (connection != null && !connection.isClosed()) {
-                connection.close();
+
+    public static void close(Connection conn) {
+        if (conn != null) {
+            try {
+                if (!conn.isClosed()) {
+                    conn.close();
+                }
+            } catch (SQLException ignored) {
             }
-        } catch (Exception e) {
-            // silently ignore
         }
     }
 
     public static void main(String[] args) {
-        DbContext dbContext = new DbContext();
-        try{
-            if (dbContext.isConnected()) {
-            System.out.println("Successfully connected");
-        } else {
-            System.out.println("Failed to connected");
-        }
-        }
-        catch(Exception ex)
-        {
-            System.out.println(ex);
+        try (Connection conn = getConnection()) {
+            System.out.println(conn.isValid(5)
+                ? "Database connection established successfully."
+                : "Failed to connect.");
+        } catch (SQLException e) {
+            System.out.println("DB Connection FAILED: " + e.getMessage());
         }
     }
 }

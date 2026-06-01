@@ -1,0 +1,32 @@
+/* ============================================
+   PROFILE SHARED — Profile page specific styles
+   ============================================ */
+
+/* Security */
+.security-desc {
+    font-size: 0.85rem;
+    color: var(--gray-600);
+    line-height: 1.6;
+    margin-bottom: 1.25rem;
+}
+
+.security-join {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.8rem;
+    color: var(--gray-600);
+    padding-top: 1.25rem;
+    margin-top: 1.25rem;
+    border-top: 1px solid var(--gray-100);
+}
+
+.security-join i { color: #e53935; }
+
+/* Responsive */
+@media (max-width: 768px) {
+    .field-grid, .form-grid { grid-template-columns: 1fr; }
+    .field-box.full, .form-group.full { grid-column: span 1; }
+    .hero-card { flex-direction: column; text-align: center; }
+    .hero-actions { justify-content: center; }
+}

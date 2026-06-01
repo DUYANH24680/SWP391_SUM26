@@ -1,0 +1,31 @@
+/* ============================================
+   BASE RESET & GLOBAL STYLES — Sena Shop
+   ============================================ */
+
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    min-height: 100vh;
+    font-family: 'Inter', sans-serif;
+    color: var(--gray-800);
+    background: var(--bg);
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+}
+
+a {
+    color: var(--green-dark);
+    text-decoration: none;
+    transition: color 0.15s;
+}
+
+a:hover { color: var(--green); }
+
+img { display: block; max-width: 100%; }

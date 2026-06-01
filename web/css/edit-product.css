@@ -1,0 +1,75 @@
+/* ============================================
+   EDIT PRODUCT — Page-specific styles
+   ============================================ */
+
+.current-image-wrap {
+    border: 1.5px solid var(--gray-200);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    background: var(--gray-50);
+}
+
+.current-image {
+    width: 100%;
+    height: 140px;
+    object-fit: cover;
+    display: block;
+}
+
+.current-image-placeholder {
+    height: 140px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    color: var(--gray-400);
+    font-size: 0.8rem;
+}
+
+.current-image-placeholder i {
+    font-size: 2rem;
+}
+
+.current-image-label {
+    background: var(--green-light);
+    color: var(--green-dark);
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.3rem;
+    text-align: center;
+}
+
+.current-image-label i {
+    margin-right: 0.25rem;
+}
+
+.remove-preview {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--danger);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+}
+
+#imagePreview {
+    position: relative;
+    margin-top: 0.75rem;
+}
+
+#imagePreview img {
+    width: 100%;
+    height: 140px;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--gray-200);
+}

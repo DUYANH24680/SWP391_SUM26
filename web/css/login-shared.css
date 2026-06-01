@@ -1,0 +1,31 @@
+/* ============================================
+   LOGIN SHARED — Minimal shared base for login
+   (reset only, no layout)
+   ============================================ */
+
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    height: 100%;
+    font-family: 'Inter', sans-serif;
+}
+
+body {
+    display: flex;
+    min-height: 100vh;
+}
+
+a {
+    color: var(--green-dark);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin: 15px 0;
+    transition: color 0.3s;
+}
+
+a:hover { color: var(--green); }
