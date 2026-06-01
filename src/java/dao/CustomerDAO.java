@@ -17,16 +17,34 @@ public class CustomerDAO extends Utils.DbContext {
                    + "FROM Accounts a "
                    + "JOIN Roles r ON a.role_id = r.id "
                    + "WHERE (a.username = ? OR a.email = ?) AND a.status = 1";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        try {
+            conn = createConnection();
+            ps = conn.prepareStatement(sql);
             ps.setString(1, usernameOrEmail);
             ps.setString(2, usernameOrEmail);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return mapRow(rs);
-                }
+            rs = ps.executeQuery();
+            if (rs.next()) {
+                return mapRow(rs);
             }
         } catch (SQLException e) {
             throw new RuntimeException("CustomerDAO.findByUsernameOrEmail error: " + e.getMessage(), e);
+        } finally {
+            try {
+                if (rs != null) rs.close();
+            } catch (SQLException ignored) {
+            }
+            try {
+                if (ps != null) ps.close();
+            } catch (SQLException ignored) {
+            }
+            try {
+                if (conn != null && !conn.isClosed()) conn.close();
+            } catch (SQLException ignored) {
+            }
         }
         return null;
     }

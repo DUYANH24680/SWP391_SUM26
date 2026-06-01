@@ -2,17 +2,10 @@
 <%@ page import="model.Customer" %>
 <%
     Customer user = (Customer) session.getAttribute("user");
-    String role   = (String) session.getAttribute("role");
-
-    if (user == null) {
-        response.sendRedirect(request.getContextPath() + "/profile");
-        return;
+    String roleDisplay = user.getRoleName();
+    if (roleDisplay == null) {
+        roleDisplay = "Thành viên";
     }
-
-    String roleDisplay = "Member";
-    if ("admin".equalsIgnoreCase(role))         roleDisplay = "Quản Trị Viên";
-    else if ("seller".equalsIgnoreCase(role))   roleDisplay = "Nhân Viên Bán Hàng";
-    else if ("delivery".equalsIgnoreCase(role)) roleDisplay = "Nhân Viên Giao Hàng";
 
     String fullname    = user.getFullname();
     String username    = user.getUsername();
@@ -20,7 +13,7 @@
     String phone       = user.getPhone();
     String address     = user.getAddress();
     String genderStr   = "Chưa cập nhật";
-    if (user.getGender() != null) genderStr = user.getGender() ? "Nam" : "Nu";
+    if (user.getGender() != null) genderStr = user.getGender() ? "Nam" : "Nữ";
 
     String avatarUrl = user.getAvatar();
     String createdAtStr = "";
@@ -756,23 +749,23 @@
                 <div class="card-body">
                     <div class="field-grid">
                         <div class="field-box">
-                            <div class="field-lbl"><i class="fa-regular fa-user"></i> Ho va Ten</div>
+                            <div class="field-lbl"><i class="fa-regular fa-user"></i> Họ và Tên</div>
                             <div class="field-val"><%= fullname %></div>
                         </div>
                         <div class="field-box">
-                            <div class="field-lbl"><i class="fa-solid fa-venus-mars"></i> Gioi Tinh</div>
+                            <div class="field-lbl"><i class="fa-solid fa-venus-mars"></i> Giới Tính</div>
                             <div class="field-val"><%= genderStr %></div>
                         </div>
                         <div class="field-box">
-                            <div class="field-lbl"><i class="fa-regular fa-envelope"></i> Dia Chi Email</div>
+                            <div class="field-lbl"><i class="fa-regular fa-envelope"></i> Địa Chỉ Email</div>
                             <div class="field-val"><%= email %></div>
                         </div>
                         <div class="field-box">
-                            <div class="field-lbl"><i class="fa-solid fa-phone"></i> So Dien Thoai</div>
+                            <div class="field-lbl"><i class="fa-solid fa-phone"></i> Số Điện Thoại</div>
                             <div class="field-val"><%= phone %></div>
                         </div>
                         <div class="field-box full">
-                            <div class="field-lbl"><i class="fa-solid fa-location-dot"></i> Dia Chi Mac Dinh</div>
+                            <div class="field-lbl"><i class="fa-solid fa-location-dot"></i> Địa Chỉ Mặc Định</div>
                             <div class="field-val"><i class="fa-solid fa-map-pin"></i> <%= address %></div>
                         </div>
                     </div>
@@ -859,7 +852,7 @@
             <input type="hidden" name="action" value="updateProfile">
             <div class="form-grid">
                 <div class="form-group">
-                    <label class="form-label">Ho va ten</label>
+                    <label class="form-label">Họ và tên</label>
                     <input type="text" name="fullname" class="form-control" value="<%= fullname %>" required>
                 </div>
                 <div class="form-group">
@@ -870,20 +863,20 @@
                     <label class="form-label">Số điện thoại</label>
                     <input type="text" name="phone" class="form-control"
                            value="<%= "Chưa cập nhật".equals(phone) ? "" : phone %>"
-                           placeholder="Nhap so dien thoai">
+                           placeholder="Nhập số điện thoại">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Giới tính</label>
                     <select name="gender" class="form-control">
-                        <option value="" <%= user.getGender() == null ? "selected" : "" %>>Chua chon</option>
+                        <option value="" <%= user.getGender() == null ? "selected" : "" %>>Chưa chọn</option>
                         <option value="1" <%= (user.getGender() != null && user.getGender())  ? "selected" : "" %>>Nam</option>
                         <option value="0" <%= (user.getGender() != null && !user.getGender()) ? "selected" : "" %>>Nữ</option>
                     </select>
                 </div>
                 <div class="form-group full">
-                    <label class="form-label">Dia chi</label>
+                    <label class="form-label">Địa chỉ</label>
                     <textarea name="address" class="form-control"
-                              placeholder="Nhap dia chi"><%= "Chưa cập nhật".equals(address) ? "" : address %></textarea>
+                              placeholder="Nhập địa chỉ"><%= "Chưa cập nhật".equals(address) ? "" : address %></textarea>
                 </div>
                 <div class="form-group full">
                     <label class="form-label">Avatar URL</label>
