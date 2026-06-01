@@ -11,8 +11,8 @@ import jakarta.mail.internet.*;
 public class EmailService {
     
     // Gmail configuration
-    private static final String EMAIL_FROM = "your-email@gmail.com";
-    private static final String EMAIL_PASSWORD = "your-app-password"; // Use Gmail App Password
+    private static final String EMAIL_FROM = "doanhche180633@fpt.edu.vn";
+    private static final String EMAIL_PASSWORD = "fjlpswpvzfpgfouk"; // Use Gmail App Password
     private static final String SMTP_HOST = "smtp.gmail.com";
     private static final String SMTP_PORT = "587";
     
@@ -39,7 +39,7 @@ public class EmailService {
             
             // Create message
             Message message = new MimeMessage(session);
-            message.setFrom(new InternetAddress(EMAIL_FROM, "SenaFruit Support"));
+            message.setFrom(new InternetAddress(EMAIL_FROM, "SenaFruit"));
             message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(recipientEmail));
             message.setSubject("Đặt lại mật khẩu tài khoản SenaFruit");
             
