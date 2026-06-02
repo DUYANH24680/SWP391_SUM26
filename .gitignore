@@ -17,4 +17,7 @@ Thumbs.db
 *.iml
 .vscode/
 
-.cursor/
+.cursor/build/ 
+nbproject/private/ 
+"src/java/Utils/DbContext.java" 
+"build/web/WEB-INF/classes/Utils/DbContext.class" 

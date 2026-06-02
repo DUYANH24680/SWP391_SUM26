@@ -5,16 +5,16 @@
 ## 🟢 GIAI ĐOẠN 1: IMPLEMENTATION PLAN (KẾ HOẠCH TRIỂN KHAI)
 
 ### 1. Phân tích Yêu cầu (Requirements)
-- **Tên tính năng:** Xem và Chỉnh sửa Hồ sơ Cá nhân (View & Edit Profile), Đổi mật khẩu.
-- **Mô tả ngắn gọn:** Cho phép người dùng (đã đăng nhập) xem thông tin cá nhân của họ, thay đổi thông tin (họ tên, email, sđt, địa chỉ, giới tính, avatar) và cập nhật mật khẩu an toàn.
+- **Tên tính năng:** Xem và Chỉnh sửa Hồ sơ Cá nhân (View & Edit Profile), Đổi mật khẩu, Tải lên Ảnh đại diện.
+- **Mô tả ngắn gọn:** Cho phép người dùng (đã đăng nhập) xem thông tin cá nhân của họ, thay đổi thông tin (họ tên, email, sđt, địa chỉ, giới tính, tải lên và xem trước avatar từ local hoặc URL) và cập nhật mật khẩu an toàn.
 - **Các trường dữ liệu liên quan:** `fullname`, `email`, `phone`, `address`, `gender`, `avatar`, `password_hash`.
 
 ### 2. Thiết kế Luồng Dữ Liệu & Phân rã Kiến trúc (Architecture Mapping)
 
 | Lớp (Layer) | Tên File / Class | Nhiệm vụ cụ thể trong Task này |
 | :--- | :--- | :--- |
-| **1. VIEW** | `profile.jsp` | Hiển thị giao diện người dùng, bao gồm thông tin hiển thị, Modal form chỉnh sửa thông tin, form đổi mật khẩu. |
-| **2. CONTROLLER** | `ProfileServlet.java` | Lắng nghe `/profile`. Xử lý GET (trả về View) và POST (nhận action `updateProfile` hoặc `changePassword`). Chuyển tiếp Request sang Service và trả về thông báo (Flash Message). |
+| **1. VIEW** | `profile.jsp` | Hiển thị giao diện người dùng, bao gồm thông tin hiển thị, Modal form chỉnh sửa thông tin (có tích hợp upload avatar từ local và preview), form đổi mật khẩu. |
+| **2. CONTROLLER** | `ProfileServlet.java` | Lắng nghe `/profile`. Xử lý GET (trả về View) và POST (nhận action `updateProfile` hoặc `changePassword`). Hỗ trợ `@MultipartConfig` để xử lý file upload, chuyển tiếp Request sang Service. |
 | **3. SERVICE** | `UserService.java` | Xử lý logic validate đầu vào (kiểm tra định dạng email, sđt, độ dài mật khẩu). Hash mật khẩu (SHA-256). Gọi đến DAO để thực thi. |
 | **4. DAO / REPOSITORY**| `CustomerDAO.java` | Truy vấn và Update dữ liệu DB bảng `Accounts` bằng SQL thuần. Gồm các hàm: `findById`, `updateProfile`, `updatePassword`, `isEmailTaken`. |
 | **5. MODEL / ENTITY** | `Customer.java` | Ánh xạ các trường dữ liệu của người dùng trong hệ thống (của bảng `Accounts`). |
@@ -23,8 +23,8 @@
 - [x] **Bước 1:** Xác nhận Model `Customer` đã có đủ các trường, cấu trúc Database đã chuẩn.
 - [x] **Bước 2:** Viết các hàm `findById`, `updateProfile`, `updatePassword`, `isEmailTaken` ở `CustomerDAO.java`.
 - [x] **Bước 3:** Viết hàm xử lý nghiệp vụ `updateProfile` và `changePassword` (bao gồm logic mã hóa mật khẩu) trong `UserService.java`.
-- [x] **Bước 4:** Xử lý điều hướng tại `ProfileServlet.java`, hứng Session và cập nhật Flash messages.
-- [x] **Bước 5:** Xây dựng file `profile.jsp` hiển thị và nhận Input người dùng.
+- [x] **Bước 4:** Xử lý điều hướng tại `ProfileServlet.java`, hứng Session, cấu hình `@MultipartConfig` và xử lý upload file ảnh vào thư mục `uploads/`.
+- [x] **Bước 5:** Xây dựng file `profile.jsp` hiển thị và nhận Input người dùng, thêm javascript để preview ảnh local.
 
 ---
 

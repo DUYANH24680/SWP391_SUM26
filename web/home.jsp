@@ -2,6 +2,16 @@
 <%@ page import="model.Customer" %>
 <%
     Customer user = (Customer) session.getAttribute("user");
+    String avatarUrl = "";
+    if (user != null) {
+        avatarUrl = user.getAvatar();
+        if (avatarUrl == null || avatarUrl.trim().isEmpty()) {
+            String fullname = user.getFullname() != null ? user.getFullname() : user.getUsername();
+            avatarUrl = "https://ui-avatars.com/api/?name="
+                      + java.net.URLEncoder.encode(fullname, "UTF-8")
+                      + "&background=4caf50&color=fff&size=80&bold=true&rounded=true";
+        }
+    }
 %>
 <!DOCTYPE html>
 <html lang="vi">
@@ -1419,7 +1429,7 @@
             <!-- Avatar with dropdown -->
             <div class="avatar-wrap">
                 <img class="nav-avatar"
-                     src="https://ui-avatars.com/api/?name=<%= user.getFullname() != null ? user.getFullname().replace(" ", "+") : "User" %>&background=4caf50&color=fff&size=80&bold=true"
+                     src="<%= avatarUrl %>"
                      alt="avatar">
                 <div class="avatar-dropdown">
                     <div class="avatar-dropdown-inner">

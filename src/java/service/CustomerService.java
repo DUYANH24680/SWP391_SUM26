@@ -29,7 +29,7 @@ public class CustomerService {
         Customer customer = dao.findByUsernameOrEmail(username);
         
         // Kiểm tra (Logic)
-        if (customer != null && customer.getPasswordHash().equals(password)) {
+        if (customer != null && Utils.PasswordHashUtil.checkPassword(password, customer.getPasswordHash())) {
             return customer;
         }
         

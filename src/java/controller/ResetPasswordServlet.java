@@ -109,9 +109,8 @@ public class ResetPasswordServlet extends HttpServlet {
             return;
         }
 
-        // Update password (store plain text as per project pattern)
-        // TODO: In production, use proper password hashing (BCrypt)
-        boolean passwordUpdated = customerDAO.updatePassword(customer.getId(), newPassword);
+        // Update password (hash it before storing)
+        boolean passwordUpdated = customerDAO.updatePassword(customer.getId(), Utils.PasswordHashUtil.hashPassword(newPassword));
         if (!passwordUpdated) {
             request.setAttribute("error", "Lỗi hệ thống, vui lòng thử lại sau");
             request.setAttribute("token", token);
