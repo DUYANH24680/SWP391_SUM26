@@ -12,7 +12,16 @@ import service.UserService;
 
 import java.io.IOException;
 
+import jakarta.servlet.annotation.MultipartConfig;
+import jakarta.servlet.http.Part;
+import java.io.File;
+import java.nio.file.Paths;
+import java.util.UUID;
+
 @WebServlet("/profile")
+@MultipartConfig(fileSizeThreshold = 1024 * 1024,
+  maxFileSize = 1024 * 1024 * 5, 
+  maxRequestSize = 1024 * 1024 * 5 * 5)
 public class ProfileServlet extends HttpServlet {
 
     private final UserService userService = new UserService();
@@ -83,6 +92,50 @@ public class ProfileServlet extends HttpServlet {
         Boolean gender = null;
         if (genderStr != null && !genderStr.isEmpty()) {
             gender = "1".equals(genderStr);
+        }
+
+        try {
+            Part filePart = req.getPart("avatarFile");
+            if (filePart != null && filePart.getSize() > 0) {
+                // Check size: max 2MB
+                if (filePart.getSize() > 1024 * 1024 * 2) {
+                    session.setAttribute("error", "Kích thước ảnh đại diện không được vượt quá 2MB.");
+                    return;
+                }
+                
+                // Check MIME type
+                String contentType = filePart.getContentType();
+                if (contentType == null || !contentType.startsWith("image/")) {
+                    session.setAttribute("error", "Định dạng file không hợp lệ. Chỉ chấp nhận các file ảnh.");
+                    return;
+                }
+
+                String fileName = Paths.get(filePart.getSubmittedFileName()).getFileName().toString();
+                // Get extension
+                String ext = "";
+                int i = fileName.lastIndexOf('.');
+                if (i > 0) {
+                    ext = fileName.substring(i).toLowerCase();
+                }
+                
+                if (!ext.equals(".jpg") && !ext.equals(".jpeg") && !ext.equals(".png") && !ext.equals(".gif") && !ext.equals(".webp")) {
+                    session.setAttribute("error", "Định dạng ảnh không hỗ trợ. Chỉ chấp nhận JPG, JPEG, PNG, GIF, WEBP.");
+                    return;
+                }
+
+                String newFileName = UUID.randomUUID().toString() + ext;
+                
+                String uploadPath = req.getServletContext().getRealPath("") + File.separator + "uploads";
+                File uploadDir = new File(uploadPath);
+                if (!uploadDir.exists()) uploadDir.mkdir();
+                
+                filePart.write(uploadPath + File.separator + newFileName);
+                avatar = "uploads/" + newFileName; // Set avatar to the new uploaded local path
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            session.setAttribute("error", "Đã xảy ra lỗi trong quá trình tải ảnh lên.");
+            return;
         }
 
         String error = userService.updateProfile(user.getId(), fullname, email, phone, address, gender, avatar);

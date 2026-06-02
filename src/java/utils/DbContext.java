@@ -16,13 +16,13 @@ public class DbContext {
     
     protected Connection connection;
     private static final String DB_URL = "jdbc:sqlserver://localhost:1433;"
-            + "databaseName=FruitShopSystem;"
+            + "databaseName=SENAFRUIT;"
             + "encrypt=false;"
             + "trustServerCertificate=true;"
             + "loginTimeout=30;"
             + "socketTimeout=60;";
     private static final String DB_USER = "sa";
-    private static final String DB_PASS = "123456";
+    private static final String DB_PASS = "1234567890";
 
     public DbContext() {
         try {

@@ -17,15 +17,45 @@ public class UserService {
         if (fullname == null || fullname.trim().isEmpty()) {
             return "Họ và tên không được để trống.";
         }
+        fullname = fullname.trim();
+        if (fullname.length() < 2 || fullname.length() > 50) {
+            return "Họ và tên phải từ 2 đến 50 ký tự.";
+        }
+        if (!fullname.matches("^[\\p{L}\\s]+$")) {
+            return "Họ và tên chỉ được chứa chữ cái và khoảng trắng.";
+        }
+
         if (email == null || email.trim().isEmpty()) {
             return "Email không được để trống.";
         }
-        if (!email.contains("@")) {
+        email = email.trim();
+        if (email.length() > 100) {
+            return "Email không được vượt quá 100 ký tự.";
+        }
+        if (!email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")) {
             return "Email không đúng định dạng.";
         }
-        if (phone != null && !phone.isEmpty() && !phone.matches("^[0-9]{9,11}$")) {
-            return "Số điện thoại không hợp lệ (9-11 chữ số).";
+
+        if (phone == null || phone.trim().isEmpty()) {
+            return "Số điện thoại không được để trống.";
         }
+        phone = phone.trim();
+        if (!phone.matches("^0[35789][0-9]{8}$")) {
+            return "Số điện thoại không hợp lệ (phải bắt đầu bằng 03, 05, 07, 08, 09 và gồm 10 chữ số).";
+        }
+
+        if (gender == null) {
+            return "Vui lòng chọn giới tính.";
+        }
+
+        if (address == null || address.trim().isEmpty()) {
+            return "Địa chỉ không được để trống.";
+        }
+        address = address.trim();
+        if (address.length() > 200) {
+            return "Địa chỉ không được vượt quá 200 ký tự.";
+        }
+
         CustomerDAO dao = new CustomerDAO();
         try {
             if (dao.isEmailTaken(email.trim(), customerId)) {
@@ -55,10 +85,10 @@ public class UserService {
         try {
             Customer c = dao.findById(customerId);
             if (c == null) return "Không tìm thấy tài khoản.";
-            if (!currentPassword.equals(c.getPasswordHash())) {
+            if (!hashPassword(currentPassword).equals(c.getPasswordHash())) {
                 return "Mật khẩu hiện tại không đúng.";
             }
-            boolean ok = dao.updatePassword(customerId, newPassword);
+            boolean ok = dao.updatePassword(customerId, hashPassword(newPassword));
             return ok ? null : "Đổi mật khẩu thất bại. Vui lòng thử lại.";
         } finally {
             dao.close();

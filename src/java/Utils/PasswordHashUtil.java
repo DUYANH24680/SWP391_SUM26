@@ -15,22 +15,19 @@ package Utils;
  */
 public class PasswordHashUtil {
     
-    /**
-     * Hash password using BCrypt
-     * 
-     * NOTE: Requires org.mindrot:jbcrypt dependency
-     * 
-     * @param password Plain text password
-     * @return Hashed password (BCrypt hash)
-     */
     public static String hashPassword(String password) {
         try {
-            // Uncomment when BCrypt is added to project
-            // return org.mindrot.jbcrypt.BCrypt.hashpw(password, org.mindrot.jbcrypt.BCrypt.gensalt());
-            
-            // For now, return plain text (INSECURE - only for development)
-            System.out.println("WARNING: Using plain text passwords. Please implement proper hashing!");
-            return password;
+            java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");
+            byte[] hash = md.digest(password.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : hash) {
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) {
+                    hexString.append('0');
+                }
+                hexString.append(hex);
+            }
+            return hexString.toString();
         } catch (Exception e) {
             throw new RuntimeException("Error hashing password: " + e.getMessage(), e);
         }
@@ -39,19 +36,14 @@ public class PasswordHashUtil {
     /**
      * Verify password against hash
      * 
-     * NOTE: Requires org.mindrot:jbcrypt dependency
-     * 
      * @param plainPassword Plain text password to verify
      * @param hashedPassword Stored hash from database
      * @return true if password matches, false otherwise
      */
     public static boolean checkPassword(String plainPassword, String hashedPassword) {
         try {
-            // Uncomment when BCrypt is added to project
-            // return org.mindrot.jbcrypt.BCrypt.checkpw(plainPassword, hashedPassword);
-            
-            // For now, use direct comparison (INSECURE - only for development)
-            return plainPassword.equals(hashedPassword);
+            String hashedInput = hashPassword(plainPassword);
+            return hashedInput.equals(hashedPassword);
         } catch (Exception e) {
             System.err.println("Error verifying password: " + e.getMessage());
             return false;

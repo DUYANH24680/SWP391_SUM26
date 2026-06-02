@@ -654,11 +654,11 @@
         <a href="#">Trái Cây</a>
         <a href="#">Rau Củ</a>
         <a href="#">Nhập Khẩu</a>
-        <a href="#">Huu Co</a>
+        <a href="#">Hữu Cơ</a>
         <a href="#">Khuyến Mãi</a>
     </div>
     <div class="nav-right">
-        <button class="nav-icon-btn" title="Gio hang"><i class="fa-solid fa-basket-shopping"></i></button>
+        <button class="nav-icon-btn" title="Giỏ hàng"><i class="fa-solid fa-basket-shopping"></i></button>
         <img class="nav-avatar" src="<%= avatarUrl %>" alt="avatar">
     </div>
 </nav>
@@ -680,7 +680,7 @@
 
         <div class="sidebar-nav">
             <button class="active" id="nav-profile" onclick="showPanel('profile')">
-                <i class="fa-regular fa-user"></i> Ho So
+                <i class="fa-regular fa-user"></i> Hồ Sơ
             </button>
             <button id="nav-security" onclick="showPanel('security')">
                 <i class="fa-solid fa-shield-halved"></i> Bảo Mật
@@ -715,7 +715,7 @@
             <div class="hero-card">
                 <div class="hero-avatar-wrap">
                     <img class="hero-avatar" src="<%= avatarUrl %>" alt="Avatar">
-                    <div class="hero-avatar-edit" onclick="openEdit()" title="Chinh sua anh dai dien">
+                    <div class="hero-avatar-edit" onclick="openEdit()" title="Chỉnh sửa ảnh đại diện">
                         <i class="fa-solid fa-gear"></i>
                     </div>
                 </div>
@@ -728,12 +728,12 @@
                     <div class="hero-sub">
                         @<%= username %>
                         <% if (!createdAtStr.isEmpty()) { %>
-                          &nbsp;&bull;&nbsp; Tham gia tu <%= createdAtStr %>
+                          &nbsp;&bull;&nbsp; Tham gia từ <%= createdAtStr %>
                         <% } %>
                     </div>
                     <div class="hero-actions">
                         <button class="btn btn-green btn-sm" onclick="openEdit()">
-                            <i class="fa-solid fa-pencil"></i> Chinh Sua Ho So
+                            <i class="fa-solid fa-pencil"></i> Chỉnh Sửa Hồ Sơ
                         </button>
                     </div>
                 </div>
@@ -743,7 +743,7 @@
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">
-                        <i class="fa-regular fa-address-card"></i> Thong Tin Ca Nhan
+                        <i class="fa-regular fa-address-card"></i> Thông Tin Cá Nhân
                     </div>
                 </div>
                 <div class="card-body">
@@ -780,13 +780,13 @@
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">
-                        <i class="fa-solid fa-shield-halved"></i> Bảo Mật Tai Khoan
+                        <i class="fa-solid fa-shield-halved"></i> Bảo Mật Tài Khoản
                     </div>
                 </div>
                 <div class="card-body">
                     <p class="security-desc">
-                        Giu tai khoan cua ban luon an toan bang cach cap nhat mat khau dinh ky.
-                        Su dung mat khau manh voi it nhat 6 ky tu.
+                        Giữ tài khoản của bạn luôn an toàn bằng cách cập nhật mật khẩu định kỳ.
+                        Sử dụng mật khẩu mạnh với ít nhất 6 ký tự.
                     </p>
                     <form action="profile" method="POST">
                         <input type="hidden" name="action" value="changePassword">
@@ -795,18 +795,18 @@
                             <div class="form-group full">
                                 <label class="form-label">Mật khẩu hiện tại</label>
                                 <input type="password" name="currentPassword" class="form-control"
-                                       placeholder="Nhap mat khau hien tai" required>
+                                       placeholder="Nhập mật khẩu hiện tại" required>
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Mật khẩu mới</label>
                                 <input type="password" name="newPassword" class="form-control"
                                        placeholder="Mật khẩu mới" required>
-                                <span class="pw-hint">Toi thieu 6 ky tu</span>
+                                <span class="pw-hint">Tối thiểu 6 ký tự</span>
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Xác nhận mật khẩu mới</label>
                                 <input type="password" name="confirmPassword" class="form-control"
-                                       placeholder="Nhap lai mat khau moi" required>
+                                       placeholder="Nhập lại mật khẩu mới" required>
                             </div>
                         </div>
                         <div class="form-actions">
@@ -819,7 +819,7 @@
                     <% if (!createdAtStr.isEmpty()) { %>
                     <div class="security-join">
                         <i class="fa-regular fa-calendar"></i>
-                        Tham gia Sena Shop tu ngay <strong style="margin-left:0.2rem;"><%= createdAtStr %></strong>
+                        Tham gia Sena Shop từ ngày <strong style="margin-left:0.2rem;"><%= createdAtStr %></strong>
                     </div>
                     <% } %>
                 </div>
@@ -837,7 +837,7 @@
     <div class="footer-links">
         <a href="#">Privacy</a>
         <a href="#">Terms</a>
-        <a href="#">Lien He</a>
+        <a href="#">Liên Hệ</a>
     </div>
 </footer>
 
@@ -845,48 +845,56 @@
 <div class="modal-overlay" id="editModal">
     <div class="modal-box">
         <div class="modal-header">
-            <div class="modal-title"><i class="fa-regular fa-pen-to-square"></i> Chinh Sua Ho So</div>
+            <div class="modal-title"><i class="fa-regular fa-pen-to-square"></i> Chỉnh Sửa Hồ Sơ</div>
             <button class="modal-close" onclick="closeEdit()"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <form action="profile" method="POST">
+        <form action="profile" method="POST" enctype="multipart/form-data" onsubmit="return validateProfileForm(event)">
             <input type="hidden" name="action" value="updateProfile">
             <div class="form-grid">
                 <div class="form-group">
                     <label class="form-label">Họ và tên</label>
                     <input type="text" name="fullname" class="form-control" value="<%= fullname %>" required>
+                    <span class="error-msg" id="error-fullname" style="color: #ef4444; font-size: 0.75rem; margin-top: 0.2rem; display: none;"></span>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Email</label>
                     <input type="email" name="email" class="form-control" value="<%= email %>" required>
+                    <span class="error-msg" id="error-email" style="color: #ef4444; font-size: 0.75rem; margin-top: 0.2rem; display: none;"></span>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Số điện thoại</label>
                     <input type="text" name="phone" class="form-control"
                            value="<%= "Chưa cập nhật".equals(phone) ? "" : phone %>"
-                           placeholder="Nhập số điện thoại">
+                           placeholder="Nhập số điện thoại" required>
+                    <span class="error-msg" id="error-phone" style="color: #ef4444; font-size: 0.75rem; margin-top: 0.2rem; display: none;"></span>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Giới tính</label>
-                    <select name="gender" class="form-control">
+                    <select name="gender" class="form-control" required>
                         <option value="" <%= user.getGender() == null ? "selected" : "" %>>Chưa chọn</option>
                         <option value="1" <%= (user.getGender() != null && user.getGender())  ? "selected" : "" %>>Nam</option>
                         <option value="0" <%= (user.getGender() != null && !user.getGender()) ? "selected" : "" %>>Nữ</option>
                     </select>
+                    <span class="error-msg" id="error-gender" style="color: #ef4444; font-size: 0.75rem; margin-top: 0.2rem; display: none;"></span>
                 </div>
                 <div class="form-group full">
                     <label class="form-label">Địa chỉ</label>
                     <textarea name="address" class="form-control"
-                              placeholder="Nhập địa chỉ"><%= "Chưa cập nhật".equals(address) ? "" : address %></textarea>
+                               placeholder="Nhập địa chỉ" required><%= "Chưa cập nhật".equals(address) ? "" : address %></textarea>
+                    <span class="error-msg" id="error-address" style="color: #ef4444; font-size: 0.75rem; margin-top: 0.2rem; display: none;"></span>
                 </div>
                 <div class="form-group full">
-                    <label class="form-label">Avatar URL</label>
-                    <input type="text" name="avatar" class="form-control"
-                           value="<%= user.getAvatar() != null ? user.getAvatar() : "" %>"
-                           placeholder="https://...">
+                    <label class="form-label">Ảnh đại diện (Avatar)</label>
+                    <div style="display:flex; align-items:center; gap: 1rem;">
+                        <img id="avatarPreview" src="<%= avatarUrl %>" alt="Preview" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid var(--green);">
+                        <input type="file" name="avatarFile" id="avatarFile" accept="image/*" class="form-control" style="flex: 1;" onchange="previewAvatar(event)">
+                    </div>
+                    <input type="hidden" name="avatar" value="<%= user.getAvatar() != null ? user.getAvatar() : "" %>">
+                    <span class="error-msg" id="error-avatar" style="color: #ef4444; font-size: 0.75rem; margin-top: 0.2rem; display: none;"></span>
                 </div>
             </div>
             <div class="form-actions">
-                <button type="button" class="btn btn-outline" onclick="closeEdit()">Huy</button>
+                <button type="button" class="btn btn-outline" onclick="closeEdit()">Hủy</button>
                 <button type="submit" class="btn btn-green">
                     <i class="fa-solid fa-floppy-disk"></i> Lưu Thay Đổi
                 </button>
@@ -917,6 +925,20 @@
         localStorage.setItem('senaPanel', name);
     }
 
+    // Avatar preview function
+    function previewAvatar(event) {
+        var reader = new FileReader();
+        reader.onload = function(){
+            var output = document.getElementById('avatarPreview');
+            output.src = reader.result;
+        };
+        if(event.target.files[0]) {
+            reader.readAsDataURL(event.target.files[0]);
+        }
+    }
+    
+
+
     // Restore last panel
     window.addEventListener('DOMContentLoaded', function() {
         var urlParams = new URLSearchParams(window.location.search);
@@ -942,15 +964,119 @@
         document.body.style.overflow = '';
     }
 
-    // Close on overlay click
-    document.getElementById('editModal').addEventListener('click', function(e) {
-        if (e.target === this) closeEdit();
-    });
-
     // Escape key
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') closeEdit();
     });
+
+    // Profile validation functions
+    function validateProfileForm(event) {
+        var form = event.target;
+        var fullname = form.fullname.value.trim();
+        var email = form.email.value.trim();
+        var phone = form.phone.value.trim();
+        var address = form.address.value.trim();
+        var avatarFile = form.avatarFile.files[0];
+        
+        var isValid = true;
+
+        // Reset errors
+        document.querySelectorAll('.error-msg').forEach(function(el) {
+            el.textContent = '';
+            el.style.display = 'none';
+        });
+
+        // Fullname validation
+        if (fullname === "") {
+            showError('fullname', 'Họ và tên không được để trống.');
+            isValid = false;
+        } else if (fullname.length < 2 || fullname.length > 50) {
+            showError('fullname', 'Họ và tên phải từ 2 đến 50 ký tự.');
+            isValid = false;
+        } else {
+            // Regex matching letters and spaces (unicode compatible)
+            var nameRegex = /^[\p{L}\s]+$/u;
+            if (!nameRegex.test(fullname)) {
+                showError('fullname', 'Họ và tên chỉ được chứa chữ cái và khoảng trắng.');
+                isValid = false;
+            }
+        }
+
+        // Email validation
+        if (email === "") {
+            showError('email', 'Email không được để trống.');
+            isValid = false;
+        } else if (email.length > 100) {
+            showError('email', 'Email không được vượt quá 100 ký tự.');
+            isValid = false;
+        } else {
+            var emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+            if (!emailRegex.test(email)) {
+                showError('email', 'Email không đúng định dạng.');
+                isValid = false;
+            }
+        }
+
+        // Phone validation
+        if (phone === "") {
+            showError('phone', 'Số điện thoại không được để trống.');
+            isValid = false;
+        } else {
+            var phoneRegex = /^0[35789][0-9]{8}$/;
+            if (!phoneRegex.test(phone)) {
+                showError('phone', 'Số điện thoại không hợp lệ (phải bắt đầu bằng 03, 05, 07, 08, 09 và gồm 10 chữ số).');
+                isValid = false;
+            }
+        }
+
+        // Gender validation
+        var gender = form.gender.value;
+        if (gender === "") {
+            showError('gender', 'Vui lòng chọn giới tính.');
+            isValid = false;
+        }
+
+        // Address validation
+        if (address === "") {
+            showError('address', 'Địa chỉ không được để trống.');
+            isValid = false;
+        } else if (address.length > 200) {
+            showError('address', 'Địa chỉ không được vượt quá 200 ký tự.');
+            isValid = false;
+        }
+
+        // Avatar file validation
+        if (avatarFile) {
+            // Check size: 2MB limit
+            if (avatarFile.size > 2 * 1024 * 1024) {
+                showError('avatar', 'Kích thước ảnh đại diện không được vượt quá 2MB.');
+                isValid = false;
+            }
+            
+            // Check extension
+            var allowedExts = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+            var fileName = avatarFile.name;
+            var ext = fileName.substring(fileName.lastIndexOf('.') + 1).toLowerCase();
+            if (allowedExts.indexOf(ext) === -1) {
+                showError('avatar', 'Định dạng file không hỗ trợ. Chỉ chấp nhận JPG, JPEG, PNG, GIF, WEBP.');
+                isValid = false;
+            }
+        }
+
+        if (!isValid) {
+            event.preventDefault();
+            return false;
+        }
+        return true;
+    }
+
+    function showError(fieldName, message) {
+        var el = document.getElementById('error-' + fieldName);
+        if (el) {
+            el.textContent = message;
+            el.style.display = 'block';
+        }
+    }
 </script>
 </body>
 </html>
