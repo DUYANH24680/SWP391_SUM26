@@ -8,9 +8,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import model.Customer;
+import model.DeliveryAddress;
 import service.UserService;
 
 import java.io.IOException;
+import java.util.List;
 
 import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.http.Part;
@@ -45,6 +47,11 @@ public class ProfileServlet extends HttpServlet {
             resp.sendRedirect(req.getContextPath() + "/login.jsp");
             return;
         }
+
+        // Fetch addresses
+        dao.DeliveryAddressDAO addressDAO = new dao.DeliveryAddressDAO();
+        List<DeliveryAddress> addresses = addressDAO.findByCustomerId(sessionUser.getId());
+        req.setAttribute("addresses", addresses);
 
         // Update the session with fresh data
         session.setAttribute("user", freshUser);
