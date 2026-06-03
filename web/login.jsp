@@ -1,7 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
 <%
     if (session.getAttribute("user") != null) {
-        response.sendRedirect("home.html");
+        response.sendRedirect("home.jsp");
         return;
     }
 %>
@@ -312,6 +312,21 @@
             border: 1px solid #fecaca;
         }
 
+        .success-msg {
+            background: #f0fdf4;
+            color: var(--green-dark);
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            width: 100%;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid #bbf7d0;
+        }
+
         /* Mobile Responsive */
         @media (max-width: 768px) {
             .container {
@@ -340,7 +355,7 @@
 </head>
 <body>
 
-<div class="container" id="container">
+<div class="container<%= Boolean.TRUE.equals(request.getAttribute("showRegister")) ? " right-panel-active" : "" %>" id="container">
     
     <!-- Sign Up Form -->
     <div class="form-container sign-up-container">
@@ -348,22 +363,36 @@
             <h1 class="brand"><i class="fa-solid fa-apple-whole"></i> Sena Shop</h1>
             <h1>Tạo Tài Khoản</h1>
             <span>Nhập thông tin bên dưới để tham gia Sena Shop</span>
+
+            <% if (request.getAttribute("registerError") != null) { %>
+                <div class="error-msg">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    <%= request.getAttribute("registerError") %>
+                </div>
+            <% } %>
             
             <div class="input-group">
                 <i class="fa-regular fa-user"></i>
-                <input type="text" name="fullname" placeholder="Họ và tên" required />
+                <input type="text" name="fullname" placeholder="Họ và tên" required
+                       value="<%= request.getAttribute("fullname") != null ? request.getAttribute("fullname") : "" %>" />
             </div>
             <div class="input-group">
                 <i class="fa-regular fa-envelope"></i>
-                <input type="email" name="email" placeholder="Email" required />
-            </div>
-            <div class="input-group">
-                <i class="fa-solid fa-user"></i>
-                <input type="text" name="username" placeholder="Tên đăng nhập" required />
+                <input type="email" name="email" placeholder="Email" required
+                       value="<%= request.getAttribute("email") != null ? request.getAttribute("email") : "" %>" />
             </div>
             <div class="input-group">
                 <i class="fa-solid fa-lock"></i>
-                <input type="password" name="password" placeholder="Mật khẩu" required />
+                <input type="password" name="password" placeholder="Mật khẩu" required minlength="6" />
+            </div>
+            <div class="input-group">
+                <i class="fa-solid fa-lock"></i>
+                <input type="password" name="confirmPassword" placeholder="Xác nhận mật khẩu" required minlength="6" />
+            </div>
+            <div class="input-group">
+                <i class="fa-solid fa-phone"></i>
+                <input type="tel" name="phone" placeholder="Số điện thoại" required pattern="[0-9]{9,11}"
+                       value="<%= request.getAttribute("phone") != null ? request.getAttribute("phone") : "" %>" />
             </div>
             
             <button type="submit">Đăng Ký Ngay</button>
@@ -377,6 +406,17 @@
             <h1>Đăng Nhập</h1>
             <span>Sử dụng tài khoản thành viên của bạn</span>
             
+            <%
+                String successMsg = (String) session.getAttribute("message");
+                if (successMsg != null) {
+                    session.removeAttribute("message");
+            %>
+                <div class="success-msg">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <%= successMsg %>
+                </div>
+            <% } %>
+
             <% if (request.getAttribute("error") != null) { %>
                 <div class="error-msg">
                     <i class="fa-solid fa-circle-exclamation"></i>
@@ -386,7 +426,7 @@
 
             <div class="input-group">
                 <i class="fa-solid fa-user"></i>
-                <input type="text" name="username" placeholder="Tên đăng nhập" required />
+                <input type="text" name="username" placeholder="Tên đăng nhập hoặc Email" required />
             </div>
             <div class="input-group">
                 <i class="fa-solid fa-lock"></i>

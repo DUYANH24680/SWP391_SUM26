@@ -11,15 +11,13 @@ import service.CustomerService;
 @WebServlet("/login")
 public class LoginServlet extends HttpServlet {
 
-    private CustomerService service = new CustomerService();
-
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
         String username = request.getParameter("username");
         String password = request.getParameter("password");
 
-        Customer customer = service.login(username, password);
+        Customer customer = new CustomerService().login(username, password);
 
         if (customer != null) {
             HttpSession session = request.getSession();
