@@ -3,23 +3,21 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SenaFruit/web/index.html</file>
-            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SenaFruit/src/java/utils/DbContext.java</file>
-            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SenaFruit/src/java/controller/ProfileServlet.java</file>
-            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SenaFruit/src/java/dao/CustomerDAO.java</file>
-            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SenaFruit/src/java/dao/PasswordResetTokenDAO.java</file>
-            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SenaFruit/src/java/service/UserService.java</file>
-            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SenaFruit/src/java/dao/DeliveryAddressDAO.java</file>
-            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SenaFruit/web/META-INF/context.xml</file>
-            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SenaFruit/web/WEB-INF/web.xml</file>
-            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SenaFruit/src/java/model/DeliveryAddress.java</file>
-            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SenaFruit/src/java/service/CustomerService.java</file>
-            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SenaFruit/src/java/controller/LoginServlet.java</file>
-            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SenaFruit/src/java/model/Customer.java</file>
-            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SenaFruit/src/java/controller/LogoutServlet.java</file>
-            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SenaFruit/src/java/filter/EncodingFilter.java</file>
-            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SenaFruit/nbproject/build-impl.xml~</file>
-            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SenaFruit/src/java/utils/PasswordHashUtil.java</file>
+            <file>file:/F:/SenaFruit/src/java/dao/CustomerDAO.java</file>
+            <file>file:/F:/SenaFruit/src/java/Utils/DbContext.java</file>
+            <file>file:/F:/SenaFruit/src/java/controller/CartServlet.java</file>
+            <file>file:/F:/SenaFruit/web/login.jsp</file>
+            <file>file:/F:/SenaFruit/src/java/filter/EncodingFilter.java</file>
+            <file>file:/F:/SenaFruit/src/java/service/CustomerService.java</file>
+            <file>file:/F:/SenaFruit/src/java/dao/CartDAO.java</file>
+            <file>file:/F:/SenaFruit/src/java/controller/WishlistServlet.java</file>
+            <file>file:/F:/SenaFruit/src/java/controller/LoginServlet.java</file>
+            <file>file:/F:/SenaFruit/src/java/model/Customer.java</file>
+            <file>file:/F:/SenaFruit/src/java/service/EmailService.java</file>
+            <file>file:/F:/SenaFruit/web/home.jsp</file>
+            <file>file:/F:/SenaFruit/src/java/dao/WishlistDAO.java</file>
+            <file>file:/F:/SenaFruit/src/java/Utils/PasswordHashUtil.java</file>
+            <file>file:/F:/SenaFruit/src/java/controller/DeliveryAddressServlet.java</file>
         </group>
     </open-files>
 </project-private>

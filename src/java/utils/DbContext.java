@@ -22,7 +22,7 @@ public class DbContext {
             + "loginTimeout=30;"
             + "socketTimeout=60;";
     private static final String DB_USER = "sa";
-    private static final String DB_PASS = "1234567890";
+    private static final String DB_PASS = "123456";
 
     public DbContext() {
         try {
@@ -37,7 +37,7 @@ public class DbContext {
             throw new RuntimeException(
                 "DB Connection FAILED! " + ex.getMessage()
                 + " | Check: 1) SQL Server is running, "
-                + "2) Database 'FruitShopSystem' exists, "
+                + "2) Database 'SENAFRUIT' exists, "
                 + "3) sa password='123456' is correct, "
                 + "4) SQL Server is listening on port 1433", ex);
         }

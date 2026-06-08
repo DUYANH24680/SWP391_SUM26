@@ -1,13 +1,13 @@
 package controller;
 
-import dao.CustomerDAO;
+import dao.UserDAO;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import model.Customer;
+import model.User;
 import model.DeliveryAddress;
 import service.UserService;
 
@@ -33,14 +33,14 @@ public class ProfileServlet extends HttpServlet {
             throws ServletException, IOException {
         HttpSession session = req.getSession(true);
         
-        Customer sessionUser = (Customer) session.getAttribute("user");
+        User sessionUser = (User) session.getAttribute("user");
         if (sessionUser == null) {
             resp.sendRedirect(req.getContextPath() + "/login.jsp");
             return;
         }
 
         // Always fetch the freshest user data from the DB for View Profile
-        Customer freshUser = userService.getCustomerById(sessionUser.getId());
+        User freshUser = userService.getUserById(sessionUser.getId());
         if (freshUser == null) {
             // User might have been deleted or banned
             session.invalidate();
@@ -63,7 +63,7 @@ public class ProfileServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         HttpSession session = req.getSession(true);
-        Customer user = (Customer) session.getAttribute("user");
+        User user = (User) session.getAttribute("user");
 
         if (user == null) {
             resp.sendRedirect(req.getContextPath() + "/login.jsp");
@@ -88,7 +88,7 @@ public class ProfileServlet extends HttpServlet {
         resp.sendRedirect(req.getContextPath() + "/profile");
     }
 
-    private void handleUpdateProfile(HttpServletRequest req, HttpSession session, Customer user) {
+    private void handleUpdateProfile(HttpServletRequest req, HttpSession session, User user) {
         String fullname = req.getParameter("fullname");
         String email = req.getParameter("email");
         String phone = req.getParameter("phone");
@@ -149,13 +149,13 @@ public class ProfileServlet extends HttpServlet {
         if (error != null) {
             session.setAttribute("error", error);
         } else {
-            Customer updatedUser = userService.getCustomerById(user.getId());
+            User updatedUser = userService.getUserById(user.getId());
             session.setAttribute("user", updatedUser);
             session.setAttribute("message", "Cập nhật hồ sơ thành công!");
         }
     }
 
-    private void handleChangePassword(HttpServletRequest req, HttpSession session, Customer user) {
+    private void handleChangePassword(HttpServletRequest req, HttpSession session, User user) {
         String currentPassword = req.getParameter("currentPassword");
         String newPassword = req.getParameter("newPassword");
         String confirmPassword = req.getParameter("confirmPassword");

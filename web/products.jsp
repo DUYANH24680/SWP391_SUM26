@@ -735,9 +735,28 @@
                                     </td>
 
                                     <!-- Hanh dong -->
-                                    <td>
-                                        <a href="#" class="btn-detail">
-                                            <i class="fa-regular fa-eye"></i> Chi Tiet
+                                    <td style="display: flex; gap: 0.4rem; align-items: center;">
+                                        <!-- Form Thêm Giỏ Hàng -->
+                                        <form action="cart" method="post" style="margin:0;">
+                                            <input type="hidden" name="action" value="add">
+                                            <input type="hidden" name="productId" value="${p.id}">
+                                            <input type="hidden" name="quantity" value="1">
+                                            <button type="submit" class="btn btn-green btn-sm" title="Thêm vào giỏ" ${p.stockQuantity <= 0 ? 'disabled style="opacity:0.5;"' : ''}>
+                                                <i class="fa-solid fa-cart-plus"></i>
+                                            </button>
+                                        </form>
+                                        
+                                        <!-- Form Thêm Yêu Thích -->
+                                        <form action="wishlist" method="post" style="margin:0;">
+                                            <input type="hidden" name="action" value="add">
+                                            <input type="hidden" name="productId" value="${p.id}">
+                                            <button type="submit" class="btn btn-outline btn-sm" title="Yêu thích">
+                                                <i class="fa-solid fa-heart"></i>
+                                            </button>
+                                        </form>
+
+                                        <a href="#" class="btn-detail btn-sm" title="Chi tiết">
+                                            <i class="fa-regular fa-eye"></i>
                                         </a>
                                     </td>
                                 </tr>

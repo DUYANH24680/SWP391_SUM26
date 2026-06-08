@@ -6,14 +6,14 @@ import jakarta.servlet.annotation.*;
 import java.io.IOException;
 
 import dao.PasswordResetTokenDAO;
-import dao.CustomerDAO;
-import model.Customer;
+import dao.UserDAO;
+import model.User;
 
 @WebServlet("/reset-password")
 public class ResetPasswordServlet extends HttpServlet {
 
     private PasswordResetTokenDAO tokenDAO = new PasswordResetTokenDAO();
-    private CustomerDAO customerDAO = new CustomerDAO();
+    private UserDAO userDAO = new UserDAO();
 
     /**
      * GET - Display reset password form with token validation
@@ -101,16 +101,16 @@ public class ResetPasswordServlet extends HttpServlet {
             return;
         }
 
-        // Get customer by email
-        Customer customer = customerDAO.findByUsernameOrEmail(email);
-        if (customer == null) {
+        // Get user by email
+        User user = userDAO.findByUsernameOrEmail(email);
+        if (user == null) {
             request.setAttribute("error", "Email không tồn tại");
             request.getRequestDispatcher("reset-password.jsp").forward(request, response);
             return;
         }
 
         // Update password (hash it before storing)
-        boolean passwordUpdated = customerDAO.updatePassword(customer.getId(), Utils.PasswordHashUtil.hashPassword(newPassword));
+        boolean passwordUpdated = userDAO.updatePassword(user.getId(), Utils.PasswordHashUtil.hashPassword(newPassword));
         if (!passwordUpdated) {
             request.setAttribute("error", "Lỗi hệ thống, vui lòng thử lại sau");
             request.setAttribute("token", token);

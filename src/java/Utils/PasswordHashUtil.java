@@ -9,9 +9,9 @@ package Utils;
  * Cách sử dụng:
  * 1. Thêm dependency: org.mindrot:jbcrypt:0.4
  * 2. Thay đổi LoginServlet: 
- *    if (PasswordHashUtil.checkPassword(password, customer.getPasswordHash())) {...}
+ *    if (PasswordHashUtil.checkPassword(password, user.getPasswordHash())) {...}
  * 3. Thay đổi ResetPasswordServlet:
- *    customerDAO.updatePassword(id, PasswordHashUtil.hashPassword(newPassword));
+ *    userDAO.updatePassword(id, PasswordHashUtil.hashPassword(newPassword));
  */
 public class PasswordHashUtil {
     

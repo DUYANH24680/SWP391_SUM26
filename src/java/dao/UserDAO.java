@@ -1,18 +1,17 @@
 package dao;
 
-import model.Customer;
-import Utils.DbContext;
+import model.User;
 import java.sql.*;
 
 /**
- * CustomerDAO - Handles all DB operations for Customers table.
+ * UserDAO - Handles all DB operations for Users table.
  */
-public class CustomerDAO extends Utils.DbContext {
+public class UserDAO extends Utils.DbContext {
 
     /**
-     * Find a customer by username or email (for login).
+     * Find a user by username or email (for login).
      */
-    public Customer findByUsernameOrEmail(String usernameOrEmail) {
+    public User findByUsernameOrEmail(String usernameOrEmail) {
         String sql = "SELECT a.id, a.role_id, r.name AS role_name, a.fullname, a.username, a.password_hash, a.email, a.phone, a.address, a.gender, a.avatar, a.status, a.created_at "
                    + "FROM Accounts a "
                    + "JOIN Roles r ON a.role_id = r.id "
@@ -31,7 +30,7 @@ public class CustomerDAO extends Utils.DbContext {
                 return mapRow(rs);
             }
         } catch (SQLException e) {
-            throw new RuntimeException("CustomerDAO.findByUsernameOrEmail error: " + e.getMessage(), e);
+            throw new RuntimeException("UserDAO.findByUsernameOrEmail error: " + e.getMessage(), e);
         } finally {
             try {
                 if (rs != null) rs.close();
@@ -50,9 +49,9 @@ public class CustomerDAO extends Utils.DbContext {
     }
 
     /**
-     * Find a customer by id.
+     * Find a user by id.
      */
-    public Customer findById(int id) {
+    public User findById(int id) {
         String sql = "SELECT a.id, a.role_id, r.name AS role_name, a.fullname, a.username, a.password_hash, a.email, a.phone, a.address, a.gender, a.avatar, a.status, a.created_at "
                    + "FROM Accounts a "
                    + "JOIN Roles r ON a.role_id = r.id "
@@ -65,7 +64,7 @@ public class CustomerDAO extends Utils.DbContext {
                 }
             }
         } catch (SQLException e) {
-            throw new RuntimeException("CustomerDAO.findById error: " + e.getMessage(), e);
+            throw new RuntimeException("UserDAO.findById error: " + e.getMessage(), e);
         }
         return null;
     }
@@ -86,7 +85,7 @@ public class CustomerDAO extends Utils.DbContext {
             ps.setInt(7, id);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            throw new RuntimeException("CustomerDAO.updateProfile error: " + e.getMessage(), e);
+            throw new RuntimeException("UserDAO.updateProfile error: " + e.getMessage(), e);
         }
     }
 
@@ -100,12 +99,12 @@ public class CustomerDAO extends Utils.DbContext {
             ps.setInt(2, id);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            throw new RuntimeException("CustomerDAO.updatePassword error: " + e.getMessage(), e);
+            throw new RuntimeException("UserDAO.updatePassword error: " + e.getMessage(), e);
         }
     }
 
     /**
-     * Check if email is already used by another customer (for uniqueness validation).
+     * Check if email is already used by another user (for uniqueness validation).
      */
     public boolean isEmailTaken(String email, int excludeId) {
         String sql = "SELECT COUNT(1) FROM Accounts WHERE email = ? AND id <> ? AND status = 1";
@@ -116,14 +115,14 @@ public class CustomerDAO extends Utils.DbContext {
                 if (rs.next()) return rs.getInt(1) > 0;
             }
         } catch (SQLException e) {
-            throw new RuntimeException("CustomerDAO.isEmailTaken error: " + e.getMessage(), e);
+            throw new RuntimeException("UserDAO.isEmailTaken error: " + e.getMessage(), e);
         }
         return false;
     }
 
     // ---- helper ----
-    private Customer mapRow(ResultSet rs) throws SQLException {
-        Customer c = new Customer();
+    private User mapRow(ResultSet rs) throws SQLException {
+        User c = new User();
         c.setId(rs.getInt("id"));
         c.setRoleId(rs.getInt("role_id"));
         c.setRoleName(rs.getString("role_name"));

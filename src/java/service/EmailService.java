@@ -19,7 +19,7 @@ public class EmailService {
     /**
      * Send password reset email
      */
-    public static boolean sendPasswordResetEmail(String recipientEmail, String resetLink, String customerName) {
+    public static boolean sendPasswordResetEmail(String recipientEmail, String resetLink, String userName) {
         try {
             // Setup email properties
             Properties props = new Properties();
@@ -44,7 +44,7 @@ public class EmailService {
             message.setSubject("Đặt lại mật khẩu tài khoản SenaFruit");
             
             // Email content
-            String emailContent = buildEmailContent(customerName, resetLink);
+            String emailContent = buildEmailContent(userName, resetLink);
             message.setContent(emailContent, "text/html;charset=UTF-8");
             
             // Send email
@@ -62,12 +62,12 @@ public class EmailService {
     /**
      * Build HTML email content
      */
-    private static String buildEmailContent(String customerName, String resetLink) {
+    private static String buildEmailContent(String userName, String resetLink) {
         return "<html>" +
                 "<body style='font-family: Arial, sans-serif; color: #333;'>" +
                 "<div style='max-width: 600px; margin: 0 auto; border: 1px solid #ddd; padding: 20px;'>" +
                 "<h2 style='color: #4CAF50;'>Đặt Lại Mật Khẩu</h2>" +
-                "<p>Xin chào " + customerName + ",</p>" +
+                "<p>Xin chào " + userName + ",</p>" +
                 "<p>Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản SenaFruit của bạn.</p>" +
                 "<p>Vui lòng click vào link dưới đây để đặt lại mật khẩu (link có hiệu lực trong 1 giờ):</p>" +
                 "<p style='text-align: center;'>" +

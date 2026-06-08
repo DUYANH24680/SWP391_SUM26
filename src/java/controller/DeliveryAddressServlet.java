@@ -10,7 +10,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 // Import Model để tương tác với Object
-import model.Customer;
+import model.User;
 import model.DeliveryAddress;
 
 // Import IO để xử lý ngoại lệ đầu vào/đầu ra
@@ -35,8 +35,8 @@ public class DeliveryAddressServlet extends HttpServlet {
         // Lấy Session hiện tại (phiên làm việc của người dùng)
         HttpSession session = req.getSession();
         
-        // Lấy object 'user' (Tài khoản đang đăng nhập) từ trong session ra, ép kiểu về class Customer
-        Customer user = (Customer) session.getAttribute("user");
+        // Lấy object 'user' (Tài khoản đang đăng nhập) từ trong session ra, ép kiểu về class User
+        User user = (User) session.getAttribute("user");
         
         // Nếu user bằng null nghĩa là khách chưa đăng nhập hoặc session đã hết hạn
         if (user == null) {
@@ -94,7 +94,7 @@ public class DeliveryAddressServlet extends HttpServlet {
      * Lấy dữ liệu từ form, tạo đối tượng DeliveryAddress và lưu vào DB.
      */
     // Định nghĩa hàm truyền vào 3 tham số: req, session, và user hiện tại
-    private void handleAddAddress(HttpServletRequest req, HttpSession session, Customer user) {
+    private void handleAddAddress(HttpServletRequest req, HttpSession session, User user) {
         // Lấy ô Tên người nhận (name="recipientName")
         String recipientName = req.getParameter("recipientName");
         // Lấy ô Số điện thoại (name="recipientPhone")
@@ -133,7 +133,7 @@ public class DeliveryAddressServlet extends HttpServlet {
      * Hàm xử lý Cập nhật địa chỉ đã có
      * Tìm địa chỉ theo ID và CustomerID (để đảm bảo tính bảo mật), cập nhật thông tin và lưu lại.
      */
-    private void handleUpdateAddress(HttpServletRequest req, HttpSession session, Customer user) {
+    private void handleUpdateAddress(HttpServletRequest req, HttpSession session, User user) {
         // Lấy ID của cái địa chỉ cần sửa và ép kiểu về int. (VD: "5" -> số 5)
         int id = Integer.parseInt(req.getParameter("id"));
         
@@ -182,7 +182,7 @@ public class DeliveryAddressServlet extends HttpServlet {
      * Hàm xử lý Xóa địa chỉ
      * Xóa địa chỉ theo ID và CustomerID.
      */
-    private void handleDeleteAddress(HttpServletRequest req, HttpSession session, Customer user) {
+    private void handleDeleteAddress(HttpServletRequest req, HttpSession session, User user) {
         // Lấy ID của thẻ địa chỉ mà khách bấm nút Xóa
         int id = Integer.parseInt(req.getParameter("id"));
         
