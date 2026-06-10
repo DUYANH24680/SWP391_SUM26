@@ -17,7 +17,7 @@ public class ShopDAO extends Utils.DbContext {
         String sql = "SELECT id, owner_id, shop_name, logo, description, address, status, created_at "
                    + "FROM Shops "
                    + "WHERE owner_id = ? AND status = 1";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
             ps.setInt(1, ownerId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -39,7 +39,7 @@ public class ShopDAO extends Utils.DbContext {
     public boolean hasApprovedShop(int ownerId) {
         System.out.println("[ShopDAO] hasApprovedShop() called for ownerId=" + ownerId);
         String sql = "SELECT COUNT(1) FROM Shops WHERE owner_id = ? AND status = 1";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
             ps.setInt(1, ownerId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {

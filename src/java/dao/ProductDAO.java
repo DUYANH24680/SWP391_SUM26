@@ -16,15 +16,35 @@ public class ProductDAO extends DbContext {
                    + "FROM Products p "
                    + "LEFT JOIN Shops s ON p.shop_id = s.id "
                    + "WHERE p.isDelete = 0 ORDER BY p.created_at DESC";
-        try (PreparedStatement ps = connection.prepareStatement(sql);
+        try (PreparedStatement ps = getConnection().prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             List<Product> list = new ArrayList<>();
             while (rs.next()) {
                 list.add(mapRow(rs));
             }
+            System.out.println("[ProductDAO] getAllProducts() returned " + list.size() + " products");
             return list;
         } catch (SQLException e) {
+            System.err.println("[ProductDAO] getAllProducts() SQL error: " + e.getMessage());
+            e.printStackTrace();
             throw new RuntimeException("ProductDAO.getAllProducts error: " + e.getMessage(), e);
+        }
+    }
+
+    public int countAllProducts() {
+        String sql = "SELECT COUNT(*) FROM Products WHERE isDelete = 0";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                int count = rs.getInt(1);
+                System.out.println("[ProductDAO] countAllProducts() = " + count);
+                return count;
+            }
+            return 0;
+        } catch (SQLException e) {
+            System.err.println("[ProductDAO] countAllProducts() error: " + e.getMessage());
+            e.printStackTrace();
+            return 0;
         }
     }
 
@@ -38,7 +58,7 @@ public class ProductDAO extends DbContext {
                    + "WHERE p.isDelete = 0 "
                    + "  AND (p.title LIKE ? OR p.description LIKE ?) "
                    + "ORDER BY p.created_at DESC";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
             String pattern = "%" + keyword + "%";
             ps.setString(1, pattern);
             ps.setString(2, pattern);
@@ -47,9 +67,12 @@ public class ProductDAO extends DbContext {
                 while (rs.next()) {
                     list.add(mapRow(rs));
                 }
+                System.out.println("[ProductDAO] searchProducts('" + keyword + "') returned " + list.size() + " products");
                 return list;
             }
         } catch (SQLException e) {
+            System.err.println("[ProductDAO] searchProducts() SQL error: " + e.getMessage());
+            e.printStackTrace();
             throw new RuntimeException("ProductDAO.searchProducts error: " + e.getMessage(), e);
         }
     }
@@ -62,7 +85,7 @@ public class ProductDAO extends DbContext {
                    + "FROM Products p "
                    + "LEFT JOIN Shops s ON p.shop_id = s.id "
                    + "WHERE p.id = ?";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
             ps.setInt(1, id);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -70,6 +93,8 @@ public class ProductDAO extends DbContext {
                 }
             }
         } catch (SQLException e) {
+            System.err.println("[ProductDAO] getProductById(" + id + ") error: " + e.getMessage());
+            e.printStackTrace();
             throw new RuntimeException("ProductDAO.getProductById error: " + e.getMessage(), e);
         }
         return null;
@@ -88,18 +113,39 @@ public class ProductDAO extends DbContext {
                    + "LEFT JOIN Shops s ON p.shop_id = s.id "
                    + "WHERE p.shop_id = ? AND p.isDelete = 0 "
                    + "ORDER BY p.created_at DESC";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
             ps.setInt(1, shopId);
             try (ResultSet rs = ps.executeQuery()) {
                 List<Product> list = new ArrayList<>();
                 while (rs.next()) {
                     list.add(mapRow(rs));
                 }
+                System.out.println("[ProductDAO] getProductsByShopId(" + shopId + ") returned " + list.size() + " products");
                 return list;
             }
         } catch (SQLException e) {
+            System.err.println("[ProductDAO] getProductsByShopId(" + shopId + ") error: " + e.getMessage());
+            e.printStackTrace();
             throw new RuntimeException("ProductDAO.getProductsByShopId error: " + e.getMessage(), e);
         }
+    }
+
+    public int countProductsByShopId(int shopId) {
+        String sql = "SELECT COUNT(*) FROM Products WHERE shop_id = ? AND isDelete = 0";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            ps.setInt(1, shopId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    int count = rs.getInt(1);
+                    System.out.println("[ProductDAO] countProductsByShopId(" + shopId + ") = " + count);
+                    return count;
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[ProductDAO] countProductsByShopId(" + shopId + ") error: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return 0;
     }
 
     /**
@@ -120,16 +166,13 @@ public class ProductDAO extends DbContext {
         ResultSet rsKeys = null;
 
         try {
-            // Bat transaction
-            conn = connection;
+            conn = getConnection();
             conn.setAutoCommit(false);
 
-            // INSERT vao bang Products
             psProduct = conn.prepareStatement(sqlProduct, Statement.RETURN_GENERATED_KEYS);
             psProduct.setString(1, product.getTitle());
             psProduct.setString(2, product.getDescription());
 
-            // imageUrls.get(0) lam anh chinh trong bang Products
             if (imageUrls != null && !imageUrls.isEmpty()) {
                 psProduct.setString(3, imageUrls.get(0));
             } else {
@@ -156,7 +199,6 @@ public class ProductDAO extends DbContext {
                 return false;
             }
 
-            // Lay product_id vua duoc tao
             rsKeys = psProduct.getGeneratedKeys();
             if (!rsKeys.next()) {
                 conn.rollback();
@@ -164,7 +206,6 @@ public class ProductDAO extends DbContext {
             }
             int generatedProductId = rsKeys.getInt(1);
 
-            // Neu co anh thi INSERT vao bang ProductImages
             if (imageUrls != null && !imageUrls.isEmpty()) {
                 psImage = conn.prepareStatement(sqlImage);
                 for (int i = 0; i < imageUrls.size(); i++) {
@@ -176,29 +217,23 @@ public class ProductDAO extends DbContext {
                 psImage.executeBatch();
             }
 
-            // Commit transaction
             conn.commit();
+            System.out.println("[ProductDAO] addProduct() success, id=" + generatedProductId);
             return true;
 
         } catch (SQLException e) {
-            // Rollback neu co loi
+            System.err.println("[ProductDAO] addProduct() error: " + e.getMessage());
+            e.printStackTrace();
             if (conn != null) {
-                try {
-                    conn.rollback();
-                } catch (SQLException ex) {
-                    throw new RuntimeException("ProductDAO.addProduct rollback error: " + ex.getMessage(), ex);
-                }
+                try { conn.rollback(); } catch (SQLException ex) { }
             }
             throw new RuntimeException("ProductDAO.addProduct error: " + e.getMessage(), e);
         } finally {
-            // Dong tat ca resource
             if (rsKeys != null) try { rsKeys.close(); } catch (SQLException ignored) {}
             if (psProduct != null) try { psProduct.close(); } catch (SQLException ignored) {}
             if (psImage != null) try { psImage.close(); } catch (SQLException ignored) {}
             if (conn != null) {
-                try {
-                    conn.setAutoCommit(true);
-                } catch (SQLException ignored) {}
+                try { conn.setAutoCommit(true); } catch (SQLException ignored) {}
             }
         }
     }

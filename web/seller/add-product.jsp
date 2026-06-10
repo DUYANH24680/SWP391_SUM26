@@ -5,7 +5,7 @@
 <%
     Customer user = (Customer) session.getAttribute("user");
     if (user == null) {
-        response.sendRedirect(request.getContextPath() + "/profile");
+        response.sendRedirect(request.getContextPath() + "/login");
         return;
     }
 

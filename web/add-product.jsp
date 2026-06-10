@@ -10,7 +10,7 @@
 
     Customer user = (Customer) rawUser;
     if (user == null) {
-        response.sendRedirect(request.getContextPath() + "/profile");
+        response.sendRedirect(request.getContextPath() + "/login");
         return;
     }
 

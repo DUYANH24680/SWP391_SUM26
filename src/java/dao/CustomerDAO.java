@@ -17,7 +17,7 @@ public class CustomerDAO extends Utils.DbContext {
                    + "FROM Accounts a "
                    + "JOIN Roles r ON a.role_id = r.id "
                    + "WHERE (a.username = ? OR a.email = ?) AND a.status = 1";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
             ps.setString(1, usernameOrEmail);
             ps.setString(2, usernameOrEmail);
             try (ResultSet rs = ps.executeQuery()) {
@@ -39,7 +39,7 @@ public class CustomerDAO extends Utils.DbContext {
                    + "FROM Accounts a "
                    + "JOIN Roles r ON a.role_id = r.id "
                    + "WHERE a.id = ? AND a.status = 1";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
             ps.setInt(1, id);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -54,7 +54,7 @@ public class CustomerDAO extends Utils.DbContext {
 
     public boolean updateProfile(int id, String fullname, String email, String phone, String address, Boolean gender, String avatar) {
         String sql = "UPDATE Accounts SET fullname = ?, email = ?, phone = ?, address = ?, gender = ?, avatar = ? WHERE id = ?";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
             ps.setString(1, fullname);
             ps.setString(2, email);
             ps.setString(3, phone);
@@ -77,7 +77,7 @@ public class CustomerDAO extends Utils.DbContext {
      */
     public boolean updatePassword(int id, String newPasswordHash) {
         String sql = "UPDATE Accounts SET password_hash = ? WHERE id = ?";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
             ps.setString(1, newPasswordHash);
             ps.setInt(2, id);
             return ps.executeUpdate() > 0;
@@ -91,7 +91,7 @@ public class CustomerDAO extends Utils.DbContext {
      */
     public boolean isEmailTaken(String email, int excludeId) {
         String sql = "SELECT COUNT(1) FROM Accounts WHERE email = ? AND id <> ? AND status = 1";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
             ps.setString(1, email);
             ps.setInt(2, excludeId);
             try (ResultSet rs = ps.executeQuery()) {

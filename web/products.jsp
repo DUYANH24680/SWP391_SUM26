@@ -215,6 +215,7 @@
         }
 
         .alert-danger { background: #fee2e2; border: 1px solid #fecaca; color: #991b1b; }
+        .alert-warning { background: #fef9c3; border: 1px solid #fde68a; color: #92400e; }
 
         /* ======= CARD ======= */
         .card {
@@ -576,6 +577,33 @@
         </div>
         <% } %>
 
+        <% Boolean shopNotApproved = (Boolean) request.getAttribute("shopNotApproved");
+           String shopNotApprovedMsg = (String) request.getAttribute("shopNotApprovedMsg");
+           if (shopNotApproved != null && shopNotApproved) { %>
+        <div class="alert alert-warning" style="background:#fef9c3;border:1px solid #fde68a;color:#92400e;">
+            <i class="fa-solid fa-shop-slash"></i>
+            <div>
+                <strong>Cua hang chua duoc phe duyet</strong>
+                <p style="margin:0.25rem 0 0;font-size:0.82rem;">
+                    <%= shopNotApprovedMsg != null ? shopNotApprovedMsg : "Cua hang cua ban chua duoc phe duyet. Vui long cho admin xac nhan." %>
+                </p>
+                <p style="margin:0.25rem 0 0;font-size:0.82rem;">
+                    Neu chua co cua hang, <a href="create-shop" style="color:#15803d;font-weight:600;">ban yeu cau mo cua hang tai day</a>.
+                </p>
+            </div>
+        </div>
+        <% } %>
+
+        <%-- Debug info (chi hien thi khi co error hoac trong moi truong dev) --%>
+        <% String debugRole = (String) request.getAttribute("debugRole");
+           String debugEnv = System.getProperty("user.name") != null ? "debug" : "";
+           if (debugRole != null && (error != null || "debug".equals(System.getProperty("debug.mode")))) { %>
+        <div class="alert" style="background:#f0f9ff;border:1px solid #bae6fd;color:#0c4a6e;font-size:0.78rem;">
+            <i class="fa-solid fa-bug"></i>
+            <span><strong>[DEBUG]</strong> role=<%= debugRole %>, sessionId=<%= session.getId() %></span>
+        </div>
+        <% } %>
+
         <!-- Page header card -->
         <div class="card">
             <div class="card-header">
@@ -607,8 +635,12 @@
                 </div>
                 <span style="font-size:0.82rem;color:var(--gray-400);margin-left:auto;">
                     <c:choose>
-                        <c:when test="${not empty products}">${products.size()} san pham</c:when>
-                        <c:otherwise>0 san pham</c:otherwise>
+                        <c:when test="${totalProductCount > 0}">
+                            <span style="font-weight:600;color:var(--green);">${products.size()}</span> / ${totalProductCount} san pham
+                        </c:when>
+                        <c:when test="${empty products && empty error && empty shopNotApproved}">
+                            0 san pham
+                        </c:when>
                     </c:choose>
                 </span>
             </form>
@@ -748,7 +780,23 @@
                                 <td colspan="10">
                                     <div class="empty-state">
                                         <i class="fa-regular fa-face-frown"></i>
-                                        <p>Khong tim thay san pham nao.</p>
+                                        <c:choose>
+                                            <c:when test="${not empty error}">
+                                                <p style="color:#991b1b;font-weight:500;">Loi tai san pham. Vui long thu lai sau.</p>
+                                            </c:when>
+                                            <c:when test="${shopNotApproved}">
+                                                <p>Cua hang cua ban chua co san pham nao.</p>
+                                            </c:when>
+                                            <c:when test="${not empty searchKeyword}">
+                                                <p>Khong tim thay san pham nao voi tu khoa "<strong>${searchKeyword}</strong>".</p>
+                                            </c:when>
+                                            <c:when test="${debugRole == 'seller'}">
+                                                <p>Ban chua co san pham nao. <a href="add-product" style="color:var(--green);font-weight:600;">Them san pham dau tien</a>.</p>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <p>Hien chua co san pham nao.</p>
+                                            </c:otherwise>
+                                        </c:choose>
                                     </div>
                                 </td>
                             </tr>

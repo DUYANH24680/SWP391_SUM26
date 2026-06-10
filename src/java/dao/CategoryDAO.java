@@ -14,7 +14,7 @@ public class CategoryDAO extends Utils.DbContext {
         List<Category> list = new ArrayList<>();
         String sql = "SELECT id, name, image, isDelete FROM Categories WHERE isDelete = 0 ORDER BY name ASC";
 
-        try (PreparedStatement ps = connection.prepareStatement(sql);
+        try (PreparedStatement ps = getConnection().prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
             System.out.println("[CategoryDAO] Query executed, collecting results...");

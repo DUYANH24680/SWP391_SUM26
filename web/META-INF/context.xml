@@ -1,2 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Context path="/WebProject"/>
+<Context path="/WebProject">
+
+    <!--
+        Tomcat JDBC Connection Pool Configuration
+        Handles "Read timed out" by:
+        1. Reusing connections (pooling) instead of opening new per request
+        2. Faster validation with testOnBorrow / testWhileIdle
+        3. Larger maxActive to handle concurrent requests
+        4. Proper checkout/in timeout to fail fast instead of hanging
+    -->
+    <!-- Pool size: enough for concurrent requests -->
+    <Resource name="jdbc/SENAFRUIT"
+              auth="Container"
+              type="javax.sql.DataSource"
+              factory="org.apache.tomcat.jdbc.pool.DataSourceFactory"
+              driverClassName="com.microsoft.sqlserver.jdbc.SQLServerDriver"
+              url="jdbc:sqlserver://localhost:1433;databaseName=SENAFRUIT;encrypt=false;trustServerCertificate=true;loginTimeout=30"
+              username="sa"
+              password="123"
+              maxActive="20"
+              maxIdle="10"
+              minIdle="5"
+              validationQuery="SELECT 1"
+              testOnBorrow="true"
+              testWhileIdle="false"
+              testOnReturn="false"
+              timeBetweenEvictionRunsMillis="0"
+              removeAbandoned="false"
+              logAbandoned="false"
+              maxWait="5000"
+              validationInterval="30000"
+    />
+
+</Context>

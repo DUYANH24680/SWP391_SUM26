@@ -65,6 +65,12 @@ public class AddProductServlet extends HttpServlet {
             List<Category> categories = categoryDAO.getAllActiveCategories();
             req.setAttribute("categories", categories);
             System.out.println("[AddProductServlet] Forwarding to add-product.jsp with " + categories.size() + " categories");
+        } catch (RuntimeException e) {
+            System.err.println("[AddProductServlet] Failed to load categories (DB may be slow/unavailable): " + e.getMessage());
+            req.setAttribute("categories", java.util.Collections.emptyList());
+            if (session != null) {
+                session.setAttribute("error", "Khong the tai danh muc. Vui long thu lai sau.");
+            }
         } finally {
             categoryDAO.close();
         }
