@@ -1,7 +1,7 @@
 package service;
 
-import dao.CustomerDAO;
-import model.Customer;
+import dao.UserDAO;
+import model.User;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -11,27 +11,95 @@ import java.security.NoSuchAlgorithmException;
  */
 public class UserService {
 
+    private UserDAO dao = new UserDAO();
+
+    // ---- Login ----
+
+    public User login(String username, String password) {
+
+        // Validate basic
+        if (username == null || username.trim().isEmpty()) {
+            return null;
+        }
+        if (password == null || password.trim().isEmpty()) {
+            return null;
+        }
+
+        // Lấy dữ liệu từ DB (DAO)
+        User user = dao.findByUsernameOrEmail(username);
+        
+        // Kiểm tra (Logic)
+        if (user != null) {
+            String dbPassword = user.getPasswordHash();
+            boolean isMatch = false;
+            
+            if (dbPassword != null && dbPassword.length() == 64) {
+                // Nếu độ dài là 64 ký tự -> Đây là mật khẩu đã được mã hóa SHA-256
+                isMatch = Utils.PasswordHashUtil.checkPassword(password, dbPassword);
+            } else {
+                // Nếu không phải 64 ký tự -> Đây là mật khẩu chữ thường (plain text)
+                isMatch = password.equals(dbPassword);
+            }
+            
+            if (isMatch) {
+                return user;
+            }
+        }
+        
+        return null;
+    }
+
     // ---- Profile ----
 
-    public String updateProfile(int customerId, String fullname, String email, String phone, String address, Boolean gender, String avatar) {
+    public String updateProfile(int userId, String fullname, String email, String phone, String address, Boolean gender, String avatar) {
         if (fullname == null || fullname.trim().isEmpty()) {
             return "Họ và tên không được để trống.";
         }
+        fullname = fullname.trim();
+        if (fullname.length() < 2 || fullname.length() > 50) {
+            return "Họ và tên phải từ 2 đến 50 ký tự.";
+        }
+        if (!fullname.matches("^[\\p{L}\\s]+$")) {
+            return "Họ và tên chỉ được chứa chữ cái và khoảng trắng.";
+        }
+
         if (email == null || email.trim().isEmpty()) {
             return "Email không được để trống.";
         }
-        if (!email.contains("@")) {
+        email = email.trim();
+        if (email.length() > 100) {
+            return "Email không được vượt quá 100 ký tự.";
+        }
+        if (!email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")) {
             return "Email không đúng định dạng.";
         }
-        if (phone != null && !phone.isEmpty() && !phone.matches("^[0-9]{9,11}$")) {
-            return "Số điện thoại không hợp lệ (9-11 chữ số).";
+
+        if (phone == null || phone.trim().isEmpty()) {
+            return "Số điện thoại không được để trống.";
         }
-        CustomerDAO dao = new CustomerDAO();
+        phone = phone.trim();
+        if (!phone.matches("^0[35789][0-9]{8}$")) {
+            return "Số điện thoại không hợp lệ (phải bắt đầu bằng 03, 05, 07, 08, 09 và gồm 10 chữ số).";
+        }
+
+        if (gender == null) {
+            return "Vui lòng chọn giới tính.";
+        }
+
+        if (address == null || address.trim().isEmpty()) {
+            return "Địa chỉ không được để trống.";
+        }
+        address = address.trim();
+        if (address.length() > 200) {
+            return "Địa chỉ không được vượt quá 200 ký tự.";
+        }
+
+        UserDAO dao = new UserDAO();
         try {
-            if (dao.isEmailTaken(email.trim(), customerId)) {
+            if (dao.isEmailTaken(email.trim(), userId)) {
                 return "Email này đã được sử dụng bởi một tài khoản khác.";
             }
-            boolean ok = dao.updateProfile(customerId, fullname.trim(), email.trim(), phone, address, gender, avatar);
+            boolean ok = dao.updateProfile(userId, fullname.trim(), email.trim(), phone, address, gender, avatar);
             return ok ? null : "Cập nhật thất bại. Vui lòng thử lại.";
         } finally {
             dao.close();
@@ -44,21 +112,21 @@ public class UserService {
      * Change password after verifying the current password.
      * Returns an error message or null on success.
      */
-    public String changePassword(int customerId, String currentPassword, String newPassword, String confirmPassword) {
+    public String changePassword(int userId, String currentPassword, String newPassword, String confirmPassword) {
         if (newPassword == null || newPassword.length() < 6) {
             return "Mật khẩu mới phải có ít nhất 6 ký tự.";
         }
         if (!newPassword.equals(confirmPassword)) {
             return "Xác nhận mật khẩu không khớp.";
         }
-        CustomerDAO dao = new CustomerDAO();
+        UserDAO dao = new UserDAO();
         try {
-            Customer c = dao.findById(customerId);
+            User c = dao.findById(userId);
             if (c == null) return "Không tìm thấy tài khoản.";
-            if (!currentPassword.equals(c.getPasswordHash())) {
+            if (!hashPassword(currentPassword).equals(c.getPasswordHash())) {
                 return "Mật khẩu hiện tại không đúng.";
             }
-            boolean ok = dao.updatePassword(customerId, newPassword);
+            boolean ok = dao.updatePassword(userId, hashPassword(newPassword));
             return ok ? null : "Đổi mật khẩu thất bại. Vui lòng thử lại.";
         } finally {
             dao.close();
@@ -66,10 +134,10 @@ public class UserService {
     }
 
     /**
-     * Get a fresh customer object (for re-loading after update).
+     * Get a fresh user object (for re-loading after update).
      */
-    public Customer getCustomerById(int id) {
-        CustomerDAO dao = new CustomerDAO();
+    public User getUserById(int id) {
+        UserDAO dao = new UserDAO();
         try {
             return dao.findById(id);
         } finally {

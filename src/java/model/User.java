@@ -2,7 +2,7 @@ package model;
 
 import java.sql.Timestamp;
 
-public class Customer {
+public class User {
     private int id;
     private int roleId;
     private String roleName;
@@ -17,10 +17,10 @@ public class Customer {
     private int status;
     private Timestamp createdAt;
 
-    public Customer() {
+    public User() {
     }
 
-    public Customer(int id, int roleId, String roleName, String fullname, String username, String passwordHash, String email, String phone, String address, Boolean gender, String avatar, int status, Timestamp createdAt) {
+    public User(int id, int roleId, String roleName, String fullname, String username, String passwordHash, String email, String phone, String address, Boolean gender, String avatar, int status, Timestamp createdAt) {
         this.id = id;
         this.roleId = roleId;
         this.roleName = roleName;
