@@ -138,28 +138,6 @@
             background-color: rgba(255, 255, 255, 0.1);
         }
 
-        a.button {
-            border-radius: 30px;
-            border: 2px solid #FFFFFF;
-            background-color: transparent;
-            color: #FFFFFF;
-            font-size: 0.9rem;
-            font-weight: 700;
-            padding: 10px 30px;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            transition: transform 80ms ease-in, background-color 0.3s, box-shadow 0.3s;
-            cursor: pointer;
-            margin-top: 10px;
-            display: inline-block;
-            text-align: center;
-        }
-
-        a.button:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-            color: #FFFFFF;
-        }
-
         form {
             background-color: #FFFFFF;
             display: flex;
@@ -362,7 +340,7 @@
 </head>
 <body>
 
-<div class="container <%= "signup".equals(request.getParameter("mode")) ? "right-panel-active" : "" %>" id="container">
+<div class="container" id="container">
     
     <!-- Sign Up Form -->
     <div class="form-container sign-up-container">
@@ -415,7 +393,7 @@
                 <input type="password" name="password" placeholder="Mật khẩu" required />
             </div>
             
-            <a href="forgot-password">Quên mật khẩu?</a>
+            <a href="#">Quên mật khẩu?</a>
             <button type="submit">Đăng Nhập</button>
         </form>
     </div>
@@ -426,17 +404,30 @@
             <div class="overlay-panel overlay-left">
                 <h1>Chào mừng trở lại!</h1>
                 <p>Để tiếp tục mua sắm và theo dõi đơn hàng, vui lòng đăng nhập bằng tài khoản của bạn.</p>
-                <a href="login.jsp" class="button ghost" id="signIn">Đăng Nhập</a>
+                <button class="ghost" id="signIn">Đăng Nhập</button>
             </div>
             <div class="overlay-panel overlay-right">
                 <h1>Chào bạn mới!</h1>
                 <p>Nhập thông tin cá nhân của bạn và bắt đầu hành trình mua sắm trái cây tươi ngon cùng Sena Shop.</p>
-                <a href="login.jsp?mode=signup" class="button ghost" id="signUp">Tạo Tài Khoản</a>
+                <button class="ghost" id="signUp">Tạo Tài Khoản</button>
             </div>
         </div>
     </div>
 </div>
 
+<script>
+    const signUpButton = document.getElementById('signUp');
+    const signInButton = document.getElementById('signIn');
+    const container = document.getElementById('container');
+
+    signUpButton.addEventListener('click', () => {
+        container.classList.add("right-panel-active");
+    });
+
+    signInButton.addEventListener('click', () => {
+        container.classList.remove("right-panel-active");
+    });
+</script>
 
 </body>
 </html>

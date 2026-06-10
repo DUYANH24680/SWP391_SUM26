@@ -1,29 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
 <%@ page import="model.Customer" %>
-<%@ page import="dao.ProductDAO" %>
-<%@ page import="model.Product" %>
-<%@ page import="java.util.List" %>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%
     Customer user = (Customer) session.getAttribute("user");
-    
-    // Lấy danh sách sản phẩm từ database cho trang chủ
-    ProductDAO pDao = new ProductDAO();
-    List<Product> homeProducts = pDao.getAllProducts();
-    pDao.close();
-    request.setAttribute("homeProducts", homeProducts);
-
-    String avatarUrl = "";
-    if (user != null) {
-        avatarUrl = user.getAvatar();
-        if (avatarUrl == null || avatarUrl.trim().isEmpty()) {
-            String fullname = user.getFullname() != null ? user.getFullname() : user.getUsername();
-            avatarUrl = "https://ui-avatars.com/api/?name="
-                      + java.net.URLEncoder.encode(fullname, "UTF-8")
-                      + "&background=4caf50&color=fff&size=80&bold=true&rounded=true";
-        }
-    }
 %>
 <!DOCTYPE html>
 <html lang="vi">
@@ -1411,7 +1389,7 @@
 
 <!-- ====================================================== TOPNAV -->
 <nav class="topnav">
-    <a href="home.jsp" class="nav-logo">
+    <a href="home.html" class="nav-logo">
         <i class="fa-solid fa-apple-whole"></i> Sena Shop
     </a>
 
@@ -1421,11 +1399,11 @@
     </div>
 
     <div class="nav-links">
-        <a href="home.jsp" class="active">Trang Chủ</a>
-        <a href="products">Sản Phẩm</a>
-        <a href="products">Rau Củ</a>
-        <a href="products">Nhập Khẩu</a>
-        <a href="products">Khuyến Mãi</a>
+        <a href="#" class="active">Trang Chủ</a>
+        <a href="#">Trái Cây</a>
+        <a href="#">Rau Củ</a>
+        <a href="#">Nhập Khẩu</a>
+        <a href="#">Khuyến Mãi</a>
     </div>
 
     <div class="nav-right">
@@ -1441,7 +1419,7 @@
             <!-- Avatar with dropdown -->
             <div class="avatar-wrap">
                 <img class="nav-avatar"
-                     src="<%= avatarUrl %>"
+                     src="https://ui-avatars.com/api/?name=<%= user.getFullname() != null ? user.getFullname().replace(" ", "+") : "User" %>&background=4caf50&color=fff&size=80&bold=true"
                      alt="avatar">
                 <div class="avatar-dropdown">
                     <div class="avatar-dropdown-inner">
@@ -1756,81 +1734,181 @@
 
             <!-- Product grid -->
             <div class="products-grid">
-                <c:choose>
-                    <c:when test="${not empty homeProducts}">
-                        <c:forEach var="p" items="${homeProducts}">
-                            <div class="product-card ${p.stockQuantity <= 0 ? 'out-of-stock' : ''}">
-                                <div class="product-image-wrap">
-                                    <c:choose>
-                                        <c:when test="${not empty p.image}">
-                                            <img src="${p.image}" alt="${p.title}" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
-                                            <div class="product-emoji" style="display:none;">🍎</div>
-                                        </c:when>
-                                        <c:otherwise>
-                                            <div class="product-emoji">🍎</div>
-                                        </c:otherwise>
-                                    </c:choose>
-                                    
-                                    <c:if test="${p.salePrice < p.originalPrice}">
-                                        <div class="product-badge badge-sale">
-                                            -<fmt:formatNumber value="${p.getDiscountPercent()}" maxFractionDigits="0" />%
-                                        </div>
-                                    </c:if>
 
-                                    <!-- Form Thêm Yêu Thích -->
-                                    <form action="wishlist" method="post" style="position: absolute; top: 0.75rem; right: 0.75rem; margin:0; z-index:10;">
-                                        <input type="hidden" name="action" value="add">
-                                        <input type="hidden" name="productId" value="${p.id}">
-                                        <button type="submit" class="product-wishlist" style="position:static;"><i class="fa-solid fa-heart"></i></button>
-                                    </form>
-                                </div>
-                                <div class="product-info">
-                                    <div class="product-category">${not empty p.shopName ? p.shopName : 'Sena Shop'}</div>
-                                    <div class="product-name">${p.title}</div>
-                                    <div class="product-rating">
-                                        <div class="stars">
-                                            <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
-                                            <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
-                                            <i class="fa-solid fa-star"></i>
-                                        </div>
-                                        <span class="rating-count">5.0 (0)</span>
-                                    </div>
-                                    <div class="product-price">
-                                        <c:choose>
-                                            <c:when test="${p.salePrice < p.originalPrice}">
-                                                <span class="price-current"><fmt:formatNumber value="${p.salePrice}" pattern="#,##0" /> đ</span>
-                                                <span class="price-original"><fmt:formatNumber value="${p.originalPrice}" pattern="#,##0" /> đ</span>
-                                            </c:when>
-                                            <c:otherwise>
-                                                <span class="price-current"><fmt:formatNumber value="${p.originalPrice}" pattern="#,##0" /> đ</span>
-                                            </c:otherwise>
-                                        </c:choose>
-                                    </div>
-                                </div>
-                                <div class="product-footer">
-                                    <div class="product-unit"><i class="fa-solid fa-scale-balanced"></i> ${not empty p.unit ? p.unit : 'kg'}</div>
-                                    <c:choose>
-                                        <c:when test="${p.stockQuantity <= 0}">
-                                            <button class="btn-cart" disabled style="background:var(--gray-200);color:var(--gray-400);"><i class="fa-solid fa-ban"></i> Hết</button>
-                                        </c:when>
-                                        <c:otherwise>
-                                            <!-- Form Thêm Giỏ Hàng -->
-                                            <form action="cart" method="post" style="margin:0;">
-                                                <input type="hidden" name="action" value="add">
-                                                <input type="hidden" name="productId" value="${p.id}">
-                                                <input type="hidden" name="quantity" value="1">
-                                                <button type="submit" class="btn-cart"><i class="fa-solid fa-plus"></i> Thêm</button>
-                                            </form>
-                                        </c:otherwise>
-                                    </c:choose>
-                                </div>
+                <!-- Product 1 -->
+                <div class="product-card">
+                    <div class="product-image-wrap">
+                        <div class="product-emoji">🍎</div>
+                        <div class="product-badge badge-sale">-18%</div>
+                        <button class="product-wishlist"><i class="fa-regular fa-heart"></i></button>
+                    </div>
+                    <div class="product-info">
+                        <div class="product-category">Nhập Khẩu</div>
+                        <div class="product-name">Táo Mỹ Fuji Tươi Giòn</div>
+                        <div class="product-rating">
+                            <div class="stars">
+                                <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+                                <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+                                <i class="fa-solid fa-star"></i>
                             </div>
-                        </c:forEach>
-                    </c:when>
-                    <c:otherwise>
-                        <p style="text-align:center; padding: 2rem; color:var(--gray-400); grid-column: span 3;">Chưa có sản phẩm nào.</p>
-                    </c:otherwise>
-                </c:choose>
+                            <span class="rating-count">4.9 (128)</span>
+                        </div>
+                        <div class="product-price">
+                            <span class="price-current">99.000 d</span>
+                            <span class="price-original">120.000 d</span>
+                            <span class="price-pct">-18%</span>
+                        </div>
+                    </div>
+                    <div class="product-footer">
+                        <div class="product-unit"><i class="fa-solid fa-scale-balanced"></i> Con 100 kg</div>
+                        <button class="btn-cart"><i class="fa-solid fa-plus"></i> Thêm</button>
+                    </div>
+                </div>
+
+                <!-- Product 2 -->
+                <div class="product-card">
+                    <div class="product-image-wrap">
+                        <div class="product-emoji">🍇</div>
+                        <div class="product-badge badge-sale">-17%</div>
+                        <button class="product-wishlist"><i class="fa-regular fa-heart"></i></button>
+                    </div>
+                    <div class="product-info">
+                        <div class="product-category">Nhập Khẩu</div>
+                        <div class="product-name">Nho Úc Không Hạt Tươi</div>
+                        <div class="product-rating">
+                            <div class="stars">
+                                <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+                                <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+                                <i class="fa-solid fa-star-half-stroke"></i>
+                            </div>
+                            <span class="rating-count">4.7 (89)</span>
+                        </div>
+                        <div class="product-price">
+                            <span class="price-current">150.000 d</span>
+                            <span class="price-original">180.000 d</span>
+                            <span class="price-pct">-17%</span>
+                        </div>
+                    </div>
+                    <div class="product-footer">
+                        <div class="product-unit"><i class="fa-solid fa-scale-balanced"></i> Con 80 kg</div>
+                        <button class="btn-cart"><i class="fa-solid fa-plus"></i> Thêm</button>
+                    </div>
+                </div>
+
+                <!-- Product 3 -->
+                <div class="product-card">
+                    <div class="product-image-wrap">
+                        <div class="product-emoji">🥭</div>
+                        <div class="product-badge badge-new">Mới</div>
+                        <button class="product-wishlist"><i class="fa-regular fa-heart"></i></button>
+                    </div>
+                    <div class="product-info">
+                        <div class="product-category">Noi Dia</div>
+                        <div class="product-name">Xoài Cát Hòa Lộc Đặc Sản</div>
+                        <div class="product-rating">
+                            <div class="stars">
+                                <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+                                <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+                                <i class="fa-solid fa-star"></i>
+                            </div>
+                            <span class="rating-count">5.0 (201)</span>
+                        </div>
+                        <div class="product-price">
+                            <span class="price-current">65.000 d</span>
+                        </div>
+                    </div>
+                    <div class="product-footer">
+                        <div class="product-unit"><i class="fa-solid fa-scale-balanced"></i> Con 150 kg</div>
+                        <button class="btn-cart"><i class="fa-solid fa-plus"></i> Thêm</button>
+                    </div>
+                </div>
+
+                <!-- Product 4 -->
+                <div class="product-card">
+                    <div class="product-image-wrap">
+                        <div class="product-emoji">🍊</div>
+                        <div class="product-badge badge-organic">Huu Co</div>
+                        <button class="product-wishlist"><i class="fa-regular fa-heart"></i></button>
+                    </div>
+                    <div class="product-info">
+                        <div class="product-category">Huu Co</div>
+                        <div class="product-name">Cam Hữu Cơ Đà Lạt Tươi</div>
+                        <div class="product-rating">
+                            <div class="stars">
+                                <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+                                <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+                                <i class="fa-regular fa-star empty"></i>
+                            </div>
+                            <span class="rating-count">4.2 (67)</span>
+                        </div>
+                        <div class="product-price">
+                            <span class="price-current">45.000 d</span>
+                            <span class="price-original">55.000 d</span>
+                            <span class="price-pct">-18%</span>
+                        </div>
+                    </div>
+                    <div class="product-footer">
+                        <div class="product-unit"><i class="fa-solid fa-scale-balanced"></i> Con 120 kg</div>
+                        <button class="btn-cart"><i class="fa-solid fa-plus"></i> Thêm</button>
+                    </div>
+                </div>
+
+                <!-- Product 5 -->
+                <div class="product-card">
+                    <div class="product-image-wrap">
+                        <div class="product-emoji">🍑</div>
+                        <div class="product-badge badge-hot">Hot</div>
+                        <button class="product-wishlist"><i class="fa-regular fa-heart"></i></button>
+                    </div>
+                    <div class="product-info">
+                        <div class="product-category">Nhập Khẩu</div>
+                        <div class="product-name">Đào Mỹ Vàng Giòn Ngọt</div>
+                        <div class="product-rating">
+                            <div class="stars">
+                                <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+                                <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+                                <i class="fa-solid fa-star-half-stroke"></i>
+                            </div>
+                            <span class="rating-count">4.6 (45)</span>
+                        </div>
+                        <div class="product-price">
+                            <span class="price-current">135.000 d</span>
+                        </div>
+                    </div>
+                    <div class="product-footer">
+                        <div class="product-unit"><i class="fa-solid fa-scale-balanced"></i> Con 60 kg</div>
+                        <button class="btn-cart"><i class="fa-solid fa-plus"></i> Thêm</button>
+                    </div>
+                </div>
+
+                <!-- Product 6 - Out of stock -->
+                <div class="product-card out-of-stock">
+                    <div class="product-image-wrap">
+                        <div class="product-emoji">🍈</div>
+                        <button class="product-wishlist"><i class="fa-regular fa-heart"></i></button>
+                    </div>
+                    <div class="product-info">
+                        <div class="product-category">Cao Cap</div>
+                        <div class="product-name">Sầu Riêng Musang King</div>
+                        <div class="product-rating">
+                            <div class="stars">
+                                <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+                                <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+                                <i class="fa-solid fa-star"></i>
+                            </div>
+                            <span class="rating-count">4.9 (310)</span>
+                        </div>
+                        <div class="product-price">
+                            <span class="price-current">320.000 d</span>
+                            <span class="price-original">350.000 d</span>
+                        </div>
+                    </div>
+                    <div class="product-footer">
+                        <div class="product-unit" style="color:var(--orange);"><i class="fa-solid fa-circle-xmark"></i> Hết hàng</div>
+                        <button class="btn-cart" disabled><i class="fa-solid fa-ban"></i> Het</button>
+                    </div>
+                </div>
+
             </div><!-- /products-grid -->
 
             <!-- Pagination -->
