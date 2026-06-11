@@ -480,6 +480,28 @@
             color: #fff;
         }
 
+        .btn-delete {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.4rem 0.85rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.8rem;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            border: 1.5px solid #dc2626;
+            background: transparent;
+            color: #dc2626;
+            text-decoration: none;
+            transition: all 0.15s;
+        }
+
+        .btn-delete:hover {
+            background: #dc2626;
+            color: #fff;
+        }
+
         /* Empty state */
         .empty-state {
             text-align: center;
@@ -770,6 +792,11 @@
                                     <td>
                                         <a href="#" class="btn-detail">
                                             <i class="fa-regular fa-eye"></i> Chi Tiet
+                                        </a>
+                                        <a href="${pageContext.request.contextPath}/delete-product?id=${p.id}"
+                                           class="btn-delete"
+                                           onclick="return confirm('Ban co chắc muon xoa san pham \u2018${p.title}\u2019 khong?')">
+                                            <i class="fa-solid fa-trash"></i> Xoa
                                         </a>
                                     </td>
                                 </tr>
