@@ -790,7 +790,7 @@
 
                                     <!-- Hanh dong -->
                                     <td>
-                                        <a href="#" class="btn-detail">
+                                        <a href="${pageContext.request.contextPath}/products?id=${p.id}" class="btn-detail">
                                             <i class="fa-regular fa-eye"></i> Chi Tiet
                                         </a>
                                         <a href="${pageContext.request.contextPath}/delete-product?id=${p.id}"
