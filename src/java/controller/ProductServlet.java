@@ -1,5 +1,6 @@
 package controller;
 
+import dao.CategoryDAO;
 import dao.ProductDAO;
 import dao.ShopDAO;
 import jakarta.servlet.ServletException;
@@ -8,6 +9,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import model.Category;
 import model.Product;
 import model.Shop;
 
@@ -27,6 +29,23 @@ public class ProductServlet extends HttpServlet {
 
         if ("addProductForm".equals(action) || "add-product".equals(action)) {
             resp.sendRedirect(req.getContextPath() + "/add-product");
+            return;
+        }
+
+        // ---- product-detail handler ----
+        String idParam = req.getParameter("id");
+        if (idParam != null && !idParam.trim().isEmpty()) {
+            HttpSession session = req.getSession(false);
+            try {
+                handleProductDetail(req, resp);
+            } catch (Exception e) {
+                System.err.println("[ProductServlet] product-detail error: " + e.getMessage());
+                e.printStackTrace();
+                if (session != null) {
+                    session.setAttribute("error", "Khong the tai chi tiet san pham: " + e.getMessage());
+                }
+                resp.sendRedirect(req.getContextPath() + "/products");
+            }
             return;
         }
 
@@ -76,6 +95,83 @@ public class ProductServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         resp.sendRedirect(req.getContextPath() + "/products");
+    }
+
+    // -----------------------------------------------------------------
+    // Product detail handler
+    // -----------------------------------------------------------------
+    private void handleProductDetail(HttpServletRequest req, HttpServletResponse resp) throws Exception {
+        HttpSession session = req.getSession(false);
+        if (session == null || session.getAttribute("user") == null) {
+            resp.sendRedirect(req.getContextPath() + "/login");
+            return;
+        }
+
+        String idParam = req.getParameter("id").trim();
+        int productId;
+        try {
+            productId = Integer.parseInt(idParam);
+        } catch (NumberFormatException e) {
+            session.setAttribute("error", "ID san pham khong hop le.");
+            resp.sendRedirect(req.getContextPath() + "/products");
+            return;
+        }
+
+        ProductDAO productDAO = new ProductDAO();
+        try {
+            Product product = productDAO.getProductById(productId);
+
+            if (product == null || product.isIsDelete()) {
+                session.setAttribute("error", "San pham khong ton tai hoac da bi xoa.");
+                resp.sendRedirect(req.getContextPath() + "/products");
+                return;
+            }
+
+            // Load category name
+            String categoryName = "-";
+            try {
+                CategoryDAO categoryDAO = new CategoryDAO();
+                try {
+                    List<Category> allCats = categoryDAO.getAllActiveCategories();
+                    for (Category c : allCats) {
+                        if (c.getId() == product.getCategoryId()) {
+                            categoryName = c.getName();
+                            break;
+                        }
+                    }
+                } finally {
+                    categoryDAO.close();
+                }
+            } catch (Exception ex) {
+                System.err.println("[ProductServlet] load category name failed: " + ex.getMessage());
+            }
+
+            // Load shop info
+            Shop shopInfo = null;
+            if (product.getShopId() > 0) {
+                try {
+                    ShopDAO shopDAO = new ShopDAO();
+                    try {
+                        shopInfo = shopDAO.getShopById(product.getShopId());
+                    } finally {
+                        shopDAO.close();
+                    }
+                } catch (Exception ex) {
+                    System.err.println("[ProductServlet] load shop info failed: " + ex.getMessage());
+                }
+            }
+
+            req.setAttribute("product", product);
+            req.setAttribute("categoryName", categoryName);
+            if (shopInfo != null) {
+                req.setAttribute("shopInfo", shopInfo);
+            }
+
+            req.getRequestDispatcher("/product-detail.jsp").forward(req, resp);
+
+        } finally {
+            productDAO.close();
+        }
     }
 
     // -----------------------------------------------------------------

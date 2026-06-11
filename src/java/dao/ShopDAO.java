@@ -10,6 +10,38 @@ import java.sql.*;
 public class ShopDAO extends Utils.DbContext {
 
     /**
+     * Lay thong tin shop theo id (khong kiem tra status).
+     * Su dung de hien thi thong tin shop trong trang chi tiet san pham.
+     */
+    public Shop getShopById(int shopId) {
+        String sql = "SELECT id, owner_id, shop_name, logo, description, address, phone, rating, status, created_at "
+                   + "FROM Shops WHERE id = ?";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            ps.setInt(1, shopId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    Shop shop = new Shop();
+                    shop.setId(rs.getInt("id"));
+                    shop.setOwnerId(rs.getInt("owner_id"));
+                    shop.setName(rs.getString("shop_name"));
+                    shop.setLogo(rs.getString("logo"));
+                    shop.setDescription(rs.getString("description"));
+                    shop.setAddress(rs.getString("address"));
+                    shop.setPhone(rs.getString("phone"));
+                    shop.setRating(rs.getDouble("rating"));
+                    shop.setStatus(rs.getInt("status"));
+                    shop.setCreatedAt(rs.getTimestamp("created_at"));
+                    return shop;
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[ShopDAO] getShopById error: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
      * Lay thong tin shop theo owner_id, chi tra ve neu shop da duoc Approved (status = 1).
      * Neu khong co shop hoac status khac 1 thi tra ve null.
      */
