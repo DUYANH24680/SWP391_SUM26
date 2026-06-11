@@ -260,4 +260,28 @@ public class ProductDAO extends DbContext {
         p.setCreatedAt(rs.getTimestamp("created_at"));
         return p;
     }
+
+    /**
+     * Soft delete: danh dau san pham la da xoa (isDelete = 1).
+     * Chi seller cua shop so huu moi duoc phep xoa san pham cua minh.
+     */
+    public boolean deleteProduct(int productId, int shopId) {
+        String sql = "UPDATE Products SET isDelete = 1 WHERE id = ? AND shop_id = ? AND isDelete = 0";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            ps.setInt(1, productId);
+            ps.setInt(2, shopId);
+            int rowsUpdated = ps.executeUpdate();
+            if (rowsUpdated > 0) {
+                System.out.println("[ProductDAO] deleteProduct(id=" + productId + ", shopId=" + shopId + ") success");
+            } else {
+                System.out.println("[ProductDAO] deleteProduct(id=" + productId + ", shopId=" + shopId
+                    + ") — product not found or already deleted");
+            }
+            return rowsUpdated > 0;
+        } catch (SQLException e) {
+            System.err.println("[ProductDAO] deleteProduct(" + productId + "," + shopId + ") error: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("ProductDAO.deleteProduct error: " + e.getMessage(), e);
+        }
+    }
 }

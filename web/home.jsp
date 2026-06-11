@@ -1389,7 +1389,7 @@
 
 <!-- ====================================================== TOPNAV -->
 <nav class="topnav">
-    <a href="home.html" class="nav-logo">
+    <a href="home.jsp" class="nav-logo">
         <i class="fa-solid fa-apple-whole"></i> Sena Shop
     </a>
 
