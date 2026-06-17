@@ -284,4 +284,65 @@ public class ProductDAO extends DbContext {
             throw new RuntimeException("ProductDAO.deleteProduct error: " + e.getMessage(), e);
         }
     }
+
+    public List<Product> filterProducts(String keyword, List<Integer> categoryIds, String status) {
+        StringBuilder sql = new StringBuilder(
+                "SELECT p.id, p.category_id, p.shop_id, p.title, p.image, p.description, p.unit, "
+              + "p.stock_quantity, p.sold_quantity, p.original_price, p.sale_price, p.expired_date, "
+              + "p.average_rating, p.is_featured, p.status, p.isDelete, p.created_at, "
+              + "s.shop_name "
+              + "FROM Products p "
+              + "LEFT JOIN Shops s ON p.shop_id = s.id "
+              + "WHERE p.isDelete = 0 "
+        );
+
+        List<Object> params = new ArrayList<>();
+
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            sql.append(" AND (p.title LIKE ? OR p.description LIKE ?) ");
+            String pattern = "%" + keyword.trim() + "%";
+            params.add(pattern);
+            params.add(pattern);
+        }
+
+        if (categoryIds != null && !categoryIds.isEmpty()) {
+            sql.append(" AND p.category_id IN (");
+            for (int i = 0; i < categoryIds.size(); i++) {
+                sql.append("?");
+                params.add(categoryIds.get(i));
+                if (i < categoryIds.size() - 1) {
+                    sql.append(",");
+                }
+            }
+            sql.append(") ");
+        }
+
+        if (status != null && !status.isEmpty()) {
+            if ("in_stock".equals(status)) {
+                sql.append(" AND p.stock_quantity > 0 ");
+            } else if ("out_of_stock".equals(status)) {
+                sql.append(" AND p.stock_quantity <= 0 ");
+            }
+        }
+
+        sql.append(" ORDER BY p.created_at DESC");
+
+        try (PreparedStatement ps = getConnection().prepareStatement(sql.toString())) {
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+
+            try (ResultSet rs = ps.executeQuery()) {
+                List<Product> list = new ArrayList<>();
+                while (rs.next()) {
+                    list.add(mapRow(rs));
+                }
+                return list;
+            }
+        } catch (SQLException e) {
+            System.err.println("[ProductDAO] filterProducts SQL error: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("ProductDAO.filterProducts error: " + e.getMessage(), e);
+        }
+    }
 }
