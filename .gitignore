@@ -19,3 +19,5 @@ Thumbs.db
 
 .cursor/
 /build
+
+"build/web/WEB-INF/classes/Utils/DbContext.class"
