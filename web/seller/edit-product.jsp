@@ -5,14 +5,15 @@
 <%@ page import="java.util.List" %>
 <%@ page import="java.text.SimpleDateFormat" %>
 <%
-    Object rawUser = session.getAttribute("user");
-    Object rawUserId = session.getAttribute("userId");
-
-    Customer user = (Customer) rawUser;
+    Customer user = (Customer) session.getAttribute("user");
     if (user == null) {
         response.sendRedirect(request.getContextPath() + "/login");
         return;
     }
+
+    String role = (String) session.getAttribute("role");
+    String roleDisplay = "Member";
+    if ("seller".equalsIgnoreCase(role)) roleDisplay = "Nhân Viên Bán Hàng";
 
     String avatarUrl = user.getAvatar();
     if (avatarUrl == null || avatarUrl.trim().isEmpty()) {
@@ -29,14 +30,15 @@
 
     Product product = (Product) request.getAttribute("product");
     List<Category> categories = (List<Category>) request.getAttribute("categories");
-    List<String> currentImages = (List<String>) request.getAttribute("currentImages");
     if (categories == null) categories = java.util.Collections.emptyList();
+
+    List<String> currentImages = (List<String>) request.getAttribute("currentImages");
     if (currentImages == null) currentImages = java.util.Collections.emptyList();
 
-    SimpleDateFormat dbDateFormat = new SimpleDateFormat("yyyy-MM-dd");
-    String expiredDateValue = "";
+    String expiredDateStr = "";
     if (product != null && product.getExpiredDate() != null) {
-        expiredDateValue = dbDateFormat.format(product.getExpiredDate());
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        expiredDateStr = sdf.format(product.getExpiredDate());
     }
 %>
 <!DOCTYPE html>
@@ -55,8 +57,6 @@
             --green-dark:  #388e3c;
             --green-light: #e8f5e9;
             --green-mid:   #c8e6c9;
-            --amber:       #f59e0b;
-            --amber-light: #fffbeb;
             --bg:          #f0f4f1;
             --white:       #ffffff;
             --gray-50:     #f8fafb;
@@ -66,6 +66,8 @@
             --gray-600:    #5a6a5a;
             --gray-800:    #2d3d2d;
             --shadow-sm:   0 1px 3px rgba(0,0,0,.08);
+            --shadow:      0 4px 12px rgba(0,0,0,.08);
+            --shadow-md:   0 8px 24px rgba(0,0,0,.10);
             --radius:      14px;
             --radius-sm:   8px;
         }
@@ -156,59 +158,68 @@
         }
 
         /* ======= LAYOUT ======= */
-        .layout {
-            display: flex;
+        .page-wrap {
             flex: 1;
-            max-width: 1280px;
+            max-width: 900px;
             width: 100%;
-            margin: 1.5rem auto;
+            margin: 2rem auto;
             padding: 0 1.5rem;
-            gap: 1.5rem;
-            align-items: flex-start;
         }
 
-        /* ======= SIDEBAR ======= */
-        .sidebar {
-            width: 200px;
-            flex-shrink: 0;
-            background: var(--white);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow-sm);
-            border: 1px solid var(--gray-200);
-            overflow: hidden;
-            position: sticky;
-            top: 76px;
-        }
-
-        .sidebar-nav { padding: 0.5rem; }
-
-        .sidebar-nav a,
-        .sidebar-nav button {
+        /* ======= BREADCRUMB ======= */
+        .breadcrumb {
             display: flex;
             align-items: center;
-            gap: 0.65rem;
-            width: 100%;
-            padding: 0.65rem 0.9rem;
-            border-radius: var(--radius-sm);
-            font-size: 0.875rem;
-            font-weight: 500;
-            color: var(--gray-600);
-            border: none;
-            background: transparent;
-            cursor: pointer;
-            font-family: 'Inter', sans-serif;
-            text-align: left;
-            text-decoration: none;
-            transition: all 0.15s;
+            gap: 0.4rem;
+            font-size: 0.82rem;
+            color: var(--gray-400);
+            margin-bottom: 1.25rem;
         }
 
-        .sidebar-nav a:hover { background: var(--green-light); color: var(--green-dark); }
-        .sidebar-nav a.active { background: var(--green); color: #fff; font-weight: 600; }
-        .sidebar-nav a.logout { color: #e53e3e; }
-        .sidebar-nav a.logout:hover { background: #fff5f5; color: #c53030; }
+        .breadcrumb a {
+            color: var(--green);
+            text-decoration: none;
+            font-weight: 500;
+        }
 
-        /* ======= MAIN ======= */
-        .main { flex: 1; display: flex; flex-direction: column; gap: 1.25rem; min-width: 0; }
+        .breadcrumb a:hover { text-decoration: underline; }
+
+        .breadcrumb span { color: var(--gray-600); font-weight: 500; }
+
+        /* ======= PAGE HEADER ======= */
+        .page-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.75rem;
+        }
+
+        .page-header-icon {
+            width: 52px; height: 52px;
+            border-radius: var(--radius);
+            background: var(--green-light);
+            border: 1.5px solid var(--green-mid);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            color: var(--green-dark);
+            flex-shrink: 0;
+        }
+
+        .page-header-text h1 {
+            font-size: 1.45rem;
+            font-weight: 800;
+            color: var(--gray-800);
+            letter-spacing: -0.02em;
+            line-height: 1.1;
+        }
+
+        .page-header-text p {
+            font-size: 0.82rem;
+            color: var(--gray-400);
+            margin-top: 0.2rem;
+        }
 
         /* ======= ALERTS ======= */
         .alert {
@@ -219,6 +230,7 @@
             border-radius: var(--radius-sm);
             font-size: 0.875rem;
             font-weight: 500;
+            margin-bottom: 1.25rem;
         }
 
         .alert-success { background: #dcfce7; border: 1px solid #bbf7d0; color: #166534; }
@@ -231,6 +243,7 @@
             border: 1px solid var(--gray-200);
             box-shadow: var(--shadow-sm);
             overflow: hidden;
+            margin-bottom: 1.25rem;
         }
 
         .card-header {
@@ -250,19 +263,6 @@
         .card-title i { color: var(--green); }
 
         .card-body { padding: 1.5rem; }
-
-        /* ======= BREADCRUMB ======= */
-        .breadcrumb {
-            display: flex;
-            align-items: center;
-            gap: 0.4rem;
-            font-size: 0.82rem;
-            color: var(--gray-400);
-        }
-
-        .breadcrumb a { color: var(--green); text-decoration: none; font-weight: 500; }
-        .breadcrumb a:hover { text-decoration: underline; }
-        .breadcrumb span { color: var(--gray-600); font-weight: 500; }
 
         /* ======= SECTION LABEL ======= */
         .section-label {
@@ -296,7 +296,10 @@
             gap: 0.3rem;
         }
 
-        .form-label .required { color: #dc2626; font-size: 0.7rem; }
+        .form-label .required {
+            color: #dc2626;
+            font-size: 0.7rem;
+        }
 
         .form-control {
             background: var(--gray-50);
@@ -318,6 +321,7 @@
         }
 
         .form-control::placeholder { color: var(--gray-400); }
+
         textarea.form-control { resize: vertical; min-height: 100px; }
         select.form-control option { background: var(--white); }
 
@@ -389,7 +393,8 @@
             background: var(--gray-50);
         }
 
-        .image-upload-area:hover {
+        .image-upload-area:hover,
+        .image-upload-area.drag-over {
             border-color: var(--green);
             background: var(--green-light);
         }
@@ -409,70 +414,114 @@
         .image-upload-text strong { color: var(--green); }
         .image-upload-text span { display: block; margin-top: 0.2rem; font-size: 0.72rem; }
 
-        /* ======= CURRENT IMAGES ======= */
-        .current-images-section { margin-bottom: 1.25rem; }
-
-        .current-images-grid {
+        .upload-preview {
             display: flex;
             flex-wrap: wrap;
             gap: 0.75rem;
-            margin-top: 0.75rem;
+            margin-top: 0.85rem;
         }
 
-        .current-image-thumb {
-            width: 90px;
-            height: 90px;
+        .preview-thumb {
+            width: 80px; height: 80px;
             border-radius: 10px;
             object-fit: cover;
             border: 2px solid var(--gray-200);
             position: relative;
         }
 
-        .current-image-thumb.is-cover {
-            border-color: var(--green);
-            box-shadow: 0 0 0 2px var(--green-mid);
+        .upload-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.65rem;
+            margin-top: 0.85rem;
         }
 
-        .image-cover-badge {
-            position: absolute;
-            bottom: 4px;
-            left: 4px;
-            background: var(--green);
-            color: #fff;
-            font-size: 0.6rem;
-            font-weight: 700;
-            padding: 1px 5px;
-            border-radius: 4px;
-        }
-
-        /* ======= REPLACE IMAGES TOGGLE ======= */
-        .replace-images-toggle {
+        .upload-item {
             display: flex;
             align-items: center;
-            gap: 0.6rem;
-            padding: 0.8rem 1rem;
-            background: var(--amber-light);
-            border: 1.5px solid #fde68a;
+            gap: 0.75rem;
+            padding: 0.65rem 0.9rem;
+            background: var(--gray-50);
+            border: 1px solid var(--gray-100);
             border-radius: var(--radius-sm);
-            margin-bottom: 1rem;
-            font-size: 0.875rem;
-            color: #92400e;
-            cursor: pointer;
+            font-size: 0.82rem;
+            color: var(--gray-600);
         }
 
-        .replace-images-toggle input[type="checkbox"] {
+        .upload-item i { color: var(--green); font-size: 1rem; }
+
+        /* ======= CURRENT IMAGES ======= */
+        .current-images-label {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--gray-600);
+            margin-bottom: 0.6rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .current-images-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .current-img-wrap {
+            position: relative;
+            width: 90px;
+            height: 90px;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 2px solid var(--gray-200);
+        }
+
+        .current-img-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .current-img-wrap .img-badge {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0,0,0,0.55);
+            color: #fff;
+            font-size: 0.62rem;
+            font-weight: 600;
+            text-align: center;
+            padding: 0.2rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .replace-images-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            padding: 0.7rem 1rem;
+            background: #fff7ed;
+            border: 1px solid #fed7aa;
+            border-radius: var(--radius-sm);
+        }
+
+        .replace-images-row input[type="checkbox"] {
             width: 16px;
             height: 16px;
-            accent-color: var(--amber);
+            accent-color: var(--green);
             cursor: pointer;
         }
 
-        .replace-images-panel {
-            display: none;
-        }
-
-        .replace-images-panel.active {
-            display: block;
+        .replace-images-row label {
+            font-size: 0.82rem;
+            color: #9a3412;
+            font-weight: 500;
+            cursor: pointer;
+            user-select: none;
         }
 
         /* ======= INFO BOX ======= */
@@ -512,20 +561,14 @@
         }
 
         .footer-logo i { color: var(--green); }
+
         .footer-copy { font-size: 0.78rem; color: var(--gray-400); }
 
         /* ======= RESPONSIVE ======= */
-        @media (max-width: 900px) {
-            .layout { flex-direction: column; padding: 0 1rem; }
-            .sidebar { width: 100%; position: static; }
-            .sidebar-nav { display: flex; flex-wrap: wrap; gap: 0.25rem; }
-            .sidebar-nav a { width: auto; }
-        }
-
         @media (max-width: 640px) {
             .form-grid { grid-template-columns: 1fr; }
             .form-group.full { grid-column: span 1; }
-            .layout { padding: 0 1rem; }
+            .page-wrap { padding: 0 1rem; }
             .topnav { padding: 0 1rem; }
             .nav-links { display: none; }
         }
@@ -548,226 +591,228 @@
     </div>
 </nav>
 
-<!-- ====== LAYOUT ====== -->
-<div class="layout">
+<!-- ====== MAIN ====== -->
+<div class="page-wrap">
 
-    <!-- SIDEBAR -->
-    <aside class="sidebar">
-        <div class="sidebar-nav">
-            <a href="profile"><i class="fa-regular fa-user"></i> Hồ Sơ</a>
-            <a href="products"><i class="fa-brands fa-opencart"></i> Sản Phẩm</a>
-            <a href="add-product"><i class="fa-solid fa-plus"></i> Thêm Sản Phẩm</a>
-            <a href="#" class="active"><i class="fa-solid fa-pen-to-square"></i> Chỉnh Sửa</a>
-            <a href="#"><i class="fa-solid fa-basket-shopping"></i> Đơn Hàng</a>
-            <a href="#"><i class="fa-regular fa-heart"></i> Yêu Thích</a>
-            <a href="logout" class="logout" style="margin-top:0.5rem;"><i class="fa-solid fa-right-from-bracket"></i> Đăng Xuất</a>
-        </div>
-    </aside>
+    <!-- Breadcrumb -->
+    <div class="breadcrumb">
+        <a href="products"><i class="fa-solid fa-box"></i> Sản Phẩm</a>
+        <i class="fa-solid fa-chevron-right" style="font-size:0.6rem;color:var(--gray-400);"></i>
+        <span>Chỉnh Sửa Sản Phẩm</span>
+    </div>
 
-    <!-- MAIN -->
-    <main class="main">
+    <!-- Page header -->
+    <div class="page-header">
+        <div class="page-header-icon">
+            <i class="fa-solid fa-pen-to-square"></i>
+        </div>
+        <div class="page-header-text">
+            <h1>Chỉnh Sửa Sản Phẩm</h1>
+            <p>Cập nhật thông tin sản phẩm. Thay đổi sẽ được áp dụng ngay sau khi lưu.</p>
+        </div>
+    </div>
 
-        <!-- Breadcrumb -->
-        <div class="breadcrumb">
-            <a href="products"><i class="fa-solid fa-box"></i> Sản Phẩm</a>
-            <i class="fa-solid fa-chevron-right" style="font-size:0.6rem;color:var(--gray-400);"></i>
-            <span>Chỉnh Sửa Sản Phẩm</span>
-        </div>
+    <!-- Alerts -->
+    <% if (message != null) { %>
+    <div class="alert alert-success">
+        <i class="fa-solid fa-circle-check"></i>
+        <span><%= message %></span>
+    </div>
+    <% } %>
+    <% if (error != null) { %>
+    <div class="alert alert-danger">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <span><%= error %></span>
+    </div>
+    <% } %>
 
-        <!-- Alerts -->
-        <% if (message != null) { %>
-        <div class="alert alert-success">
-            <i class="fa-solid fa-circle-check"></i>
-            <span><%= message %></span>
-        </div>
-        <% } %>
-        <% if (error != null) { %>
-        <div class="alert alert-danger">
-            <i class="fa-solid fa-circle-exclamation"></i>
-            <span><%= error %></span>
-        </div>
-        <% } %>
-
-        <!-- Info box -->
-        <div class="info-box">
-            <i class="fa-solid fa-circle-info"></i>
-            <span>Bỏ trống phần ảnh nếu bạn muốn giữ nguyên ảnh hiện tại. Tick chọn <strong>Thay đổi ảnh</strong> để tải lên ảnh mới.</span>
-        </div>
+    <% if (product == null) { %>
+    <div class="alert alert-danger">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <span>Không tìm thấy sản phẩm. Vui lòng quay lại danh sách sản phẩm.</span>
+    </div>
+    <div class="form-actions">
+        <a href="products" class="btn btn-outline">
+            <i class="fa-solid fa-arrow-left"></i> Quay Lại
+        </a>
+    </div>
+    <% } else { %>
 
     <!-- Form -->
-    <% if (product != null) { %>
-    <form action="edit-product" method="POST" enctype="multipart/form-data">
-    <input type="hidden" name="productId" value="<%= product.getId() %>">
-    <input type="hidden" name="action" value="update">
+    <form action="edit-product" method="POST" enctype="multipart/form-data" id="productForm">
 
-            <!-- Thong tin co ban -->
-            <div class="card">
-                <div class="card-header">
-                    <i class="fa-solid fa-info-circle" style="color:var(--green);font-size:1rem;"></i>
-                    <div class="card-title">Thông Tin Cơ Bản</div>
-                </div>
-                <div class="card-body">
-                    <div class="section-label">
-                        <i class="fa-solid fa-asterisk" style="font-size:0.5rem;color:var(--green);"></i>
-                        Thông tin sản phẩm
-                    </div>
-                    <div class="form-grid">
+        <!-- Hidden inputs -->
+        <input type="hidden" name="productId" value="<%= product.getId() %>">
+        <input type="hidden" name="action" value="update">
 
-                        <div class="form-group full">
-                            <label class="form-label">Tên sản phẩm <span class="required">*</span></label>
-                            <input type="text" name="title" class="form-control"
-                                   value="<%= product.getTitle() != null ? product.getTitle() : "" %>"
-                                   placeholder="VD: Cam Vinh ruot do late 5kg" required>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Danh mục <span class="required">*</span></label>
-                            <select name="categoryId" class="form-control" required>
-                                <option value="">-- Chọn danh mục --</option>
-                                <% for (Category c : categories) { %>
-                                <option value="<%= c.getId() %>"
-                                    <%= (product.getCategoryId() == c.getId()) ? "selected" : "" %>>
-                                    <%= c.getName() %>
-                                </option>
-                                <% } %>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Đơn vị tính <span class="required">*</span></label>
-                            <input type="text" name="unit" class="form-control"
-                                   value="<%= product.getUnit() != null ? product.getUnit() : "" %>"
-                                   placeholder="VD: kg, tan, qua" required>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Giá gốc (VNĐ) <span class="required">*</span></label>
-                            <input type="number" name="originalPrice" class="form-control"
-                                   value="<%= product.getOriginalPrice() %>"
-                                   placeholder="VD: 150000" min="0" step="1000" required>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Giá bán (VNĐ) <span class="required">*</span></label>
-                            <input type="number" name="salePrice" class="form-control"
-                                   value="<%= product.getSalePrice() %>"
-                                   placeholder="VD: 120000" min="0" step="1000" required>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Số lượng trong kho <span class="required">*</span></label>
-                            <input type="number" name="stockQuantity" class="form-control"
-                                   value="<%= product.getStockQuantity() %>"
-                                   placeholder="VD: 100" min="0" required>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Ngày hết hạn</label>
-                            <input type="date" name="expiredDate" class="form-control"
-                                   value="<%= expiredDateValue %>">
-                            <span class="form-hint">Để trống nếu không có hạn sử dụng</span>
-                        </div>
-
-                        <div class="form-group full">
-                            <label class="form-label">Mô tả sản phẩm <span class="required">*</span></label>
-                            <textarea name="description" class="form-control"
-                                      placeholder="Mô tả chi tiết về sản phẩm: xuất xứ, cách bảo quản, ưu điểm..."
-                                      required><%= product.getDescription() != null ? product.getDescription() : "" %></textarea>
-                        </div>
-
-                    </div>
-                </div>
+        <!-- === Thong tin co ban === -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fa-solid fa-info-circle" style="color:var(--green);font-size:1rem;"></i>
+                <div class="card-title">Thông Tin Cơ Bản</div>
             </div>
-
-            <!-- Hinh anh -->
-            <div class="card">
-                <div class="card-header">
-                    <i class="fa-solid fa-images" style="color:var(--green);font-size:1rem;"></i>
-                    <div class="card-title">Hình Ảnh Sản Phẩm</div>
+            <div class="card-body">
+                <div class="section-label">
+                    <i class="fa-solid fa-asterisk" style="font-size:0.5rem;color:var(--green);"></i>
+                    Thông tin sản phẩm
                 </div>
-                <div class="card-body">
-                    <div class="section-label">
-                        <i class="fa-solid fa-asterisk" style="font-size:0.5rem;color:var(--green);"></i>
-                        Ảnh hiện tại
+                <div class="form-grid">
+
+                    <div class="form-group full">
+                        <label class="form-label">Tên sản phẩm <span class="required">*</span></label>
+                        <input type="text" name="title" class="form-control"
+                               placeholder="VD: Cam Vinh ruot do late 5kg"
+                               value="<%= product.getTitle() != null ? product.getTitle() : "" %>" required>
                     </div>
 
-                    <% if (!currentImages.isEmpty()) { %>
-                    <div class="current-images-grid">
-                        <% for (int i = 0; i < currentImages.size(); i++) { %>
-                        <div style="position:relative;display:inline-block;">
-                            <img src="<%= currentImages.get(i) %>" alt="Ảnh <%= i + 1 %>"
-                                 class="current-image-thumb <%= i == 0 ? "is-cover" : "" %>">
-                            <% if (i == 0) { %>
-                            <span class="image-cover-badge">Cover</span>
+                    <div class="form-group">
+                        <label class="form-label">Danh mục <span class="required">*</span></label>
+                        <select name="categoryId" class="form-control" required>
+                            <option value="">-- Chọn danh mục --</option>
+                            <% for (Category c : categories) { %>
+                            <option value="<%= c.getId() %>"
+                                <%= (product.getCategoryId() == c.getId()) ? "selected" : "" %>>
+                                <%= c.getName() %>
+                            </option>
                             <% } %>
-                        </div>
-                        <% } %>
+                        </select>
                     </div>
-                    <% } else { %>
-                    <p style="font-size:0.82rem;color:var(--gray-400);margin-top:0.5rem;">Chưa có ảnh nào.</p>
-                    <% } %>
 
-                    <!-- Toggle thay doi anh -->
-                    <label class="replace-images-toggle" for="replaceImagesCheck" style="margin-top:1.25rem;">
-                        <input type="checkbox" id="replaceImagesCheck" name="replaceImages" value="true"
-                               onchange="toggleImagePanel(this.checked)">
-                        <strong><i class="fa-solid fa-pen"></i> Thay đổi ảnh</strong>
-                        &mdash; Bỏ chọn để giữ nguyên ảnh hiện tại
-                    </label>
+                    <div class="form-group">
+                        <label class="form-label">Đơn vị tính <span class="required">*</span></label>
+                        <input type="text" name="unit" class="form-control"
+                               placeholder="VD: kg, tan, qua"
+                               value="<%= product.getUnit() != null ? product.getUnit() : "" %>" required>
+                    </div>
 
-                    <!-- Panel upload anh moi -->
-                    <div id="imagePanel" class="replace-images-panel">
-                        <div class="form-group" style="margin-bottom:1.25rem;">
-                            <label class="form-label">Ảnh chính</label>
-                            <div class="image-upload-area">
-                                <div class="image-upload-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
-                                <div class="image-upload-text">
-                                    <strong>Click để chọn ảnh chính</strong>
-                                    <span>JPG, JPEG, PNG, WEBP &bull; Tối đa 5MB</span>
-                                </div>
-                                <input type="file" name="images" accept=".jpg,.jpeg,.png,.webp"
-                                       style="display:block;margin:0.75rem auto 0;cursor:pointer;">
-                            </div>
-                        </div>
+                    <div class="form-group">
+                        <label class="form-label">Giá gốc (VNĐ) <span class="required">*</span></label>
+                        <input type="number" name="originalPrice" class="form-control"
+                               placeholder="VD: 150000" min="0" step="1000"
+                               value="<%= product.getOriginalPrice() %>" required>
+                    </div>
 
-                        <div class="form-group">
-                            <label class="form-label">Ảnh phụ</label>
-                            <div class="image-upload-area">
-                                <div class="image-upload-icon"><i class="fa-solid fa-images"></i></div>
-                                <div class="image-upload-text">
-                                    <strong>Click để chọn nhiều ảnh phụ</strong>
-                                    <span>JPG, JPEG, PNG, WEBP &bull; Tối đa 5MB mỗi ảnh</span>
-                                </div>
-                                <input type="file" name="images" accept=".jpg,.jpeg,.png,.webp"
-                                       multiple style="display:block;margin:0.75rem auto 0;cursor:pointer;">
-                            </div>
-                            <span class="form-hint">Có thể chọn nhiều ảnh cùng lúc. Ảnh đầu tiên sẽ là ảnh chính.</span>
-                        </div>
+                    <div class="form-group">
+                        <label class="form-label">Giá bán (VNĐ) <span class="required">*</span></label>
+                        <input type="number" name="salePrice" class="form-control"
+                               placeholder="VD: 120000" min="0" step="1000"
+                               value="<%= product.getSalePrice() %>" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Số lượng trong kho <span class="required">*</span></label>
+                        <input type="number" name="stockQuantity" class="form-control"
+                               placeholder="VD: 100" min="0"
+                               value="<%= product.getStockQuantity() %>" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Ngày hết hạn</label>
+                        <input type="date" name="expiredDate" class="form-control"
+                               value="<%= expiredDateStr %>">
+                        <span class="form-hint">Để trống nếu không có hạn sử dụng</span>
+                    </div>
+
+                    <div class="form-group full">
+                        <label class="form-label">Mô tả sản phẩm <span class="required">*</span></label>
+                        <textarea name="description" class="form-control"
+                                  placeholder="Mô tả chi tiết về sản phẩm: xuất xứ, cách bảo quản, ưu điểm..."
+                                  required><%= product.getDescription() != null ? product.getDescription() : "" %></textarea>
                     </div>
 
                 </div>
             </div>
-
-            <!-- Actions -->
-            <div class="form-actions">
-                <a href="products" class="btn btn-outline">
-                    <i class="fa-solid fa-xmark"></i> Hủy
-                </a>
-                <button type="submit" class="btn btn-green">
-                    <i class="fa-solid fa-floppy-disk"></i> Cập Nhật
-                </button>
-            </div>
-
-        </form>
-        <% } else { %>
-        <div class="alert alert-danger">
-            <i class="fa-solid fa-circle-exclamation"></i>
-            <span>Không tìm thấy sản phẩm. <a href="products">Quay lại danh sách.</a></span>
         </div>
-        <% } %>
 
-    </main>
-</div><!-- /layout -->
+        <!-- === Hinh anh === -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fa-solid fa-images" style="color:var(--green);font-size:1rem;"></i>
+                <div class="card-title">Hình Ảnh Sản Phẩm</div>
+            </div>
+            <div class="card-body">
+                <div class="section-label">
+                    <i class="fa-solid fa-camera"></i>
+                    Ảnh hiện tại
+                </div>
+
+                <% if (!currentImages.isEmpty()) { %>
+                <div class="current-images-grid">
+                    <% for (int i = 0; i < currentImages.size(); i++) { %>
+                    <div class="current-img-wrap">
+                        <img src="<%= currentImages.get(i) %>" alt="Ảnh sản phẩm <%= i + 1 %>">
+                        <div class="img-badge"><%= i == 0 ? "Chính" : "Phụ " + i %></div>
+                    </div>
+                    <% } %>
+                </div>
+                <% } else { %>
+                <p style="font-size:0.82rem;color:var(--gray-400);margin-bottom:1rem;">
+                    <i class="fa-solid fa-image" style="color:var(--gray-400);margin-right:0.3rem;"></i>
+                    Chưa có ảnh nào
+                </p>
+                <% } %>
+
+                <div class="section-label">
+                    <i class="fa-solid fa-asterisk" style="font-size:0.5rem;color:var(--green);"></i>
+                    Thay đổi ảnh
+                </div>
+
+                <div class="replace-images-row">
+                    <input type="checkbox" name="replaceImages" id="replaceImages" value="true"
+                           onchange="toggleImageUpload()">
+                    <label for="replaceImages">Thay thế toàn bộ ảnh hiện tại bằng ảnh mới</label>
+                </div>
+
+                <div id="imageUploadSection" style="display:none;">
+                    <!-- Anh chinh -->
+                    <div class="form-group" style="margin-bottom:1.25rem;">
+                        <label class="form-label">Ảnh chính <span class="required">*</span></label>
+                        <div class="image-upload-area">
+                            <div class="image-upload-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+                            <div class="image-upload-text">
+                                <strong>Click để chọn ảnh chính</strong>
+                                <span>JPG, JPEG, PNG, WEBP &bull; Tối đa 5MB &bull; Khuyen mai: 600x600px</span>
+                            </div>
+                            <input type="file" name="images" accept=".jpg,.jpeg,.png,.webp"
+                                   style="display:block;margin:0.75rem auto 0;cursor:pointer;" id="mainImageInput">
+                        </div>
+                    </div>
+
+                    <!-- Anh phu -->
+                    <div class="form-group">
+                        <label class="form-label">Ảnh phụ</label>
+                        <div class="image-upload-area">
+                            <div class="image-upload-icon"><i class="fa-solid fa-images"></i></div>
+                            <div class="image-upload-text">
+                                <strong>Click để chọn nhiều ảnh phụ</strong>
+                                <span>JPG, JPEG, PNG, WEBP &bull; Tối đa 5MB mỗi ảnh</span>
+                            </div>
+                            <input type="file" name="images" accept=".jpg,.jpeg,.png,.webp"
+                                   multiple style="display:block;margin:0.75rem auto 0;cursor:pointer;"
+                                   id="subImagesInput">
+                        </div>
+                        <span class="form-hint">Có thể chọn nhiều ảnh cùng lúc. Ảnh đầu tiên sẽ là ảnh chính.</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="form-actions">
+            <a href="products" class="btn btn-outline">
+                <i class="fa-solid fa-arrow-left"></i> Hủy
+            </a>
+            <button type="submit" class="btn btn-green">
+                <i class="fa-solid fa-floppy-disk"></i> Cập Nhật
+            </button>
+        </div>
+
+    </form>
+
+    <% } %>
+
+</div><!-- /page-wrap -->
 
 <!-- ====== FOOTER ====== -->
 <footer class="footer">
@@ -776,12 +821,12 @@
 </footer>
 
 <script>
-    function toggleImagePanel(checked) {
-        var panel = document.getElementById('imagePanel');
-        if (checked) {
-            panel.classList.add('active');
-        } else {
-            panel.classList.remove('active');
+    function toggleImageUpload() {
+        var section = document.getElementById('imageUploadSection');
+        var checkbox = document.getElementById('replaceImages');
+        section.style.display = checkbox.checked ? 'block' : 'none';
+        if (!checkbox.checked) {
+            document.getElementById('mainImageInput').removeAttribute('required');
         }
     }
 </script>

@@ -59,6 +59,7 @@ public class ProductServlet extends HttpServlet {
                          + ", keyword=" + (keyword != null ? "\"" + keyword + "\"" : "null"));
 
         req.setAttribute("debugRole", role);
+        req.setAttribute("role", role);
 
         try {
             List<Product> products = loadProducts(role, session, keyword);
