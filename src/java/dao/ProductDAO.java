@@ -285,6 +285,184 @@ public class ProductDAO extends DbContext {
         }
     }
 
+    /**
+     * Lay san pham theo id co kiem tra ownership.
+     * Tra ve null neu san pham khong ton tai hoac khong thuoc shop.
+     */
+    public Product getProductByIdForEdit(int productId, int shopId) {
+        String sql = "SELECT p.id, p.category_id, p.shop_id, p.title, p.image, p.description, p.unit, "
+                   + "p.stock_quantity, p.sold_quantity, p.original_price, p.sale_price, p.expired_date, "
+                   + "p.average_rating, p.is_featured, p.status, p.isDelete, p.created_at, "
+                   + "s.shop_name "
+                   + "FROM Products p "
+                   + "LEFT JOIN Shops s ON p.shop_id = s.id "
+                   + "WHERE p.id = ? AND p.shop_id = ? AND p.isDelete = 0";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            ps.setInt(1, productId);
+            ps.setInt(2, shopId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    System.out.println("[ProductDAO] getProductByIdForEdit(productId=" + productId
+                        + ", shopId=" + shopId + ") — ownership verified");
+                    return mapRow(rs);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[ProductDAO] getProductByIdForEdit(" + productId + "," + shopId
+                + ") error: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("ProductDAO.getProductByIdForEdit error: " + e.getMessage(), e);
+        }
+        System.out.println("[ProductDAO] getProductByIdForEdit(productId=" + productId
+            + ", shopId=" + shopId + ") — product not found or not owned by shop");
+        return null;
+    }
+
+    /**
+     * Lay danh sach anh cua mot san pham.
+     */
+    public List<String> getProductImageUrls(int productId) {
+        String sql = "SELECT image_url FROM ProductImages WHERE product_id = ? ORDER BY sort_order ASC";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            ps.setInt(1, productId);
+            try (ResultSet rs = ps.executeQuery()) {
+                List<String> urls = new ArrayList<>();
+                while (rs.next()) {
+                    urls.add(rs.getString("image_url"));
+                }
+                System.out.println("[ProductDAO] getProductImageUrls(" + productId
+                    + ") returned " + urls.size() + " images");
+                return urls;
+            }
+        } catch (SQLException e) {
+            System.err.println("[ProductDAO] getProductImageUrls(" + productId
+                + ") error: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("ProductDAO.getProductImageUrls error: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Xoa toan bo anh cua mot san pham.
+     * Tra ve so anh da xoa.
+     */
+    public boolean deleteAllProductImages(int productId) {
+        String sql = "DELETE FROM ProductImages WHERE product_id = ?";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            ps.setInt(1, productId);
+            int rowsDeleted = ps.executeUpdate();
+            System.out.println("[ProductDAO] deleteAllProductImages(" + productId
+                + ") deleted " + rowsDeleted + " images");
+            return rowsDeleted >= 0;
+        } catch (SQLException e) {
+            System.err.println("[ProductDAO] deleteAllProductImages(" + productId
+                + ") error: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("ProductDAO.deleteAllProductImages error: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Cap nhat thong tin san pham co tich hop thay doi anh.
+     * Neu newImageUrls khac null thi xoa anh cu va them anh moi trong cung transaction.
+     * Dong thoi cap nhat lai truong image (anh dai dien) theo anh dau tien trong danh sach.
+     */
+    public boolean updateProduct(Product product, List<String> newImageUrls) {
+        String sqlUpdate = "UPDATE Products SET "
+                + "title = ?, description = ?, unit = ?, stock_quantity = ?, "
+                + "original_price = ?, sale_price = ?, expired_date = ?, "
+                + "category_id = ?, status = ? "
+                + "WHERE id = ? AND shop_id = ? AND isDelete = 0";
+
+        String sqlDeleteImages = "DELETE FROM ProductImages WHERE product_id = ?";
+        String sqlInsertImage = "INSERT INTO ProductImages (product_id, image_url, sort_order) VALUES (?, ?, ?)";
+
+        Connection conn = null;
+        PreparedStatement psUpdate = null;
+        PreparedStatement psDeleteImages = null;
+        PreparedStatement psInsertImage = null;
+
+        try {
+            conn = getConnection();
+            conn.setAutoCommit(false);
+
+            psUpdate = conn.prepareStatement(sqlUpdate);
+            psUpdate.setString(1, product.getTitle());
+            psUpdate.setString(2, product.getDescription());
+            psUpdate.setString(3, product.getUnit());
+            psUpdate.setInt(4, product.getStockQuantity());
+            psUpdate.setDouble(5, product.getOriginalPrice());
+            psUpdate.setDouble(6, product.getSalePrice());
+
+            if (product.getExpiredDate() != null) {
+                psUpdate.setTimestamp(7, product.getExpiredDate());
+            } else {
+                psUpdate.setNull(7, Types.TIMESTAMP);
+            }
+
+            psUpdate.setInt(8, product.getCategoryId());
+            psUpdate.setInt(9, product.getStatus());
+            psUpdate.setInt(10, product.getId());
+            psUpdate.setInt(11, product.getShopId());
+
+            int rowsUpdated = psUpdate.executeUpdate();
+            if (rowsUpdated == 0) {
+                conn.rollback();
+                System.out.println("[ProductDAO] updateProduct — no rows updated (product not found or not owned)");
+                return false;
+            }
+
+            if (newImageUrls != null) {
+                psDeleteImages = conn.prepareStatement(sqlDeleteImages);
+                psDeleteImages.setInt(1, product.getId());
+                psDeleteImages.executeUpdate();
+
+                psInsertImage = conn.prepareStatement(sqlInsertImage);
+                for (int i = 0; i < newImageUrls.size(); i++) {
+                    psInsertImage.setInt(1, product.getId());
+                    psInsertImage.setString(2, newImageUrls.get(i));
+                    psInsertImage.setInt(3, i + 1);
+                    psInsertImage.addBatch();
+                }
+                psInsertImage.executeBatch();
+
+                String coverImage = newImageUrls.isEmpty() ? null : newImageUrls.get(0);
+                String sqlUpdateCover = "UPDATE Products SET image = ? WHERE id = ?";
+                try (PreparedStatement psCover = conn.prepareStatement(sqlUpdateCover)) {
+                    if (coverImage != null) {
+                        psCover.setString(1, coverImage);
+                    } else {
+                        psCover.setNull(1, Types.VARCHAR);
+                    }
+                    psCover.setInt(2, product.getId());
+                    psCover.executeUpdate();
+                }
+            }
+
+            conn.commit();
+            System.out.println("[ProductDAO] updateProduct(id=" + product.getId()
+                + ", imageCount=" + (newImageUrls != null ? newImageUrls.size() : "unchanged")
+                + ") success");
+            return true;
+
+        } catch (SQLException e) {
+            System.err.println("[ProductDAO] updateProduct(" + product.getId()
+                + ") error: " + e.getMessage());
+            e.printStackTrace();
+            if (conn != null) {
+                try { conn.rollback(); } catch (SQLException ex) { }
+            }
+            throw new RuntimeException("ProductDAO.updateProduct error: " + e.getMessage(), e);
+        } finally {
+            if (psUpdate != null) try { psUpdate.close(); } catch (SQLException ignored) {}
+            if (psDeleteImages != null) try { psDeleteImages.close(); } catch (SQLException ignored) {}
+            if (psInsertImage != null) try { psInsertImage.close(); } catch (SQLException ignored) {}
+            if (conn != null) {
+                try { conn.setAutoCommit(true); } catch (SQLException ignored) {}
+            }
+        }
+    }
+
     public List<Product> filterProducts(String keyword, List<Integer> categoryIds, String status) {
         StringBuilder sql = new StringBuilder(
                 "SELECT p.id, p.category_id, p.shop_id, p.title, p.image, p.description, p.unit, "
