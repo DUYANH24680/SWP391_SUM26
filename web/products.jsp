@@ -793,6 +793,12 @@
                                         <a href="${pageContext.request.contextPath}/products?id=${p.id}" class="btn-detail">
                                             <i class="fa-regular fa-eye"></i> Chi Tiet
                                         </a>
+                                        <c:if test="${role == 'seller'}">
+                                            <a href="${pageContext.request.contextPath}/edit-product?id=${p.id}"
+                                               class="btn-detail" style="border-color:#f59e0b;color:#92400e;">
+                                                <i class="fa-solid fa-pen-to-square"></i> Sua
+                                            </a>
+                                        </c:if>
                                         <a href="${pageContext.request.contextPath}/delete-product?id=${p.id}"
                                            class="btn-delete"
                                            onclick="return confirm('Ban co chắc muon xoa san pham \u2018${p.title}\u2019 khong?')">
