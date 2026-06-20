@@ -1,6 +1,6 @@
 //Duy Anh
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ page import="model.Customer" %>
+<%@ page import="model.Account" %>
 <%@ page import="model.Product" %>
 <%@ page import="model.Shop" %>
 <%@ page import="dao.CategoryDAO" %>
@@ -8,7 +8,7 @@
 <%@ page import="java.util.List" %>
 <%
     // ---- Auth guard ----
-    Customer user = (Customer) session.getAttribute("user");
+    Account user = (Account) session.getAttribute("user");
     if (user == null) {
         response.sendRedirect(request.getContextPath() + "/login");
         return;
@@ -510,8 +510,17 @@
 
                 <!-- Action buttons -->
                 <div class="action-buttons">
-                    <button class="btn btn-green" onclick="alert('Chuc nang them vao gio hang chua duoc trien khai.')">
-                        <i class="fa-solid fa-basket-shopping"></i> Them Vao Gio Hang
+                    <% if (product.getStockQuantity() > 0) { %>
+                        <a href="checkout?productId=<%= product.getId() %>&quantity=1" class="btn btn-green" style="background:#ff7043; box-shadow: 0 4px 14px rgba(255,112,67,0.3);">
+                            <i class="fa-solid fa-basket-shopping"></i> Mua Ngay
+                        </a>
+                    <% } else { %>
+                        <button class="btn" disabled style="background:var(--gray-200); color:var(--gray-400); cursor:not-allowed;">
+                            <i class="fa-solid fa-ban"></i> Hết Hàng
+                        </button>
+                    <% } %>
+                    <button class="btn btn-outline" onclick="alert('Chức năng thêm vào giỏ hàng chưa được triển khai.')">
+                        Thêm Vào Giỏ
                     </button>
                     <a href="home.jsp" class="btn btn-outline">
                         <i class="fa-solid fa-arrow-left"></i> Quay Lai

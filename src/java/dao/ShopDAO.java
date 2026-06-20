@@ -14,7 +14,7 @@ public class ShopDAO extends Utils.DbContext {
      * Su dung de hien thi thong tin shop trong trang chi tiet san pham.
      */
     public Shop getShopById(int shopId) {
-        String sql = "SELECT id, owner_id, shop_name, logo, description, address, phone, rating, status, created_at "
+        String sql = "SELECT id, owner_id, shop_name, logo, description, address, status, created_at "
                    + "FROM Shops WHERE id = ?";
         try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
             ps.setInt(1, shopId);
@@ -27,8 +27,6 @@ public class ShopDAO extends Utils.DbContext {
                     shop.setLogo(rs.getString("logo"));
                     shop.setDescription(rs.getString("description"));
                     shop.setAddress(rs.getString("address"));
-                    shop.setPhone(rs.getString("phone"));
-                    shop.setRating(rs.getDouble("rating"));
                     shop.setStatus(rs.getInt("status"));
                     shop.setCreatedAt(rs.getTimestamp("created_at"));
                     return shop;

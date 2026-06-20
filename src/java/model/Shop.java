@@ -7,28 +7,22 @@ public class Shop {
     private int ownerId;
     private String name;
     private String logo;
-    private String banner;
     private String description;
     private String address;
-    private String phone;
-    private double rating;
     private int status;
     private Timestamp createdAt;
 
     public Shop() {
     }
 
-    public Shop(int id, int ownerId, String name, String logo, String banner, String description,
-            String address, String phone, double rating, int status, Timestamp createdAt) {
+    public Shop(int id, int ownerId, String name, String logo, String description,
+            String address, int status, Timestamp createdAt) {
         this.id = id;
         this.ownerId = ownerId;
         this.name = name;
         this.logo = logo;
-        this.banner = banner;
         this.description = description;
         this.address = address;
-        this.phone = phone;
-        this.rating = rating;
         this.status = status;
         this.createdAt = createdAt;
     }
@@ -65,13 +59,7 @@ public class Shop {
         this.logo = logo;
     }
 
-    public String getBanner() {
-        return banner;
-    }
 
-    public void setBanner(String banner) {
-        this.banner = banner;
-    }
 
     public String getDescription() {
         return description;
@@ -89,21 +77,7 @@ public class Shop {
         this.address = address;
     }
 
-    public String getPhone() {
-        return phone;
-    }
 
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
-
-    public double getRating() {
-        return rating;
-    }
-
-    public void setRating(double rating) {
-        this.rating = rating;
-    }
 
     public int getStatus() {
         return status;

@@ -1,7 +1,7 @@
 package service;
 
-import dao.CustomerDAO;
-import model.Customer;
+import dao.AccountDAO;
+import model.Account;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -26,7 +26,7 @@ public class UserService {
         if (phone != null && !phone.isEmpty() && !phone.matches("^[0-9]{9,11}$")) {
             return "Số điện thoại không hợp lệ (9-11 chữ số).";
         }
-        CustomerDAO dao = new CustomerDAO();
+        AccountDAO dao = new AccountDAO();
         try {
             if (dao.isEmailTaken(email.trim(), customerId)) {
                 return "Email này đã được sử dụng bởi một tài khoản khác.";
@@ -51,9 +51,9 @@ public class UserService {
         if (!newPassword.equals(confirmPassword)) {
             return "Xác nhận mật khẩu không khớp.";
         }
-        CustomerDAO dao = new CustomerDAO();
+        AccountDAO dao = new AccountDAO();
         try {
-            Customer c = dao.findById(customerId);
+            Account c = dao.findById(customerId);
             if (c == null) return "Không tìm thấy tài khoản.";
             if (!currentPassword.equals(c.getPasswordHash())) {
                 return "Mật khẩu hiện tại không đúng.";
@@ -66,10 +66,10 @@ public class UserService {
     }
 
     /**
-     * Get a fresh customer object (for re-loading after update).
+     * Get a fresh account object (for re-loading after update).
      */
-    public Customer getCustomerById(int id) {
-        CustomerDAO dao = new CustomerDAO();
+    public Account getAccountById(int id) {
+        AccountDAO dao = new AccountDAO();
         try {
             return dao.findById(id);
         } finally {

@@ -1,5 +1,5 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ page import="model.Customer" %>
+<%@ page import="model.Account" %>
 <%@ page import="model.Category" %>
 <%@ page import="java.util.List" %>
 <%
@@ -8,7 +8,7 @@
     System.out.println("[add-product.jsp] rawUser=" + rawUser + " type=" + (rawUser != null ? rawUser.getClass().getName() : "null"));
     System.out.println("[add-product.jsp] rawUserId=" + rawUserId + " type=" + (rawUserId != null ? rawUserId.getClass().getName() : "null"));
 
-    Customer user = (Customer) rawUser;
+    Account user = (Account) rawUser;
     if (user == null) {
         response.sendRedirect(request.getContextPath() + "/login");
         return;
@@ -483,7 +483,7 @@
             <a href="profile"><i class="fa-regular fa-user"></i> Hồ Sơ</a>
             <a href="products"><i class="fa-brands fa-opencart"></i> Sản Phẩm</a>
             <a href="#" class="active"><i class="fa-solid fa-plus"></i> Thêm Sản Phẩm</a>
-            <a href="#"><i class="fa-solid fa-basket-shopping"></i> Đơn Hàng</a>
+            <a href="<%= "seller".equals(role) ? "seller/orders" : "my-orders" %>"><i class="fa-solid fa-basket-shopping"></i> Đơn Hàng</a>
             <a href="#"><i class="fa-regular fa-heart"></i> Yêu Thích</a>
             <a href="logout" class="logout" style="margin-top:0.5rem;"><i class="fa-solid fa-right-from-bracket"></i> Đăng Xuất</a>
         </div>

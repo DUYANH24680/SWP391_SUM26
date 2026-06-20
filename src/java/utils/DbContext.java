@@ -14,7 +14,7 @@ public class DbContext {
     private static DataSource dataSource;
     private static String JDBC_URL = "jdbc:sqlserver://localhost:1433;databaseName=SENAFRUIT;encrypt=false;trustServerCertificate=true;loginTimeout=30";
     private static String JDBC_USER = "sa";
-    private static String JDBC_PASSWORD = "123";
+    private static String JDBC_PASSWORD = "1234567890";
 
     public DbContext() {
         initDataSource();

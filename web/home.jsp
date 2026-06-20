@@ -1,11 +1,11 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
-<%@ page import="model.Customer" %>
+<%@ page import="model.Account" %>
 <%@ page import="model.Product" %>
 <%@ page import="java.util.List" %>
 <%@ page import="dao.ProductDAO" %>
 <%@ page import="Utils.ProductSorter" %>
 <% 
-    Customer user = (Customer) session.getAttribute("user"); 
+    Account user = (Account) session.getAttribute("user"); 
     ProductDAO dao = new ProductDAO();
     List<Product> productsList = dao.getAllProducts();
     String sort = request.getParameter("sort");
@@ -2170,10 +2170,10 @@
                                     <div class="product-footer">
                                         <% if (p.getStockQuantity() > 0) { %>
                                             <div class="product-unit"><i class="fa-solid fa-scale-balanced"></i> Con <%= p.getStockQuantity() %> <%= p.getUnit() %></div>
-                                            <button class="btn-cart" onclick="window.location.href='home.jsp?add=<%= p.getId() %>'"><i class="fa-solid fa-plus"></i> Thêm</button>
+                                            <button class="btn-cart" onclick="window.location.href='checkout?productId=<%= p.getId() %>&quantity=1'"><i class="fa-solid fa-basket-shopping"></i> Mua ngay</button>
                                         <% } else { %>
                                             <div class="product-unit" style="color:var(--orange);"><i class="fa-solid fa-circle-xmark"></i> Hết hàng</div>
-                                            <button class="btn-cart" disabled><i class="fa-solid fa-ban"></i> Het</button>
+                                            <button class="btn-cart" disabled><i class="fa-solid fa-ban"></i> Hết hàng</button>
                                         <% } %>
                                     </div>
                                 </div>

@@ -1,9 +1,9 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ page import="model.Customer" %>
+<%@ page import="model.Account" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%
-    Customer user = (Customer) session.getAttribute("user");
+    Account user = (Account) session.getAttribute("user");
     if (user == null) {
         response.sendRedirect(request.getContextPath() + "/profile");
         return;
@@ -582,7 +582,7 @@
         <div class="sidebar-nav">
             <a href="profile"><i class="fa-regular fa-user"></i> Ho So</a>
             <a href="products" class="active"><i class="fa-brands fa-opencart"></i> San Pham</a>
-            <a href="#"><i class="fa-solid fa-basket-shopping"></i> Don Hang</a>
+            <a href="${role == 'seller' ? 'seller/orders' : 'my-orders'}"><i class="fa-solid fa-basket-shopping"></i> Don Hang</a>
             <a href="#"><i class="fa-regular fa-heart"></i> Yeu Thich</a>
             <a href="#"><i class="fa-regular fa-credit-card"></i> Thanh Toan</a>
             <a href="logout" class="logout" style="margin-top:0.5rem;"><i class="fa-solid fa-right-from-bracket"></i> Dang Xuat</a>

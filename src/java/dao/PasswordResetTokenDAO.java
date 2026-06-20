@@ -8,7 +8,7 @@ public class PasswordResetTokenDAO extends DbContext {
     public boolean createToken(String email, String token, Timestamp expiryTime) {
         // First invalidate any existing tokens for this email
         String deleteSql = "UPDATE PasswordResetTokens SET is_used = 1 WHERE email = ?";
-        try (PreparedStatement ps = connection.prepareStatement(deleteSql)) {
+        try (PreparedStatement ps = getConnection().prepareStatement(deleteSql)) {
             ps.setString(1, email);
             ps.executeUpdate();
         } catch (SQLException e) {
