@@ -34,6 +34,10 @@ public class CategoryDAO extends DbContext {
         }
     }
 
+    public List<Category> getAllActiveCategories() {
+        return getAllCategories(false);
+    }
+
     public Category getCategoryById(int id) {
         System.out.println("[CategoryDAO] getCategoryById(id=" + id + ") called");
 

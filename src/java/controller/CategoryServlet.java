@@ -46,6 +46,8 @@ public class CategoryServlet extends HttpServlet {
         } else if (pathInfo.startsWith("/edit/")) {
             String idStr = pathInfo.substring("/edit/".length());
             forwardCategoryEdit(req, resp, idStr);
+        } else if (pathInfo.equals("/delete")) {
+            forwardDeleteCategory(req, resp);
         } else {
             resp.sendRedirect(req.getContextPath() + "/category");
         }
@@ -72,7 +74,6 @@ public class CategoryServlet extends HttpServlet {
         switch (pathInfo) {
             case "/create" -> handleCreate(req, resp);
             case "/update" -> handleUpdate(req, resp);
-            case "/delete" -> handleDelete(req, resp);
             default -> resp.sendRedirect(req.getContextPath() + "/category");
         }
     }
@@ -140,6 +141,49 @@ public class CategoryServlet extends HttpServlet {
         } finally {
             dao.close();
         }
+    }
+
+    private void forwardDeleteCategory(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
+        HttpSession session = req.getSession(false);
+        String idStr = req.getParameter("id");
+        System.out.println("[CategoryServlet] forwardDeleteCategory: idStr=" + idStr);
+
+        if (idStr == null || idStr.trim().isEmpty()) {
+            if (session != null) {
+                session.setAttribute("error", "ID danh muc khong hop le.");
+            }
+            resp.sendRedirect(req.getContextPath() + "/category");
+            return;
+        }
+
+        int id;
+        try {
+            id = Integer.parseInt(idStr.trim());
+        } catch (NumberFormatException e) {
+            System.err.println("[CategoryServlet] forwardDeleteCategory: invalid id=" + idStr);
+            if (session != null) {
+                session.setAttribute("error", "ID danh muc khong hop le.");
+            }
+            resp.sendRedirect(req.getContextPath() + "/category");
+            return;
+        }
+
+        CategoryDAO dao = new CategoryDAO();
+        try {
+            boolean success = dao.softDeleteCategory(id);
+            System.out.println("[CategoryServlet] softDeleteCategory(" + id + ") = " + success);
+            if (session != null) {
+                if (success) {
+                    session.setAttribute("message", "Xoa danh muc thanh cong!");
+                } else {
+                    session.setAttribute("error", "Danh muc khong ton tai hoac da bi xoa.");
+                }
+            }
+        } finally {
+            dao.close();
+        }
+        resp.sendRedirect(req.getContextPath() + "/category");
     }
 
     private void handleCreate(HttpServletRequest req, HttpServletResponse resp)
@@ -241,40 +285,6 @@ public class CategoryServlet extends HttpServlet {
                 session.setAttribute("message", "Cap nhat danh muc thanh cong!");
             } else {
                 session.setAttribute("error", "Khong the cap nhat danh muc. Vui long thu lai.");
-            }
-        } finally {
-            dao.close();
-        }
-        resp.sendRedirect(req.getContextPath() + "/category");
-    }
-
-    private void handleDelete(HttpServletRequest req, HttpServletResponse resp)
-            throws ServletException, IOException {
-        HttpSession session = req.getSession(false);
-        String idStr = req.getParameter("id");
-
-        if (idStr == null || idStr.trim().isEmpty()) {
-            session.setAttribute("error", "ID danh muc khong hop le.");
-            resp.sendRedirect(req.getContextPath() + "/category");
-            return;
-        }
-
-        int id;
-        try {
-            id = Integer.parseInt(idStr.trim());
-        } catch (NumberFormatException e) {
-            session.setAttribute("error", "ID danh muc khong hop le.");
-            resp.sendRedirect(req.getContextPath() + "/category");
-            return;
-        }
-
-        CategoryDAO dao = new CategoryDAO();
-        try {
-            boolean success = dao.softDeleteCategory(id);
-            if (success) {
-                session.setAttribute("message", "Xoa danh muc thanh cong!");
-            } else {
-                session.setAttribute("error", "Danh muc khong ton tai hoac da bi xoa.");
             }
         } finally {
             dao.close();

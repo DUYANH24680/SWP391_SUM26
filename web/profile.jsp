@@ -695,6 +695,11 @@
             <button id="nav-security" onclick="showPanel('security')">
                 <i class="fa-solid fa-shield-halved"></i> Bảo Mật
             </button>
+            <% if ("admin".equalsIgnoreCase(role) || "seller".equalsIgnoreCase(role)) { %>
+            <a href="category" style="display:flex; align-items:center; gap:0.65rem; width:100%; padding:0.65rem 0.9rem; border-radius:var(--radius-sm); font-size:0.875rem; font-weight:500; color:var(--gray-600); border:none; background:transparent; cursor:pointer; text-decoration:none; transition:all 0.15s;" onmouseover="this.style.background='var(--green-light)'; this.style.color='var(--green-dark)';" onmouseout="this.style.background='transparent'; this.style.color='var(--gray-600)';">
+                <i class="fa-solid fa-layer-group"></i> Quản Lý Danh Mục
+            </a>
+            <% } %>
             <a href="logout" style="text-decoration:none; display:flex; align-items:center; gap:0.75rem; padding:12px 16px; border-radius:12px; color:#e53e3e; font-weight:600; font-size:0.95rem; margin-bottom:8px; border:1px solid transparent; transition:all 0.2s;" onmouseover="this.style.background='#fff5f5'; this.style.borderColor='#fed7d7';" onmouseout="this.style.background='transparent'; this.style.borderColor='transparent';">
                 <i class="fa-solid fa-right-from-bracket" style="width:20px;text-align:center;"></i> Đăng Xuất
             </a>
