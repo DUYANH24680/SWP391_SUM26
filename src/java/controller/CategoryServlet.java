@@ -93,7 +93,7 @@ public class CategoryServlet extends HttpServlet {
         } finally {
             dao.close();
         }
-        req.getRequestDispatcher("/categories.jsp").forward(req, resp);
+        req.getRequestDispatcher("/admin/categories.jsp").forward(req, resp);
     }
 
     private void forwardCategoryForm(HttpServletRequest req, HttpServletResponse resp,
