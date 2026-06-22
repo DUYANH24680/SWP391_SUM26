@@ -6,23 +6,23 @@
             <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/web/home.jsp</file>
             <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/Utils/DbContext.java</file>
             <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/dao/PasswordResetTokenDAO.java</file>
-            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/dao/ProductDAO.java</file>
-            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/dao/UserAddressDAO.java</file>
-            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/dao/UserDAO.java</file>
-            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/service/CustomerService.java</file>
             <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/service/UserService.java</file>
             <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/controller/LogoutServlet.java</file>
-            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/controller/ProductServlet.java</file>
             <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/web/login.jsp</file>
             <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/web/profile.jsp</file>
-            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/web/products.jsp</file>
             <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/controller/LoginServlet.java</file>
             <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/controller/ProfileServlet.java</file>
             <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/web/index.html</file>
-            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/model/User.java</file>
-            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/model/Product.java</file>
-            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/model/UserAddress.java</file>
             <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/web/WEB-INF/web.xml</file>
+            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/model/DeliveryAddress.java</file>
+            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/controller/MyOrdersServlet.java</file>
+            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/dao/DeliveryAddressDAO.java</file>
+            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/controller/ProductInfoServlet.java</file>
+            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/controller/DeleteProductServlet.java</file>
+            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/controller/SellerOrdersServlet.java</file>
+            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/web/my-orders.jsp</file>
+            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/web/seller/orders.jsp</file>
+            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/web/product-detail.jsp</file>
         </group>
     </open-files>
 </project-private>

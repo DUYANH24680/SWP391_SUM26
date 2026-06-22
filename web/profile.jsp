@@ -686,6 +686,11 @@
         </div>
 
         <div class="sidebar-nav">
+            <% if ("seller".equalsIgnoreCase(role)) { %>
+                <a href="seller/dashboard" style="display:flex; align-items:center; gap:0.65rem; width:100%; padding:0.65rem 0.9rem; border-radius:var(--radius-sm); font-size:0.875rem; font-weight:500; color:var(--gray-600); border:none; background:transparent; cursor:pointer; text-decoration:none; transition:all 0.15s;" onmouseover="this.style.background='var(--green-light)'; this.style.color='var(--green-dark)';" onmouseout="this.style.background='transparent'; this.style.color='var(--gray-600)';">
+                    <i class="fa-solid fa-gauge"></i> Dashboard
+                </a>
+            <% } %>
             <button class="active" id="nav-profile" onclick="showPanel('profile')">
                 <i class="fa-regular fa-user"></i> Ho So
             </button>
