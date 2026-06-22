@@ -187,7 +187,7 @@ public class CartItem {
     }
 
     public double getSubtotal() {
-        return unitPrice * quantity;
+        return totalPrice;
     }
 
     public void incrementQuantity(int amount) {

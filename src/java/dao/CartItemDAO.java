@@ -12,9 +12,11 @@ public class CartItemDAO extends DbContext {
     public CartItem getItem(int cartId, int productId, String size) {
         String sql = "SELECT ci.id, ci.cart_id, ci.product_id, ci.size, ci.quantity, ci.unit_price, "
                    + "ci.discount_amount, ci.total_price, ci.voucher_id, v.code AS voucher_code, ci.note, ci.is_selected, "
+                   + "p.shop_id AS product_shop_id, p.title AS product_title, p.image AS product_image, p.unit AS product_unit, "
                    + "ci.created_at, ci.updated_at "
                    + "FROM CartItems ci "
                    + "LEFT JOIN Vouchers v ON ci.voucher_id = v.id "
+                   + "LEFT JOIN Products p ON ci.product_id = p.id "
                    + "WHERE ci.cart_id = ? AND ci.product_id = ? AND ci.size = ?";
         try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
             ps.setInt(1, cartId);
@@ -35,9 +37,11 @@ public class CartItemDAO extends DbContext {
     public List<CartItem> getItemsByCartId(int cartId) {
         String sql = "SELECT ci.id, ci.cart_id, ci.product_id, ci.size, ci.quantity, ci.unit_price, "
                    + "ci.discount_amount, ci.total_price, ci.voucher_id, v.code AS voucher_code, ci.note, ci.is_selected, "
+                   + "p.shop_id AS product_shop_id, p.title AS product_title, p.image AS product_image, p.unit AS product_unit, "
                    + "ci.created_at, ci.updated_at "
                    + "FROM CartItems ci "
                    + "LEFT JOIN Vouchers v ON ci.voucher_id = v.id "
+                   + "LEFT JOIN Products p ON ci.product_id = p.id "
                    + "WHERE ci.cart_id = ? ORDER BY ci.created_at DESC";
         try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
             ps.setInt(1, cartId);
@@ -148,6 +152,10 @@ public class CartItemDAO extends DbContext {
         item.setDiscountCode(rs.getString("voucher_code"));
         item.setNote(rs.getString("note"));
         item.setSelected(rs.getBoolean("is_selected"));
+        item.setShopId(rs.getInt("product_shop_id"));
+        item.setTitle(rs.getString("product_title"));
+        item.setImage(rs.getString("product_image"));
+        item.setUnit(rs.getString("product_unit"));
         item.setCreatedAt(rs.getTimestamp("created_at"));
         item.setUpdatedAt(rs.getTimestamp("updated_at"));
         return item;
