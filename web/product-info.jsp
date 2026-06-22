@@ -804,6 +804,9 @@
                     <button class="btn btn-green" onclick="addToCart()">
                         <i class="fa-solid fa-basket-shopping"></i> Thêm Vào Giỏ Hàng
                     </button>
+                    <button class="btn btn-outline" data-wishlist-action="add" data-product-id="<%= product.getId() %>">
+                        <i class="fa-regular fa-heart"></i> Thêm vào Wishlist
+                    </button>
                     <button class="btn btn-outline" onclick="buyNow()">
                         <i class="fa-solid fa-bolt"></i> Mua Ngay
                     </button>
@@ -1001,5 +1004,6 @@
             });
         });
     </script>
+    <script src="js/wishlist.js"></script>
 </body>
 </html>

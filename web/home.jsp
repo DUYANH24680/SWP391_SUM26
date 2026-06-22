@@ -2150,7 +2150,7 @@
                                         <% } else if (p.isIsFeatured()) { %>
                                             <div class="product-badge badge-hot">Hot</div>
                                         <% } %>
-                                        <button class="product-wishlist"><i class="fa-regular fa-heart"></i></button>
+                                        <button class="product-wishlist" data-wishlist-action="add" data-product-id="<%= p.getId() %>"><i class="fa-regular fa-heart"></i></button>
                                     </div>
                                     <div class="product-info">
                                         <div class="product-category"><%= p.getShopName() != null ? p.getShopName() : "Chung" %></div>
