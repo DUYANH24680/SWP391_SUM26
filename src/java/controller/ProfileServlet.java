@@ -1,13 +1,13 @@
 package controller;
 
-import dao.CustomerDAO;
+import dao.AccountDAO;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import model.Customer;
+import model.Account;
 import service.UserService;
 
 import java.io.IOException;
@@ -22,35 +22,37 @@ public class ProfileServlet extends HttpServlet {
             throws ServletException, IOException {
         HttpSession session = req.getSession(true);
         
-        Customer sessionUser = (Customer) session.getAttribute("user");
-        if (sessionUser == null) {
-            resp.sendRedirect(req.getContextPath() + "/login.jsp");
-            return;
+        // Auto-login if no user session exists (bypassing login page)
+        if (session.getAttribute("user") == null) {
+            AccountDAO accountDAO = new AccountDAO();
+            try {
+                Account defaultCust = accountDAO.findById(1);
+                if (defaultCust != null) {
+                    session.setAttribute("user", defaultCust);
+                    session.setAttribute("userId", defaultCust.getId());
+                    session.setAttribute("role", defaultCust.getRoleName());
+                }
+            } finally {
+                accountDAO.close();
+            }
         }
 
-        // Always fetch the freshest user data from the DB for View Profile
-        Customer freshUser = userService.getCustomerById(sessionUser.getId());
-        if (freshUser == null) {
-            // User might have been deleted or banned
-            session.invalidate();
-            resp.sendRedirect(req.getContextPath() + "/login.jsp");
+        Account user = (Account) session.getAttribute("user");
+        if (user == null) {
+            resp.getWriter().println("No customer found in the database. Please add sample data to Customers table first.");
             return;
         }
-
-        // Update the session with fresh data
-        session.setAttribute("user", freshUser);
 
         req.getRequestDispatcher("/profile.jsp").forward(req, resp);
     }
 
-    @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         HttpSession session = req.getSession(true);
-        Customer user = (Customer) session.getAttribute("user");
+        Account user = (Account) session.getAttribute("user");
 
         if (user == null) {
-            resp.sendRedirect(req.getContextPath() + "/login.jsp");
+            resp.sendRedirect(req.getContextPath() + "/profile");
             return;
         }
 
@@ -60,19 +62,23 @@ public class ProfileServlet extends HttpServlet {
             return;
         }
 
-        switch (action) {
-            case "updateProfile":
-                handleUpdateProfile(req, session, user);
-                break;
-            case "changePassword":
-                handleChangePassword(req, session, user);
-                break;
+        try {
+            switch (action) {
+                case "updateProfile":
+                    handleUpdateProfile(req, session, user);
+                    break;
+                case "changePassword":
+                    handleChangePassword(req, session, user);
+                    break;
+            }
+        } catch (Exception e) {
+            session.setAttribute("error", "Đã xảy ra lỗi: " + e.getMessage());
         }
 
         resp.sendRedirect(req.getContextPath() + "/profile");
     }
 
-    private void handleUpdateProfile(HttpServletRequest req, HttpSession session, Customer user) {
+    private void handleUpdateProfile(HttpServletRequest req, HttpSession session, Account user) {
         String fullname = req.getParameter("fullname");
         String email = req.getParameter("email");
         String phone = req.getParameter("phone");
@@ -89,13 +95,13 @@ public class ProfileServlet extends HttpServlet {
         if (error != null) {
             session.setAttribute("error", error);
         } else {
-            Customer updatedUser = userService.getCustomerById(user.getId());
+            Account updatedUser = userService.getAccountById(user.getId());
             session.setAttribute("user", updatedUser);
             session.setAttribute("message", "Cập nhật hồ sơ thành công!");
         }
     }
 
-    private void handleChangePassword(HttpServletRequest req, HttpSession session, Customer user) {
+    private void handleChangePassword(HttpServletRequest req, HttpSession session, Account user) {
         String currentPassword = req.getParameter("currentPassword");
         String newPassword = req.getParameter("newPassword");
         String confirmPassword = req.getParameter("confirmPassword");
