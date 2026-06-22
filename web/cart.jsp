@@ -8,10 +8,12 @@
         response.sendRedirect(request.getContextPath() + "/login");
         return;
     }
-    Cart cart = (Cart) session.getAttribute("cart");
+    Cart cart = (Cart) request.getAttribute("cart");
+    if (cart == null) {
+        cart = (Cart) session.getAttribute("cart");
+    }
     if (cart == null) {
         cart = new Cart();
-        session.setAttribute("cart", cart);
     }
 %>
 <!DOCTYPE html>
