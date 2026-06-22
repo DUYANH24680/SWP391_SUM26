@@ -1,9 +1,9 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ page import="model.Account" %>
+<%@ page import="model.User" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%
-    Account user = (Account) session.getAttribute("user");
+    User user = (User) session.getAttribute("user");
     if (user == null) {
         response.sendRedirect(request.getContextPath() + "/profile");
         return;
@@ -580,16 +580,11 @@
     <!-- SIDEBAR -->
     <aside class="sidebar">
         <div class="sidebar-nav">
-            <c:if test="${role == 'seller'}">
-                <a href="seller/dashboard"><i class="fa-solid fa-gauge"></i> Dashboard</a>
-            </c:if>
             <a href="profile"><i class="fa-regular fa-user"></i> Ho So</a>
             <a href="products" class="active"><i class="fa-brands fa-opencart"></i> San Pham</a>
-            <a href="${role == 'seller' ? 'seller/orders' : 'my-orders'}"><i class="fa-solid fa-basket-shopping"></i> Don Hang</a>
-            <c:if test="${role != 'seller'}">
-                <a href="#"><i class="fa-regular fa-heart"></i> Yeu Thich</a>
-                <a href="#"><i class="fa-regular fa-credit-card"></i> Thanh Toan</a>
-            </c:if>
+            <a href="#"><i class="fa-solid fa-basket-shopping"></i> Don Hang</a>
+            <a href="#"><i class="fa-regular fa-heart"></i> Yeu Thich</a>
+            <a href="#"><i class="fa-regular fa-credit-card"></i> Thanh Toan</a>
             <a href="logout" class="logout" style="margin-top:0.5rem;"><i class="fa-solid fa-right-from-bracket"></i> Dang Xuat</a>
         </div>
     </aside>

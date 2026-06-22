@@ -1,9 +1,9 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ page import="model.Account" %>
+<%@ page import="model.User" %>
 <%@ page import="model.DeliveryAddress" %>
 <%@ page import="java.util.List" %>
 <%
-    Account user = (Account) session.getAttribute("user");
+    User user = (User) session.getAttribute("user");
     String role   = (String) session.getAttribute("role");
 
     if (user == null) {

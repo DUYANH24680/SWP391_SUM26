@@ -5,13 +5,13 @@ import jakarta.servlet.http.*;
 import jakarta.servlet.annotation.*;
 import java.io.IOException;
 
-import model.Account;
-import service.AccountService;
+import model.User;
+import service.UserService;
 
 @WebServlet("/login")
 public class LoginServlet extends HttpServlet {
 
-    private AccountService service = new AccountService();
+    private UserService service = new UserService();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -25,19 +25,15 @@ public class LoginServlet extends HttpServlet {
         String username = request.getParameter("username");
         String password = request.getParameter("password");
 
-        Account customer = service.login(username, password);
+        User user = service.login(username, password);
 
-        if (customer != null) {
+        if (user != null) {
             HttpSession session = request.getSession();
-            session.setAttribute("user", customer);
-            session.setAttribute("userId", customer.getId());
-            session.setAttribute("role", customer.getRoleName());
+            session.setAttribute("user", user);
+            session.setAttribute("userId", user.getId());
+            session.setAttribute("role", user.getRoleName());
 
-            if ("seller".equalsIgnoreCase(customer.getRoleName())) {
-                response.sendRedirect(request.getContextPath() + "/seller/dashboard");
-            } else {
-                response.sendRedirect(request.getContextPath() + "/home.jsp");
-            }
+            response.sendRedirect(request.getContextPath() + "/home.jsp");
         } else {
             request.setAttribute("error", "Sai tài khoản hoặc mật khẩu");
             request.getRequestDispatcher("login.jsp").forward(request, response);

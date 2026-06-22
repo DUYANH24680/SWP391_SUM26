@@ -1,0 +1,155 @@
+package dao;
+
+import Utils.DbContext;
+import model.CartItem;
+
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class CartItemDAO extends DbContext {
+
+    public CartItem getItem(int cartId, int productId, String size) {
+        String sql = "SELECT ci.id, ci.cart_id, ci.product_id, ci.size, ci.quantity, ci.unit_price, "
+                   + "ci.discount_amount, ci.total_price, ci.voucher_id, v.code AS voucher_code, ci.note, ci.is_selected, "
+                   + "ci.created_at, ci.updated_at "
+                   + "FROM CartItems ci "
+                   + "LEFT JOIN Vouchers v ON ci.voucher_id = v.id "
+                   + "WHERE ci.cart_id = ? AND ci.product_id = ? AND ci.size = ?";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            ps.setInt(1, cartId);
+            ps.setInt(2, productId);
+            ps.setString(3, size);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return mapRow(rs);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[CartItemDAO] getItem error: " + e.getMessage());
+            throw new RuntimeException("CartItemDAO.getItem error: " + e.getMessage(), e);
+        }
+        return null;
+    }
+
+    public List<CartItem> getItemsByCartId(int cartId) {
+        String sql = "SELECT ci.id, ci.cart_id, ci.product_id, ci.size, ci.quantity, ci.unit_price, "
+                   + "ci.discount_amount, ci.total_price, ci.voucher_id, v.code AS voucher_code, ci.note, ci.is_selected, "
+                   + "ci.created_at, ci.updated_at "
+                   + "FROM CartItems ci "
+                   + "LEFT JOIN Vouchers v ON ci.voucher_id = v.id "
+                   + "WHERE ci.cart_id = ? ORDER BY ci.created_at DESC";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            ps.setInt(1, cartId);
+            try (ResultSet rs = ps.executeQuery()) {
+                List<CartItem> items = new ArrayList<>();
+                while (rs.next()) {
+                    items.add(mapRow(rs));
+                }
+                return items;
+            }
+        } catch (SQLException e) {
+            System.err.println("[CartItemDAO] getItemsByCartId error: " + e.getMessage());
+            throw new RuntimeException("CartItemDAO.getItemsByCartId error: " + e.getMessage(), e);
+        }
+    }
+
+    public boolean insertItem(CartItem item) {
+        String sql = "INSERT INTO CartItems (cart_id, product_id, size, quantity, unit_price, discount_amount, total_price, voucher_id, note, is_selected, created_at, updated_at) "
+                   + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, GETDATE(), GETDATE())";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setInt(1, item.getCartId());
+            ps.setInt(2, item.getProductId());
+            ps.setString(3, item.getSize());
+            ps.setInt(4, item.getQuantity());
+            ps.setDouble(5, item.getUnitPrice());
+            ps.setDouble(6, item.getDiscountAmount());
+            ps.setDouble(7, item.getTotalPrice());
+            if (item.getVoucherId() > 0) {
+                ps.setInt(8, item.getVoucherId());
+            } else {
+                ps.setNull(8, Types.INTEGER);
+            }
+            ps.setString(9, item.getNote());
+            ps.setBoolean(10, item.isSelected());
+            int affected = ps.executeUpdate();
+            if (affected == 0) {
+                return false;
+            }
+            try (ResultSet rs = ps.getGeneratedKeys()) {
+                if (rs.next()) {
+                    item.setId(rs.getInt(1));
+                }
+            }
+            return true;
+        } catch (SQLException e) {
+            System.err.println("[CartItemDAO] insertItem error: " + e.getMessage());
+            throw new RuntimeException("CartItemDAO.insertItem error: " + e.getMessage(), e);
+        }
+    }
+
+    public boolean updateItem(CartItem item) {
+        String sql = "UPDATE CartItems SET quantity = ?, discount_amount = ?, total_price = ?, voucher_id = ?, note = ?, updated_at = GETDATE() "
+                   + "WHERE id = ?";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            ps.setInt(1, item.getQuantity());
+            ps.setDouble(2, item.getDiscountAmount());
+            ps.setDouble(3, item.getTotalPrice());
+            if (item.getVoucherId() > 0) {
+                ps.setInt(4, item.getVoucherId());
+            } else {
+                ps.setNull(4, Types.INTEGER);
+            }
+            ps.setString(5, item.getNote());
+            ps.setInt(6, item.getId());
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("[CartItemDAO] updateItem error: " + e.getMessage());
+            throw new RuntimeException("CartItemDAO.updateItem error: " + e.getMessage(), e);
+        }
+    }
+
+    public boolean deleteItem(int cartId, int productId, String size) {
+        String sql = "DELETE FROM CartItems WHERE cart_id = ? AND product_id = ? AND size = ?";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            ps.setInt(1, cartId);
+            ps.setInt(2, productId);
+            ps.setString(3, size);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("[CartItemDAO] deleteItem error: " + e.getMessage());
+            throw new RuntimeException("CartItemDAO.deleteItem error: " + e.getMessage(), e);
+        }
+    }
+
+    public boolean deleteItemsByCartId(int cartId) {
+        String sql = "DELETE FROM CartItems WHERE cart_id = ?";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            ps.setInt(1, cartId);
+            ps.executeUpdate();
+            return true;
+        } catch (SQLException e) {
+            System.err.println("[CartItemDAO] deleteItemsByCartId error: " + e.getMessage());
+            throw new RuntimeException("CartItemDAO.deleteItemsByCartId error: " + e.getMessage(), e);
+        }
+    }
+
+    private CartItem mapRow(ResultSet rs) throws SQLException {
+        CartItem item = new CartItem();
+        item.setId(rs.getInt("id"));
+        item.setCartId(rs.getInt("cart_id"));
+        item.setProductId(rs.getInt("product_id"));
+        item.setSize(rs.getString("size"));
+        item.setQuantity(rs.getInt("quantity"));
+        item.setUnitPrice(rs.getDouble("unit_price"));
+        item.setDiscountAmount(rs.getDouble("discount_amount"));
+        item.setTotalPrice(rs.getDouble("total_price"));
+        item.setVoucherId(rs.getInt("voucher_id"));
+        item.setDiscountCode(rs.getString("voucher_code"));
+        item.setNote(rs.getString("note"));
+        item.setSelected(rs.getBoolean("is_selected"));
+        item.setCreatedAt(rs.getTimestamp("created_at"));
+        item.setUpdatedAt(rs.getTimestamp("updated_at"));
+        return item;
+    }
+}

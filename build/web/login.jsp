@@ -393,7 +393,7 @@
                 <input type="password" name="password" placeholder="Mật khẩu" required />
             </div>
             
-            <a href="#">Quên mật khẩu?</a>
+            <a href="forgot-password">Quên mật khẩu?</a>
             <button type="submit">Đăng Nhập</button>
         </form>
     </div>

@@ -4,7 +4,7 @@ import java.sql.Timestamp;
 
 public class DeliveryAddress {
     private int id;
-    private int customerId;
+    private int userId;
     private String recipientName;
     private String recipientPhone;
     private String address;
@@ -15,9 +15,9 @@ public class DeliveryAddress {
     public DeliveryAddress() {
     }
 
-    public DeliveryAddress(int id, int customerId, String recipientName, String recipientPhone, String address, String note, boolean isDefault, Timestamp createdAt) {
+    public DeliveryAddress(int id, int userId, String recipientName, String recipientPhone, String address, String note, boolean isDefault, Timestamp createdAt) {
         this.id = id;
-        this.customerId = customerId;
+        this.userId = userId;
         this.recipientName = recipientName;
         this.recipientPhone = recipientPhone;
         this.address = address;
@@ -34,12 +34,12 @@ public class DeliveryAddress {
         this.id = id;
     }
 
-    public int getCustomerId() {
-        return customerId;
+    public int getUserId() {
+        return userId;
     }
 
-    public void setCustomerId(int customerId) {
-        this.customerId = customerId;
+    public void setUserId(int userId) {
+        this.userId = userId;
     }
 
     public String getRecipientName() {

@@ -1,6 +1,5 @@
-//Duy Anh
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ page import="model.Account" %>
+<%@ page import="model.User" %>
 <%@ page import="model.Product" %>
 <%@ page import="model.Shop" %>
 <%@ page import="dao.CategoryDAO" %>
@@ -8,7 +7,7 @@
 <%@ page import="java.util.List" %>
 <%
     // ---- Auth guard ----
-    Account user = (Account) session.getAttribute("user");
+    User user = (User) session.getAttribute("user");
     if (user == null) {
         response.sendRedirect(request.getContextPath() + "/login");
         return;
@@ -74,7 +73,7 @@
         }
         body {
             font-family: 'Inter', sans-serif;
-            background: rgba(31, 41, 55, 0.95); /* Dark overlay */
+            background: rgba(31, 41, 55, 0.95);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -109,14 +108,13 @@
             background: #fff;
             border-radius: var(--radius);
             width: 100%;
-            max-width: 1000px;
+            max-width: 1100px;
             max-height: 90vh;
             overflow-y: auto;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
             padding: 2rem;
             position: relative;
         }
-        /* Tùy chỉnh thanh cuộn cho modal-container */
         .modal-container::-webkit-scrollbar { width: 8px; }
         .modal-container::-webkit-scrollbar-track { background: #f1f1f1; border-radius: var(--radius); }
         .modal-container::-webkit-scrollbar-thumb { background: #ccc; border-radius: var(--radius); }
@@ -147,7 +145,7 @@
         
         .detail-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr 1.2fr;
             gap: 2rem;
         }
         @media (max-width: 768px) {
@@ -201,7 +199,7 @@
         .badge-red { background: #fee2e2; color: #991b1b; }
         .badge-gray { background: var(--gray-100); color: var(--gray-600); }
         
-        .section-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--gray-400); margin-bottom: 0.5rem; }
+        .section-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--gray-400); margin-bottom: 0.7rem; }
         
         .shop-card {
             background: var(--gray-50); border: 1px solid var(--gray-200);
@@ -212,8 +210,220 @@
         .shop-avatar-placeholder { width: 44px; height: 44px; border-radius: 50%; background: var(--green-light); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
         .shop-name { font-size: 0.95rem; font-weight: 700; color: var(--gray-800); }
         .shop-meta { font-size: 0.8rem; color: var(--gray-400); }
+
+        /* ===== PRODUCT CODE ===== */
+        .product-code-box {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            padding: 0.75rem 1rem;
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--gray-800);
+        }
+        .code-text { flex: 1; }
+        .btn-copy {
+            background: none;
+            border: none;
+            color: var(--green);
+            cursor: pointer;
+            padding: 0.4rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            font-size: 1rem;
+        }
+        .btn-copy:hover { color: var(--green-dark); transform: scale(1.1); }
+
+        /* ===== SIZE SELECTION ===== */
+        .size-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+        .size-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.3rem;
+            padding: 0.8rem;
+            border: 2px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            background: #fff;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+            color: var(--gray-600);
+        }
+        .size-btn span { font-size: 1.1rem; }
+        .size-btn small { font-size: 0.7rem; color: var(--gray-400); font-weight: 500; }
+        .size-btn:hover {
+            border-color: var(--green);
+            background: var(--green-light);
+            color: var(--green-dark);
+        }
+        .size-btn.active {
+            border-color: var(--green);
+            background: var(--green);
+            color: #fff;
+        }
+        .size-btn.active small { color: rgba(255,255,255,0.9); }
+
+        /* ===== QUANTITY CONTROL ===== */
+        .quantity-control {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            width: fit-content;
+        }
+        .qty-btn {
+            background: none;
+            border: none;
+            color: var(--gray-600);
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+        .qty-btn:hover { color: var(--green); background: rgba(76, 175, 80, 0.1); }
+        .qty-input {
+            width: 60px;
+            border: none;
+            background: transparent;
+            text-align: center;
+            font-weight: 600;
+            font-size: 1rem;
+            color: var(--gray-800);
+            outline: none;
+        }
+        .qty-input::-webkit-outer-spin-button,
+        .qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .qty-input[type=number] { -moz-appearance: textfield; }
+
+        /* ===== DISCOUNT CODE ===== */
+        .discount-input-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .discount-input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.2s;
+            background: var(--gray-50);
+        }
+        .discount-input:focus {
+            border-color: var(--green);
+            background: #fff;
+        }
+        .btn-apply-code {
+            padding: 0.75rem 1.25rem;
+            background: var(--gray-100);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            color: var(--gray-600);
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .btn-apply-code:hover {
+            background: var(--gray-50);
+            color: var(--green);
+            border-color: var(--green);
+        }
+        #discountMessage {
+            font-weight: 600;
+            border-radius: 6px;
+        }
+        #discountMessage.success {
+            background: #dcfce7;
+            color: #166534;
+            border-left: 3px solid var(--green);
+            padding-left: 0.75rem;
+        }
+        #discountMessage.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border-left: 3px solid #dc2626;
+            padding-left: 0.75rem;
+        }
+
+        /* ===== NOTES TEXTAREA ===== */
+        .notes-textarea {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            font-family: inherit;
+            font-size: 0.9rem;
+            resize: vertical;
+            min-height: 80px;
+            outline: none;
+            transition: border-color 0.2s;
+            background: var(--gray-50);
+            color: var(--gray-800);
+        }
+        .notes-textarea:focus {
+            border-color: var(--green);
+            background: #fff;
+        }
+        .notes-textarea::placeholder {
+            color: var(--gray-400);
+        }
+
+        /* ===== ORDER SUMMARY ===== */
+        .order-summary {
+            background: var(--green-light);
+            border: 1px solid var(--green-mid);
+            border-radius: var(--radius-sm);
+            padding: 1rem 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+        .summary-price {
+            font-size: 1.3rem;
+            color: #dc2626;
+            font-weight: 800;
+        }
+        .discount-row {
+            color: var(--green-dark);
+            font-size: 0.85rem;
+        }
+        .summary-saving {
+            color: var(--green-dark);
+        }
         
-        .action-buttons { display: flex; gap: 0.75rem; margin-top: 0.5rem; flex-wrap: wrap;}
+        .action-buttons { display: flex; gap: 0.75rem; margin-top: 0; flex-wrap: wrap;}
         .btn {
             display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
             padding: 0.75rem 1.5rem; border-radius: var(--radius-sm); font-size: 0.9rem; font-weight: 600;
@@ -258,7 +468,7 @@
         .summary-score h2 {
             font-size: 3rem;
             font-weight: 800;
-            color: #f59e0b; /* yellow star color */
+            color: #f59e0b;
             line-height: 1;
         }
         .summary-score p {
@@ -508,24 +718,107 @@
                     </div>
                 </div>
 
+                <!-- Product Code -->
+                <div>
+                    <div class="section-label">Mã Sản Phẩm</div>
+                    <div class="product-code-box">
+                        <span class="code-text"><%= product.getId() %></span>
+                        <button class="btn-copy" onclick="copyToClipboard('<%= product.getId() %>')" title="Sao chép">
+                            <i class="fa-solid fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Size Selection -->
+                <div>
+                    <div class="section-label">Kích Cỡ</div>
+                    <div class="size-options">
+                        <button class="size-btn" data-size="S" onclick="selectSize('S', this)">
+                            <span>S</span>
+                            <small>(11-12kg)</small>
+                        </button>
+                        <button class="size-btn" data-size="M" onclick="selectSize('M', this)">
+                            <span>M</span>
+                            <small>(13-14kg)</small>
+                        </button>
+                        <button class="size-btn" data-size="L" onclick="selectSize('L', this)">
+                            <span>L</span>
+                            <small>(15-16kg)</small>
+                        </button>
+                        <button class="size-btn" data-size="XL" onclick="selectSize('XL', this)">
+                            <span>XL</span>
+                            <small>(17-20kg)</small>
+                        </button>
+                    </div>
+                    <input type="hidden" id="selectedSize" value="">
+                </div>
+
+                <!-- Quantity Input -->
+                <div>
+                    <div class="section-label">Số Lượng</div>
+                    <div class="quantity-control">
+                        <button class="qty-btn" id="decreaseQty" onclick="decreaseQuantity()">
+                            <i class="fa-solid fa-minus"></i>
+                        </button>
+                        <input type="number" id="quantityInput" class="qty-input" value="1" min="1" max="999">
+                        <button class="qty-btn" id="increaseQty" onclick="increaseQuantity()">
+                            <i class="fa-solid fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Discount Code -->
+                <div>
+                    <div class="section-label">Mã Giảm Giá (Tùy Chọn)</div>
+                    <div class="discount-input-group">
+                        <input type="text" id="discountCode" class="discount-input" placeholder="Nhập mã giảm giá...">
+                        <button class="btn-apply-code" onclick="applyDiscountCode()">
+                            <i class="fa-solid fa-tag"></i> Áp Dụng
+                        </button>
+                    </div>
+                    <div id="discountMessage" style="display:none; margin-top:0.5rem; font-size:0.85rem; padding:0.5rem 0.75rem; border-radius:6px;"></div>
+                </div>
+
+                <!-- Notes -->
+                <div>
+                    <div class="section-label">Ghi Chú Đơn Hàng (Tùy Chọn)</div>
+                    <textarea id="orderNotes" class="notes-textarea" placeholder="Ví dụ: Không cắt mở gói, Giao vào buổi sáng..."></textarea>
+                </div>
+
+                <!-- Order Summary -->
+                <div class="order-summary">
+                    <div class="summary-row">
+                        <span>Thành tiền:</span>
+                        <span class="summary-price" id="totalPrice"><%= nf.format((long) salePrice) %> đ</span>
+                    </div>
+                    <% if (hasDiscount) { %>
+                    <div class="summary-row discount-row">
+                        <span>Tiết kiệm:</span>
+                        <span class="summary-saving"><%= nf.format((long) (originalPrice - salePrice)) %> đ</span>
+                    </div>
+                    <% } %>
+                </div>
+
                 <!-- Action buttons -->
                 <div class="action-buttons">
-                    <% if (product.getStockQuantity() > 0) { %>
-                        <a href="checkout?productId=<%= product.getId() %>&quantity=1" class="btn btn-green" style="background:#ff7043; box-shadow: 0 4px 14px rgba(255,112,67,0.3);">
-                            <i class="fa-solid fa-basket-shopping"></i> Mua Ngay
-                        </a>
-                    <% } else { %>
-                        <button class="btn" disabled style="background:var(--gray-200); color:var(--gray-400); cursor:not-allowed;">
-                            <i class="fa-solid fa-ban"></i> Hết Hàng
-                        </button>
-                    <% } %>
-                    <button class="btn btn-outline" onclick="alert('Chức năng thêm vào giỏ hàng chưa được triển khai.')">
-                        Thêm Vào Giỏ
+                    <button class="btn btn-green" onclick="addToCart()">
+                        <i class="fa-solid fa-basket-shopping"></i> Thêm Vào Giỏ Hàng
+                    </button>
+                    <button class="btn btn-outline" onclick="buyNow()">
+                        <i class="fa-solid fa-bolt"></i> Mua Ngay
                     </button>
                     <a href="home.jsp" class="btn btn-outline">
-                        <i class="fa-solid fa-arrow-left"></i> Quay Lai
+                        <i class="fa-solid fa-arrow-left"></i> Quay Lại
                     </a>
                 </div>
+                <form id="cartForm" action="cart" method="post" style="display:none;">
+                    <input type="hidden" id="cartAction" name="action" value="add">
+                    <input type="hidden" name="productId" value="<%= product.getId() %>">
+                    <input type="hidden" id="cartSize" name="size" value="">
+                    <input type="hidden" id="cartQty" name="quantity" value="1">
+                    <input type="hidden" id="cartDiscountCode" name="discountCode" value="">
+                    <input type="hidden" id="cartNote" name="note" value="">
+                </form>
             </div>
         </div>
 
@@ -585,14 +878,115 @@
                     <i class="fa-solid fa-star active" data-val="5"></i>
                 </div>
                 <textarea class="comment-textarea" placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm này..."></textarea>
-                <button class="btn btn-green" onclick="alert('Cảm ơn bạn đã gửi đánh giá! (Chức năng đang phát triển)')">Gửi Đánh Giá</button>
+                <button class="btn btn-green" onclick="submitReview()">Gửi Đánh Giá</button>
             </div>
         </div>
         <!-- END REVIEWS SECTION -->
     </div>
 
     <script>
-        // JS Xử lý rating input UI
+        // ===== SIZE SELECTION =====
+        function selectSize(size, btn) {
+            document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById('selectedSize').value = size;
+        }
+
+        // ===== QUANTITY CONTROL =====
+        function decreaseQuantity() {
+            const input = document.getElementById('quantityInput');
+            const val = parseInt(input.value);
+            if (val > 1) input.value = val - 1;
+        }
+        function increaseQuantity() {
+            const input = document.getElementById('quantityInput');
+            const val = parseInt(input.value);
+            if (val < 999) input.value = val + 1;
+        }
+
+        // ===== DISCOUNT CODE =====
+        function applyDiscountCode() {
+            const code = document.getElementById('discountCode').value.trim();
+            const msg = document.getElementById('discountMessage');
+            
+            if (!code) {
+                msg.textContent = 'Vui lòng nhập mã giảm giá';
+                msg.className = 'error';
+                msg.style.display = 'block';
+                return;
+            }
+            
+            // Mock validation - replace with actual API call
+            if (code.toUpperCase() === 'SAVE10') {
+                msg.textContent = '✓ Mã giảm giá "SAVE10" đã được áp dụng! Giảm 10%';
+                msg.className = 'success';
+                msg.style.display = 'block';
+            } else if (code.toUpperCase() === 'SAVE20') {
+                msg.textContent = '✓ Mã giảm giá "SAVE20" đã được áp dụng! Giảm 20%';
+                msg.className = 'success';
+                msg.style.display = 'block';
+            } else {
+                msg.textContent = '✗ Mã giảm giá không hợp lệ hoặc đã hết hạn';
+                msg.className = 'error';
+                msg.style.display = 'block';
+            }
+        }
+
+        // ===== COPY PRODUCT CODE =====
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Đã sao chép mã sản phẩm: ' + text);
+            }).catch(() => {
+                alert('Không thể sao chép');
+            });
+        }
+
+        // ===== ADD TO CART =====
+        function addToCart() {
+            const size = document.getElementById('selectedSize').value;
+            const qty = document.getElementById('quantityInput').value;
+            const notes = document.getElementById('orderNotes').value;
+            const code = document.getElementById('discountCode').value;
+
+            if (!size) {
+                alert('Vui lòng chọn kích cỡ');
+                return;
+            }
+
+            document.getElementById('cartSize').value = size;
+            document.getElementById('cartQty').value = qty;
+            document.getElementById('cartNote').value = notes;
+            document.getElementById('cartDiscountCode').value = code;
+            document.getElementById('cartAction').value = 'add';
+            document.getElementById('cartForm').submit();
+        }
+
+        // ===== BUY NOW =====
+        function buyNow() {
+            const size = document.getElementById('selectedSize').value;
+            const qty = document.getElementById('quantityInput').value;
+            const notes = document.getElementById('orderNotes').value;
+            const code = document.getElementById('discountCode').value;
+
+            if (!size) {
+                alert('Vui lòng chọn kích cỡ');
+                return;
+            }
+
+            document.getElementById('cartSize').value = size;
+            document.getElementById('cartQty').value = qty;
+            document.getElementById('cartNote').value = notes;
+            document.getElementById('cartDiscountCode').value = code;
+            document.getElementById('cartAction').value = 'buyNow';
+            document.getElementById('cartForm').submit();
+        }
+
+        // ===== SUBMIT REVIEW =====
+        function submitReview() {
+            alert('Cảm ơn bạn đã gửi đánh giá! (Chức năng đang phát triển)');
+        }
+
+        // ===== RATING STARS =====
         const stars = document.querySelectorAll('#ratingInput i');
         stars.forEach(star => {
             star.addEventListener('click', function() {

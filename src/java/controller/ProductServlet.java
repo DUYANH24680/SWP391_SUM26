@@ -182,7 +182,7 @@ public class ProductServlet extends HttpServlet {
         if (ROLE_SELLER.equals(role)) {
             return loadSellerProducts(session, keyword);
         }
-        return loadCustomerProducts(keyword);
+        return loadUserProducts(keyword);
     }
 
     // -----------------------------------------------------------------
@@ -240,14 +240,14 @@ public class ProductServlet extends HttpServlet {
     }
 
     // -----------------------------------------------------------------
-    // Customer / khach: thay tat ca san pham
+    // User / khach: thay tat ca san pham
     // -----------------------------------------------------------------
-    private List<Product> loadCustomerProducts(String keyword) throws Exception {
-        System.out.println("[ProductServlet.loadCustomerProducts] loading all products");
+    private List<Product> loadUserProducts(String keyword) throws Exception {
+        System.out.println("[ProductServlet.loadUserProducts] loading all products");
         ProductDAO dao = new ProductDAO();
         try {
             if (keyword != null && !keyword.trim().isEmpty()) {
-                System.out.println("[ProductServlet.loadCustomerProducts] searching '" + keyword.trim() + "'");
+                System.out.println("[ProductServlet.loadUserProducts] searching '" + keyword.trim() + "'");
                 return dao.searchProducts(keyword.trim());
             }
             return dao.getAllProducts();
