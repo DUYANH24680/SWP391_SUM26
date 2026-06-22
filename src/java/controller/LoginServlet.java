@@ -33,7 +33,11 @@ public class LoginServlet extends HttpServlet {
             session.setAttribute("userId", customer.getId());
             session.setAttribute("role", customer.getRoleName());
 
-            response.sendRedirect(request.getContextPath() + "/home.jsp");
+            if ("seller".equalsIgnoreCase(customer.getRoleName())) {
+                response.sendRedirect(request.getContextPath() + "/seller/dashboard");
+            } else {
+                response.sendRedirect(request.getContextPath() + "/home.jsp");
+            }
         } else {
             request.setAttribute("error", "Sai tài khoản hoặc mật khẩu");
             request.getRequestDispatcher("login.jsp").forward(request, response);

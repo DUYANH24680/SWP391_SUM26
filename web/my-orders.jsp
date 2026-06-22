@@ -27,6 +27,7 @@
     String error = (String) session.getAttribute("error");
     session.removeAttribute("message");
     session.removeAttribute("error");
+    java.text.NumberFormat nf = java.text.NumberFormat.getNumberInstance(java.util.Locale.forLanguageTag("vi"));
 %>
 <!DOCTYPE html>
 <html lang="vi">

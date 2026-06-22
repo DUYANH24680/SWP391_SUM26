@@ -420,6 +420,7 @@
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="sidebar-nav">
+                <a href="dashboard"><i class="fa-solid fa-gauge"></i> Dashboard</a>
                 <a href="../profile"><i class="fa-regular fa-user"></i> Hồ Sơ</a>
                 <a href="../products"><i class="fa-brands fa-opencart"></i> Sản Phẩm</a>
                 <a href="orders" class="active"><i class="fa-solid fa-basket-shopping"></i> Đơn Hàng</a>
