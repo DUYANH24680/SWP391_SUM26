@@ -17,10 +17,4 @@ Thumbs.db
 *.iml
 .vscode/
 
-.cursor/
 
-build/
-dist/
-nbproject/private/
-
-*.class

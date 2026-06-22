@@ -10,148 +10,424 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đăng nhập - SenaFruit</title>
+    <title>Sena Shop - Đăng Nhập & Đăng Ký</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
         :root {
-            --primary: #2f855a;
-            --secondary: #f6ad55;
-            --accent: #ecc94b;
-            --bg: #f7fafc;
-            --card: #ffffff;
-            --text: #1a202c;
-            --muted: #4a5568;
+            --green: #4caf50;
+            --green-dark: #388e3c;
+            --green-light: #e8f5e9;
+            --white: #ffffff;
+            --gray-800: #2d3d2d;
+            --gray-500: #7a8a7a;
+            --gray-200: #dde5dd;
+            --bg: #f0f4f1;
+            --danger: #ef4444;
         }
+
         * {
             box-sizing: border-box;
-        }
-        body {
             margin: 0;
-            min-height: 100vh;
-            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #e9f7ef 0%, #fafaf7 100%);
-            color: var(--text);
+            padding: 0;
         }
-        .page-shell {
+
+        body {
+            background: url('https://images.unsplash.com/photo-1610832958506-aa56368176cf?q=80&w=2070&auto=format&fit=crop') no-repeat center center/cover;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: var(--gray-800);
+            position: relative;
+        }
+
+        /* Dark overlay for background readability */
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(4px);
+            z-index: 0;
+        }
+
+        h1 {
+            font-weight: 800;
+            margin: 0 0 1rem;
+            color: var(--gray-800);
+            font-size: 2rem;
+        }
+
+        h1.brand {
+            color: var(--green);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            font-size: 2.2rem;
+        }
+
+        p {
+            font-size: 0.95rem;
+            font-weight: 400;
+            line-height: 20px;
+            letter-spacing: 0.5px;
+            margin: 20px 0 30px;
+            color: var(--white);
+        }
+
+        span {
+            font-size: 0.85rem;
+            color: var(--gray-500);
+            margin-bottom: 1.5rem;
+            display: inline-block;
+        }
+
+        a {
+            color: var(--green-dark);
+            font-size: 0.9rem;
+            text-decoration: none;
+            margin: 15px 0;
+            font-weight: 600;
+            transition: color 0.3s;
+        }
+
+        a:hover {
+            color: var(--green);
+        }
+
+        button {
+            border-radius: 30px;
+            border: none;
+            background-color: var(--green);
+            color: #FFFFFF;
+            font-size: 0.9rem;
+            font-weight: 700;
+            padding: 14px 45px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            transition: transform 80ms ease-in, background-color 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: var(--green-dark);
+            box-shadow: 0 6px 20px rgba(56, 142, 60, 0.4);
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        button:focus {
+            outline: none;
+        }
+
+        button.ghost {
+            background-color: transparent;
+            border: 2px solid #FFFFFF;
+            box-shadow: none;
+        }
+        
+        button.ghost:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        form {
+            background-color: #FFFFFF;
             display: flex;
             align-items: center;
             justify-content: center;
-            min-height: 100vh;
-            padding: 24px;
-        }
-        .login-card {
-            width: min(420px, 100%);
-            background: var(--card);
-            border-radius: 28px;
-            box-shadow: 0 24px 70px rgba(46, 64, 83, 0.12);
-            overflow: hidden;
-        }
-        .login-header {
-            padding: 36px 30px 24px;
-            background: linear-gradient(135deg, var(--primary), #48bb78);
-            color: white;
+            flex-direction: column;
+            padding: 0 50px;
+            height: 100%;
             text-align: center;
         }
-        .login-header h1 {
-            margin: 0;
-            font-size: 2.1rem;
-            letter-spacing: 0.02em;
+
+        .input-group {
+            width: 100%;
+            position: relative;
+            margin-bottom: 15px;
         }
-        .login-header p {
-            margin: 12px 0 0;
-            color: rgba(255,255,255,0.88);
-            font-size: 0.96rem;
+
+        .input-group i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray-500);
         }
-        .login-body {
-            padding: 32px 30px 34px;
-        }
-        .login-body label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: var(--muted);
+
+        input {
+            background-color: var(--bg);
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            padding: 14px 15px 14px 45px;
+            width: 100%;
             font-size: 0.95rem;
+            font-family: inherit;
+            transition: border-color 0.3s, background-color 0.3s;
         }
-        .login-body input {
-            width: 100%;
-            padding: 14px 16px;
-            margin-bottom: 18px;
-            border: 1px solid #e2e8f0;
-            border-radius: 14px;
-            font-size: 1rem;
-            transition: border-color 0.2s ease;
-        }
-        .login-body input:focus {
+
+        input:focus {
             outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 4px rgba(72, 187, 120, 0.16);
+            border-color: var(--green);
+            background-color: var(--white);
         }
-        .login-body button {
+
+        .container {
+            background-color: #fff;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25), 0 10px 20px rgba(0, 0, 0, 0.22);
+            position: relative;
+            overflow: hidden;
+            width: 900px;
+            max-width: 100%;
+            min-height: 600px;
+            z-index: 1;
+        }
+
+        .form-container {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            transition: all 0.6s ease-in-out;
+        }
+
+        .sign-in-container {
+            left: 0;
+            width: 50%;
+            z-index: 2;
+        }
+
+        .container.right-panel-active .sign-in-container {
+            transform: translateX(100%);
+        }
+
+        .sign-up-container {
+            left: 0;
+            width: 50%;
+            opacity: 0;
+            z-index: 1;
+        }
+
+        .container.right-panel-active .sign-up-container {
+            transform: translateX(100%);
+            opacity: 1;
+            z-index: 5;
+            animation: show 0.6s;
+        }
+
+        @keyframes show {
+            0%, 49.99% { opacity: 0; z-index: 1; }
+            50%, 100% { opacity: 1; z-index: 5; }
+        }
+
+        .overlay-container {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            width: 50%;
+            height: 100%;
+            overflow: hidden;
+            transition: transform 0.6s ease-in-out;
+            z-index: 100;
+        }
+
+        .container.right-panel-active .overlay-container {
+            transform: translateX(-100%);
+        }
+
+        .overlay {
+            background: linear-gradient(135deg, var(--green-dark), var(--green));
+            background-repeat: no-repeat;
+            background-size: cover;
+            background-position: 0 0;
+            color: #FFFFFF;
+            position: relative;
+            left: -100%;
+            height: 100%;
+            width: 200%;
+            transform: translateX(0);
+            transition: transform 0.6s ease-in-out;
+        }
+
+        .container.right-panel-active .overlay {
+            transform: translateX(50%);
+        }
+
+        .overlay-panel {
+            position: absolute;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            padding: 0 40px;
+            text-align: center;
+            top: 0;
+            height: 100%;
+            width: 50%;
+            transform: translateX(0);
+            transition: transform 0.6s ease-in-out;
+        }
+
+        .overlay-panel h1 {
+            color: var(--white);
+        }
+
+        .overlay-left {
+            transform: translateX(-20%);
+        }
+
+        .container.right-panel-active .overlay-left {
+            transform: translateX(0);
+        }
+
+        .overlay-right {
+            right: 0;
+            transform: translateX(0);
+        }
+
+        .container.right-panel-active .overlay-right {
+            transform: translateX(20%);
+        }
+        
+        .error-msg {
+            background: #fef2f2;
+            color: var(--danger);
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
             width: 100%;
-            padding: 14px 16px;
-            background: var(--secondary);
-            border: none;
-            border-radius: 14px;
-            color: #1a202c;
-            font-size: 1rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid #fecaca;
         }
-        .login-body button:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 12px 20px rgba(0,0,0,0.08);
-        }
-        .login-body .hint {
-            margin-top: 18px;
-            color: var(--muted);
-            font-size: 0.93rem;
-            text-align: center;
-        }
-        .login-body .hint a {
-            color: var(--primary);
-            text-decoration: none;
-            font-weight: 600;
-        }
-        .error-message {
-            margin-top: 16px;
-            color: #c53030;
-            text-align: center;
-            font-weight: 600;
-        }
-        .footer-note {
-            margin-top: 14px;
-            text-align: center;
-            color: #718096;
-            font-size: 0.88rem;
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .container {
+                min-height: 700px;
+            }
+            .form-container {
+                width: 100%;
+                height: 50%;
+            }
+            .sign-in-container {
+                top: 50%;
+            }
+            .sign-up-container {
+                top: 0;
+                opacity: 1;
+                transform: translateY(0);
+            }
+            .overlay-container {
+                display: none;
+            }
+            form {
+                padding: 0 30px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="page-shell">
-        <section class="login-card">
-            <div class="login-header">
-                <h1>SenaFruit</h1>
-                <p>Đăng nhập để tiếp tục mua hoa quả tươi ngon mỗi ngày</p>
+
+<div class="container" id="container">
+    
+    <!-- Sign Up Form -->
+    <div class="form-container sign-up-container">
+        <form action="register" method="post">
+            <h1 class="brand"><i class="fa-solid fa-apple-whole"></i> Sena Shop</h1>
+            <h1>Tạo Tài Khoản</h1>
+            <span>Nhập thông tin bên dưới để tham gia Sena Shop</span>
+            
+            <div class="input-group">
+                <i class="fa-regular fa-user"></i>
+                <input type="text" name="fullname" placeholder="Họ và tên" required />
             </div>
-            <div class="login-body">
-                <form action="login" method="post">
-                    <label for="username">Tên đăng nhập</label>
-                    <input id="username" type="text" name="username" placeholder="Nhập username" required>
-
-                    <label for="password">Mật khẩu</label>
-                    <input id="password" type="password" name="password" placeholder="Nhập mật khẩu" required>
-
-                    <button type="submit">Đăng nhập</button>
-                </form>
-
-                <p class="hint">Chưa có tài khoản? <a href="#">Liên hệ quản trị viên</a></p>
-                <p class="footer-note">SenaFruit - Hoa quả sạch, an toàn và giao nhanh toàn quốc.</p>
-
-                <% if (request.getAttribute("error") != null) { %>
-                    <p class="error-message"><%= request.getAttribute("error") %></p>
-                <% } %>
+            <div class="input-group">
+                <i class="fa-regular fa-envelope"></i>
+                <input type="email" name="email" placeholder="Email" required />
             </div>
-        </section>
+            <div class="input-group">
+                <i class="fa-solid fa-user"></i>
+                <input type="text" name="username" placeholder="Tên đăng nhập" required />
+            </div>
+            <div class="input-group">
+                <i class="fa-solid fa-lock"></i>
+                <input type="password" name="password" placeholder="Mật khẩu" required />
+            </div>
+            
+            <button type="submit">Đăng Ký Ngay</button>
+        </form>
     </div>
+
+    <!-- Sign In Form -->
+    <div class="form-container sign-in-container">
+        <form action="login" method="post">
+            <h1 class="brand"><i class="fa-solid fa-apple-whole"></i> Sena Shop</h1>
+            <h1>Đăng Nhập</h1>
+            <span>Sử dụng tài khoản thành viên của bạn</span>
+            
+            <% if (request.getAttribute("error") != null) { %>
+                <div class="error-msg">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    <%= request.getAttribute("error") %>
+                </div>
+            <% } %>
+
+            <div class="input-group">
+                <i class="fa-solid fa-user"></i>
+                <input type="text" name="username" placeholder="Tên đăng nhập" required />
+            </div>
+            <div class="input-group">
+                <i class="fa-solid fa-lock"></i>
+                <input type="password" name="password" placeholder="Mật khẩu" required />
+            </div>
+            
+            <a href="forgot-password">Quên mật khẩu?</a>
+            <button type="submit">Đăng Nhập</button>
+        </form>
+    </div>
+
+    <!-- Sliding Overlay -->
+    <div class="overlay-container">
+        <div class="overlay">
+            <div class="overlay-panel overlay-left">
+                <h1>Chào mừng trở lại!</h1>
+                <p>Để tiếp tục mua sắm và theo dõi đơn hàng, vui lòng đăng nhập bằng tài khoản của bạn.</p>
+                <button class="ghost" id="signIn">Đăng Nhập</button>
+            </div>
+            <div class="overlay-panel overlay-right">
+                <h1>Chào bạn mới!</h1>
+                <p>Nhập thông tin cá nhân của bạn và bắt đầu hành trình mua sắm trái cây tươi ngon cùng Sena Shop.</p>
+                <button class="ghost" id="signUp">Tạo Tài Khoản</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const signUpButton = document.getElementById('signUp');
+    const signInButton = document.getElementById('signIn');
+    const container = document.getElementById('container');
+
+    signUpButton.addEventListener('click', () => {
+        container.classList.add("right-panel-active");
+    });
+
+    signInButton.addEventListener('click', () => {
+        container.classList.remove("right-panel-active");
+    });
+</script>
+
 </body>
 </html>
