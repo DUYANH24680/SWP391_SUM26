@@ -62,7 +62,7 @@ public class AddProductServlet extends HttpServlet {
 
         CategoryDAO categoryDAO = new CategoryDAO();
         try {
-            List<Category> categories = categoryDAO.getAllActiveCategories();
+            List<Category> categories = categoryDAO.getAllCategories(false);
             req.setAttribute("categories", categories);
             System.out.println("[AddProductServlet] Forwarding to add-product.jsp with " + categories.size() + " categories");
         } catch (RuntimeException e) {

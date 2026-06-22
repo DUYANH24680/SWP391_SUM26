@@ -104,7 +104,7 @@ public class EditProductServlet extends HttpServlet {
         CategoryDAO categoryDAO = new CategoryDAO();
         List<Category> categories;
         try {
-            categories = categoryDAO.getAllActiveCategories();
+            categories = categoryDAO.getAllCategories(false);
         } catch (RuntimeException e) {
             System.err.println("[EditProductServlet] Failed to load categories: " + e.getMessage());
             categories = java.util.Collections.emptyList();
