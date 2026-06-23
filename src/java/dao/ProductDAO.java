@@ -206,6 +206,7 @@ public class ProductDAO extends DbContext {
                 return false;
             }
             int generatedProductId = rsKeys.getInt(1);
+            product.setId(generatedProductId);
 
             if (imageUrls != null && !imageUrls.isEmpty()) {
                 psImage = conn.prepareStatement(sqlImage);
