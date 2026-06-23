@@ -9,7 +9,7 @@
         return;
     }
 
-    String role = (String) session.getAttribute("role");
+ĩ String role = (String) session.getAttribute("role");
     if (role == null || (!role.equals("admin") && !role.equals("seller"))) {
         response.sendRedirect(request.getContextPath() + "/home.jsp");
         return;
