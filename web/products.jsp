@@ -2,6 +2,18 @@
 <%@ page import="model.Account" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%!
+    public static String imgUrl(String path, String contextPath) {
+        if (path == null || path.trim().isEmpty()) return null;
+        String trimmed = path.trim();
+        if (trimmed.startsWith("uploads/")) {
+            try {
+                return contextPath + "/image?path=" + java.net.URLEncoder.encode(trimmed, "UTF-8");
+            } catch (java.io.UnsupportedEncodingException e) { return trimmed; }
+        }
+        return trimmed;
+    }
+%>
 <%
     Account user = (Account) session.getAttribute("user");
     if (user == null) {
@@ -695,9 +707,16 @@
                                     <!-- Hinh anh -->
                                     <td>
                                         <c:choose>
-                                            <c:when test="${not empty p.image}">
+                                            <c:when test="${p.image != null && p.image != '' && p.image != 'null'}">
                                                 <div class="product-img">
-                                                    <img src="${p.image}" alt="${p.title}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                                                    <c:choose>
+                                                        <c:when test="${p.image.startsWith('uploads/')}">
+                                                            <img src="<%= request.getContextPath() %>/image?path=<c:out value='${p.image}' />" alt="${p.title}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <img src="${p.image}" alt="${p.title}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                                                        </c:otherwise>
+                                                    </c:choose>
                                                     <div class="product-img-placeholder" style="display:none;">🍎</div>
                                                 </div>
                                             </c:when>

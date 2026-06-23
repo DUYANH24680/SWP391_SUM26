@@ -66,6 +66,16 @@
     boolean hasDiscount = salePrice > 0 && salePrice < originalPrice;
     int discountPercent = (int) Math.round(product.getDiscountPercent());
     java.text.NumberFormat nf = java.text.NumberFormat.getNumberInstance(java.util.Locale.forLanguageTag("vi"));
+
+    // ---- Image URL helper: uploaded images go through ImageServlet ----
+    java.util.function.Function<String, String> imgUrl = (String path) -> {
+        if (path == null || path.trim().isEmpty()) return null;
+        String trimmed = path.trim();
+        if (trimmed.startsWith("uploads/")) {
+            return request.getContextPath() + "/image?path=" + java.net.URLEncoder.encode(trimmed);
+        }
+        return trimmed; // external URL or existing absolute path
+    };
 %>
 <!DOCTYPE html>
 <html lang="vi">
@@ -616,7 +626,7 @@
                     <div>
                         <% if (product.getImage() != null && !product.getImage().trim().isEmpty()) { %>
                         <div class="product-image-wrap">
-                            <img src="<%= product.getImage() %>"
+                            <img src="<%= imgUrl.apply(product.getImage()) %>"
                                  alt="<%= product.getTitle() %>"
                                  onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
                             <div class="product-image-placeholder" style="display:none;">🍎</div>
@@ -760,7 +770,7 @@
                             </div>
                             <div class="shop-card">
                                 <% if (shopInfo.getLogo() != null && !shopInfo.getLogo().trim().isEmpty()) { %>
-                                <img class="shop-avatar" src="<%= shopInfo.getLogo() %>"
+                                <img class="shop-avatar" src="<%= imgUrl.apply(shopInfo.getLogo()) %>"
                                      alt="<%= shopInfo.getName() %>"
                                      onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
                                 <div class="shop-avatar-placeholder" style="display:none;">&#127974;</div>

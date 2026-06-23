@@ -4,6 +4,18 @@
 <%@ page import="model.Product" %>
 <%@ page import="java.util.List" %>
 <%@ page import="java.text.SimpleDateFormat" %>
+<%!
+    public static String imgUrl(String path, String contextPath) {
+        if (path == null || path.trim().isEmpty()) return null;
+        String trimmed = path.trim();
+        if (trimmed.startsWith("uploads/")) {
+            try {
+                return contextPath + "/image?path=" + java.net.URLEncoder.encode(trimmed, "UTF-8");
+            } catch (java.io.UnsupportedEncodingException e) { return trimmed; }
+        }
+        return trimmed;
+    }
+%>
 <%
     Account user = (Account) session.getAttribute("user");
     if (user == null) {
@@ -740,7 +752,7 @@
                 <div class="current-images-grid">
                     <% for (int i = 0; i < currentImages.size(); i++) { %>
                     <div class="current-img-wrap">
-                        <img src="<%= currentImages.get(i) %>" alt="Ảnh sản phẩm <%= i + 1 %>">
+                        <img src="<%= imgUrl(currentImages.get(i), request.getContextPath()) %>" alt="Ảnh sản phẩm <%= i + 1 %>">
                         <div class="img-badge"><%= i == 0 ? "Chính" : "Phụ " + i %></div>
                     </div>
                     <% } %>

@@ -3,6 +3,19 @@
 <%@ page import="model.Category" %>
 <%@ page import="java.util.List" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%!
+    // Helper: chuyen duong dan image thanh URL hop le (di qua ImageServlet neu la uploads/)
+    public static String imgUrl(String path, String contextPath) {
+        if (path == null || path.trim().isEmpty()) return null;
+        String trimmed = path.trim();
+        if (trimmed.startsWith("uploads/")) {
+            try {
+                return contextPath + "/image?path=" + java.net.URLEncoder.encode(trimmed, "UTF-8");
+            } catch (java.io.UnsupportedEncodingException e) { return trimmed; }
+        }
+        return trimmed;
+    }
+%>
 <%
     Object rawUser = session.getAttribute("user");
     Customer user = (Customer) rawUser;
@@ -32,6 +45,16 @@
 
     List<Category> categories = (List<Category>) request.getAttribute("categories");
     if (categories == null) categories = java.util.Collections.emptyList();
+
+    // ---- Image URL helper ----
+    java.util.function.Function<String, String> imgUrl = (String path) -> {
+        if (path == null || path.trim().isEmpty()) return null;
+        String trimmed = path.trim();
+        if (trimmed.startsWith("uploads/")) {
+            return request.getContextPath() + "/image?path=" + java.net.URLEncoder.encode(trimmed, "UTF-8");
+        }
+        return trimmed;
+    };
 %>
 <!DOCTYPE html>
 <html lang="vi">
@@ -624,7 +647,7 @@
                                     <td>
                                         <c:choose>
                                             <c:when test="${not empty c.image}">
-                                                <img class="cat-img" src="${c.image}" alt="${c.name}"
+                                                <img class="cat-img" src="<%= imgUrl(c.getImage(), request.getContextPath()) %>" alt="${c.name}"
                                                      onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
                                                 <div class="cat-img-placeholder" style="display:none;">
                                                     <i class="fa-solid fa-layer-group" style="color:var(--green);font-size:1.2rem;"></i>

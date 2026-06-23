@@ -304,8 +304,10 @@ public class EditProductServlet extends HttpServlet {
                         newImageUrls = (newImageUrls == null) ? new ArrayList<>() : newImageUrls;
                         newImageUrls.add(imagePath);
                     } catch (Exception e) {
+                        e.printStackTrace(); // IN CHI TIET LOI
                         uploadError = true;
-                        uploadErrorMsg = e.getMessage();
+                        uploadErrorMsg = "Loi upload: " + e.getClass().getName() + " — " + e.getMessage();
+                        System.out.println("[EditProductServlet] Upload error detail: " + uploadErrorMsg);
                         break;
                     }
                 }
