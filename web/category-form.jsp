@@ -9,7 +9,7 @@
         return;
     }
 
-ĩ String role = (String) session.getAttribute("role");
+    String role = (String) session.getAttribute("role");
     if (role == null || (!role.equals("admin") && !role.equals("seller"))) {
         response.sendRedirect(request.getContextPath() + "/home.jsp");
         return;
@@ -30,6 +30,16 @@
     String actionUrl = isEdit
             ? request.getContextPath() + "/category/update"
             : request.getContextPath() + "/category/create";
+
+    // ---- Image URL helper ----
+    java.util.function.Function<String, String> imgUrl = (String path) -> {
+        if (path == null || path.trim().isEmpty()) return null;
+        String trimmed = path.trim();
+        if (trimmed.startsWith("uploads/")) {
+            return request.getContextPath() + "/image?path=" + java.net.URLEncoder.encode(trimmed);
+        }
+        return trimmed;
+    };
 %>
 <!DOCTYPE html>
 <html lang="vi">
@@ -582,7 +592,7 @@
 
                         <% if (isEdit && category.getImage() != null && !category.getImage().trim().isEmpty()) { %>
                         <div class="image-preview" id="currentImagePreview">
-                            <img src="<%= category.getImage() %>" alt="Ảnh hiện tại" id="currentImg">
+                            <img src="<%= imgUrl.apply(category.getImage()) %>" alt="Ảnh hiện tại" id="currentImg">
                             <div class="image-preview-label">
                                 <i class="fa-solid fa-check-circle"></i>
                                 Ảnh hiện tại — sẽ được thay thế nếu bạn chọn ảnh mới

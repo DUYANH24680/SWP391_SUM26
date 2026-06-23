@@ -7,6 +7,12 @@
 
     <display-name>Sena Shop - Fruit Store</display-name>
 
+    <!-- Upload external path: thu muc luu anh nam ngoai build/ (tranh bi xoa khi rebuild) -->
+    <context-param>
+        <param-name>upload.external.path</param-name>
+        <param-value>C:/uploads</param-value>
+    </context-param>
+
     <!-- Session timeout: 30 minutes -->
     <session-config>
         <session-timeout>30</session-timeout>

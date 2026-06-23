@@ -2133,11 +2133,32 @@
                                 <div class="product-card <%= p.getStockQuantity() <= 0 ? "out-of-stock" : "" %>" data-id="<%= p.getId() %>" style="cursor:pointer;">
                                     <div class="product-image-wrap">
                                         <%
-                                            String imgStr = p.getImage() != null && !p.getImage().isEmpty() ? p.getImage() : "🍎";
-                                            if (imgStr.toLowerCase().endsWith(".png") || imgStr.toLowerCase().endsWith(".jpg") || imgStr.toLowerCase().endsWith(".jpeg") || imgStr.toLowerCase().endsWith(".gif") || imgStr.contains("/")) {
+                                            String imgStr = p.getImage();
+                                            if (imgStr == null || imgStr.trim().isEmpty()) {
+                                                // Khong co anh → hien thi emoji
                                         %>
-                                            <img src="<%= imgStr %>" alt="<%= p.getTitle() %>" style="width:100%; height:100%; object-fit:cover; border-radius:var(--radius-md);">
-                                        <%  } else { %>
+                                            <div class="product-emoji">🍎</div>
+                                        <%
+                                            } else if (imgStr.trim().startsWith("uploads/")) {
+                                                // Anh upload → goi ImageServlet
+                                                String encoded = java.net.URLEncoder.encode(imgStr.trim(), "UTF-8");
+                                                String imgSrc = request.getContextPath() + "/image?path=" + encoded;
+                                        %>
+                                            <img src="<%= imgSrc %>" alt="<%= p.getTitle() %>" style="width:100%; height:100%; object-fit:cover; border-radius:var(--radius-md);" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                                            <div class="product-emoji" style="display:none;">🍎</div>
+                                        <%
+                                            } else if (imgStr.trim().toLowerCase().endsWith(".png")
+                                                    || imgStr.trim().toLowerCase().endsWith(".jpg")
+                                                    || imgStr.trim().toLowerCase().endsWith(".jpeg")
+                                                    || imgStr.trim().toLowerCase().endsWith(".gif")
+                                                    || imgStr.trim().toLowerCase().startsWith("http")) {
+                                                // Duong dan anh hoac URL tuyệt đối → dung truc tiep
+                                        %>
+                                            <img src="<%= imgStr.trim() %>" alt="<%= p.getTitle() %>" style="width:100%; height:100%; object-fit:cover; border-radius:var(--radius-md);">
+                                        <%
+                                            } else {
+                                                // Con lai → emoji
+                                        %>
                                             <div class="product-emoji"><%= imgStr %></div>
                                         <%  } %>
                                         <% if (p.getSalePrice() < p.getOriginalPrice()) { 

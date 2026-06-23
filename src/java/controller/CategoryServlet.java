@@ -296,7 +296,7 @@ public class CategoryServlet extends HttpServlet {
         try {
             Part filePart = req.getPart("image");
             if (filePart != null && filePart.getSize() > 0) {
-                return FileUploadUtil.saveProductImage(filePart, subFolder);
+                return FileUploadUtil.saveProductImage(filePart, subFolder, getServletContext());
             }
         } catch (Exception e) {
             System.err.println("[CategoryServlet] image upload error: " + e.getMessage());
