@@ -132,142 +132,40 @@ public class CheckoutServlet extends HttpServlet {
         String note = req.getParameter("note");
         String voucherCode = req.getParameter("voucherCode");
 
-        if (recipientName == null || recipientPhone == null || address == null ||
-            recipientName.trim().isEmpty() || recipientPhone.trim().isEmpty() || address.trim().isEmpty()) {
-            req.setAttribute("error", "Vui lòng nhập đầy đủ thông tin giao hàng.");
-            doGet(req, resp);
-            return;
-        }
-
         String prodIdParam = req.getParameter("productId");
-        boolean isBuyNow = (prodIdParam != null && !prodIdParam.trim().isEmpty());
+        Integer buyNowProductId = null;
+        Integer buyNowQuantity = null;
 
-        ProductDAO productDAO = new ProductDAO();
-        VoucherDAO voucherDAO = new VoucherDAO();
-        OrderDAO orderDAO = new OrderDAO();
-        
         try {
-            double totalCost = 0.0;
-            List<OrderDetail> details = new java.util.ArrayList<>();
-
-            if (isBuyNow) {
-                // 1. Buy Now placing order
-                int productId = Integer.parseInt(prodIdParam.trim());
-                int quantity = Integer.parseInt(req.getParameter("quantity").trim());
-
-                Product product = productDAO.getProductById(productId);
-                if (product == null || product.isIsDelete() || product.getStatus() != 1) {
-                    req.setAttribute("error", "Sản phẩm không tồn tại hoặc đã ngừng bán.");
-                    doGet(req, resp);
-                    return;
-                }
-                if (product.getStockQuantity() < quantity) {
-                    req.setAttribute("error", "Số lượng trong kho không đủ cho sản phẩm " + product.getTitle());
-                    doGet(req, resp);
-                    return;
-                }
-
-                double unitPrice = product.getSalePrice() > 0 && product.getSalePrice() < product.getOriginalPrice()
-                        ? product.getSalePrice() : product.getOriginalPrice();
-                totalCost = unitPrice * quantity;
-
-                OrderDetail detail = new OrderDetail();
-                detail.setProductId(productId);
-                detail.setQuantity(quantity);
-                detail.setUnitPrice(unitPrice);
-                detail.setTotalPrice(totalCost);
-                details.add(detail);
-            } else {
-                // 2. Cart checkout placing order
-                CartService cartService = new CartService();
-                Cart cart = cartService.getCartByCustomerId(user.getId());
-                if (cart == null || cart.isEmpty()) {
-                    req.setAttribute("error", "Giỏ hàng của bạn đang trống.");
-                    doGet(req, resp);
-                    return;
-                }
-
-                for (CartItem item : cart.getItems()) {
-                    Product p = productDAO.getProductById(item.getProductId());
-                    if (p == null || p.isIsDelete() || p.getStatus() != 1) {
-                        req.setAttribute("error", "Sản phẩm " + item.getTitle() + " không còn khả dụng.");
-                        doGet(req, resp);
-                        return;
-                    }
-                    if (p.getStockQuantity() < item.getQuantity()) {
-                        req.setAttribute("error", "Sản phẩm " + item.getTitle() + " không đủ hàng trong kho.");
-                        doGet(req, resp);
-                        return;
-                    }
-
-                    double unitPrice = p.getSalePrice() > 0 && p.getSalePrice() < p.getOriginalPrice()
-                            ? p.getSalePrice() : p.getOriginalPrice();
-                    double itemTotal = unitPrice * item.getQuantity();
-                    totalCost += itemTotal;
-
-                    OrderDetail detail = new OrderDetail();
-                    detail.setProductId(item.getProductId());
-                    detail.setQuantity(item.getQuantity());
-                    detail.setUnitPrice(unitPrice);
-                    detail.setTotalPrice(itemTotal);
-                    details.add(detail);
-                }
+            if (prodIdParam != null && !prodIdParam.trim().isEmpty()) {
+                buyNowProductId = Integer.parseInt(prodIdParam.trim());
+                buyNowQuantity = Integer.parseInt(req.getParameter("quantity").trim());
             }
 
-            // Free shipping on orders from 200,000 VND
-            double shippingFee = totalCost >= 200000 ? 0.0 : 20000.0;
-            double discountAmount = 0.0;
-            Integer voucherId = null;
+            service.OrderService orderService = new service.OrderService();
+            orderService.placeOrder(
+                user.getId(),
+                recipientName,
+                recipientPhone,
+                address,
+                paymentMethod,
+                note,
+                voucherCode,
+                buyNowProductId,
+                buyNowQuantity
+            );
 
-            if (voucherCode != null && !voucherCode.trim().isEmpty()) {
-                Voucher voucher = voucherDAO.findByCode(voucherCode);
-                if (voucher != null && voucher.isValid(totalCost)) {
-                    voucherId = voucher.getId();
-                    discountAmount = voucher.calculateDiscount(totalCost);
-                }
-            }
+            session.setAttribute("message", "Đặt hàng thành công!");
+            resp.sendRedirect(req.getContextPath() + "/my-orders");
 
-            double finalCost = totalCost - discountAmount + shippingFee;
-
-            Order order = new Order();
-            order.setCustomerId(user.getId());
-            order.setVoucherId(voucherId);
-            order.setRecipientName(recipientName.trim());
-            order.setRecipientPhone(recipientPhone.trim());
-            order.setAddress(address.trim());
-            order.setPaymentMethod(paymentMethod != null ? paymentMethod.trim() : "COD");
-            order.setStatus(1); // 1 = Pending
-            order.setPaymentStatus(0); // 0 = Unpaid
-            order.setTotalCost(totalCost);
-            order.setDiscountAmount(discountAmount);
-            order.setShippingFee(shippingFee);
-            order.setFinalCost(finalCost);
-            order.setNote(note != null ? note.trim() : "");
-
-            boolean success = orderDAO.createOrder(order, details);
-
-            if (success) {
-                if (!isBuyNow) {
-                    // Clear the cart
-                    CartService cartService = new CartService();
-                    cartService.clearCart(user.getId());
-                }
-                session.setAttribute("message", "Đặt hàng thành công!");
-                resp.sendRedirect(req.getContextPath() + "/my-orders");
-            } else {
-                req.setAttribute("error", "Đặt hàng thất bại. Vui lòng thử lại.");
-                doGet(req, resp);
-            }
-
+        } catch (IllegalArgumentException e) {
+            req.setAttribute("error", e.getMessage());
+            doGet(req, resp);
         } catch (Exception e) {
             System.err.println("[CheckoutServlet] doPost error: " + e.getMessage());
             e.printStackTrace();
             req.setAttribute("error", "Lỗi xử lý đơn hàng: " + e.getMessage());
             doGet(req, resp);
-        } finally {
-            productDAO.close();
-            voucherDAO.close();
-            orderDAO.close();
         }
     }
 
