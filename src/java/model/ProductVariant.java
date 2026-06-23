@@ -5,7 +5,9 @@ import java.sql.Timestamp;
 public class ProductVariant {
     private int id;
     private int productId;
-    private String weight;           // e.g. "500g", "1kg", "2kg"
+    private String weightValue;  // e.g. "500", "1", "2"
+    private String weightUnit;  // e.g. "g", "kg", "ml"
+    private String sku;          // SKU code for variant
     private double price;            // giá bán riêng cho variant này
     private int stockQuantity;       // tồn kho riêng
     private boolean isDelete;
@@ -14,11 +16,13 @@ public class ProductVariant {
     public ProductVariant() {
     }
 
-    public ProductVariant(int id, int productId, String weight, double price, int stockQuantity,
-            boolean isDelete, Timestamp createdAt) {
+    public ProductVariant(int id, int productId, String weightValue, String weightUnit, String sku,
+            double price, int stockQuantity, boolean isDelete, Timestamp createdAt) {
         this.id = id;
         this.productId = productId;
-        this.weight = weight;
+        this.weightValue = weightValue;
+        this.weightUnit = weightUnit;
+        this.sku = sku;
         this.price = price;
         this.stockQuantity = stockQuantity;
         this.isDelete = isDelete;
@@ -42,11 +46,38 @@ public class ProductVariant {
     }
 
     public String getWeight() {
-        return weight;
+        if (weightValue != null && weightUnit != null) {
+            return weightValue + weightUnit;
+        }
+        return weightValue != null ? weightValue : "";
     }
 
     public void setWeight(String weight) {
-        this.weight = weight;
+        this.weightValue = weight;
+    }
+
+    public String getWeightValue() {
+        return weightValue;
+    }
+
+    public void setWeightValue(String weightValue) {
+        this.weightValue = weightValue;
+    }
+
+    public String getWeightUnit() {
+        return weightUnit;
+    }
+
+    public void setWeightUnit(String weightUnit) {
+        this.weightUnit = weightUnit;
+    }
+
+    public String getSku() {
+        return sku;
+    }
+
+    public void setSku(String sku) {
+        this.sku = sku;
     }
 
     public double getPrice() {

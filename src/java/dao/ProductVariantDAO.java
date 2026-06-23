@@ -11,13 +11,15 @@ import java.util.List;
  *
  * SQL table reference:
  * CREATE TABLE ProductVariants (
- *     id          INT IDENTITY(1,1) PRIMARY KEY,
- *     product_id  INT NOT NULL,
- *     weight      NVARCHAR(50) NOT NULL,   -- e.g. '500g', '1kg', '2kg'
- *     price       DECIMAL(18,2) NOT NULL,
- *     stock_quantity INT NOT NULL DEFAULT 0,
- *     isDelete    BIT NOT NULL DEFAULT 0,
- *     created_at  DATETIME DEFAULT GETDATE(),
+ *     id              INT IDENTITY(1,1) PRIMARY KEY,
+ *     product_id      INT NOT NULL,
+ *     weight_value    NVARCHAR(50) NOT NULL,
+ *     weight_unit     NVARCHAR(10) NOT NULL,
+ *     sale_price      DECIMAL(18,2) NOT NULL,
+ *     stock_quantity  INT NOT NULL DEFAULT 0,
+ *     sku             NVARCHAR(50),
+ *     is_active       BIT NOT NULL DEFAULT 1,
+ *     created_at      DATETIME DEFAULT GETDATE(),
  *     FOREIGN KEY (product_id) REFERENCES Products(id)
  * );
  */
@@ -33,8 +35,8 @@ public class ProductVariantDAO extends DbContext {
         }
 
         String sqlDelete = "DELETE FROM ProductVariants WHERE product_id = ?";
-        String sqlInsert = "INSERT INTO ProductVariants (product_id, weight, price, stock_quantity, isDelete, created_at) "
-                         + "VALUES (?, ?, ?, ?, 0, GETDATE())";
+        String sqlInsert = "INSERT INTO ProductVariants (product_id, weight_value, weight_unit, sale_price, stock_quantity, sku, is_active, created_at) "
+                         + "VALUES (?, ?, ?, ?, ?, ?, 1, GETDATE())";
 
         Connection conn = null;
         PreparedStatement psDelete = null;
@@ -51,9 +53,11 @@ public class ProductVariantDAO extends DbContext {
             psInsert = conn.prepareStatement(sqlInsert);
             for (ProductVariant v : variants) {
                 psInsert.setInt(1, productId);
-                psInsert.setString(2, v.getWeight());
-                psInsert.setDouble(3, v.getPrice());
-                psInsert.setInt(4, v.getStockQuantity());
+                psInsert.setString(2, v.getWeightValue());
+                psInsert.setString(3, v.getWeightUnit());
+                psInsert.setDouble(4, v.getPrice());
+                psInsert.setInt(5, v.getStockQuantity());
+                psInsert.setString(6, v.getSku() != null ? v.getSku() : "");
                 psInsert.addBatch();
             }
             psInsert.executeBatch();
@@ -82,8 +86,8 @@ public class ProductVariantDAO extends DbContext {
      * Lay tat ca cac variant (weight) cua mot san pham.
      */
     public List<ProductVariant> getVariantsByProductId(int productId) {
-        String sql = "SELECT id, product_id, weight, price, stock_quantity, isDelete, created_at "
-                   + "FROM ProductVariants WHERE product_id = ? AND isDelete = 0 "
+        String sql = "SELECT id, product_id, weight_value, weight_unit, sale_price, stock_quantity, sku, is_active, created_at "
+                   + "FROM ProductVariants WHERE product_id = ? AND is_active = 1 "
                    + "ORDER BY id ASC";
         try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
             ps.setInt(1, productId);
@@ -108,7 +112,7 @@ public class ProductVariantDAO extends DbContext {
      * Cap nhat so luong ton kho cho mot variant cu the.
      */
     public boolean updateVariantStock(int variantId, int newStock) {
-        String sql = "UPDATE ProductVariants SET stock_quantity = ? WHERE id = ? AND isDelete = 0";
+        String sql = "UPDATE ProductVariants SET stock_quantity = ? WHERE id = ? AND is_active = 1";
         try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
             ps.setInt(1, newStock);
             ps.setInt(2, variantId);
@@ -129,7 +133,7 @@ public class ProductVariantDAO extends DbContext {
      * Xoa (soft delete) tat ca cac variant cua mot san pham.
      */
     public boolean deleteVariantsByProductId(int productId) {
-        String sql = "UPDATE ProductVariants SET isDelete = 1 WHERE product_id = ?";
+        String sql = "UPDATE ProductVariants SET is_active = 0 WHERE product_id = ?";
         try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
             ps.setInt(1, productId);
             int rowsUpdated = ps.executeUpdate();
@@ -148,10 +152,12 @@ public class ProductVariantDAO extends DbContext {
         ProductVariant v = new ProductVariant();
         v.setId(rs.getInt("id"));
         v.setProductId(rs.getInt("product_id"));
-        v.setWeight(rs.getString("weight"));
-        v.setPrice(rs.getDouble("price"));
+        v.setWeightValue(rs.getString("weight_value"));
+        v.setWeightUnit(rs.getString("weight_unit"));
+        v.setPrice(rs.getDouble("sale_price"));
         v.setStockQuantity(rs.getInt("stock_quantity"));
-        v.setIsDelete(rs.getBoolean("isDelete"));
+        v.setSku(rs.getString("sku"));
+        v.setIsDelete(!rs.getBoolean("is_active"));
         v.setCreatedAt(rs.getTimestamp("created_at"));
         return v;
     }

@@ -283,11 +283,11 @@ public class AddProductServlet extends HttpServlet {
             }
 
             ProductVariant v = new ProductVariant();
-            v.setWeight(weight.trim());
 
-            if (units != null && units.length > i && units[i] != null) {
-                v.setWeight(weight.trim() + units[i].trim()); // e.g. "500" + "kg" = "500kg"
-            }
+            String w = weight.trim();
+            String u = (units != null && units.length > i && units[i] != null) ? units[i].trim() : "";
+            v.setWeightValue(w);
+            v.setWeightUnit(u);
 
             if (prices != null && prices.length > i && prices[i] != null && !prices[i].trim().isEmpty()) {
                 try {
