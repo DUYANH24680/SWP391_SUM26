@@ -5,13 +5,13 @@ import jakarta.servlet.http.*;
 import jakarta.servlet.annotation.*;
 import java.io.IOException;
 
-import model.User;
-import service.UserService;
+import model.Account;
+import service.AccountService;
 
 @WebServlet("/login")
 public class LoginServlet extends HttpServlet {
 
-    private UserService service = new UserService();
+    private AccountService service = new AccountService();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -25,7 +25,7 @@ public class LoginServlet extends HttpServlet {
         String username = request.getParameter("username");
         String password = request.getParameter("password");
 
-        User user = service.login(username, password);
+        Account user = service.login(username, password);
 
         if (user != null) {
             HttpSession session = request.getSession();

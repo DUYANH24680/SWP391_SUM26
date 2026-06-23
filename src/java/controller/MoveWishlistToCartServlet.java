@@ -7,7 +7,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import model.Cart;
-import model.User;
+import model.Account;
 import service.WishlistService;
 
 import java.io.IOException;
@@ -26,7 +26,7 @@ public class MoveWishlistToCartServlet extends HttpServlet {
             return;
         }
 
-        User user = (User) session.getAttribute("user");
+        Account user = (Account) session.getAttribute("user");
         int productId = parsePositiveInt(req.getParameter("productId"), 0);
 
         try {

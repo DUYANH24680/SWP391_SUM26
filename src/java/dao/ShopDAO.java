@@ -23,7 +23,7 @@ public class ShopDAO extends Utils.DbContext {
                     Shop shop = new Shop();
                     shop.setId(rs.getInt("id"));
                     shop.setOwnerId(rs.getInt("owner_id"));
-                    shop.setName(rs.getString("shop_name"));
+                    shop.setShopName(rs.getString("shop_name"));
                     shop.setLogo(rs.getString("logo"));
                     shop.setDescription(rs.getString("description"));
                     shop.setAddress(rs.getString("address"));
@@ -91,7 +91,7 @@ public class ShopDAO extends Utils.DbContext {
         Shop shop = new Shop();
         shop.setId(rs.getInt("id"));
         shop.setOwnerId(rs.getInt("owner_id"));
-        shop.setName(rs.getString("shop_name"));
+        shop.setShopName(rs.getString("shop_name"));
         shop.setLogo(rs.getString("logo"));
         shop.setDescription(rs.getString("description"));
         shop.setAddress(rs.getString("address"));

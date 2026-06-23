@@ -6,7 +6,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import model.User;
+import model.Account;
 import service.CartService;
 
 import java.io.IOException;
@@ -31,7 +31,7 @@ public class AddToCartServlet extends HttpServlet {
             return;
         }
 
-        User user = (User) session.getAttribute("user");
+        Account user = (Account) session.getAttribute("user");
         String productIdParam = trimParam(req.getParameter("productId"));
         String size = trimParam(req.getParameter("size"));
         String quantityParam = trimParam(req.getParameter("quantity"));

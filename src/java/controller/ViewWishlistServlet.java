@@ -6,7 +6,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import model.User;
+import model.Account;
 import service.WishlistService;
 
 import java.io.IOException;
@@ -25,7 +25,7 @@ public class ViewWishlistServlet extends HttpServlet {
             return;
         }
 
-        User user = (User) session.getAttribute("user");
+        Account user = (Account) session.getAttribute("user");
         req.setAttribute("wishlist", wishlistService.getWishlistByCustomerId(user.getId()));
         req.getRequestDispatcher("/wishlist.jsp").forward(req, resp);
     }

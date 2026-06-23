@@ -5,14 +5,14 @@ import jakarta.servlet.http.*;
 import jakarta.servlet.annotation.*;
 import java.io.IOException;
 import dao.PasswordResetTokenDAO;
-import dao.UserDAO;
-import model.User;
+import dao.AccountDAO;
+import model.Account;
 
 @WebServlet("/reset-password")
 public class ResetPasswordServlet extends HttpServlet {
 
     private PasswordResetTokenDAO tokenDAO = new PasswordResetTokenDAO();
-    private UserDAO userDAO = new UserDAO();
+    private AccountDAO userDAO = new AccountDAO();
 
     /**
      * GET - Display reset password form with token validation
@@ -34,15 +34,15 @@ public class ResetPasswordServlet extends HttpServlet {
         email = email.trim();
 
         // Get user by email to obtain account_id
-        User user = userDAO.findByUsernameOrEmail(email);
+        Account user = userDAO.findByUsernameOrEmail(email);
         if (user == null) {
             request.setAttribute("error", "Link không hợp lệ");
             request.getRequestDispatcher("reset-password.jsp").forward(request, response);
             return;
         }
 
-        // Validate token (dùng account_id, không dùng email)
-        boolean isValidToken = tokenDAO.validateToken(user.getId(), token);
+        // Validate token (dùng email, không dùng id)
+        boolean isValidToken = tokenDAO.validateToken(email, token);
         if (!isValidToken) {
             request.setAttribute("error", "Link đã hết hạn hoặc không tồn tại");
             request.getRequestDispatcher("reset-password.jsp").forward(request, response);
@@ -101,15 +101,15 @@ public class ResetPasswordServlet extends HttpServlet {
         email = email.trim();
 
         // Get user by email to obtain account_id
-        User user = userDAO.findByUsernameOrEmail(email);
+        Account user = userDAO.findByUsernameOrEmail(email);
         if (user == null) {
             request.setAttribute("error", "Email không tồn tại");
             request.getRequestDispatcher("reset-password.jsp").forward(request, response);
             return;
         }
 
-        // Validate token again (dùng account_id, không dùng email)
-        boolean isValidToken = tokenDAO.validateToken(user.getId(), token);
+        // Validate token again (dùng email, không dùng id)
+        boolean isValidToken = tokenDAO.validateToken(email, token);
         if (!isValidToken) {
             request.setAttribute("error", "Link đã hết hạn hoặc không tồn tại");
             request.getRequestDispatcher("reset-password.jsp").forward(request, response);

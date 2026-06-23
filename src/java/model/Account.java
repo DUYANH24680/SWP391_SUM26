@@ -2,7 +2,7 @@ package model;
 
 import java.sql.Timestamp;
 
-public class User {
+public class Account {
     private int id;
     private int roleId;
     private String roleName;
@@ -11,14 +11,16 @@ public class User {
     private String passwordHash;
     private String email;
     private String phone;
+    private String address;
     private String avatar;
+    private Boolean gender;
     private int status;
     private Timestamp createdAt;
 
-    public User() {
+    public Account() {
     }
 
-    public User(int id, int roleId, String roleName, String fullname, String username, String passwordHash, String email, String phone, String avatar, int status, Timestamp createdAt) {
+    public Account(int id, int roleId, String roleName, String fullname, String username, String passwordHash, String email, String phone, String address, String avatar, Boolean gender, int status, Timestamp createdAt) {
         this.id = id;
         this.roleId = roleId;
         this.roleName = roleName;
@@ -27,7 +29,9 @@ public class User {
         this.passwordHash = passwordHash;
         this.email = email;
         this.phone = phone;
+        this.address = address;
         this.avatar = avatar;
+        this.gender = gender;
         this.status = status;
         this.createdAt = createdAt;
     }
@@ -96,12 +100,28 @@ public class User {
         this.phone = phone;
     }
 
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
     public String getAvatar() {
         return avatar;
     }
 
     public void setAvatar(String avatar) {
         this.avatar = avatar;
+    }
+
+    public Boolean getGender() {
+        return gender;
+    }
+
+    public void setGender(Boolean gender) {
+        this.gender = gender;
     }
 
     public int getStatus() {

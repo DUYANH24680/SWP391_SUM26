@@ -5,7 +5,7 @@ import java.sql.Timestamp;
 public class Shop {
     private int id;
     private int ownerId;
-    private String name;
+    private String shopName;
     private String logo;
     private String description;
     private String address;
@@ -15,11 +15,11 @@ public class Shop {
     public Shop() {
     }
 
-    public Shop(int id, int ownerId, String name, String logo, String description,
+    public Shop(int id, int ownerId, String shopName, String logo, String description,
             String address, int status, Timestamp createdAt) {
         this.id = id;
         this.ownerId = ownerId;
-        this.name = name;
+        this.shopName = shopName;
         this.logo = logo;
         this.description = description;
         this.address = address;
@@ -43,12 +43,12 @@ public class Shop {
         this.ownerId = ownerId;
     }
 
-    public String getName() {
-        return name;
+    public String getShopName() {
+        return shopName;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setShopName(String shopName) {
+        this.shopName = shopName;
     }
 
     public String getLogo() {
@@ -58,8 +58,6 @@ public class Shop {
     public void setLogo(String logo) {
         this.logo = logo;
     }
-
-
 
     public String getDescription() {
         return description;
@@ -76,8 +74,6 @@ public class Shop {
     public void setAddress(String address) {
         this.address = address;
     }
-
-
 
     public int getStatus() {
         return status;

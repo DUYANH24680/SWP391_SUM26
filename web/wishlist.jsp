@@ -1,9 +1,9 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="model.Wishlist" %>
 <%@ page import="model.WishlistItem" %>
-<%@ page import="model.User" %>
+<%@ page import="model.Account" %>
 <%
-    User user = (User) session.getAttribute("user");
+    Account user = (Account) session.getAttribute("user");
     if (user == null) {
         response.sendRedirect(request.getContextPath() + "/login");
         return;

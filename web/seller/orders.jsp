@@ -408,7 +408,7 @@
         </div>
         <div class="nav-right" style="display:flex;align-items:center;gap:0.5rem;">
             <% if (shop != null) { %>
-                <span class="badge badge-green" style="font-weight:700;"><%= shop.getName() %></span>
+                <span class="badge badge-green" style="font-weight:700;"><%= shop.getShopName() %></span>
             <% } %>
             <img class="nav-avatar" src="<%= avatarUrl %>" alt="avatar">
         </div>
