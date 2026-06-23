@@ -203,7 +203,7 @@ public class AddProductServlet extends HttpServlet {
         for (Part part : fileParts) {
             if (part.getSize() > 0) {
                 try {
-                    String imagePath = FileUploadUtil.saveProductImage(part, String.valueOf(shopId));
+                    String imagePath = FileUploadUtil.saveProductImage(part, String.valueOf(shopId), getServletContext());
                     imageUrls.add(imagePath);
                 } catch (Exception e) {
                     uploadError = true;

@@ -1,5 +1,6 @@
 package Utils;
 
+import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
 
 import java.io.File;
@@ -24,13 +25,15 @@ public class FileUploadUtil {
      * Lưu file ảnh upload vào thư mục web/uploads/products/[subFolder]/.
      * Tên file được đổi thành timestamp + số ngẫu nhiên để tránh trùng lặp.
      *
-     * @param part      Part chứa dữ liệu file từ HttpServletRequest
-     * @param subFolder Thư mục con bên trong products (ví dụ: "1", "temp")
+     * @param part       Part chứa dữ liệu file từ HttpServletRequest
+     * @param subFolder  Thư mục con bên trong products (ví dụ: "1", "temp")
+     * @param servletContext ServletContext để lấy đường dẫn thực của webapp
      * @return Đường dẫn tương đối để lưu vào database, ví dụ: uploads/products/1/1749567890123_42.jpg
      * @throws ServletException nếu extension không hợp lệ, file quá lớn, hoặc file rỗng
      * @throws IOException      nếu lỗi ghi file
      */
-    public static String saveProductImage(jakarta.servlet.http.Part part, String subFolder)
+    public static String saveProductImage(jakarta.servlet.http.Part part, String subFolder,
+                                          ServletContext servletContext)
             throws ServletException, IOException {
 
         // Lấy tên file gốc từ Content-Disposition header
@@ -65,10 +68,19 @@ public class FileUploadUtil {
                 + "." + extension;
 
         // Xác định đường dẫn tuyệt đối trên disk
-        // webappRoot/web/uploads/products/[subFolder]/
-        String webappRoot = System.getProperty("catalina.base", System.getProperty("user.dir"));
+        // getRealPath("/") trả về thư mục gốc của webapp (hoạt động đúng cả NetBeans lẫn production)
+        String webappRoot = servletContext.getRealPath("/");
+        if (webappRoot == null) {
+            throw new ServletException(
+                "Không thể xác định thư mục gốc của webapp. Vui long cau hinh server dung cach.");
+        }
+
+        // Chuẩn hóa: loại bỏ trailing separator nếu có
+        if (webappRoot.endsWith(File.separator) || webappRoot.endsWith("/")) {
+            webappRoot = webappRoot.substring(0, webappRoot.length() - 1);
+        }
+
         String uploadDirPath = webappRoot
-                + File.separator + "web"
                 + File.separator + "uploads"
                 + File.separator + "products"
                 + File.separator + subFolder;
@@ -84,7 +96,7 @@ public class FileUploadUtil {
             Files.copy(input, targetPath, StandardCopyOption.REPLACE_EXISTING);
         }
 
-        // Trả về đường dẫn relative để lưu vào DB
+        // Trả về đường dẫn relative để lưu vào DB và truy cập qua <img src="...">
         return "uploads/products/" + subFolder + "/" + safeFileName;
     }
 
@@ -154,4 +166,3 @@ public class FileUploadUtil {
         return fileName.substring(lastDot + 1);
     }
 }
-

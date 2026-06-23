@@ -299,7 +299,7 @@ public class EditProductServlet extends HttpServlet {
             for (Part part : fileParts) {
                 if (part.getSize() > 0) {
                     try {
-                        String imagePath = FileUploadUtil.saveProductImage(part, String.valueOf(shopId));
+                        String imagePath = FileUploadUtil.saveProductImage(part, String.valueOf(shopId), getServletContext());
                         newImageUrls = (newImageUrls == null) ? new ArrayList<>() : newImageUrls;
                         newImageUrls.add(imagePath);
                     } catch (Exception e) {
