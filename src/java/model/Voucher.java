@@ -111,6 +111,19 @@ public class Voucher {
         this.status = status;
     }
 
+    public boolean isActive() {
+        return status;
+    }
+
+    public boolean isExpired() {
+        Timestamp now = new Timestamp(System.currentTimeMillis());
+        return endDate != null && now.after(endDate);
+    }
+
+    public boolean hasAvailableUsage() {
+        return usedCount < quantity;
+    }
+
     /**
      * Check if the voucher is valid currently and for the given order total.
      */

@@ -1,9 +1,9 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="model.Cart" %>
 <%@ page import="model.CartItem" %>
-<%@ page import="model.User" %>
+<%@ page import="model.Account" %>
 <%
-    User user = (User) session.getAttribute("user");
+    Account user = (Account) session.getAttribute("user");
     if (user == null) {
         response.sendRedirect(request.getContextPath() + "/login");
         return;
@@ -274,7 +274,7 @@
                 <div class="cart-actions">
                     <a href="home.jsp" class="btn btn-secondary">Tiếp tục mua sắm</a>
                     <a href="cart?action=clear" class="btn btn-danger">Xóa giỏ hàng</a>
-                    <button type="button" class="btn btn-primary" onclick="alert('Thanh toán đang phát triển.')">Tiến hành thanh toán</button>
+                    <a href="${pageContext.request.contextPath}/checkout" class="btn btn-primary">Tiến hành thanh toán</a>
                 </div>
             </div>
         <% } %>

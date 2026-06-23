@@ -1,19 +1,19 @@
 package dao;
 
-import model.User;
+import model.Account;
 import Utils.DbContext;
 import java.sql.*;
 
 /**
- * UserDAO - Handles all DB operations for Accounts table.
+ * AccountDAO - Handles all DB operations for Accounts table.
  */
-public class UserDAO extends Utils.DbContext {
+public class AccountDAO extends Utils.DbContext {
 
     /**
-     * Find a user by username or email (for login).
+     * Find an account by username or email (for login).
      */
-    public User findByUsernameOrEmail(String usernameOrEmail) {
-        String sql = "SELECT u.id, u.role_id, r.name AS role_name, u.fullname, u.username, u.password_hash, u.email, u.phone, u.avatar, u.status, u.created_at "
+    public Account findByUsernameOrEmail(String usernameOrEmail) {
+        String sql = "SELECT u.id, u.role_id, r.name AS role_name, u.fullname, u.username, u.password_hash, u.email, u.phone, u.address, u.avatar, u.gender, u.status, u.created_at "
                    + "FROM Accounts u "
                    + "JOIN Roles r ON u.role_id = r.id "
                    + "WHERE (u.username = ? OR u.email = ?) AND u.status = 1";
@@ -31,7 +31,7 @@ public class UserDAO extends Utils.DbContext {
                 return mapRow(rs);
             }
         } catch (SQLException e) {
-            throw new RuntimeException("UserDAO.findByUsernameOrEmail error: " + e.getMessage(), e);
+            throw new RuntimeException("AccountDAO.findByUsernameOrEmail error: " + e.getMessage(), e);
         } finally {
             try {
                 if (rs != null) rs.close();
@@ -50,10 +50,10 @@ public class UserDAO extends Utils.DbContext {
     }
 
     /**
-     * Find a user by id.
+     * Find an account by id.
      */
-    public User findById(int id) {
-        String sql = "SELECT u.id, u.role_id, r.name AS role_name, u.fullname, u.username, u.password_hash, u.email, u.phone, u.avatar, u.status, u.created_at "
+    public Account findById(int id) {
+        String sql = "SELECT u.id, u.role_id, r.name AS role_name, u.fullname, u.username, u.password_hash, u.email, u.phone, u.address, u.avatar, u.gender, u.status, u.created_at "
                    + "FROM Accounts u "
                    + "JOIN Roles r ON u.role_id = r.id "
                    + "WHERE u.id = ? AND u.status = 1";
@@ -65,22 +65,31 @@ public class UserDAO extends Utils.DbContext {
                 }
             }
         } catch (SQLException e) {
-            throw new RuntimeException("UserDAO.findById error: " + e.getMessage(), e);
+            throw new RuntimeException("AccountDAO.findById error: " + e.getMessage(), e);
         }
         return null;
     }
 
+    /**
+     * Update profile details including address and gender.
+     */
     public boolean updateProfile(int id, String fullname, String email, String phone, String address, Boolean gender, String avatar) {
-        String sql = "UPDATE Accounts SET fullname = ?, email = ?, phone = ?, avatar = ? WHERE id = ?";
+        String sql = "UPDATE Accounts SET fullname = ?, email = ?, phone = ?, address = ?, gender = ?, avatar = ? WHERE id = ?";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, fullname);
             ps.setString(2, email);
             ps.setString(3, phone);
-            ps.setString(4, avatar);
-            ps.setInt(5, id);
+            ps.setString(4, address);
+            if (gender != null) {
+                ps.setBoolean(5, gender);
+            } else {
+                ps.setNull(5, Types.BIT);
+            }
+            ps.setString(6, avatar);
+            ps.setInt(7, id);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            throw new RuntimeException("UserDAO.updateProfile error: " + e.getMessage(), e);
+            throw new RuntimeException("AccountDAO.updateProfile error: " + e.getMessage(), e);
         }
     }
 
@@ -94,12 +103,12 @@ public class UserDAO extends Utils.DbContext {
             ps.setInt(2, id);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            throw new RuntimeException("UserDAO.updatePassword error: " + e.getMessage(), e);
+            throw new RuntimeException("AccountDAO.updatePassword error: " + e.getMessage(), e);
         }
     }
 
     /**
-     * Check if email is already used by another user (for uniqueness validation).
+     * Check if email is already taken by another account.
      */
     public boolean isEmailTaken(String email, int excludeId) {
         String sql = "SELECT COUNT(1) FROM Accounts WHERE email = ? AND id <> ? AND status = 1";
@@ -110,14 +119,14 @@ public class UserDAO extends Utils.DbContext {
                 if (rs.next()) return rs.getInt(1) > 0;
             }
         } catch (SQLException e) {
-            throw new RuntimeException("UserDAO.isEmailTaken error: " + e.getMessage(), e);
+            throw new RuntimeException("AccountDAO.isEmailTaken error: " + e.getMessage(), e);
         }
         return false;
     }
 
     // ---- helper ----
-    private User mapRow(ResultSet rs) throws SQLException {
-        User u = new User();
+    private Account mapRow(ResultSet rs) throws SQLException {
+        Account u = new Account();
         u.setId(rs.getInt("id"));
         u.setRoleId(rs.getInt("role_id"));
         u.setRoleName(rs.getString("role_name"));
@@ -126,7 +135,10 @@ public class UserDAO extends Utils.DbContext {
         u.setPasswordHash(rs.getString("password_hash"));
         u.setEmail(rs.getString("email"));
         u.setPhone(rs.getString("phone"));
+        u.setAddress(rs.getString("address"));
         u.setAvatar(rs.getString("avatar"));
+        boolean genderVal = rs.getBoolean("gender");
+        u.setGender(rs.wasNull() ? null : genderVal);
         u.setStatus(rs.getInt("status"));
         u.setCreatedAt(rs.getTimestamp("created_at"));
         return u;

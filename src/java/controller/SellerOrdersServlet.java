@@ -2,6 +2,8 @@ package controller;
 
 import dao.ShopDAO;
 import dao.OrderDAO;
+import dao.ProductDAO;
+import model.Product;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -105,10 +107,17 @@ public class SellerOrdersServlet extends HttpServlet {
                     // Check if order belongs to the seller's shop to prevent illegal updates
                     List<OrderDetail> details = orderDAO.getOrderDetails(orderId);
                     boolean ownsOrder = false;
-                    for (OrderDetail od : details) {
-                        // All items in the order belong to the same shop in our single item checkout flow
-                        ownsOrder = true; 
-                        break;
+                    ProductDAO productDAO = new ProductDAO();
+                    try {
+                        for (OrderDetail od : details) {
+                            Product p = productDAO.getProductById(od.getProductId());
+                            if (p != null && p.getShopId() == shop.getId()) {
+                                ownsOrder = true;
+                                break;
+                            }
+                        }
+                    } finally {
+                        productDAO.close();
                     }
 
                     if (ownsOrder) {

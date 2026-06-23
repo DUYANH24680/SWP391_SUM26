@@ -42,7 +42,7 @@
     Shop shopInfo = (Shop) request.getAttribute("shopInfo");
     if (shopInfo == null) {
         shopInfo = new Shop();
-        shopInfo.setName(product.getShopName() != null ? product.getShopName() : "-");
+        shopInfo.setShopName(product.getShopName() != null ? product.getShopName() : "-");
     }
 
     // ---- Avatar ----

@@ -8,15 +8,15 @@ import java.sql.Timestamp;
 import java.util.UUID;
 
 import dao.PasswordResetTokenDAO;
-import dao.UserDAO;
-import model.User;
+import dao.AccountDAO;
+import model.Account;
 import service.EmailService;
 
 @WebServlet("/forgot-password")
 public class ForgotPasswordServlet extends HttpServlet {
 
     private PasswordResetTokenDAO tokenDAO = new PasswordResetTokenDAO();
-    private UserDAO userDAO = new UserDAO();
+    private AccountDAO userDAO = new AccountDAO();
 
     /**
      * GET - Display forgot password form
@@ -44,7 +44,7 @@ public class ForgotPasswordServlet extends HttpServlet {
         email = email.trim();
 
         // Check if email exists
-        User user = userDAO.findByUsernameOrEmail(email);
+        Account user = userDAO.findByUsernameOrEmail(email);
         if (user == null) {
             // For security, don't reveal if email exists or not
             request.setAttribute("success", "Nếu email tồn tại, bạn sẽ nhận được link đặt lại mật khẩu");
@@ -57,8 +57,8 @@ public class ForgotPasswordServlet extends HttpServlet {
         long expiryMs = System.currentTimeMillis() + (1 * 60 * 60 * 1000); // 1 hour
         Timestamp expiryTime = new Timestamp(expiryMs);
 
-        // Save token to database - dùng account_id thay vì email
-        boolean tokenSaved = tokenDAO.createToken(user.getId(), token, expiryTime);
+        // Save token to database - dùng email thay vì id
+        boolean tokenSaved = tokenDAO.createToken(email, token, expiryTime);
         if (!tokenSaved) {
             request.setAttribute("error", "Lỗi hệ thống, vui lòng thử lại sau");
             request.getRequestDispatcher("forgot-password.jsp").forward(request, response);

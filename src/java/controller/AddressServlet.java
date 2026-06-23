@@ -7,7 +7,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import model.User;
+import model.Account;
 import model.DeliveryAddress;
 
 import java.io.IOException;
@@ -20,7 +20,7 @@ public class AddressServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         HttpSession session = req.getSession(true);
-        User user = (User) session.getAttribute("user");
+        Account user = (Account) session.getAttribute("user");
 
         if (user == null) {
             resp.sendRedirect(req.getContextPath() + "/login");
@@ -28,7 +28,7 @@ public class AddressServlet extends HttpServlet {
         }
 
         DeliveryAddressDAO dao = new DeliveryAddressDAO();
-        List<DeliveryAddress> addresses = dao.findByUserId(user.getId());
+        List<DeliveryAddress> addresses = dao.findByCustomerId(user.getId());
         req.setAttribute("addresses", addresses);
 
         req.getRequestDispatcher("/address.jsp").forward(req, resp);
@@ -38,7 +38,7 @@ public class AddressServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         HttpSession session = req.getSession(true);
-        User user = (User) session.getAttribute("user");
+        Account user = (Account) session.getAttribute("user");
 
         if (user == null) {
             resp.sendRedirect(req.getContextPath() + "/login");
@@ -69,7 +69,7 @@ public class AddressServlet extends HttpServlet {
         resp.sendRedirect(req.getContextPath() + "/address");
     }
 
-    private void handleAddAddress(HttpServletRequest req, HttpSession session, User user) {
+    private void handleAddAddress(HttpServletRequest req, HttpSession session, Account user) {
         String name = req.getParameter("recipientName");
         String phone = req.getParameter("recipientPhone");
         String address = req.getParameter("address");
@@ -77,7 +77,7 @@ public class AddressServlet extends HttpServlet {
         boolean isDefault = "on".equals(req.getParameter("isDefault"));
 
         DeliveryAddress da = new DeliveryAddress();
-        da.setUserId(user.getId());
+        da.setCustomerId(user.getId());
         da.setRecipientName(name);
         da.setRecipientPhone(phone);
         da.setAddress(address);
@@ -92,7 +92,7 @@ public class AddressServlet extends HttpServlet {
         }
     }
 
-    private void handleUpdateAddress(HttpServletRequest req, HttpSession session, User user) {
+    private void handleUpdateAddress(HttpServletRequest req, HttpSession session, Account user) {
         try {
             int id = Integer.parseInt(req.getParameter("id"));
             String name = req.getParameter("recipientName");
@@ -103,7 +103,7 @@ public class AddressServlet extends HttpServlet {
 
             DeliveryAddress da = new DeliveryAddress();
             da.setId(id);
-            da.setUserId(user.getId());
+            da.setCustomerId(user.getId());
             da.setRecipientName(name);
             da.setRecipientPhone(phone);
             da.setAddress(address);
@@ -124,7 +124,7 @@ public class AddressServlet extends HttpServlet {
         }
     }
 
-    private void handleDeleteAddress(HttpServletRequest req, HttpSession session, User user) {
+    private void handleDeleteAddress(HttpServletRequest req, HttpSession session, Account user) {
         try {
             int id = Integer.parseInt(req.getParameter("id"));
             DeliveryAddressDAO dao = new DeliveryAddressDAO();
@@ -138,7 +138,7 @@ public class AddressServlet extends HttpServlet {
         }
     }
 
-    private void handleSetDefaultAddress(HttpServletRequest req, HttpSession session, User user) {
+    private void handleSetDefaultAddress(HttpServletRequest req, HttpSession session, Account user) {
         try {
             int id = Integer.parseInt(req.getParameter("id"));
             DeliveryAddressDAO dao = new DeliveryAddressDAO();

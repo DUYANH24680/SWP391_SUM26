@@ -1,21 +1,21 @@
 package controller;
 
-import dao.UserDAO;
+import dao.AccountDAO;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import model.User;
-import service.UserService;
+import model.Account;
+import service.AccountService;
 
 import java.io.IOException;
 
 @WebServlet("/profile")
 public class ProfileServlet extends HttpServlet {
 
-    private final UserService userService = new UserService();
+    private final AccountService userService = new AccountService();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -24,9 +24,9 @@ public class ProfileServlet extends HttpServlet {
         
         // Auto-login if no user session exists (bypassing login page)
         if (session.getAttribute("user") == null) {
-            UserDAO userDAO = new UserDAO();
+            AccountDAO userDAO = new AccountDAO();
             try {
-                User defaultCust = userDAO.findById(1);
+                Account defaultCust = userDAO.findById(1);
                 if (defaultCust != null) {
                     session.setAttribute("user", defaultCust);
                     session.setAttribute("userId", defaultCust.getId());
@@ -37,7 +37,7 @@ public class ProfileServlet extends HttpServlet {
             }
         }
 
-        User user = (User) session.getAttribute("user");
+        Account user = (Account) session.getAttribute("user");
         if (user == null) {
             resp.getWriter().println("No user found in the database. Please add sample data to Accounts table first.");
             return;
@@ -50,7 +50,7 @@ public class ProfileServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         HttpSession session = req.getSession(true);
-        User user = (User) session.getAttribute("user");
+        Account user = (Account) session.getAttribute("user");
 
         if (user == null) {
             resp.sendRedirect(req.getContextPath() + "/profile");
@@ -75,7 +75,7 @@ public class ProfileServlet extends HttpServlet {
         resp.sendRedirect(req.getContextPath() + "/profile");
     }
 
-    private void handleUpdateProfile(HttpServletRequest req, HttpSession session, User user) {
+    private void handleUpdateProfile(HttpServletRequest req, HttpSession session, Account user) {
         String fullname = req.getParameter("fullname");
         String email = req.getParameter("email");
         String phone = req.getParameter("phone");
@@ -92,13 +92,13 @@ public class ProfileServlet extends HttpServlet {
         if (error != null) {
             session.setAttribute("error", error);
         } else {
-            User updatedUser = userService.getUserById(user.getId());
+            Account updatedUser = userService.getUserById(user.getId());
             session.setAttribute("user", updatedUser);
             session.setAttribute("message", "Cập nhật hồ sơ thành công!");
         }
     }
 
-    private void handleChangePassword(HttpServletRequest req, HttpSession session, User user) {
+    private void handleChangePassword(HttpServletRequest req, HttpSession session, Account user) {
         String currentPassword = req.getParameter("currentPassword");
         String newPassword = req.getParameter("newPassword");
         String confirmPassword = req.getParameter("confirmPassword");

@@ -337,7 +337,7 @@
         </div>
         <div class="nav-right" style="display:flex;align-items:center;gap:0.5rem;">
             <% if (shop != null) { %>
-                <span class="badge" style="background:#dcfce7; color:#166534; padding:0.25rem 0.75rem; border-radius:100px; font-size:0.75rem; font-weight:700;"><%= shop.getName() %></span>
+                <span class="badge" style="background:#dcfce7; color:#166534; padding:0.25rem 0.75rem; border-radius:100px; font-size:0.75rem; font-weight:700;"><%= shop.getShopName() %></span>
             <% } %>
             <img class="nav-avatar" src="<%= avatarUrl %>" alt="avatar">
         </div>
@@ -384,7 +384,7 @@
                 <div class="hero">
                     <div class="hero-text">
                         <h1>Xin chào, <%= user.getFullname() %>!</h1>
-                        <p>Chào mừng bạn trở lại trang quản lý cửa hàng <strong><%= shop.getName() %></strong>. Hãy theo dõi các thông số bán hàng của bạn.</p>
+                        <p>Chào mừng bạn trở lại trang quản lý cửa hàng <strong><%= shop.getShopName() %></strong>. Hãy theo dõi các thông số bán hàng của bạn.</p>
                     </div>
                 </div>
 

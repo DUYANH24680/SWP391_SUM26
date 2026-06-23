@@ -1,12 +1,12 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
-<%@ page import="model.User" %>
+<%@ page import="model.Account" %>
 <%@ page import="model.Product" %>
 <%@ page import="model.Cart" %>
 <%@ page import="java.util.List" %>
 <%@ page import="dao.ProductDAO" %>
 <%@ page import="Utils.ProductSorter" %>
 <% 
-    User user = (User) session.getAttribute("user"); 
+    Account user = (Account) session.getAttribute("user"); 
     Cart cart = (Cart) session.getAttribute("cart");
     int cartCount = cart != null ? cart.getTotalQuantity() : 0;
     ProductDAO dao = new ProductDAO();
