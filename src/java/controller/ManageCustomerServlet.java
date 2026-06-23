@@ -31,6 +31,7 @@ public class ManageCustomerServlet extends HttpServlet {
         String role = (session != null) ? (String) session.getAttribute("role") : null;
 
         // Chỉ admin được truy cập
+                // Chỉ admin được truy cập
         if (!"admin".equals(role)) {
             resp.sendRedirect(req.getContextPath() + "/login");
             return;
