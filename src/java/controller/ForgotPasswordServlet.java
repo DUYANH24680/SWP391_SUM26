@@ -8,15 +8,15 @@ import java.sql.Timestamp;
 import java.util.UUID;
 
 import dao.PasswordResetTokenDAO;
-import dao.UserDAO;
-import model.User;
+import dao.AccountDAO;
+import model.Account;
 import service.EmailService;
 
 @WebServlet("/forgot-password")
 public class ForgotPasswordServlet extends HttpServlet {
 
     private PasswordResetTokenDAO tokenDAO = new PasswordResetTokenDAO();
-    private UserDAO userDAO = new UserDAO();
+    private AccountDAO accountDAO = new AccountDAO();
 
     /**
      * GET - Display forgot password form
@@ -44,8 +44,8 @@ public class ForgotPasswordServlet extends HttpServlet {
         email = email.trim();
 
         // Check if email exists
-        User user = userDAO.findByUsernameOrEmail(email);
-        if (user == null) {
+        Account account = accountDAO.findByUsernameOrEmail(email);
+        if (account == null) {
             // For security, don't reveal if email exists or not
             request.setAttribute("success", "Nếu email tồn tại, bạn sẽ nhận được link đặt lại mật khẩu");
             request.getRequestDispatcher("forgot-password.jsp").forward(request, response);
@@ -58,7 +58,7 @@ public class ForgotPasswordServlet extends HttpServlet {
         Timestamp expiryTime = new Timestamp(expiryMs);
 
         // Save token to database - dùng account_id thay vì email
-        boolean tokenSaved = tokenDAO.createToken(user.getId(), token, expiryTime);
+        boolean tokenSaved = tokenDAO.createToken(account.getId(), token, expiryTime);
         if (!tokenSaved) {
             request.setAttribute("error", "Lỗi hệ thống, vui lòng thử lại sau");
             request.getRequestDispatcher("forgot-password.jsp").forward(request, response);
@@ -69,7 +69,7 @@ public class ForgotPasswordServlet extends HttpServlet {
         String resetLink = buildResetLink(request, token, email);
 
         // Send email
-        boolean emailSent = EmailService.sendPasswordResetEmail(email, resetLink, user.getFullname());
+        boolean emailSent = EmailService.sendPasswordResetEmail(email, resetLink, account.getFullname());
         if (!emailSent) {
             request.setAttribute("error", "Không thể gửi email, vui lòng thử lại sau");
             request.getRequestDispatcher("forgot-password.jsp").forward(request, response);
@@ -115,3 +115,4 @@ public class ForgotPasswordServlet extends HttpServlet {
         }
     }
 }
+

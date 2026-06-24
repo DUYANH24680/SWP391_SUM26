@@ -1,43 +1,52 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ page import="model.Account" %>
+<%@ page import="model.Customer" %>
 <%@ page import="model.Category" %>
-<%@ page import="java.util.List" %>
 <%
-    Object rawUser = session.getAttribute("Account");
-    Object rawUserId = session.getAttribute("userId");
-    System.out.println("[add-product.jsp] rawUser=" + rawUser + " type=" + (rawUser != null ? rawUser.getClass().getName() : "null"));
-    System.out.println("[add-product.jsp] rawUserId=" + rawUserId + " type=" + (rawUserId != null ? rawUserId.getClass().getName() : "null"));
-
-    Account Account = (Account) rawUser;
-    if (Account == null) {
+    Object rawUser = session.getAttribute("user");
+    Customer user = (Customer) rawUser;
+    if (user == null) {
         response.sendRedirect(request.getContextPath() + "/login");
         return;
     }
 
     String role = (String) session.getAttribute("role");
-    String avatarUrl = Account.getAvatar();
+    if (role == null || (!role.equals("admin") && !role.equals("seller"))) {
+        response.sendRedirect(request.getContextPath() + "/home.jsp");
+        return;
+    }
+
+    String avatarUrl = user.getAvatar();
     if (avatarUrl == null || avatarUrl.trim().isEmpty()) {
-        String fullname = Account.getFullname() != null ? Account.getFullname() : Account.getUsername();
+        String fullname = user.getFullname() != null ? user.getFullname() : user.getUsername();
         avatarUrl = "https://ui-avatars.com/api/?name="
                   + java.net.URLEncoder.encode(fullname, "UTF-8")
                   + "&background=4caf50&color=fff&size=80&bold=true&rounded=true";
     }
 
-    String message = (String) session.getAttribute("message");
-    String error = (String) session.getAttribute("error");
-    session.removeAttribute("message");
-    session.removeAttribute("error");
+    Category category = (Category) request.getAttribute("category");
+    String formError = (String) request.getAttribute("formError");
+    boolean isEdit = (category != null);
+    String pageTitle = isEdit ? "Sửa Danh Mục" : "Thêm Danh Mục Mới";
+    String actionUrl = isEdit
+            ? request.getContextPath() + "/category/update"
+            : request.getContextPath() + "/category/create";
 
-    List<Category> categories = (List<Category>) request.getAttribute("categories");
-    if (categories == null) categories = java.util.Collections.emptyList();
-    System.out.println("[add-product.jsp] categories size from request: " + categories.size());
+    // ---- Image URL helper ----
+    java.util.function.Function<String, String> imgUrl = (String path) -> {
+        if (path == null || path.trim().isEmpty()) return null;
+        String trimmed = path.trim();
+        if (trimmed.startsWith("uploads/")) {
+            return request.getContextPath() + "/image?path=" + java.net.URLEncoder.encode(trimmed);
+        }
+        return trimmed;
+    };
 %>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thêm Sản Phẩm | Sena Shop</title>
+    <title><%= pageTitle %> | Sena Shop</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
@@ -215,6 +224,7 @@
 
         .alert-success { background: #dcfce7; border: 1px solid #bbf7d0; color: #166534; }
         .alert-danger  { background: #fee2e2; border: 1px solid #fecaca; color: #991b1b; }
+        .alert-success i, .alert-danger i { flex-shrink: 0; }
 
         /* ======= CARD ======= */
         .card {
@@ -256,24 +266,11 @@
         .breadcrumb a:hover { text-decoration: underline; }
         .breadcrumb span { color: var(--gray-600); font-weight: 500; }
 
-        /* ======= SECTION LABEL ======= */
-        .section-label {
-            font-size: 0.7rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            color: var(--gray-400);
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.4rem;
-        }
-
         /* ======= FORM ======= */
         .form-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 1rem;
+            gap: 1.25rem;
         }
 
         .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
@@ -310,8 +307,6 @@
         }
 
         .form-control::placeholder { color: var(--gray-400); }
-        textarea.form-control { resize: vertical; min-height: 100px; }
-        select.form-control option { background: var(--white); }
 
         .form-hint {
             font-size: 0.72rem;
@@ -327,6 +322,79 @@
             border-top: 1px solid var(--gray-100);
             background: var(--gray-50);
         }
+
+        /* ======= IMAGE UPLOAD ======= */
+        .image-upload-area {
+            border: 2px dashed var(--gray-200);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.18s;
+            background: var(--gray-50);
+        }
+
+        .image-upload-area:hover {
+            border-color: var(--green);
+            background: var(--green-light);
+        }
+
+        .image-upload-icon {
+            font-size: 2rem;
+            color: var(--gray-400);
+            margin-bottom: 0.5rem;
+        }
+
+        .image-upload-text {
+            font-size: 0.82rem;
+            color: var(--gray-400);
+            line-height: 1.5;
+        }
+
+        .image-upload-text strong { color: var(--green); }
+        .image-upload-text span { display: block; margin-top: 0.2rem; font-size: 0.72rem; }
+
+        .image-preview {
+            margin-top: 0.75rem;
+            position: relative;
+            display: none;
+        }
+
+        .image-preview img {
+            width: 120px;
+            height: 120px;
+            object-fit: cover;
+            border-radius: var(--radius-sm);
+            border: 1.5px solid var(--gray-200);
+        }
+
+        .image-preview-label {
+            font-size: 0.75rem;
+            color: var(--green-dark);
+            font-weight: 600;
+            margin-top: 0.4rem;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .image-preview-label i { font-size: 0.7rem; }
+
+        /* ======= INFO BOX ======= */
+        .info-box {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: var(--radius-sm);
+            padding: 0.9rem 1.1rem;
+            font-size: 0.82rem;
+            color: #1e40af;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.6rem;
+            line-height: 1.5;
+        }
+
+        .info-box i { color: #3b82f6; margin-top: 0.1rem; flex-shrink: 0; }
 
         /* ======= BUTTONS ======= */
         .btn {
@@ -369,53 +437,6 @@
             border-color: var(--gray-400);
             color: var(--gray-800);
         }
-
-        /* ======= IMAGE UPLOAD ======= */
-        .image-upload-area {
-            border: 2px dashed var(--gray-200);
-            border-radius: var(--radius);
-            padding: 1.5rem;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.18s;
-            background: var(--gray-50);
-        }
-
-        .image-upload-area:hover {
-            border-color: var(--green);
-            background: var(--green-light);
-        }
-
-        .image-upload-icon {
-            font-size: 2rem;
-            color: var(--gray-400);
-            margin-bottom: 0.5rem;
-        }
-
-        .image-upload-text {
-            font-size: 0.82rem;
-            color: var(--gray-400);
-            line-height: 1.5;
-        }
-
-        .image-upload-text strong { color: var(--green); }
-        .image-upload-text span { display: block; margin-top: 0.2rem; font-size: 0.72rem; }
-
-        /* ======= INFO BOX ======= */
-        .info-box {
-            background: #eff6ff;
-            border: 1px solid #bfdbfe;
-            border-radius: var(--radius-sm);
-            padding: 0.9rem 1.1rem;
-            font-size: 0.82rem;
-            color: #1e40af;
-            display: flex;
-            align-items: flex-start;
-            gap: 0.6rem;
-            line-height: 1.5;
-        }
-
-        .info-box i { color: #3b82f6; margin-top: 0.1rem; flex-shrink: 0; }
 
         /* ======= FOOTER ======= */
         .footer {
@@ -480,9 +501,10 @@
     <!-- SIDEBAR -->
     <aside class="sidebar">
         <div class="sidebar-nav">
-            <a href="profile"><i class="fa-regular fa-Account"></i> Hồ Sơ</a>
+            <a href="profile"><i class="fa-regular fa-user"></i> Hồ Sơ</a>
             <a href="products"><i class="fa-brands fa-opencart"></i> Sản Phẩm</a>
-            <a href="#" class="active"><i class="fa-solid fa-plus"></i> Thêm Sản Phẩm</a>
+            <a href="add-product"><i class="fa-solid fa-plus"></i> Thêm Sản Phẩm</a>
+            <a href="category" class="active"><i class="fa-solid fa-layer-group"></i> Danh Mục</a>
             <a href="#"><i class="fa-solid fa-basket-shopping"></i> Đơn Hàng</a>
             <a href="#"><i class="fa-regular fa-heart"></i> Yêu Thích</a>
             <a href="logout" class="logout" style="margin-top:0.5rem;"><i class="fa-solid fa-right-from-bracket"></i> Đăng Xuất</a>
@@ -494,99 +516,51 @@
 
         <!-- Breadcrumb -->
         <div class="breadcrumb">
-            <a href="products"><i class="fa-solid fa-box"></i> Sản Phẩm</a>
+            <a href="category"><i class="fa-solid fa-layer-group"></i> Danh Mục</a>
             <i class="fa-solid fa-chevron-right" style="font-size:0.6rem;color:var(--gray-400);"></i>
-            <span>Thêm Sản Phẩm Mới</span>
+            <span><%= pageTitle %></span>
         </div>
 
         <!-- Alerts -->
-        <% if (message != null) { %>
-        <div class="alert alert-success">
-            <i class="fa-solid fa-circle-check"></i>
-            <span><%= message %></span>
-        </div>
-        <% } %>
-        <% if (error != null) { %>
+        <% if (formError != null) { %>
         <div class="alert alert-danger">
             <i class="fa-solid fa-circle-exclamation"></i>
-            <span><%= error %></span>
+            <span><%= formError %></span>
         </div>
         <% } %>
 
         <!-- Info box -->
         <div class="info-box">
             <i class="fa-solid fa-circle-info"></i>
-            <span>Sản phẩm sau khi tạo sẽ có trạng thái <strong>Chờ duyệt</strong> (status = 0). Bạn chỉ có thể thêm sản phẩm khi cửa hàng đã được phê duyệt.</span>
+            <span>Tên danh mục phải là duy nhất trong hệ thống. Ảnh đại diện là tùy chọn — nếu không upload, ảnh cũ sẽ được giữ nguyên (khi chỉnh sửa).</span>
         </div>
 
-    <!-- Form -->
-    <form action="add-product" method="POST" enctype="multipart/form-data">
-    <input type="hidden" name="shopId" value="<%= session.getAttribute("shopId") != null ? session.getAttribute("shopId") : 1 %>">
+        <!-- Form -->
+        <form action="<%= actionUrl %>" method="POST" enctype="multipart/form-data">
 
-            <!-- Thong tin co ban -->
+            <% if (isEdit) { %>
+            <input type="hidden" name="id" value="<%= category.getId() %>">
+            <% } %>
+
+            <!-- Thong tin danh muc -->
             <div class="card">
                 <div class="card-header">
                     <i class="fa-solid fa-info-circle" style="color:var(--green);font-size:1rem;"></i>
-                    <div class="card-title">Thông Tin Cơ Bản</div>
+                    <div class="card-title">Thông Tin Danh Mục</div>
                 </div>
                 <div class="card-body">
-                    <div class="section-label">
-                        <i class="fa-solid fa-asterisk" style="font-size:0.5rem;color:var(--green);"></i>
-                        Thông tin sản phẩm
-                    </div>
                     <div class="form-grid">
 
-                        <div class="form-group full">
-                            <label class="form-label">Tên sản phẩm <span class="required">*</span></label>
-                            <input type="text" name="title" class="form-control"
-                                   placeholder="VD: Cam Vinh ruot do late 5kg" required>
-                        </div>
-
                         <div class="form-group">
-                            <label class="form-label">Danh mục <span class="required">*</span></label>
-                            <select name="categoryId" class="form-control" required>
-                                <option value="">-- Chọn danh mục --</option>
-                                <% for (Category c : categories) { %>
-                                <option value="<%= c.getId() %>"><%= c.getName() %></option>
-                                <% } %>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Đơn vị tính <span class="required">*</span></label>
-                            <input type="text" name="unit" class="form-control"
-                                   placeholder="VD: kg, tan, qua" required>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Giá gốc (VNĐ) <span class="required">*</span></label>
-                            <input type="number" name="originalPrice" class="form-control"
-                                   placeholder="VD: 150000" min="0" step="1000" required>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Giá bán (VNĐ) <span class="required">*</span></label>
-                            <input type="number" name="salePrice" class="form-control"
-                                   placeholder="VD: 120000" min="0" step="1000" required>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Số lượng trong kho <span class="required">*</span></label>
-                            <input type="number" name="stockQuantity" class="form-control"
-                                   placeholder="VD: 100" min="0" required>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Ngày hết hạn</label>
-                            <input type="date" name="expiredDate" class="form-control">
-                            <span class="form-hint">Để trống nếu không có hạn sử dụng</span>
-                        </div>
-
-                        <div class="form-group full">
-                            <label class="form-label">Mô tả sản phẩm <span class="required">*</span></label>
-                            <textarea name="description" class="form-control"
-                                      placeholder="Mô tả chi tiết về sản phẩm: xuất xứ, cách bảo quản, ưu điểm..."
-                                      required></textarea>
+                            <label class="form-label" for="name">
+                                Tên danh mục <span class="required">*</span>
+                            </label>
+                            <input type="text" name="name" class="form-control"
+                                   placeholder="VD: Trái Cây Tươi"
+                                   value="<%= isEdit && category.getName() != null ? category.getName().replace("\"", "&quot;") : "" %>"
+                                   maxlength="100"
+                                   required>
+                            <span class="form-hint">Tối đa 100 ký tự, không trùng với danh mục khác.</span>
                         </div>
 
                     </div>
@@ -594,42 +568,45 @@
             </div>
 
             <!-- Hinh anh -->
-            <div class="card">
+            <div class="card" style="margin-top:1.25rem;">
                 <div class="card-header">
                     <i class="fa-solid fa-images" style="color:var(--green);font-size:1rem;"></i>
-                    <div class="card-title">Hình Ảnh Sản Phẩm</div>
+                    <div class="card-title">Hình Ảnh Danh Mục</div>
                 </div>
                 <div class="card-body">
-                    <div class="section-label">
-                        <i class="fa-solid fa-asterisk" style="font-size:0.5rem;color:var(--green);"></i>
-                        Upload ảnh sản phẩm
-                    </div>
-
-                    <div class="form-group" style="margin-bottom:1.25rem;">
-                        <label class="form-label">Ảnh chính <span class="required">*</span></label>
-                        <div class="image-upload-area">
-                            <div class="image-upload-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
-                            <div class="image-upload-text">
-                                <strong>Click để chọn ảnh chính</strong>
-                                <span>JPG, JPEG, PNG, WEBP &bull; Tối đa 5MB</span>
-                            </div>
-                            <input type="file" name="images" accept=".jpg,.jpeg,.png,.webp"
-                                   style="display:block;margin:0.75rem auto 0;cursor:pointer;" required>
-                        </div>
-                    </div>
 
                     <div class="form-group">
-                        <label class="form-label">Ảnh phụ</label>
-                        <div class="image-upload-area">
-                            <div class="image-upload-icon"><i class="fa-solid fa-images"></i></div>
+                        <label class="form-label">Ảnh đại diện</label>
+                        <div class="image-upload-area" id="imageUploadArea">
+                            <div class="image-upload-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
                             <div class="image-upload-text">
-                                <strong>Click để chọn nhiều ảnh phụ</strong>
-                                <span>JPG, JPEG, PNG, WEBP &bull; Tối đa 5MB mỗi ảnh</span>
+                                <strong>Click để chọn ảnh</strong>
+                                <span>JPG, JPEG, PNG, WEBP &bull; Tối đa 5MB</span>
                             </div>
-                            <input type="file" name="images" accept=".jpg,.jpeg,.png,.webp"
-                                   multiple style="display:block;margin:0.75rem auto 0;cursor:pointer;">
+                            <input type="file" name="image" id="imageInput"
+                                   accept=".jpg,.jpeg,.png,.webp"
+                                   aria-label="Chọn ảnh đại diện danh mục"
+                                   style="display:block;margin:0.75rem auto 0;cursor:pointer;">
                         </div>
-                        <span class="form-hint">Có thể chọn nhiều ảnh cùng lúc. Ảnh đầu tiên sẽ là ảnh chính.</span>
+                        <span class="form-hint">Để trống nếu không muốn thay đổi ảnh.</span>
+
+                        <% if (isEdit && category.getImage() != null && !category.getImage().trim().isEmpty()) { %>
+                        <div class="image-preview" id="currentImagePreview">
+                            <img src="<%= imgUrl.apply(category.getImage()) %>" alt="Ảnh hiện tại" id="currentImg">
+                            <div class="image-preview-label">
+                                <i class="fa-solid fa-check-circle"></i>
+                                Ảnh hiện tại — sẽ được thay thế nếu bạn chọn ảnh mới
+                            </div>
+                        </div>
+                        <% } %>
+
+                        <div class="image-preview" id="newImagePreview" style="display:none;">
+                            <img src="" alt="Ảnh mới" id="newImg">
+                            <div class="image-preview-label" style="color:var(--green);">
+                                <i class="fa-solid fa-check-circle"></i>
+                                Ảnh mới sẽ được lưu
+                            </div>
+                        </div>
                     </div>
 
                 </div>
@@ -637,11 +614,12 @@
 
             <!-- Actions -->
             <div class="form-actions">
-                <a href="products" class="btn btn-outline">
+                <a href="category" class="btn btn-outline">
                     <i class="fa-solid fa-arrow-left"></i> Quay Lại
                 </a>
                 <button type="submit" class="btn btn-green">
-                    <i class="fa-solid fa-floppy-disk"></i> Tạo Sản Phẩm
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    <%= isEdit ? "Lưu Thay Đổi" : "Tạo Danh Mục" %>
                 </button>
             </div>
 
@@ -656,6 +634,34 @@
     <span class="footer-copy">&copy; 2024 Sena Shop. Trái cây tươi ngon mỗi ngày.</span>
 </footer>
 
+<script>
+    // Preview new image when selected
+    const imageInput = document.getElementById('imageInput');
+    const newImagePreview = document.getElementById('newImagePreview');
+    const newImg = document.getElementById('newImg');
+
+    if (imageInput) {
+        imageInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    if (newImg && newImagePreview) {
+                        newImg.src = ev.target.result;
+                        newImagePreview.style.display = 'block';
+                    }
+                    // Hide "current image" label when new image selected
+                    const currentPreview = document.getElementById('currentImagePreview');
+                    if (currentPreview) currentPreview.style.display = 'none';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+</script>
+
 </body>
 </html>
+
+
 

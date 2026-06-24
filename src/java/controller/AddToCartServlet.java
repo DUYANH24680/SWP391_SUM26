@@ -6,10 +6,12 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import model.User;
+import model.Account;
+import model.Cart;
 import service.CartService;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 
 @WebServlet(name = "AddToCartServlet", urlPatterns = {"/add-to-cart"})
 public class AddToCartServlet extends HttpServlet {
@@ -17,62 +19,109 @@ public class AddToCartServlet extends HttpServlet {
     private final CartService cartService = new CartService();
 
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        resp.sendRedirect(req.getContextPath() + "/home");
-    }
+        response.setContentType("text/plain; charset=UTF-8");
+        response.setCharacterEncoding("UTF-8");
 
-    @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp)
-            throws ServletException, IOException {
-        HttpSession session = req.getSession(false);
-        if (session == null || session.getAttribute("user") == null) {
-            resp.sendRedirect(req.getContextPath() + "/login");
+        HttpSession session = request.getSession(false);
+
+        // ---- Buoc 1: Kiem tra dang nhap ----
+        if (session == null || session.getAttribute("Account") == null) {
+            System.out.println("[AddToCartServlet] CHUA DANG NHAP - redirect ve login");
+            response.sendRedirect(request.getContextPath() + "/login");
             return;
         }
 
-        User user = (User) session.getAttribute("user");
-        String productIdParam = trimParam(req.getParameter("productId"));
-        String size = trimParam(req.getParameter("size"));
-        String quantityParam = trimParam(req.getParameter("quantity"));
-        String voucherCode = trimParam(req.getParameter("voucherCode"));
-        String note = trimParam(req.getParameter("note"));
+        Account account = (Account) session.getAttribute("Account");
+        System.out.println("[AddToCartServlet] USER: id=" + account.getId()
+                + ", username=" + account.getUsername());
 
-        int productId = parsePositiveInt(productIdParam, 0);
-        int quantity = parsePositiveInt(quantityParam, 1);
+        // ---- Buoc 2: Doc tham so ----
+        String productIdStr = request.getParameter("productId");
+        String quantityStr = request.getParameter("quantity");
 
+        System.out.println("[AddToCartServlet] PARAM: productId=" + productIdStr
+                + ", quantity=" + quantityStr);
+
+        // ---- Buoc 3: Validate productId ----
+        if (productIdStr == null || productIdStr.trim().isEmpty()) {
+            System.out.println("[AddToCartServlet] LOI: productId rong");
+            session.setAttribute("error", "Khong tim thay ID san pham");
+            redirectBack(request, response);
+            return;
+        }
+
+        int productId;
         try {
-            cartService.addToCart(user.getId(), productId, size, quantity, voucherCode, note);
-            session.setAttribute("message", "Thêm giỏ hàng thành công.");
-        } catch (IllegalArgumentException e) {
-            session.setAttribute("error", e.getMessage());
-        } catch (Exception e) {
-            System.err.println("[AddToCartServlet] error: " + e.getMessage());
-            e.printStackTrace();
-            session.setAttribute("error", "Lỗi khi thêm sản phẩm vào giỏ hàng. Vui lòng thử lại.");
-        }
-
-        String referer = req.getHeader("Referer");
-        if (referer != null && !referer.trim().isEmpty()) {
-            resp.sendRedirect(referer);
-        } else {
-            resp.sendRedirect(req.getContextPath() + "/cart");
-        }
-    }
-
-    private int parsePositiveInt(String value, int defaultValue) {
-        if (value == null || value.trim().isEmpty()) {
-            return defaultValue;
-        }
-        try {
-            int parsed = Integer.parseInt(value.trim());
-            return parsed > 0 ? parsed : defaultValue;
+            productId = Integer.parseInt(productIdStr.trim());
         } catch (NumberFormatException e) {
-            return defaultValue;
+            System.out.println("[AddToCartServlet] LOI: productId khong hop le: " + productIdStr);
+            session.setAttribute("error", "ID san pham khong hop le");
+            redirectBack(request, response);
+            return;
         }
+
+        // ---- Buoc 4: Validate so luong ----
+        int quantity = 1;
+        if (quantityStr != null && !quantityStr.trim().isEmpty()) {
+            try {
+                quantity = Integer.parseInt(quantityStr.trim());
+            } catch (NumberFormatException e) {
+                quantity = 1;
+            }
+        }
+
+        // ---- Buoc 5: Size khong con su dung ----
+
+        // ---- Buoc 6: Them vao gio hang ----
+        try {
+            System.out.println("[AddToCartServlet] Goi cartService.addToCart(customerId="
+                    + account.getId() + ", productId=" + productId
+                    + ", quantity=" + quantity + ")");
+
+            Cart cart = cartService.addToCart(
+                    account.getId(), productId, quantity, null, null);
+
+            if (cart != null) {
+                System.out.println("[AddToCartServlet] SUCCESS: Da them vao gio hang. "
+                        + "Cart co " + cart.getTotalQuantity() + " san pham");
+
+                session.setAttribute("cart", cart);
+                session.setAttribute("cartCount", cart.getTotalQuantity());
+                session.setAttribute("message", "Da them san pham vao gio hang!");
+            } else {
+                System.out.println("[AddToCartServlet] WARNING: cart tra ve null");
+                session.setAttribute("error", "Co loi xay ra khi them san pham vao gio hang.");
+            }
+
+        } catch (IllegalArgumentException e) {
+            // Loi nghiep vu - hien thi thong bao cho nguoi dung
+            System.out.println("[AddToCartServlet] NGHIEP VU LOI: " + e.getMessage());
+            session.setAttribute("error", e.getMessage());
+
+        } catch (Exception e) {
+            // Loi he thong - khong hien thi chi tiet
+            System.out.println("[AddToCartServlet] HE THONG LOI: " + e.getMessage());
+            e.printStackTrace();
+            session.setAttribute("error", "Loi he thong khi them san pham vao gio hang.");
+        }
+
+        redirectBack(request, response);
     }
 
-    private String trimParam(String value) {
-        return value != null ? value.trim() : null;
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        response.sendRedirect(request.getContextPath() + "/home.jsp");
+    }
+
+    private void redirectBack(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        String referer = request.getHeader("Referer");
+        if (referer != null && !referer.trim().isEmpty()) {
+            response.sendRedirect(referer);
+        } else {
+            response.sendRedirect(request.getContextPath() + "/view-cart");
+        }
     }
 }

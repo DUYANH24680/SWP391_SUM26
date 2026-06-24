@@ -100,3 +100,4 @@ public class ShopDAO extends Utils.DbContext {
         return shop;
     }
 }
+

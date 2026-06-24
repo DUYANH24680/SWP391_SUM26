@@ -12,7 +12,7 @@ import java.util.List;
 public class DeliveryAddressDAO extends DbContext {
 
     /**
-     * Get all addresses for a user.
+     * Get all addresses for a Account.
      * @param userId
      * @return 
      */
@@ -34,7 +34,7 @@ public class DeliveryAddressDAO extends DbContext {
     }
 
     /**
-     * Find a single address by id and user id (ownership check).
+     * Find a single address by id and Account id (ownership check).
      * @param id
      * @param userId
      * @return 
@@ -116,7 +116,7 @@ public class DeliveryAddressDAO extends DbContext {
     }
 
     /**
-     * Unset all default addresses for a user, then set the given one as default.
+     * Unset all default addresses for a Account, then set the given one as default.
      * @param id
      * @param userId
      * @return 
@@ -163,3 +163,4 @@ public class DeliveryAddressDAO extends DbContext {
         return da;
     }
 }
+

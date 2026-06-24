@@ -7,8 +7,8 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%
-    Account user = (Account) session.getAttribute("user");
-    if (user == null) {
+    Account Account = (Account) session.getAttribute("Account");
+    if (Account == null) {
         response.sendRedirect(request.getContextPath() + "/login");
         return;
     }
@@ -630,3 +630,4 @@
     </script>
 </body>
 </html>
+

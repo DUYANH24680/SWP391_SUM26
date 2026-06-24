@@ -66,7 +66,7 @@ public class FileUploadUtil {
 
         // Xác định đường dẫn tuyệt đối trên disk
         // webappRoot/web/uploads/products/[subFolder]/
-        String webappRoot = System.getProperty("catalina.base", System.getProperty("user.dir"));
+        String webappRoot = System.getProperty("catalina.base", System.getProperty("Account.dir"));
         String uploadDirPath = webappRoot
                 + File.separator + "web"
                 + File.separator + "uploads"
@@ -154,4 +154,5 @@ public class FileUploadUtil {
         return fileName.substring(lastDot + 1);
     }
 }
+
 

@@ -2,11 +2,15 @@
 <project-private xmlns="http://www.netbeans.org/ns/project-private/1">
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
+<<<<<<< HEAD
         <group>
             <file>file:/F:/swp/SWP391_SUM26/web/cart.jsp</file>
             <file>file:/F:/swp/SWP391_SUM26/src/java/controller/CartServlet.java</file>
             <file>file:/F:/swp/SWP391_SUM26/src/java/dao/DeliveryAddressDAO.java</file>
             <file>file:/F:/swp/SWP391_SUM26/src/java/controller/AddProductServlet.java</file>
         </group>
+=======
+        <group/>
+>>>>>>> 3a85989 (Update cart, wishlist, account and product modules)
     </open-files>
 </project-private>

@@ -1,14 +1,28 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
-<%@ page import="model.User" %>
+<%@ page import="model.Account" %>
 <%@ page import="model.Product" %>
 <%@ page import="model.Cart" %>
 <%@ page import="java.util.List" %>
 <%@ page import="dao.ProductDAO" %>
 <%@ page import="Utils.ProductSorter" %>
-<% 
-    User user = (User) session.getAttribute("user"); 
+<%@ page import="service.WishlistService" %>
+<%
+    Account Account = (Account) session.getAttribute("Account");
     Cart cart = (Cart) session.getAttribute("cart");
-    int cartCount = cart != null ? cart.getTotalQuantity() : 0;
+    Integer sessionCartCount = (Integer) session.getAttribute("cartCount");
+    int cartCount = sessionCartCount != null ? sessionCartCount : (cart != null ? cart.getTotalQuantity() : 0);
+    int wishlistCount = 0;
+    if (Account != null) {
+        WishlistService ws = new WishlistService();
+        try {
+            wishlistCount = ws.getWishlistCount(Account.getId());
+            if (session.getAttribute("wishlistCount") != null) {
+                wishlistCount = (Integer) session.getAttribute("wishlistCount");
+            }
+        } finally {
+            ws.close();
+        }
+    }
     ProductDAO dao = new ProductDAO();
     List<Product> productsList = dao.getAllProducts();
     String sort = request.getParameter("sort");
@@ -205,6 +219,22 @@
                         width: 18px;
                         height: 18px;
                         background: var(--orange);
+                        color: #fff;
+                        border-radius: 50%;
+                        font-size: 0.62rem;
+                        font-weight: 700;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    }
+
+                    .wishlist-badge {
+                        position: absolute;
+                        top: -3px;
+                        right: -3px;
+                        width: 18px;
+                        height: 18px;
+                        background: #ef4444;
                         color: #fff;
                         border-radius: 50%;
                         font-size: 0.62rem;
@@ -1821,6 +1851,10 @@
                     </div>
 
                     <div class="nav-right">
+                        <a href="wishlist" class="nav-icon-btn" title="Wishlist">
+                            <i class="fa-solid fa-heart"></i>
+                            <span class="wishlist-badge"><%= wishlistCount %></span>
+                        </a>
                         <a href="cart" class="nav-icon-btn" title="Giỏ hàng">
                             <i class="fa-solid fa-basket-shopping"></i>
                             <span class="cart-badge"><%= cartCount %></span>
@@ -1829,26 +1863,26 @@
                             <i class="fa-regular fa-bell"></i>
                         </button>
 
-                        <% if (user !=null) { %>
+                        <% if (Account !=null) { %>
                             <!-- Avatar with dropdown -->
                             <div class="avatar-wrap">
                                 <img class="nav-avatar"
-                                    src="https://ui-avatars.com/api/?name=<%= user.getFullname() != null ? user.getFullname().replace(" ", "+") : "User" %>&background=4caf50&color=fff&size=80&bold=true"
+                                    src="https://ui-avatars.com/api/?name=<%= Account.getFullname() != null ? Account.getFullname().replace(" ", "+") : "Account" %>&background=4caf50&color=fff&size=80&bold=true"
                                 alt="avatar">
                                 <div class="avatar-dropdown">
                                     <div class="avatar-dropdown-inner">
                                         <div class="dropdown-header">
                                             <strong>
-                                                <%= user.getFullname() !=null ? user.getFullname() : user.getUsername()
+                                                <%= Account.getFullname() !=null ? Account.getFullname() : Account.getUsername()
                                                     %>
                                             </strong>
                                             <span>
-                                                <%= user.getEmail() !=null ? user.getEmail() : user.getUsername() %>
+                                                <%= Account.getEmail() !=null ? Account.getEmail() : Account.getUsername() %>
                                             </span>
                                         </div>
                                         <div class="dropdown-menu">
                                             <a class="dropdown-item" href="profile?tab=profile">
-                                                <i class="fa-regular fa-user"></i> Hồ Sơ Của Tôi
+                                                <i class="fa-regular fa-Account"></i> Hồ Sơ Của Tôi
                                             </a>
                                             <a class="dropdown-item" href="profile?tab=security">
                                                 <i class="fa-solid fa-shield-halved"></i> Bảo Mật
@@ -2150,7 +2184,10 @@
                                         <% } else if (p.isIsFeatured()) { %>
                                             <div class="product-badge badge-hot">Hot</div>
                                         <% } %>
-                                        <button class="product-wishlist" data-wishlist-action="add" data-product-id="<%= p.getId() %>"><i class="fa-regular fa-heart"></i></button>
+                                        <form action="add-to-wishlist" method="POST" style="position:absolute;top:8px;right:8px;z-index:2;" onclick="event.stopPropagation();">
+                                            <input type="hidden" name="productId" value="<%= p.getId() %>">
+                                            <button type="submit" class="product-wishlist"><i class="fa-regular fa-heart"></i></button>
+                                        </form>
                                     </div>
                                     <div class="product-info">
                                         <div class="product-category"><%= p.getShopName() != null ? p.getShopName() : "Chung" %></div>

@@ -103,7 +103,7 @@ public class ProductServlet extends HttpServlet {
     // -----------------------------------------------------------------
     private void handleProductDetail(HttpServletRequest req, HttpServletResponse resp) throws Exception {
         HttpSession session = req.getSession(false);
-        if (session == null || session.getAttribute("user") == null) {
+        if (session == null || session.getAttribute("Account") == null) {
             resp.sendRedirect(req.getContextPath() + "/login");
             return;
         }
@@ -240,7 +240,7 @@ public class ProductServlet extends HttpServlet {
     }
 
     // -----------------------------------------------------------------
-    // User / khach: thay tat ca san pham
+    // Account / khach: thay tat ca san pham
     // -----------------------------------------------------------------
     private List<Product> loadUserProducts(String keyword) throws Exception {
         System.out.println("[ProductServlet.loadUserProducts] loading all products");
@@ -312,3 +312,4 @@ public class ProductServlet extends HttpServlet {
         }
     }
 }
+

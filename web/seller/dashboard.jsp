@@ -4,15 +4,15 @@
 <%@ page import="java.text.NumberFormat" %>
 <%@ page import="java.util.Locale" %>
 <%
-    Account user = (Account) session.getAttribute("user");
-    if (user == null) {
+    Account Account = (Account) session.getAttribute("Account");
+    if (Account == null) {
         response.sendRedirect(request.getContextPath() + "/login");
         return;
     }
 
-    String avatarUrl = user.getAvatar();
+    String avatarUrl = Account.getAvatar();
     if (avatarUrl == null || avatarUrl.trim().isEmpty()) {
-        String fullname = user.getFullname() != null ? user.getFullname() : user.getUsername();
+        String fullname = Account.getFullname() != null ? Account.getFullname() : Account.getUsername();
         avatarUrl = "https://ui-avatars.com/api/?name="
                   + java.net.URLEncoder.encode(fullname, "UTF-8")
                   + "&background=4caf50&color=fff&size=80&bold=true&rounded=true";
@@ -350,7 +350,7 @@
         <aside class="sidebar">
             <div class="sidebar-nav">
                 <a href="dashboard" class="active"><i class="fa-solid fa-gauge"></i> Dashboard</a>
-                <a href="../profile"><i class="fa-regular fa-user"></i> Hồ Sơ</a>
+                <a href="../profile"><i class="fa-regular fa-Account"></i> Hồ Sơ</a>
                 <a href="../products"><i class="fa-brands fa-opencart"></i> Sản Phẩm</a>
                 <a href="orders"><i class="fa-solid fa-basket-shopping"></i> Đơn Hàng</a>
                 <a href="../logout" class="logout"><i class="fa-solid fa-right-from-bracket"></i> Đăng Xuất</a>
@@ -383,7 +383,7 @@
                 <!-- Hero Section -->
                 <div class="hero">
                     <div class="hero-text">
-                        <h1>Xin chào, <%= user.getFullname() %>!</h1>
+                        <h1>Xin chào, <%= Account.getFullname() %>!</h1>
                         <p>Chào mừng bạn trở lại trang quản lý cửa hàng <strong><%= shop.getName() %></strong>. Hãy theo dõi các thông số bán hàng của bạn.</p>
                     </div>
                 </div>
@@ -452,7 +452,7 @@
                         </a>
 
                         <a href="../profile" class="action-card">
-                            <span class="action-title"><i class="fa-regular fa-user"></i> Hồ sơ cá nhân</span>
+                            <span class="action-title"><i class="fa-regular fa-Account"></i> Hồ sơ cá nhân</span>
                             <span class="action-desc">Thay đổi thông tin liên hệ, mật khẩu, và thông tin tài khoản của bạn.</span>
                         </a>
                     </div>
@@ -465,3 +465,4 @@
 
 </body>
 </html>
+

@@ -23,15 +23,15 @@ public class MyOrdersServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         HttpSession session = req.getSession(false);
-        if (session == null || session.getAttribute("user") == null) {
+        if (session == null || session.getAttribute("Account") == null) {
             resp.sendRedirect(req.getContextPath() + "/login");
             return;
         }
-        Account user = (Account) session.getAttribute("user");
+        Account Account = (Account) session.getAttribute("Account");
 
         OrderDAO orderDAO = new OrderDAO();
         try {
-            List<Order> orders = orderDAO.getOrdersByCustomerId(user.getId());
+            List<Order> orders = orderDAO.getOrdersByCustomerId(Account.getId());
             Map<Integer, List<OrderDetail>> orderDetailsMap = new HashMap<>();
 
             for (Order o : orders) {
@@ -52,11 +52,11 @@ public class MyOrdersServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         HttpSession session = req.getSession(false);
-        if (session == null || session.getAttribute("user") == null) {
+        if (session == null || session.getAttribute("Account") == null) {
             resp.sendRedirect(req.getContextPath() + "/login");
             return;
         }
-        Account user = (Account) session.getAttribute("user");
+        Account Account = (Account) session.getAttribute("Account");
 
         String action = req.getParameter("action");
         String orderIdParam = req.getParameter("orderId");
@@ -74,7 +74,7 @@ public class MyOrdersServlet extends HttpServlet {
             OrderDAO orderDAO = new OrderDAO();
             try {
                 Order order = orderDAO.getOrderById(orderId);
-                if (order != null && order.getCustomerId() == user.getId()) {
+                if (order != null && order.getCustomerId() == Account.getId()) {
                     if (order.getStatus() == 1) { // Only pending orders can be canceled
                         boolean ok = orderDAO.updateOrderStatus(orderId, 5); // 5 = Canceled
                         if (ok) {
@@ -96,3 +96,4 @@ public class MyOrdersServlet extends HttpServlet {
         resp.sendRedirect(req.getContextPath() + "/my-orders");
     }
 }
+

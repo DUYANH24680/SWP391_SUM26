@@ -7,15 +7,15 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%
-    Account user = (Account) session.getAttribute("user");
-    if (user == null) {
+    Account Account = (Account) session.getAttribute("Account");
+    if (Account == null) {
         response.sendRedirect(request.getContextPath() + "/login");
         return;
     }
 
-    String avatarUrl = user.getAvatar();
+    String avatarUrl = Account.getAvatar();
     if (avatarUrl == null || avatarUrl.trim().isEmpty()) {
-        String fullname = user.getFullname() != null ? user.getFullname() : user.getUsername();
+        String fullname = Account.getFullname() != null ? Account.getFullname() : Account.getUsername();
         avatarUrl = "https://ui-avatars.com/api/?name="
                   + java.net.URLEncoder.encode(fullname, "UTF-8")
                   + "&background=4caf50&color=fff&size=80&bold=true&rounded=true";
@@ -401,7 +401,7 @@
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="sidebar-nav">
-                <a href="profile"><i class="fa-regular fa-user"></i> Hồ Sơ</a>
+                <a href="profile"><i class="fa-regular fa-Account"></i> Hồ Sơ</a>
                 <a href="products"><i class="fa-brands fa-opencart"></i> Sản Phẩm</a>
                 <a href="my-orders" class="active"><i class="fa-solid fa-basket-shopping"></i> Đơn Hàng</a>
                 <a href="#"><i class="fa-regular fa-heart"></i> Yêu Thích</a>
@@ -483,7 +483,7 @@
 
                         <!-- Shipping info -->
                         <div class="order-shipping-info">
-                            <div><i class="fa-solid fa-user-tag" style="width:14px;color:var(--green);"></i> <strong>Người nhận:</strong> <%= o.getRecipientName() %> - <%= o.getRecipientPhone() %></div>
+                            <div><i class="fa-solid fa-Account-tag" style="width:14px;color:var(--green);"></i> <strong>Người nhận:</strong> <%= o.getRecipientName() %> - <%= o.getRecipientPhone() %></div>
                             <div style="margin-top:0.2rem;"><i class="fa-solid fa-map-pin" style="width:14px;color:var(--green);"></i> <strong>Địa chỉ giao:</strong> <%= o.getAddress() %></div>
                             <% if (o.getNote() != null && !o.getNote().isEmpty()) { %>
                                 <div style="margin-top:0.2rem;"><i class="fa-solid fa-comment-dots" style="width:14px;color:var(--green);"></i> <strong>Ghi chú:</strong> <%= o.getNote() %></div>
@@ -573,3 +573,4 @@
     </script>
 </body>
 </html>
+

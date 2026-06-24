@@ -1,5 +1,5 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ page import="model.User" %>
+<%@ page import="model.Account" %>
 <%@ page import="model.Product" %>
 <%@ page import="model.Shop" %>
 <%@ page import="dao.CategoryDAO" %>
@@ -7,8 +7,8 @@
 <%@ page import="java.util.List" %>
 <%
     // ---- Auth guard ----
-    User user = (User) session.getAttribute("user");
-    if (user == null) {
+    Account Account = (Account) session.getAttribute("Account");
+    if (Account == null) {
         response.sendRedirect(request.getContextPath() + "/login");
         return;
     }
@@ -534,7 +534,7 @@
         .comment-content {
             flex: 1;
         }
-        .comment-user {
+        .comment-Account {
             font-weight: 700;
             font-size: 1rem;
             color: var(--gray-800);
@@ -737,7 +737,7 @@
                             <span>S</span>
                             <small>(11-12kg)</small>
                         </button>
-                        <button class="size-btn" data-size="M" onclick="selectSize('M', this)">
+                        <button class="size-btn active" data-size="M" onclick="selectSize('M', this)">
                             <span>M</span>
                             <small>(13-14kg)</small>
                         </button>
@@ -750,7 +750,7 @@
                             <small>(17-20kg)</small>
                         </button>
                     </div>
-                    <input type="hidden" id="selectedSize" value="">
+                    <input type="hidden" id="selectedSize" value="M">
                 </div>
 
                 <!-- Quantity Input -->
@@ -804,9 +804,14 @@
                     <button class="btn btn-green" onclick="addToCart()">
                         <i class="fa-solid fa-basket-shopping"></i> Thêm Vào Giỏ Hàng
                     </button>
-                    <button class="btn btn-outline" data-wishlist-action="add" data-product-id="<%= product.getId() %>">
-                        <i class="fa-regular fa-heart"></i> Thêm vào Wishlist
-                    </button>
+                    <% if (product.isActive()) { %>
+                    <form action="add-to-wishlist" method="POST" style="display:inline;">
+                        <input type="hidden" name="productId" value="<%= product.getId() %>">
+                        <button type="submit" class="btn btn-outline">
+                            <i class="fa-regular fa-heart"></i> Thêm vào Wishlist
+                        </button>
+                    </form>
+                    <% } %>
                     <button class="btn btn-outline" onclick="buyNow()">
                         <i class="fa-solid fa-bolt"></i> Mua Ngay
                     </button>
@@ -853,7 +858,7 @@
                 <div class="comment-item">
                     <div class="comment-avatar">H</div>
                     <div class="comment-content">
-                        <div class="comment-user">Hoàng Văn A <span class="comment-date">2 ngày trước</span></div>
+                        <div class="comment-Account">Hoàng Văn A <span class="comment-date">2 ngày trước</span></div>
                         <div class="comment-stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
                         <div class="comment-text">Sản phẩm tuyệt vời, chất lượng rất tốt! Shop đóng gói cẩn thận, giao hàng nhanh chóng. Sẽ ủng hộ shop dài dài.</div>
                     </div>
@@ -862,7 +867,7 @@
                 <div class="comment-item">
                     <div class="comment-avatar">M</div>
                     <div class="comment-content">
-                        <div class="comment-user">Mai Thị B <span class="comment-date">1 tuần trước</span></div>
+                        <div class="comment-Account">Mai Thị B <span class="comment-date">1 tuần trước</span></div>
                         <div class="comment-stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-regular fa-star"></i></div>
                         <div class="comment-text">Chất lượng khá ổn trong tầm giá. Hàng giao đúng như mô tả. Lần sau có dịp sẽ mua tiếp nha.</div>
                     </div>
@@ -947,12 +952,12 @@
         // ===== ADD TO CART =====
         function addToCart() {
             const size = document.getElementById('selectedSize').value;
-            const qty = document.getElementById('quantityInput').value;
+            const qty = parseInt(document.getElementById('quantityInput').value) || 1;
             const notes = document.getElementById('orderNotes').value;
             const code = document.getElementById('discountCode').value;
 
             if (!size) {
-                alert('Vui lòng chọn kích cỡ');
+                alert('Vui long chon kich co');
                 return;
             }
 
@@ -967,12 +972,12 @@
         // ===== BUY NOW =====
         function buyNow() {
             const size = document.getElementById('selectedSize').value;
-            const qty = document.getElementById('quantityInput').value;
+            const qty = parseInt(document.getElementById('quantityInput').value) || 1;
             const notes = document.getElementById('orderNotes').value;
             const code = document.getElementById('discountCode').value;
 
             if (!size) {
-                alert('Vui lòng chọn kích cỡ');
+                alert('Vui long chon kich co');
                 return;
             }
 
@@ -1004,6 +1009,6 @@
             });
         });
     </script>
-    <script src="js/wishlist.js"></script>
 </body>
 </html>
+

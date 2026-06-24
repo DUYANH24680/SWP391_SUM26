@@ -24,13 +24,13 @@ public class SellerDashboardServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         HttpSession session = req.getSession(false);
-        if (session == null || session.getAttribute("user") == null) {
+        if (session == null || session.getAttribute("Account") == null) {
             resp.sendRedirect(req.getContextPath() + "/login");
             return;
         }
-        Account user = (Account) session.getAttribute("user");
+        Account Account = (Account) session.getAttribute("Account");
 
-        if (!ROLE_SELLER.equalsIgnoreCase(user.getRoleName())) {
+        if (!ROLE_SELLER.equalsIgnoreCase(Account.getRoleName())) {
             session.setAttribute("error", "Bạn không có quyền truy cập trang Seller Dashboard.");
             resp.sendRedirect(req.getContextPath() + "/home.jsp");
             return;
@@ -41,7 +41,7 @@ public class SellerDashboardServlet extends HttpServlet {
         ProductDAO productDAO = new ProductDAO();
 
         try {
-            Shop shop = shopDAO.getShopByOwnerId(user.getId());
+            Shop shop = shopDAO.getShopByOwnerId(Account.getId());
             if (shop == null) {
                 req.setAttribute("shopNotApproved", true);
                 req.setAttribute("shopNotApprovedMsg", "Cửa hàng của bạn chưa được tạo. Vui lòng tạo cửa hàng.");
@@ -85,3 +85,4 @@ public class SellerDashboardServlet extends HttpServlet {
         }
     }
 }
+
