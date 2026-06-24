@@ -891,15 +891,22 @@
                     .product-image-wrap {
                         position: relative;
                         background: linear-gradient(135deg, #f1f8e9, #e8f5e9);
-                        height: 180px;
+                        height: 160px;
                         display: flex;
                         align-items: center;
                         justify-content: center;
                         overflow: hidden;
                     }
 
+                    .product-image-wrap img {
+                        width: 100%;
+                        height: 100%;
+                        object-fit: cover;
+                        object-position: center;
+                    }
+
                     .product-emoji {
-                        font-size: 5rem;
+                        font-size: 4rem;
                         filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.12));
                         transition: transform 0.3s ease;
                     }
@@ -2147,7 +2154,7 @@
                                                 String encoded = java.net.URLEncoder.encode(imgStr.trim(), "UTF-8");
                                                 String imgSrc = request.getContextPath() + "/image?path=" + encoded;
                                         %>
-                                            <img src="<%= imgSrc %>" alt="<%= p.getTitle() %>" style="width:100%; height:100%; object-fit:cover; border-radius:var(--radius-md);" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                                            <img src="<%= imgSrc %>" alt="<%= p.getTitle() %>" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
                                             <div class="product-emoji" style="display:none;">🍎</div>
                                         <%
                                             } else if (imgStr.trim().toLowerCase().endsWith(".png")
@@ -2157,7 +2164,7 @@
                                                     || imgStr.trim().toLowerCase().startsWith("http")) {
                                                 // Duong dan anh hoac URL tuyệt đối → dung truc tiep
                                         %>
-                                            <img src="<%= imgStr.trim() %>" alt="<%= p.getTitle() %>" style="width:100%; height:100%; object-fit:cover; border-radius:var(--radius-md);">
+                                            <img src="<%= imgStr.trim() %>" alt="<%= p.getTitle() %>">
                                         <%
                                             } else {
                                                 // Con lai → emoji
