@@ -16,6 +16,8 @@ public class Account {
     private Boolean gender;
     private int status;
     private Timestamp createdAt;
+    
+        private java.util.Map<String, Object> extra;
 
     public Account() {
     }
@@ -138,5 +140,13 @@ public class Account {
 
     public void setCreatedAt(Timestamp createdAt) {
         this.createdAt = createdAt;
+    }
+    
+        public java.util.Map<String, Object> getExtra() {
+        if (extra == null) extra = new java.util.HashMap<>();
+        return extra;
+    }
+        public void setExtra(String key, Object value) {
+        getExtra().put(key, value);
     }
 }

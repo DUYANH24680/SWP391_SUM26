@@ -3,6 +3,8 @@ package dao;
 import model.Account;
 import Utils.DbContext;
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * AccountDAO - Handles all DB operations for Accounts table.
@@ -68,6 +70,81 @@ public class AccountDAO extends Utils.DbContext {
             throw new RuntimeException("AccountDAO.findById error: " + e.getMessage(), e);
         }
         return null;
+    }
+    
+        public List<Account> searchAccountsByRole(String roleName, String keyword) {
+        List<Account> list = new ArrayList<>();
+        String sql = "SELECT a.id, a.role_id, r.name AS role_name, a.fullname, a.username, a.password_hash, a.email, a.phone, a.address, a.gender, a.avatar, a.status, a.created_at "
+                   + "FROM Accounts a "
+                   + "JOIN Roles r ON a.role_id = r.id "
+                   + "WHERE r.name = ? "
+                   + "  AND (a.username LIKE ? OR a.fullname LIKE ? OR a.email LIKE ? OR a.phone LIKE ?) "
+                   + "ORDER BY a.created_at DESC";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            ps.setString(1, roleName);
+            String kw = "%" + keyword.trim() + "%";
+            ps.setString(2, kw);
+            ps.setString(3, kw);
+            ps.setString(4, kw);
+            ps.setString(5, kw);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapRow(rs));
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("AccountDAO.searchAccountsByRole error: " + e.getMessage(), e);
+        }
+        return list;
+    }
+        
+        public List<Account> getAccountsByRole(String roleName) {
+        List<Account> list = new ArrayList<>();
+        String sql = "SELECT a.id, a.role_id, r.name AS role_name, a.fullname, a.username, a.password_hash, a.email, a.phone, a.address, a.gender, a.avatar, a.status, a.created_at "
+                   + "FROM Accounts a "
+                   + "JOIN Roles r ON a.role_id = r.id "
+                   + "WHERE r.name = ? "
+                   + "ORDER BY a.created_at DESC";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            ps.setString(1, roleName);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapRow(rs));
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("AccountDAO.getAccountsByRole error: " + e.getMessage(), e);
+        }
+        return list;
+    }
+        
+            public Account findByIdIncludeAll(int id) {
+        String sql = "SELECT a.id, a.role_id, r.name AS role_name, a.fullname, a.username, a.password_hash, a.email, a.phone, a.address, a.gender, a.avatar, a.status, a.created_at "
+                   + "FROM Accounts a "
+                   + "JOIN Roles r ON a.role_id = r.id "
+                   + "WHERE a.id = ?";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            ps.setInt(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return mapRow(rs);
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("AccountDAO.findByIdIncludeAll error: " + e.getMessage(), e);
+        }
+        return null;
+    }
+            
+                public boolean updateAccountStatus(int id, int status) {
+        String sql = "UPDATE Accounts SET status = ? WHERE id = ?";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            ps.setInt(1, status);
+            ps.setInt(2, id);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            throw new RuntimeException("AccountDAO.updateAccountStatus error: " + e.getMessage(), e);
+        }
     }
 
     /**

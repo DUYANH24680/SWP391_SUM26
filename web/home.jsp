@@ -1818,6 +1818,14 @@
                         <a href="#">Rau Củ</a>
                         <a href="#">Nhập Khẩu</a>
                         <a href="#">Khuyến Mãi</a>
+                                                <% if ("admin".equals(user.getRoleName())) { %>
+                            <a href="<%= request.getContextPath() %>/admin/customers">
+                                <i class="fa-solid fa-users" style="margin-right:4px;"></i> Khách Hàng
+                            </a>
+                            <a href="<%= request.getContextPath() %>/admin/approve-products">
+                                <i class="fa-solid fa-clipboard-check" style="margin-right:4px;"></i> Duyệt Sản Phẩm
+                            </a>
+                        <% } %>
                     </div>
 
                     <div class="nav-right">
