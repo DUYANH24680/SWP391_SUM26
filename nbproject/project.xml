@@ -20,6 +20,10 @@
                     <file>${file.reference.sqljdbc42.jar-1}</file>
                 </library>
                 <library dirs="200">
+                    <file>${file.reference.jakarta.servlet.jsp.jstl-2.0.0.jar-2}</file>
+                    <path-in-war>WEB-INF/lib</path-in-war>
+                </library>
+                <library dirs="200">
                     <file>${file.reference.jakarta.servlet.jsp.jstl-api-2.0.0.jar-2}</file>
                     <path-in-war>WEB-INF/lib</path-in-war>
                 </library>
@@ -41,10 +45,6 @@
                 </library>
                 <library dirs="200">
                     <file>${file.reference.jakarta.mail-api-2.1.0.jar}</file>
-                    <path-in-war>WEB-INF/lib</path-in-war>
-                </library>
-                <library dirs="200">
-                    <file>${file.reference.jakarta.servlet.jsp.jstl-2.0.0.jar-2}</file>
                     <path-in-war>WEB-INF/lib</path-in-war>
                 </library>
             </web-module-libraries>

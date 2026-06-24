@@ -1111,6 +1111,83 @@
                         transform: scale(1.04);
                     }
 
+                    /* Buy now + Add to cart side by side */
+                    .product-footer {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 0.4rem;
+                        padding: 0.75rem 0.75rem 0.85rem;
+                        border-top: 1px solid var(--gray-100);
+                    }
+
+                    .product-footer .footer-row {
+                        display: flex;
+                        align-items: center;
+                        gap: 0.4rem;
+                    }
+
+                    .product-footer .product-unit {
+                        font-size: 0.72rem;
+                        color: var(--gray-400);
+                        display: flex;
+                        align-items: center;
+                        gap: 0.3rem;
+                        margin-bottom: 0.15rem;
+                    }
+
+                    .product-footer .btn-actions {
+                        display: flex;
+                        gap: 0.4rem;
+                    }
+
+                    .product-footer .btn-add-cart {
+                        flex: 1;
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 0.35rem;
+                        padding: 0.42rem 0.5rem;
+                        background: transparent;
+                        color: var(--green-dark);
+                        border: 1.5px solid var(--green);
+                        border-radius: 100px;
+                        font-size: 0.78rem;
+                        font-weight: 600;
+                        cursor: pointer;
+                        font-family: 'Inter', sans-serif;
+                        transition: all 0.18s;
+                        white-space: nowrap;
+                    }
+
+                    .product-footer .btn-add-cart:hover {
+                        background: var(--green-light);
+                        transform: scale(1.02);
+                    }
+
+                    .product-footer .btn-buy-now {
+                        flex: 1;
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 0.35rem;
+                        padding: 0.42rem 0.5rem;
+                        background: var(--orange);
+                        color: #fff;
+                        border: none;
+                        border-radius: 100px;
+                        font-size: 0.78rem;
+                        font-weight: 600;
+                        cursor: pointer;
+                        font-family: 'Inter', sans-serif;
+                        transition: all 0.18s;
+                        white-space: nowrap;
+                    }
+
+                    .product-footer .btn-buy-now:hover {
+                        background: var(--orange-dark);
+                        transform: scale(1.02);
+                    }
+
                     /* Out of stock overlay */
                     .out-of-stock .product-image-wrap::after {
                         content: 'Het Hang';
@@ -2209,11 +2286,41 @@
                                     </div>
                                     <div class="product-footer">
                                         <% if (p.getStockQuantity() > 0) { %>
-                                            <div class="product-unit"><i class="fa-solid fa-scale-balanced"></i> Con <%= p.getStockQuantity() %> <%= p.getUnit() %></div>
-                                            <button class="btn-cart" onclick="window.location.href='cart?action=add&productId=<%= p.getId() %>'"><i class="fa-solid fa-plus"></i> Thêm</button>
+                                            <div class="footer-row">
+                                                <div class="product-unit">
+                                                    <i class="fa-solid fa-scale-balanced"></i> Con <%= p.getStockQuantity() %> <%= p.getUnit() %>
+                                                </div>
+                                            </div>
+                                            <div class="btn-actions">
+                                                <form action="add-to-cart" method="POST" style="flex:1;">
+                                                    <input type="hidden" name="productId" value="<%= p.getId() %>">
+                                                    <input type="hidden" name="quantity" value="1">
+                                                    <button type="submit" class="btn-add-cart">
+                                                        <i class="fa-solid fa-cart-plus"></i> Gio Hang
+                                                    </button>
+                                                </form>
+                                                <form action="buy-now" method="POST" style="flex:1;">
+                                                    <input type="hidden" name="productId" value="<%= p.getId() %>">
+                                                    <input type="hidden" name="quantity" value="1">
+                                                    <button type="submit" class="btn-buy-now">
+                                                        <i class="fa-solid fa-bolt"></i> Mua Ngay
+                                                    </button>
+                                                </form>
+                                            </div>
                                         <% } else { %>
-                                            <div class="product-unit" style="color:var(--orange);"><i class="fa-solid fa-circle-xmark"></i> Hết hàng</div>
-                                            <button class="btn-cart" disabled><i class="fa-solid fa-ban"></i> Het</button>
+                                            <div class="footer-row">
+                                                <div class="product-unit" style="color:var(--orange);">
+                                                    <i class="fa-solid fa-circle-xmark"></i> Het Hang
+                                                </div>
+                                            </div>
+                                            <div class="btn-actions">
+                                                <button class="btn-add-cart" disabled style="opacity:0.5;cursor:not-allowed;">
+                                                    <i class="fa-solid fa-cart-plus"></i> Gio Hang
+                                                </button>
+                                                <button class="btn-buy-now" disabled style="opacity:0.5;cursor:not-allowed;">
+                                                    <i class="fa-solid fa-bolt"></i> Mua Ngay
+                                                </button>
+                                            </div>
                                         <% } %>
                                     </div>
                                 </div>

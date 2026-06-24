@@ -12,13 +12,15 @@ public class Account {
     private String email;
     private String phone;
     private String avatar;
+    private String address;
+    private Boolean gender;
     private int status;
     private Timestamp createdAt;
 
     public Account() {
     }
 
-    public Account(int id, int roleId, String roleName, String fullname, String username, String passwordHash, String email, String phone, String avatar, int status, Timestamp createdAt) {
+    public Account(int id, int roleId, String roleName, String fullname, String username, String passwordHash, String email, String phone, String avatar, String address, Boolean gender, int status, Timestamp createdAt) {
         this.id = id;
         this.roleId = roleId;
         this.roleName = roleName;
@@ -28,6 +30,8 @@ public class Account {
         this.email = email;
         this.phone = phone;
         this.avatar = avatar;
+        this.address = address;
+        this.gender = gender;
         this.status = status;
         this.createdAt = createdAt;
     }
@@ -118,6 +122,22 @@ public class Account {
 
     public void setCreatedAt(Timestamp createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public Boolean getGender() {
+        return gender;
+    }
+
+    public void setGender(Boolean gender) {
+        this.gender = gender;
     }
 }
 

@@ -13,7 +13,7 @@ public class AccountDAO extends Utils.DbContext {
      * Find an account by username or email (for login).
      */
     public Account findByUsernameOrEmail(String usernameOrEmail) {
-        String sql = "SELECT u.id, u.role_id, r.name AS role_name, u.fullname, u.username, u.password_hash, u.email, u.phone, u.avatar, u.status, u.created_at "
+        String sql = "SELECT u.id, u.role_id, r.name AS role_name, u.fullname, u.username, u.password_hash, u.email, u.phone, u.avatar, u.address, u.gender, u.status, u.created_at "
                    + "FROM Accounts u "
                    + "JOIN Roles r ON u.role_id = r.id "
                    + "WHERE (u.username = ? OR u.email = ?) AND u.status = 1";
@@ -53,7 +53,7 @@ public class AccountDAO extends Utils.DbContext {
      * Find an account by id.
      */
     public Account findById(int id) {
-        String sql = "SELECT u.id, u.role_id, r.name AS role_name, u.fullname, u.username, u.password_hash, u.email, u.phone, u.avatar, u.status, u.created_at "
+        String sql = "SELECT u.id, u.role_id, r.name AS role_name, u.fullname, u.username, u.password_hash, u.email, u.phone, u.avatar, u.address, u.gender, u.status, u.created_at "
                    + "FROM Accounts u "
                    + "JOIN Roles r ON u.role_id = r.id "
                    + "WHERE u.id = ? AND u.status = 1";
@@ -71,13 +71,19 @@ public class AccountDAO extends Utils.DbContext {
     }
 
     public boolean updateProfile(int id, String fullname, String email, String phone, String address, Boolean gender, String avatar) {
-        String sql = "UPDATE Accounts SET fullname = ?, email = ?, phone = ?, avatar = ? WHERE id = ?";
+        String sql = "UPDATE Accounts SET fullname = ?, email = ?, phone = ?, address = ?, gender = ?, avatar = ? WHERE id = ?";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, fullname);
             ps.setString(2, email);
             ps.setString(3, phone);
-            ps.setString(4, avatar);
-            ps.setInt(5, id);
+            ps.setString(4, address);
+            if (gender != null) {
+                ps.setBoolean(5, gender);
+            } else {
+                ps.setNull(5, Types.BIT);
+            }
+            ps.setString(6, avatar);
+            ps.setInt(7, id);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             throw new RuntimeException("AccountDAO.updateProfile error: " + e.getMessage(), e);
@@ -127,6 +133,13 @@ public class AccountDAO extends Utils.DbContext {
         u.setEmail(rs.getString("email"));
         u.setPhone(rs.getString("phone"));
         u.setAvatar(rs.getString("avatar"));
+        u.setAddress(rs.getString("address"));
+        Boolean gender = rs.getBoolean("gender");
+        if (rs.wasNull()) {
+            u.setGender(null);
+        } else {
+            u.setGender(gender);
+        }
         u.setStatus(rs.getInt("status"));
         u.setCreatedAt(rs.getTimestamp("created_at"));
         return u;

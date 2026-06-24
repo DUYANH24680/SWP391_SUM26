@@ -240,42 +240,6 @@
         }
         .btn-copy:hover { color: var(--green-dark); transform: scale(1.1); }
 
-        /* ===== SIZE SELECTION ===== */
-        .size-options {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-            gap: 0.75rem;
-            margin-bottom: 0.5rem;
-        }
-        .size-btn {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 0.3rem;
-            padding: 0.8rem;
-            border: 2px solid var(--gray-200);
-            border-radius: var(--radius-sm);
-            background: #fff;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-weight: 600;
-            color: var(--gray-600);
-        }
-        .size-btn span { font-size: 1.1rem; }
-        .size-btn small { font-size: 0.7rem; color: var(--gray-400); font-weight: 500; }
-        .size-btn:hover {
-            border-color: var(--green);
-            background: var(--green-light);
-            color: var(--green-dark);
-        }
-        .size-btn.active {
-            border-color: var(--green);
-            background: var(--green);
-            color: #fff;
-        }
-        .size-btn.active small { color: rgba(255,255,255,0.9); }
-
         /* ===== QUANTITY CONTROL ===== */
         .quantity-control {
             display: flex;
@@ -729,30 +693,6 @@
                     </div>
                 </div>
 
-                <!-- Size Selection -->
-                <div>
-                    <div class="section-label">Kích Cỡ</div>
-                    <div class="size-options">
-                        <button class="size-btn" data-size="S" onclick="selectSize('S', this)">
-                            <span>S</span>
-                            <small>(11-12kg)</small>
-                        </button>
-                        <button class="size-btn active" data-size="M" onclick="selectSize('M', this)">
-                            <span>M</span>
-                            <small>(13-14kg)</small>
-                        </button>
-                        <button class="size-btn" data-size="L" onclick="selectSize('L', this)">
-                            <span>L</span>
-                            <small>(15-16kg)</small>
-                        </button>
-                        <button class="size-btn" data-size="XL" onclick="selectSize('XL', this)">
-                            <span>XL</span>
-                            <small>(17-20kg)</small>
-                        </button>
-                    </div>
-                    <input type="hidden" id="selectedSize" value="M">
-                </div>
-
                 <!-- Quantity Input -->
                 <div>
                     <div class="section-label">Số Lượng</div>
@@ -822,7 +762,6 @@
                 <form id="cartForm" action="cart" method="post" style="display:none;">
                     <input type="hidden" id="cartAction" name="action" value="add">
                     <input type="hidden" name="productId" value="<%= product.getId() %>">
-                    <input type="hidden" id="cartSize" name="size" value="">
                     <input type="hidden" id="cartQty" name="quantity" value="1">
                     <input type="hidden" id="cartDiscountCode" name="discountCode" value="">
                     <input type="hidden" id="cartNote" name="note" value="">
@@ -893,13 +832,6 @@
     </div>
 
     <script>
-        // ===== SIZE SELECTION =====
-        function selectSize(size, btn) {
-            document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            document.getElementById('selectedSize').value = size;
-        }
-
         // ===== QUANTITY CONTROL =====
         function decreaseQuantity() {
             const input = document.getElementById('quantityInput');
@@ -951,17 +883,10 @@
 
         // ===== ADD TO CART =====
         function addToCart() {
-            const size = document.getElementById('selectedSize').value;
             const qty = parseInt(document.getElementById('quantityInput').value) || 1;
             const notes = document.getElementById('orderNotes').value;
             const code = document.getElementById('discountCode').value;
 
-            if (!size) {
-                alert('Vui long chon kich co');
-                return;
-            }
-
-            document.getElementById('cartSize').value = size;
             document.getElementById('cartQty').value = qty;
             document.getElementById('cartNote').value = notes;
             document.getElementById('cartDiscountCode').value = code;
@@ -971,17 +896,10 @@
 
         // ===== BUY NOW =====
         function buyNow() {
-            const size = document.getElementById('selectedSize').value;
             const qty = parseInt(document.getElementById('quantityInput').value) || 1;
             const notes = document.getElementById('orderNotes').value;
             const code = document.getElementById('discountCode').value;
 
-            if (!size) {
-                alert('Vui long chon kich co');
-                return;
-            }
-
-            document.getElementById('cartSize').value = size;
             document.getElementById('cartQty').value = qty;
             document.getElementById('cartNote').value = notes;
             document.getElementById('cartDiscountCode').value = code;

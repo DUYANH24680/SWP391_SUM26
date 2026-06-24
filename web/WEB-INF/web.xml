@@ -5,6 +5,11 @@
   <session-config>
     <session-timeout>30</session-timeout>
   </session-config>
+  <!-- Upload directory: images saved to F drive -->
+  <context-param>
+    <param-name>upload.external.path</param-name>
+    <param-value>F:/Lon/SWP391_SUM26-46a514658374c9b402f906d87ee2aec2caf04ff8/uploads</param-value>
+  </context-param>
   <!-- Welcome file -->
   <welcome-file-list>
     <welcome-file>login.jsp</welcome-file>
