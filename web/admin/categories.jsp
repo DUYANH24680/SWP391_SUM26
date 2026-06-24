@@ -33,9 +33,14 @@
     String avatarUrl = user.getAvatar();
     if (avatarUrl == null || avatarUrl.trim().isEmpty()) {
         String fullname = user.getFullname() != null ? user.getFullname() : user.getUsername();
-        avatarUrl = "https://ui-avatars.com/api/?name="
-                  + java.net.URLEncoder.encode(fullname, "UTF-8")
-                  + "&background=4caf50&color=fff&size=80&bold=true&rounded=true";
+        try {
+            avatarUrl = "https://ui-avatars.com/api/?name="
+                      + java.net.URLEncoder.encode(fullname, "UTF-8")
+                      + "&background=4caf50&color=fff&size=80&bold=true&rounded=true";
+        } catch (java.io.UnsupportedEncodingException e) {
+            avatarUrl = "https://ui-avatars.com/api/?name=" + fullname
+                      + "&background=4caf50&color=fff&size=80&bold=true&rounded=true";
+        }
     }
 
     String message = (String) session.getAttribute("message");
@@ -51,7 +56,9 @@
         if (path == null || path.trim().isEmpty()) return null;
         String trimmed = path.trim();
         if (trimmed.startsWith("uploads/")) {
-            return request.getContextPath() + "/image?path=" + java.net.URLEncoder.encode(trimmed, "UTF-8");
+            try {
+                return request.getContextPath() + "/image?path=" + java.net.URLEncoder.encode(trimmed, "UTF-8");
+            } catch (java.io.UnsupportedEncodingException e) { return trimmed; }
         }
         return trimmed;
     };
@@ -647,7 +654,10 @@
                                     <td>
                                         <c:choose>
                                             <c:when test="${not empty c.image}">
-                                                <img class="cat-img" src="<%= imgUrl(c.getImage(), request.getContextPath()) %>" alt="${c.name}"
+                                                <c:url value="/image" var="imgSrc">
+                                                    <c:param name="path" value="${c.image}" />
+                                                </c:url>
+                                                <img class="cat-img" src="${imgSrc}" alt="${c.name}"
                                                      onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
                                                 <div class="cat-img-placeholder" style="display:none;">
                                                     <i class="fa-solid fa-layer-group" style="color:var(--green);font-size:1.2rem;"></i>
