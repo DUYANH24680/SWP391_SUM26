@@ -1,10 +1,10 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ page import="model.Account" %>
+<%@ page import="model.Customer" %>
 <%
-    Account Account = (Account) session.getAttribute("Account");
+    Customer user = (Customer) session.getAttribute("user");
     String role   = (String) session.getAttribute("role");
 
-    if (Account == null) {
+    if (user == null) {
         response.sendRedirect(request.getContextPath() + "/profile");
         return;
     }
@@ -14,18 +14,18 @@
     else if ("seller".equalsIgnoreCase(role))   roleDisplay = "Nhân Viên Bán Hàng";
     else if ("delivery".equalsIgnoreCase(role)) roleDisplay = "Nhân Viên Giao Hàng";
 
-    String fullname    = Account.getFullname();
-    String username    = Account.getUsername();
-    String email       = Account.getEmail();
-    String phone       = Account.getPhone();
-    String address     = Account.getAddress();
+    String fullname    = user.getFullname();
+    String username    = user.getUsername();
+    String email       = user.getEmail();
+    String phone       = user.getPhone();
+    String address     = user.getAddress();
     String genderStr   = "Chưa cập nhật";
-    if (Account.getGender() != null) genderStr = Account.getGender() ? "Nam" : "Nu";
+    if (user.getGender() != null) genderStr = user.getGender() ? "Nam" : "Nu";
 
-    String avatarUrl = Account.getAvatar();
+    String avatarUrl = user.getAvatar();
     String createdAtStr = "";
-    if (Account.getCreatedAt() != null)
-        createdAtStr = new java.text.SimpleDateFormat("dd/MM/yyyy").format(Account.getCreatedAt());
+    if (user.getCreatedAt() != null)
+        createdAtStr = new java.text.SimpleDateFormat("dd/MM/yyyy").format(user.getCreatedAt());
 
     if (phone   == null || phone.trim().isEmpty())   phone   = "Chưa cập nhật";
     if (address == null || address.trim().isEmpty()) address = "Chưa cập nhật";
@@ -183,19 +183,19 @@
             top: 76px;
         }
 
-        .sidebar-Account {
+        .sidebar-user {
             padding: 1.25rem 1rem;
             border-bottom: 1px solid var(--gray-100);
         }
 
-        .sidebar-Account-row {
+        .sidebar-user-row {
             display: flex;
             align-items: center;
             gap: 0.65rem;
             margin-bottom: 0.3rem;
         }
 
-        .sidebar-Account-avatar {
+        .sidebar-user-avatar {
             width: 34px; height: 34px;
             border-radius: 50%;
             object-fit: cover;
@@ -675,9 +675,9 @@
 
     <!-- SIDEBAR -->
     <aside class="sidebar">
-        <div class="sidebar-Account">
-            <div class="sidebar-Account-row">
-                <img class="sidebar-Account-avatar" src="<%= avatarUrl %>" alt="avatar">
+        <div class="sidebar-user">
+            <div class="sidebar-user-row">
+                <img class="sidebar-user-avatar" src="<%= avatarUrl %>" alt="avatar">
                 <div>
                     <div class="sidebar-welcome"><%= fullname.split(" ")[fullname.split(" ").length - 1] %></div>
                 </div>
@@ -687,7 +687,7 @@
 
         <div class="sidebar-nav">
             <button class="active" id="nav-profile" onclick="showPanel('profile')">
-                <i class="fa-regular fa-Account"></i> Ho So
+                <i class="fa-regular fa-user"></i> Ho So
             </button>
             <a href="address" style="display:flex; align-items:center; gap:0.65rem; width:100%; padding:0.65rem 0.9rem; border-radius:var(--radius-sm); font-size:0.875rem; font-weight:500; color:var(--gray-600); border:none; background:transparent; cursor:pointer; text-decoration:none; transition:all 0.15s;" onmouseover="this.style.background='var(--green-light)'; this.style.color='var(--green-dark)';" onmouseout="this.style.background='transparent'; this.style.color='var(--gray-600)';">
                 <i class="fa-solid fa-map-location-dot"></i> Sổ Địa Chỉ
@@ -698,6 +698,11 @@
             <% if ("admin".equalsIgnoreCase(role) || "seller".equalsIgnoreCase(role)) { %>
             <a href="category" style="display:flex; align-items:center; gap:0.65rem; width:100%; padding:0.65rem 0.9rem; border-radius:var(--radius-sm); font-size:0.875rem; font-weight:500; color:var(--gray-600); border:none; background:transparent; cursor:pointer; text-decoration:none; transition:all 0.15s;" onmouseover="this.style.background='var(--green-light)'; this.style.color='var(--green-dark)';" onmouseout="this.style.background='transparent'; this.style.color='var(--gray-600)';">
                 <i class="fa-solid fa-layer-group"></i> Quản Lý Danh Mục
+            </a>
+            <% } %>
+            <% if ("admin".equalsIgnoreCase(role) || "seller".equalsIgnoreCase(role)) { %>
+            <a href="products" style="display:flex; align-items:center; gap:0.65rem; width:100%; padding:0.65rem 0.9rem; border-radius:var(--radius-sm); font-size:0.875rem; font-weight:500; color:var(--gray-600); border:none; background:transparent; cursor:pointer; text-decoration:none; transition:all 0.15s;" onmouseover="this.style.background='var(--green-light)'; this.style.color='var(--green-dark)';" onmouseout="this.style.background='transparent'; this.style.color='var(--gray-600)';">
+                <i class="fa-brands fa-opencart"></i> Quản Lý Sản Phẩm
             </a>
             <% } %>
             <a href="logout" style="text-decoration:none; display:flex; align-items:center; gap:0.75rem; padding:12px 16px; border-radius:12px; color:#e53e3e; font-weight:600; font-size:0.95rem; margin-bottom:8px; border:1px solid transparent; transition:all 0.2s;" onmouseover="this.style.background='#fff5f5'; this.style.borderColor='#fed7d7';" onmouseout="this.style.background='transparent'; this.style.borderColor='transparent';">
@@ -764,7 +769,7 @@
                 <div class="card-body">
                     <div class="field-grid">
                         <div class="field-box">
-                            <div class="field-lbl"><i class="fa-regular fa-Account"></i> Ho va Ten</div>
+                            <div class="field-lbl"><i class="fa-regular fa-user"></i> Ho va Ten</div>
                             <div class="field-val"><%= fullname %></div>
                         </div>
                         <div class="field-box">
@@ -883,9 +888,9 @@
                 <div class="form-group">
                     <label class="form-label">Giới tính</label>
                     <select name="gender" class="form-control">
-                        <option value="" <%= Account.getGender() == null ? "selected" : "" %>>Chua chon</option>
-                        <option value="1" <%= (Account.getGender() != null && Account.getGender())  ? "selected" : "" %>>Nam</option>
-                        <option value="0" <%= (Account.getGender() != null && !Account.getGender()) ? "selected" : "" %>>Nữ</option>
+                        <option value="" <%= user.getGender() == null ? "selected" : "" %>>Chua chon</option>
+                        <option value="1" <%= (user.getGender() != null && user.getGender())  ? "selected" : "" %>>Nam</option>
+                        <option value="0" <%= (user.getGender() != null && !user.getGender()) ? "selected" : "" %>>Nữ</option>
                     </select>
                 </div>
                 <div class="form-group full">
@@ -896,7 +901,7 @@
                 <div class="form-group full">
                     <label class="form-label">Avatar URL</label>
                     <input type="text" name="avatar" class="form-control"
-                           value="<%= Account.getAvatar() != null ? Account.getAvatar() : "" %>"
+                           value="<%= user.getAvatar() != null ? user.getAvatar() : "" %>"
                            placeholder="https://...">
                 </div>
             </div>
@@ -969,4 +974,5 @@
 </script>
 </body>
 </html>
+
 
