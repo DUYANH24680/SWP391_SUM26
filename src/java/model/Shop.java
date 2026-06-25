@@ -95,3 +95,4 @@ public class Shop {
         return status == 1;
     }
 }
+

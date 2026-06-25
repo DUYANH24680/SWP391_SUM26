@@ -195,6 +195,7 @@ public class CartItem {
     }
 
     public String getItemKey() {
-        return productId + "#" + (size != null ? size : "");
+        return String.valueOf(productId);
     }
 }
+

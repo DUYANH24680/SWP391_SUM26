@@ -228,3 +228,4 @@ public class Product {
         return Math.round((1 - salePrice / originalPrice) * 100 * 100.0) / 100.0;
     }
 }
+

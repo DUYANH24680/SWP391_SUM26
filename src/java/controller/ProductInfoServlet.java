@@ -24,7 +24,7 @@ public class ProductInfoServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         HttpSession session = req.getSession(false);
-        if (session == null || session.getAttribute("user") == null) {
+        if (session == null || session.getAttribute("Account") == null) {
             resp.sendRedirect(req.getContextPath() + "/login");
             return;
         }
@@ -108,3 +108,4 @@ public class ProductInfoServlet extends HttpServlet {
         }
     }
 }
+
