@@ -15,8 +15,6 @@ import java.io.IOException;
 @WebServlet(name = "BuyNowServlet", urlPatterns = {"/buy-now"})
 public class BuyNowServlet extends HttpServlet {
 
-    private final CartService cartService = new CartService();
-
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -59,6 +57,7 @@ public class BuyNowServlet extends HttpServlet {
             }
         }
 
+        CartService cartService = new CartService();
         try {
             Cart cart = cartService.addToCart(
                     account.getId(), productId, quantity, null, null);
@@ -81,10 +80,12 @@ public class BuyNowServlet extends HttpServlet {
             session.setAttribute("error", "Loi he thong khi them san pham vao gio hang.");
             redirectBack(request, response);
             return;
+        } finally {
+            cartService.close();
         }
 
         // Success - go straight to checkout
-        response.sendRedirect(request.getContextPath() + "/checkout");
+        response.sendRedirect(request.getContextPath() + "/checkout?productId=" + productId + "&quantity=" + quantity);
     }
 
     @Override

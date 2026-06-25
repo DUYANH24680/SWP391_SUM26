@@ -1,6 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="model.Account" %>
-<%@ page import="model.Product" %>
+<%@ page import="model.CartItem" %>
 <%@ page import="model.DeliveryAddress" %>
 <%@ page import="model.Voucher" %>
 <%@ page import="java.util.List" %>
@@ -13,23 +13,27 @@
         return;
     }
 
-    Product product = (Product) request.getAttribute("product");
-    if (product == null) {
-        response.sendRedirect(request.getContextPath() + "/home.jsp");
+    List<CartItem> selectedItems = (List<CartItem>) request.getAttribute("selectedItems");
+    if (selectedItems == null || selectedItems.isEmpty()) {
+        response.sendRedirect(request.getContextPath() + "/view-cart");
         return;
     }
 
     List<DeliveryAddress> addresses = (List<DeliveryAddress>) request.getAttribute("addresses");
     List<Voucher> vouchers = (List<Voucher>) request.getAttribute("vouchers");
-    int quantity = (Integer) request.getAttribute("quantity");
-
-    double unitPrice = product.getSalePrice() > 0 && product.getSalePrice() < product.getOriginalPrice()
-            ? product.getSalePrice() : product.getOriginalPrice();
-    double totalCost = unitPrice * quantity;
+    List<Integer> selectedProductIds = (List<Integer>) request.getAttribute("selectedProductIds");
+    double totalCost = request.getAttribute("totalCost") != null ? ((Number) request.getAttribute("totalCost")).doubleValue() : 0;
     double shippingFee = totalCost >= 200000 ? 0.0 : 20000.0;
     double finalCost = totalCost + shippingFee;
 
     java.text.NumberFormat nf = java.text.NumberFormat.getNumberInstance(java.util.Locale.forLanguageTag("vi"));
+
+    StringBuilder selectedProductsBuilder = new StringBuilder();
+    for (int i = 0; i < selectedProductIds.size(); i++) {
+        if (i > 0) selectedProductsBuilder.append(",");
+        selectedProductsBuilder.append(selectedProductIds.get(i));
+    }
+    String selectedProductsStr = selectedProductsBuilder.toString();
 %>
 <!DOCTYPE html>
 <html lang="vi">
@@ -68,7 +72,6 @@
             flex-direction: column;
         }
 
-        /* ======= TOPNAV ======= */
         .topnav {
             background: var(--white);
             border-bottom: 1px solid var(--gray-200);
@@ -92,7 +95,6 @@
         }
         .nav-logo i { color: var(--green); }
 
-        /* ======= CONTAINER ======= */
         .container {
             max-width: 1100px;
             width: 100%;
@@ -101,7 +103,6 @@
             flex: 1;
         }
 
-        /* ======= BREADCRUMB ======= */
         .breadcrumb {
             display: flex;
             align-items: center;
@@ -123,7 +124,6 @@
             .checkout-grid { grid-template-columns: 1fr; }
         }
 
-        /* ======= CARD ======= */
         .card {
             background: var(--white);
             border-radius: var(--radius);
@@ -145,7 +145,6 @@
         }
         .card-title i { color: var(--green); }
 
-        /* ======= ADDRESS FORM ======= */
         .form-group {
             margin-bottom: 1.25rem;
             display: flex;
@@ -186,7 +185,14 @@
             gap: 0.5rem;
         }
 
-        /* ======= PRODUCT SUMMARY ======= */
+        .product-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            max-height: 360px;
+            overflow-y: auto;
+            padding-right: 0.25rem;
+        }
         .product-summary {
             display: flex;
             gap: 1rem;
@@ -203,9 +209,7 @@
             object-fit: cover;
             border: 1px solid var(--gray-200);
         }
-        .product-details {
-            flex: 1;
-        }
+        .product-details { flex: 1; }
         .product-name {
             font-size: 0.95rem;
             font-weight: 700;
@@ -217,7 +221,6 @@
             color: var(--gray-600);
         }
 
-        /* ======= VOUCHER ROW ======= */
         .voucher-input-group {
             display: flex;
             gap: 0.5rem;
@@ -242,7 +245,6 @@
         .voucher-msg.success { color: var(--green-dark); }
         .voucher-msg.error { color: #dc2626; }
 
-        /* ======= BILLING SUMMARY ======= */
         .bill-row {
             display: flex;
             justify-content: space-between;
@@ -262,7 +264,6 @@
             color: #dc2626;
         }
 
-        /* ======= PAYMENT METHOD ======= */
         .payment-option {
             border: 1.5px solid var(--gray-200);
             border-radius: var(--radius-sm);
@@ -282,9 +283,7 @@
             border-color: var(--green);
             background: var(--green-light);
         }
-        .payment-option input {
-            accent-color: var(--green);
-        }
+        .payment-option input { accent-color: var(--green); }
         .payment-option i {
             font-size: 1.15rem;
             color: var(--green-dark);
@@ -315,7 +314,6 @@
             transform: translateY(-1px);
         }
 
-        /* ======= FOOTER ======= */
         .footer {
             background: var(--white);
             border-top: 1px solid var(--gray-200);
@@ -329,21 +327,20 @@
 </head>
 <body>
 
-    <!-- Topnav -->
     <nav class="topnav">
         <a href="home.jsp" class="nav-logo">
             <i class="fa-solid fa-apple-whole"></i> Sena Shop
         </a>
     </nav>
 
-    <!-- Main Container -->
     <div class="container">
-        
-        <!-- Breadcrumb -->
+
         <div class="breadcrumb">
             <a href="home.jsp">Trang Chủ</a>
             <i class="fa-solid fa-chevron-right" style="font-size:0.6rem;"></i>
-            <span>Tạo đơn hàng</span>
+            <a href="view-cart">Giỏ hàng</a>
+            <i class="fa-solid fa-chevron-right" style="font-size:0.6rem;"></i>
+            <span>Đặt hàng</span>
         </div>
 
         <c:if test="${not empty error}">
@@ -352,16 +349,11 @@
             </div>
         </c:if>
 
-        <form method="post" action="checkout" id="checkoutForm">
-            <input type="hidden" name="productId" value="<%= product.getId() %>">
-            <input type="hidden" name="quantity" value="<%= quantity %>">
+        <form method="post" action="checkout-cart" id="checkoutForm">
+            <input type="hidden" name="selectedProducts" value="<%= selectedProductsStr %>">
 
             <div class="checkout-grid">
-                
-                <!-- LEFT: Information Form -->
                 <div class="checkout-left">
-                    
-                    <!-- shipping addresses -->
                     <div class="card">
                         <div class="card-title">
                             <i class="fa-solid fa-truck-ramp-box"></i> Thông Tin Nhận Hàng
@@ -369,7 +361,7 @@
 
                         <% 
                             if (addresses != null && !addresses.isEmpty()) { 
-                                int selectedIndex = 0; // Default to first address
+                                int selectedIndex = 0;
                                 for (int i = 0; i < addresses.size(); i++) {
                                     if (addresses.get(i).isIsDefault()) {
                                         selectedIndex = i;
@@ -398,7 +390,7 @@
                             </div>
                         <% } else { %>
                             <div class="address-suggestion">
-                                <i class="fa-solid fa-circle-info"></i> Bạn chưa lưu địa chỉ nào. Hệ thống đã tự động điền thông tin tài khoản của bạn. Bạn có thể thay đổi hoặc quản lý sổ địa chỉ trong trang hồ sơ cá nhân.
+                                <i class="fa-solid fa-circle-info"></i> Bạn chưa lưu địa chỉ nào. Hệ thống đã tự động điền thông tin tài khoản của bạn.
                             </div>
                         <% } %>
 
@@ -423,7 +415,6 @@
                         </div>
                     </div>
 
-                    <!-- payment method -->
                     <div class="card">
                         <div class="card-title">
                             <i class="fa-regular fa-credit-card"></i> Phương Thức Thanh Toán
@@ -456,31 +447,34 @@
                             </div>
                         </label>
                     </div>
-
                 </div>
 
-                <!-- RIGHT: Order Summary and Checkout -->
                 <div class="checkout-right">
-                    
-                    <!-- product info summary -->
                     <div class="card">
                         <div class="card-title">
                             <i class="fa-solid fa-basket-shopping"></i> Tóm Tắt Đơn Hàng
                         </div>
 
-                        <div class="product-summary" style="margin-bottom:1.25rem;">
-                            <% if (product.getImage() != null && !product.getImage().trim().isEmpty()) { %>
-                                <img src="<%= product.getImage() %>" alt="<%= product.getTitle() %>" class="product-img" onerror="this.src='https://ui-avatars.com/api/?name=F&background=4caf50&color=fff&size=80&bold=true';">
-                            <% } else { %>
-                                <div class="product-img" style="background:var(--green-light); display:flex; align-items:center; justify-content:center; font-size:1.8rem;">🍎</div>
+                        <div class="product-list" style="margin-bottom:1.25rem;">
+                            <%
+                                for (CartItem item : selectedItems) {
+                                    double itemTotal = item.getUnitPrice() * item.getQuantity();
+                            %>
+                                <div class="product-summary">
+                                    <% if (item.getImage() != null && !item.getImage().trim().isEmpty()) { %>
+                                        <img src="<%= item.getImage() %>" alt="<%= item.getTitle() %>" class="product-img" onerror="this.src='https://ui-avatars.com/api/?name=F&background=4caf50&color=fff&size=80&bold=true';">
+                                    <% } else { %>
+                                        <div class="product-img" style="background:var(--green-light); display:flex; align-items:center; justify-content:center; font-size:1.8rem;">🍎</div>
+                                    <% } %>
+                                    <div class="product-details">
+                                        <div class="product-name"><%= item.getTitle() %></div>
+                                        <div class="product-qty-price">Số lượng: <strong><%= item.getQuantity() %></strong> &times; <%= nf.format((long) item.getUnitPrice()) %> đ</div>
+                                        <div class="product-qty-price">Tạm tính: <strong><%= nf.format((long) itemTotal) %> đ</strong></div>
+                                    </div>
+                                </div>
                             <% } %>
-                            <div class="product-details">
-                                <div class="product-name"><%= product.getTitle() %></div>
-                                <div class="product-qty-price">Số lượng: <strong><%= quantity %></strong> &times; <%= nf.format((long) unitPrice) %> đ</div>
-                            </div>
                         </div>
 
-                        <!-- Voucher Code input -->
                         <div class="form-group" style="margin-bottom: 1.25rem;">
                             <label class="form-label" for="voucherCode">Áp dụng mã giảm giá</label>
                             <div class="voucher-input-group">
@@ -490,11 +484,10 @@
                             <div class="voucher-msg" id="voucherMessage"></div>
                         </div>
 
-                        <!-- billing items -->
                         <div style="border-top:1px solid var(--gray-100); padding-top:1rem;">
                             <div class="bill-row">
                                 <span>Tiền hàng:</span>
-                                <strong><%= nf.format((long) totalCost) %> đ</strong>
+                                <strong id="totalCostValue"><%= nf.format((long) totalCost) %> đ</strong>
                             </div>
                             <div class="bill-row discount" id="discountRow" style="display:none;">
                                 <span>Mã giảm giá:</span>
@@ -504,7 +497,7 @@
                                 <span>Phí vận chuyển:</span>
                                 <strong id="shippingFeeValue"><%= nf.format((long) shippingFee) %> đ</strong>
                             </div>
-                            
+
                             <% if (shippingFee == 0) { %>
                                 <div style="font-size:0.75rem; color:var(--green-dark); font-weight:600; text-align:right; margin-bottom:0.5rem; margin-top:-0.25rem;">
                                     <i class="fa-solid fa-circle-check"></i> Được miễn phí vận chuyển (đơn trên 200k)
@@ -518,39 +511,34 @@
                         </div>
                     </div>
 
-                    <!-- button place order -->
                     <button type="submit" class="btn-checkout">
                         <i class="fa-solid fa-shield-check"></i> Xác Nhận Mua Hàng
                     </button>
-                    
-                    <a href="home.jsp" style="display:block; text-align:center; font-size:0.85rem; color:var(--gray-600); text-decoration:none; margin-top:1rem; font-weight:600;">
-                        <i class="fa-solid fa-chevron-left" style="font-size:0.75rem;"></i> Quay lại cửa hàng
+
+                    <a href="view-cart" style="display:block; text-align:center; font-size:0.85rem; color:var(--gray-600); text-decoration:none; margin-top:1rem; font-weight:600;">
+                        <i class="fa-solid fa-chevron-left" style="font-size:0.75rem;"></i> Quay lại giỏ hàng
                     </a>
-
                 </div>
-
             </div>
         </form>
 
     </div>
 
-    <!-- Footer -->
     <footer class="footer">
         &copy; 2026 Sena Shop. Hệ thống mua bán trái cây tươi ngon - chất lượng cao.
     </footer>
 
     <script>
-        // Tự động điền địa chỉ khi chọn địa chỉ đã lưu
         function fillAddressFields() {
             var select = document.getElementById("savedAddressSelect");
             if (!select) return;
-            
+
             var selectedOption = select.options[select.selectedIndex];
-            
+
             var nameField = document.getElementById("recipientName");
             var phoneField = document.getElementById("recipientPhone");
             var addrField = document.getElementById("address");
-            
+
             if (selectedOption.value === "new") {
                 nameField.value = "";
                 phoneField.value = "";
@@ -562,12 +550,10 @@
             }
         }
 
-        // Chạy ngay khi tải trang
         window.addEventListener("DOMContentLoaded", function() {
             fillAddressFields();
         });
 
-        // Áp dụng voucher qua AJAX
         var originalTotal = <%= totalCost %>;
         var originalShipping = <%= shippingFee %>;
         var appliedVoucherId = null;
@@ -579,7 +565,7 @@
         function applyVoucher() {
             var code = document.getElementById("voucherCode").value.trim();
             var msgDiv = document.getElementById("voucherMessage");
-            
+
             if (code === "") {
                 msgDiv.className = "voucher-msg error";
                 msgDiv.innerText = "Vui lòng nhập mã giảm giá.";
@@ -587,28 +573,26 @@
                 return;
             }
 
-            // Gọi AJAX check
             var url = "${pageContext.request.contextPath}/checkout?action=checkVoucher&code=" + encodeURIComponent(code) + "&total=" + originalTotal;
-            
+
             fetch(url)
                 .then(response => response.json())
                 .then(data => {
                     if (data.valid) {
                         msgDiv.className = "voucher-msg success";
                         msgDiv.innerHTML = '<i class="fa-solid fa-circle-check"></i> ' + data.msg;
-                        
-                        // Update UI
+
                         var discount = data.discount;
                         var finalTotal = originalTotal - discount + originalShipping;
-                        
+
                         var discountRow = document.getElementById("discountRow");
                         var discountVal = document.getElementById("discountValue");
                         var finalCostVal = document.getElementById("finalCostValue");
-                        
+
                         discountRow.style.display = "flex";
                         discountVal.innerText = "-" + formatCurrency(discount);
                         finalCostVal.innerText = formatCurrency(finalTotal);
-                        
+
                         appliedVoucherId = data.voucherId;
                     } else {
                         msgDiv.className = "voucher-msg error";
@@ -627,7 +611,7 @@
         function clearVoucherDisplay() {
             var discountRow = document.getElementById("discountRow");
             var finalCostVal = document.getElementById("finalCostValue");
-            
+
             discountRow.style.display = "none";
             finalCostVal.innerText = formatCurrency(originalTotal + originalShipping);
             appliedVoucherId = null;
@@ -635,4 +619,3 @@
     </script>
 </body>
 </html>
-

@@ -3,10 +3,16 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/F:/Lon/SWP391_SUM26-46a514658374c9b402f906d87ee2aec2caf04ff8/src/java/controller/AddProductServlet.java</file>
-            <file>file:/F:/Lon/SWP391_SUM26-46a514658374c9b402f906d87ee2aec2caf04ff8/src/java/controller/AddToCartServlet.java</file>
-            <file>file:/F:/Lon/SWP391_SUM26-46a514658374c9b402f906d87ee2aec2caf04ff8/src/java/controller/LoginServlet.java</file>
-            <file>file:/F:/Lon/SWP391_SUM26-46a514658374c9b402f906d87ee2aec2caf04ff8/src/java/Utils/DbContext.java</file>
+            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/Utils/DbContext.java</file>
+            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/service/WishlistService.java</file>
+            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/service/EmailService.java</file>
+            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/service/OrderService.java</file>
+            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/controller/CustomerDashboardServlet.java</file>
+            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/controller/CheckoutServlet.java</file>
+            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/controller/ClearCartServlet.java</file>
+            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/dao/OrderDAO.java</file>
+            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/dao/PasswordResetTokenDAO.java</file>
+            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/dao/CategoryDAO.java</file>
         </group>
     </open-files>
 </project-private>

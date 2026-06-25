@@ -2510,8 +2510,8 @@
                         productsGrid.addEventListener('click', function (e) {
                             const card = e.target.closest('.product-card');
                             if (!card) return;
-                            // Không chuyển trang nếu người dùng bấm vào nút Wishlist hoặc Thêm Giỏ Hàng
-                            if (e.target.closest('.product-wishlist') || e.target.closest('.btn-cart')) return;
+                            // Không chuyển trang nếu người dùng bấm vào nút Wishlist, Thêm Giỏ Hàng hoặc Mua Ngay
+                            if (e.target.closest('.product-wishlist') || e.target.closest('.btn-add-cart') || e.target.closest('.btn-buy-now')) return;
                             
                             const productId = card.getAttribute('data-id');
                             if (productId) window.location.href = 'info?id=' + productId;

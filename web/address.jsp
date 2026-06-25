@@ -131,6 +131,8 @@
         }
         .sidebar-nav a:hover { background: var(--green-light); color: var(--green-dark); }
         .sidebar-nav a.active { background: var(--green); color: #fff; font-weight: 600; }
+        .sidebar-nav a.logout { color: #e53e3e; }
+        .sidebar-nav a.logout:hover { background: #fff5f5; color: #c53030; }
 
         /* ======= MAIN CONTENT ======= */
         .main { flex: 1; display: flex; flex-direction: column; gap: 1.25rem; min-width: 0; }
@@ -340,8 +342,16 @@
         </div>
 
         <div class="sidebar-nav">
+            <% if (!"seller".equalsIgnoreCase(role)) { %>
+            <a href="customer-dashboard"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+            <% } %>
+            <% if ("seller".equalsIgnoreCase(role)) { %>
+            <a href="seller/dashboard">
+                <i class="fa-solid fa-store"></i> Dashboard Shop
+            </a>
+            <% } %>
             <a href="profile?tab=profile">
-                <i class="fa-regular fa-Account"></i> Ho So
+                <i class="fa-regular fa-user"></i> Ho So
             </a>
             <a href="address" class="active">
                 <i class="fa-solid fa-map-location-dot"></i> Sổ Địa Chỉ
@@ -349,7 +359,22 @@
             <a href="profile?tab=security">
                 <i class="fa-solid fa-shield-halved"></i> Bảo Mật
             </a>
-            <a href="logout" style="color:#e53e3e;">
+            <% if ("admin".equalsIgnoreCase(role) || "seller".equalsIgnoreCase(role)) { %>
+            <a href="category">
+                <i class="fa-solid fa-layer-group"></i> Quản Lý Danh Mục
+            </a>
+            <% } %>
+            <% if ("admin".equalsIgnoreCase(role) || "seller".equalsIgnoreCase(role)) { %>
+            <a href="products">
+                <i class="fa-brands fa-opencart"></i> Quản Lý Sản Phẩm
+            </a>
+            <% } %>
+            <% if ("seller".equalsIgnoreCase(role)) { %>
+            <a href="seller/orders">
+                <i class="fa-solid fa-basket-shopping"></i> Quản Lý Đơn Hàng
+            </a>
+            <% } %>
+            <a href="logout" class="logout">
                 <i class="fa-solid fa-right-from-bracket" style="width:20px;text-align:center;"></i> Đăng Xuất
             </a>
         </div>
