@@ -1,11 +1,14 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
-<%@ page import="model.Customer" %>
+<%@ page import="model.Account" %>
 <%@ page import="model.Product" %>
+<%@ page import="model.Cart" %>
 <%@ page import="java.util.List" %>
 <%@ page import="dao.ProductDAO" %>
 <%@ page import="Utils.ProductSorter" %>
 <% 
-    Customer user = (Customer) session.getAttribute("user"); 
+    Account user = (Account) session.getAttribute("user"); 
+    Cart cart = (Cart) session.getAttribute("cart");
+    int cartCount = cart != null ? cart.getTotalQuantity() : 0;
     ProductDAO dao = new ProductDAO();
     List<Product> productsList = dao.getAllProducts();
     String sort = request.getParameter("sort");
@@ -888,15 +891,22 @@
                     .product-image-wrap {
                         position: relative;
                         background: linear-gradient(135deg, #f1f8e9, #e8f5e9);
-                        height: 180px;
+                        height: 160px;
                         display: flex;
                         align-items: center;
                         justify-content: center;
                         overflow: hidden;
                     }
 
+                    .product-image-wrap img {
+                        width: 100%;
+                        height: 100%;
+                        object-fit: cover;
+                        object-position: center;
+                    }
+
                     .product-emoji {
-                        font-size: 5rem;
+                        font-size: 4rem;
                         filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.12));
                         transition: transform 0.3s ease;
                     }
@@ -1818,10 +1828,10 @@
                     </div>
 
                     <div class="nav-right">
-                        <button class="nav-icon-btn" title="Giỏ hàng">
+                        <a href="cart" class="nav-icon-btn" title="Giỏ hàng">
                             <i class="fa-solid fa-basket-shopping"></i>
-                            <span class="cart-badge">3</span>
-                        </button>
+                            <span class="cart-badge"><%= cartCount %></span>
+                        </a>
                         <button class="nav-icon-btn" title="Thông báo">
                             <i class="fa-regular fa-bell"></i>
                         </button>
@@ -2144,7 +2154,7 @@
                                                 String encoded = java.net.URLEncoder.encode(imgStr.trim(), "UTF-8");
                                                 String imgSrc = request.getContextPath() + "/image?path=" + encoded;
                                         %>
-                                            <img src="<%= imgSrc %>" alt="<%= p.getTitle() %>" style="width:100%; height:100%; object-fit:cover; border-radius:var(--radius-md);" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                                            <img src="<%= imgSrc %>" alt="<%= p.getTitle() %>" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
                                             <div class="product-emoji" style="display:none;">🍎</div>
                                         <%
                                             } else if (imgStr.trim().toLowerCase().endsWith(".png")
@@ -2154,7 +2164,7 @@
                                                     || imgStr.trim().toLowerCase().startsWith("http")) {
                                                 // Duong dan anh hoac URL tuyệt đối → dung truc tiep
                                         %>
-                                            <img src="<%= imgStr.trim() %>" alt="<%= p.getTitle() %>" style="width:100%; height:100%; object-fit:cover; border-radius:var(--radius-md);">
+                                            <img src="<%= imgStr.trim() %>" alt="<%= p.getTitle() %>">
                                         <%
                                             } else {
                                                 // Con lai → emoji
@@ -2168,7 +2178,7 @@
                                         <% } else if (p.isIsFeatured()) { %>
                                             <div class="product-badge badge-hot">Hot</div>
                                         <% } %>
-                                        <button class="product-wishlist"><i class="fa-regular fa-heart"></i></button>
+                                        <button class="product-wishlist" data-wishlist-action="add" data-product-id="<%= p.getId() %>"><i class="fa-regular fa-heart"></i></button>
                                     </div>
                                     <div class="product-info">
                                         <div class="product-category"><%= p.getShopName() != null ? p.getShopName() : "Chung" %></div>
@@ -2191,7 +2201,7 @@
                                     <div class="product-footer">
                                         <% if (p.getStockQuantity() > 0) { %>
                                             <div class="product-unit"><i class="fa-solid fa-scale-balanced"></i> Con <%= p.getStockQuantity() %> <%= p.getUnit() %></div>
-                                            <button class="btn-cart" onclick="window.location.href='home.jsp?add=<%= p.getId() %>'"><i class="fa-solid fa-plus"></i> Thêm</button>
+                                            <button class="btn-cart" onclick="window.location.href='cart?action=add&productId=<%= p.getId() %>'"><i class="fa-solid fa-plus"></i> Thêm</button>
                                         <% } else { %>
                                             <div class="product-unit" style="color:var(--orange);"><i class="fa-solid fa-circle-xmark"></i> Hết hàng</div>
                                             <button class="btn-cart" disabled><i class="fa-solid fa-ban"></i> Het</button>

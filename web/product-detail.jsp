@@ -2,13 +2,17 @@
 <%@ page import="model.Account" %>
 <%@ page import="model.Product" %>
 <%@ page import="model.Shop" %>
+<%@ page import="model.Wishlist" %>
+<%@ page import="model.Cart" %>
 <%@ page import="dao.CategoryDAO" %>
 <%@ page import="dao.ShopDAO" %>
+<%@ page import="service.WishlistService" %>
+<%@ page import="service.CartService" %>
 <%@ page import="java.util.List" %>
 <%
     // ---- Auth guard ----
-    Account user = (Account) session.getAttribute("user");
-    if (user == null) {
+    Account Account = (Account) session.getAttribute("Account");
+    if (Account == null) {
         response.sendRedirect(request.getContextPath() + "/login");
         return;
     }
@@ -32,6 +36,39 @@
         isOwner = true;
     }
 
+    // ---- Check if product is in wishlist ----
+    boolean inWishlist = false;
+    int wishlistCount = 0;
+    WishlistService wishlistService = null;
+    try {
+        wishlistService = new WishlistService();
+        inWishlist = wishlistService.isInWishlist(Account.getId(), product.getId());
+        wishlistCount = wishlistService.getWishlistCount(Account.getId());
+        if (session.getAttribute("wishlistCount") != null) {
+            wishlistCount = (Integer) session.getAttribute("wishlistCount");
+        }
+    } catch (Exception e) {
+        System.err.println("[product-detail.jsp] wishlist error: " + e.getMessage());
+        inWishlist = false;
+    } finally {
+        if (wishlistService != null) wishlistService.close();
+    }
+
+    // ---- Cart count ----
+    int cartCount = 0;
+    CartService cartService = null;
+    try {
+        cartService = new CartService();
+        Cart cart = cartService.getCartByCustomerId(Account.getId());
+        if (cart != null) cartCount = cart.getTotalQuantity();
+        if (session.getAttribute("cartCount") != null) {
+            cartCount = (Integer) session.getAttribute("cartCount");
+        }
+    } catch (Exception ignored) {}
+    finally {
+        if (cartService != null) cartService.close();
+    }
+
     // ---- Category name ----
     String categoryName = (String) request.getAttribute("categoryName");
     if (categoryName == null || categoryName.trim().isEmpty()) {
@@ -46,9 +83,9 @@
     }
 
     // ---- Avatar ----
-    String avatarUrl = user.getAvatar();
+    String avatarUrl = Account.getAvatar();
     if (avatarUrl == null || avatarUrl.trim().isEmpty()) {
-        String fullname = user.getFullname() != null ? user.getFullname() : user.getUsername();
+        String fullname = Account.getFullname() != null ? Account.getFullname() : Account.getUsername();
         avatarUrl = "https://ui-avatars.com/api/?name="
                   + java.net.URLEncoder.encode(fullname, "UTF-8")
                   + "&background=4caf50&color=fff&size=80&bold=true&rounded=true";
@@ -169,6 +206,7 @@
         }
 
         .nav-icon-btn {
+            position: relative;
             width: 38px; height: 38px;
             border-radius: 50%;
             background: var(--gray-100);
@@ -178,9 +216,61 @@
             cursor: pointer;
             font-size: 0.95rem;
             transition: background 0.15s;
+            text-decoration: none;
         }
 
         .nav-icon-btn:hover { background: var(--green-light); color: var(--green-dark); }
+
+        .nav-icon-btn .badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            min-width: 18px;
+            height: 18px;
+            background: #ef4444;
+            color: #fff;
+            font-size: 0.65rem;
+            font-weight: 700;
+            border-radius: 999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 4px;
+        }
+
+        .cart-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            min-width: 18px;
+            height: 18px;
+            background: var(--orange);
+            color: #fff;
+            font-size: 0.62rem;
+            font-weight: 700;
+            border-radius: 999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 4px;
+        }
+
+        .wishlist-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            min-width: 18px;
+            height: 18px;
+            background: #ef4444;
+            color: #fff;
+            font-size: 0.62rem;
+            font-weight: 700;
+            border-radius: 999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 4px;
+        }
 
         .nav-avatar {
             width: 38px; height: 38px;
@@ -512,6 +602,77 @@
             color: var(--gray-800);
         }
 
+        /* Wishlist button styles */
+        .btn-wishlist {
+            background: var(--white);
+            color: var(--gray-600);
+            border: 1.5px solid var(--gray-200);
+            padding: 0.75rem 1.2rem;
+        }
+
+        .btn-wishlist:hover {
+            background: #fff5f5;
+            border-color: #ef4444;
+            color: #ef4444;
+        }
+
+        .btn-wishlist.in-wishlist {
+            background: #fff5f5;
+            border-color: #ef4444;
+            color: #ef4444;
+        }
+
+        .btn-wishlist.in-wishlist i {
+            color: #ef4444;
+        }
+
+        /* Size selector */
+        .size-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            border: 2px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--gray-600);
+            transition: all 0.15s;
+        }
+
+        .size-option input:checked + .size-btn {
+            border-color: var(--green);
+            background: var(--green-light);
+            color: var(--green-dark);
+        }
+
+        .size-option:hover .size-btn {
+            border-color: var(--green);
+            color: var(--green-dark);
+        }
+
+        /* Toast notification */
+        .toast {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: var(--green);
+            color: #fff;
+            padding: 0.85rem 1.25rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.875rem;
+            font-weight: 600;
+            box-shadow: 0 4px 16px rgba(0,0,0,.15);
+            z-index: 9999;
+            opacity: 0;
+            transform: translateX(20px);
+            transition: all 0.3s ease;
+        }
+
+        .toast.show { opacity: 1; transform: translateX(0); }
+        .toast.error { background: var(--red); }
+
         /* FOOTER */
         .footer {
             background: var(--white);
@@ -564,9 +725,14 @@
         <a href="products">San Pham</a>
     </div>
     <div class="nav-right">
-        <button class="nav-icon-btn" title="Gio hang">
+        <a href="wishlist" class="nav-icon-btn" title="Yeu Thich">
+            <i class="fa-solid fa-heart"></i>
+            <span class="wishlist-badge"><%= wishlistCount %></span>
+        </a>
+        <a href="cart" class="nav-icon-btn" title="Gio hang">
             <i class="fa-solid fa-basket-shopping"></i>
-        </button>
+            <span class="cart-badge"><%= cartCount %></span>
+        </a>
         <img class="nav-avatar" src="<%= avatarUrl %>" alt="avatar">
     </div>
 </nav>
@@ -581,7 +747,7 @@
             <a href="products"><i class="fa-brands fa-opencart"></i> San Pham</a>
             <a href="add-product"><i class="fa-solid fa-plus"></i> Them San Pham</a>
             <a href="<%= "seller".equals(role) ? "seller/orders" : "my-orders" %>"><i class="fa-solid fa-basket-shopping"></i> Don Hang</a>
-            <a href="#"><i class="fa-regular fa-heart"></i> Yeu Thich</a>
+            <a href="wishlist" class="active" style="color: #ef4444;"><i class="fa-regular fa-heart"></i> Yeu Thich</a>
             <a href="logout" class="logout" style="margin-top:0.5rem;">
                 <i class="fa-solid fa-right-from-bracket"></i> Dang Xuat
             </a>
@@ -799,10 +965,63 @@
 
                         <!-- Action buttons -->
                         <div class="action-buttons">
-                            <button class="btn btn-green" onclick="alert('Chuc nang them vao gio hang chua duoc trien khai.')">
-                                <i class="fa-solid fa-basket-shopping"></i>
-                                Them Vao Gio Hang
-                            </button>
+                            <% if (product.isActive() && product.getStockQuantity() > 0) { %>
+
+                                <% if (product.getUnit() != null && (product.getUnit().toLowerCase().contains("size") || product.getUnit().toLowerCase().contains("kich co") || product.getUnit().toLowerCase().contains("kg") || product.getUnit().toLowerCase().contains("ml"))) { %>
+                                <!-- Size selector -->
+                                <div style="margin-bottom: 0.75rem;">
+                                    <div class="section-label" style="margin-bottom: 0.5rem;">
+                                        <i class="fa-solid fa-ruler" style="font-size:0.75rem;color:var(--green);"></i>
+                                        Chon Kich Co
+                                    </div>
+                                    <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                                        <label class="size-option" style="cursor:pointer;">
+                                            <input type="radio" name="selectedSize" value="S" style="display:none;">
+                                            <span class="size-btn">S</span>
+                                        </label>
+                                        <label class="size-option" style="cursor:pointer;">
+                                            <input type="radio" name="selectedSize" value="M" style="display:none;" checked>
+                                            <span class="size-btn active">M</span>
+                                        </label>
+                                        <label class="size-option" style="cursor:pointer;">
+                                            <input type="radio" name="selectedSize" value="L" style="display:none;">
+                                            <span class="size-btn">L</span>
+                                        </label>
+                                        <label class="size-option" style="cursor:pointer;">
+                                            <input type="radio" name="selectedSize" value="XL" style="display:none;">
+                                            <span class="size-btn">XL</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <% } %>
+
+                                <form action="add-to-cart" method="POST" id="addToCartForm" style="display:inline;">
+                                    <input type="hidden" name="productId" value="<%= product.getId() %>">
+                                    <input type="hidden" name="size" id="selectedSizeInput" value="M">
+                                    <input type="hidden" name="quantity" id="quantityInput" value="1">
+                                    <button type="submit" class="btn btn-green" id="addToCartBtn">
+                                        <i class="fa-solid fa-basket-shopping"></i>
+                                        Them Vao Gio Hang
+                                    </button>
+                                </form>
+                            <% } else if (product.getStockQuantity() <= 0) { %>
+                                <button class="btn btn-secondary" disabled>
+                                    <i class="fa-solid fa-ban"></i> Het Hang
+                                </button>
+                            <% } else { %>
+                                <button class="btn btn-secondary" disabled>
+                                    <i class="fa-solid fa-ban"></i> Khong Hoat Dong
+                                </button>
+                            <% } %>
+
+                            <% if (product.isActive()) { %>
+                                <button type="button" id="wishlistBtn"
+                                        class="btn btn-wishlist <%= inWishlist ? "in-wishlist" : "" %>"
+                                        onclick="toggleWishlist(<%= product.getId() %>, this)">
+                                    <i class="fa-<%= inWishlist ? "solid" : "regular" %> fa-heart"></i>
+                                    <span id="wishlistLabel"><%= inWishlist ? "Da Yeu Thich" : "Yeu Thich" %></span>
+                                </button>
+                            <% } %>
 
                             <% if (isOwner) { %>
                             <a href="edit-product?id=<%= product.getId() %>" class="btn btn-outline">
@@ -852,5 +1071,77 @@
     <span class="footer-copy">&copy; 2024 Sena Shop. Trai cay tuoi ngon moi ngay.</span>
 </footer>
 
+<!-- TOAST -->
+<div id="toast" class="toast"></div>
+
+<script>
+    // ---- Hien thi thong bao ----
+    function showToast(message, isError) {
+        var toast = document.getElementById('toast');
+        toast.textContent = message;
+        toast.className = 'toast' + (isError ? ' error' : '');
+        toast.classList.add('show');
+        setTimeout(function() {
+            toast.classList.remove('show');
+        }, 3000);
+    }
+
+    // ---- Set size truoc khi submit ----
+    var addToCartForm = document.getElementById('addToCartForm');
+    if (addToCartForm) {
+        addToCartForm.addEventListener('submit', function(e) {
+            var sizeInputs = document.getElementsByName('selectedSize');
+            if (sizeInputs.length > 0) {
+                for (var i = 0; i < sizeInputs.length; i++) {
+                    if (sizeInputs[i].checked) {
+                        document.getElementById('selectedSizeInput').value = sizeInputs[i].value;
+                        break;
+                    }
+                }
+            }
+        });
+    }
+
+    // ---- AJAX Toggle Wishlist ----
+    function toggleWishlist(productId, btn) {
+        fetch('add-to-wishlist', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'productId=' + productId
+        })
+        .then(function(response) {
+            if (response.status === 401) {
+                window.location.href = '<%= request.getContextPath() %>/login';
+                return null;
+            }
+            return response.text();
+        })
+        .then(function(data) {
+            if (data === null) return;
+
+            var icon = btn.querySelector('i');
+            var label = btn.getAttribute('id') === 'wishlistBtn' ? document.getElementById('wishlistLabel') : null;
+
+            if (btn.classList.contains('in-wishlist')) {
+                btn.classList.remove('in-wishlist');
+                icon.className = 'fa-regular fa-heart';
+                if (label) label.textContent = 'Yeu Thich';
+                showToast('Da xoa san pham khoi wishlist.');
+            } else {
+                btn.classList.add('in-wishlist');
+                icon.className = 'fa-solid fa-heart';
+                if (label) label.textContent = 'Da Yeu Thich';
+                showToast('Da them san pham vao wishlist!');
+            }
+        })
+        .catch(function(error) {
+            showToast('Loi khi cap nhat wishlist. Vui long thu lai.', true);
+        });
+    }
+</script>
+
 </body>
 </html>
+

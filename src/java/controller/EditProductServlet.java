@@ -276,7 +276,6 @@ public class EditProductServlet extends HttpServlet {
         product.setSalePrice(salePrice);
         product.setCategoryId(categoryId);
         product.setShopId(shopId);
-        product.setSellerId(ownerId);
         product.setExpiredDate(expiredDate);
         product.setStatus(status);
 
@@ -343,3 +342,5 @@ public class EditProductServlet extends HttpServlet {
 }
 
  
+
+

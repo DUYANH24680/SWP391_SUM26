@@ -95,16 +95,16 @@ public class Cart {
         }
     }
 
-    public void updateQuantity(int productId, String size, int quantity) {
+    public void updateQuantity(int productId, int quantity) {
         if (quantity < 1) {
-            removeItem(productId, size);
+            removeItem(productId);
             return;
         }
-        getItem(productId, size).ifPresent(item -> item.setQuantity(quantity));
+        getItem(productId).ifPresent(item -> item.setQuantity(quantity));
     }
 
-    public void removeItem(int productId, String size) {
-        items.removeIf(item -> item.getProductId() == productId && safeEquals(item.getSize(), size));
+    public void removeItem(int productId) {
+        items.removeIf(item -> item.getProductId() == productId);
     }
 
     public void clear() {
@@ -123,15 +123,10 @@ public class Cart {
         return items.isEmpty();
     }
 
-    public Optional<CartItem> getItem(int productId, String size) {
+    public Optional<CartItem> getItem(int productId) {
         return items.stream()
-                .filter(item -> item.getProductId() == productId && safeEquals(item.getSize(), size))
+                .filter(item -> item.getProductId() == productId)
                 .findFirst();
     }
-
-    private boolean safeEquals(String a, String b) {
-        if (a == null && b == null) return true;
-        if (a == null || b == null) return false;
-        return a.equals(b);
-    }
 }
+
