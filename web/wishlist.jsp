@@ -578,6 +578,13 @@
 
                 <!-- Actions -->
                 <div class="item-actions">
+                    <!-- Chuyen vao gio hang -->
+                    <% if (!isOutOfStock) { %>
+                    <button type="button" class="btn btn-green" title="Chuyen vao gio hang"
+                            onclick="moveSingleToCart(<%= item.getProductId() %>, this.closest('.wishlist-item'))">
+                        <i class="fa-solid fa-cart-shopping"></i>
+                    </button>
+                    <% } %>
                     <!-- Xoa khoi wishlist -->
                     <form action="remove-wishlist" method="POST" style="display:inline;" onsubmit="return confirm('Xoa san pham nay khoi wishlist?')">
                         <input type="hidden" name="productId" value="<%= item.getProductId() %>">
@@ -754,11 +761,34 @@
         });
     }
 
-    // ---- Khoi tao khi load trang ----
-    document.addEventListener('DOMContentLoaded', function() {
-        updateAllSelectAllState();
-        recalcUI();
-    });
+    function moveSingleToCart(productId, itemRow) {
+        const data = new URLSearchParams();
+        data.append('productId', productId);
+
+        fetch('move-wishlist-to-cart', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: data
+        })
+        .then(function(response) {
+            if (response.redirected) {
+                window.location.href = response.url;
+                return;
+            }
+            if (!response.ok) {
+                throw new Error('Network error');
+            }
+            if (itemRow) {
+                itemRow.style.transition = 'opacity 0.3s';
+                itemRow.style.opacity = '0';
+                setTimeout(function() { itemRow.remove(); }, 300);
+            }
+            recalcUI();
+        })
+        .catch(function(error) {
+            console.error('Loi chuyen san pham vao gio hang:', error);
+        });
+    }
 </script>
 
 </body>
