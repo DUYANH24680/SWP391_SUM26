@@ -1,9 +1,5 @@
 package controller;
 
-import dao.DeliveryAddressDAO;
-import dao.ProductDAO;
-import dao.VoucherDAO;
-import dao.OrderDAO;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -11,15 +7,15 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import model.Account;
-import model.DeliveryAddress;
-import model.Product;
-import model.Voucher;
-import model.Order;
-import model.OrderDetail;
+import model.CheckoutPageResult;
+import model.PlaceOrderResult;
+import model.VoucherCheckResult;
+import service.CheckoutService;
+import service.OrderService;
+import service.CartService;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.List;
 
 @WebServlet("/checkout")
 public class CheckoutServlet extends HttpServlet {
@@ -32,7 +28,7 @@ public class CheckoutServlet extends HttpServlet {
             resp.sendRedirect(req.getContextPath() + "/login");
             return;
         }
-        Account Account = (Account) session.getAttribute("Account");
+        Account account = (Account) session.getAttribute("Account");
 
         String action = req.getParameter("action");
         if ("checkVoucher".equals(action)) {
@@ -40,7 +36,6 @@ public class CheckoutServlet extends HttpServlet {
             return;
         }
 
-        // Load Product info
         String prodIdParam = req.getParameter("productId");
         if (prodIdParam == null || prodIdParam.trim().isEmpty()) {
             resp.sendRedirect(req.getContextPath() + "/home.jsp");
@@ -61,33 +56,21 @@ public class CheckoutServlet extends HttpServlet {
             return;
         }
 
-        ProductDAO productDAO = new ProductDAO();
-        DeliveryAddressDAO addressDAO = new DeliveryAddressDAO();
-        VoucherDAO voucherDAO = new VoucherDAO();
+        CheckoutService checkoutService = new CheckoutService();
+        CheckoutPageResult result = checkoutService.getCheckoutPageData(
+                account.getId(), productId, quantity);
 
-        try {
-            Product product = productDAO.getProductById(productId);
-            if (product == null || product.isIsDelete() || product.getStatus() != 1) {
-                session.setAttribute("error", "Sản phẩm không tồn tại hoặc ngừng bán.");
-                resp.sendRedirect(req.getContextPath() + "/home.jsp");
-                return;
-            }
-
-            List<DeliveryAddress> addresses = addressDAO.findByUserId(Account.getId());
-            List<Voucher> vouchers = voucherDAO.getAllActiveVouchers();
-
-            req.setAttribute("product", product);
-            req.setAttribute("addresses", addresses);
-            req.setAttribute("vouchers", vouchers);
-            req.setAttribute("quantity", quantity);
-
-            req.getRequestDispatcher("/checkout.jsp").forward(req, resp);
-
-        } finally {
-            productDAO.close();
-            addressDAO.close();
-            voucherDAO.close();
+        if (!result.isSuccess()) {
+            session.setAttribute("error", result.getError());
+            resp.sendRedirect(req.getContextPath() + "/home.jsp");
+            return;
         }
+
+        req.setAttribute("product", result.getProduct());
+        req.setAttribute("addresses", result.getAddresses());
+        req.setAttribute("vouchers", result.getVouchers());
+        req.setAttribute("quantity", result.getQuantity());
+        req.getRequestDispatcher("/checkout.jsp").forward(req, resp);
     }
 
     @Override
@@ -98,7 +81,7 @@ public class CheckoutServlet extends HttpServlet {
             resp.sendRedirect(req.getContextPath() + "/login");
             return;
         }
-        Account Account = (Account) session.getAttribute("Account");
+        Account account = (Account) session.getAttribute("Account");
 
         String prodIdParam = req.getParameter("productId");
         String qtyParam = req.getParameter("quantity");
@@ -109,7 +92,8 @@ public class CheckoutServlet extends HttpServlet {
         String note = req.getParameter("note");
         String voucherCode = req.getParameter("voucherCode");
 
-        if (prodIdParam == null || qtyParam == null || recipientName == null || recipientPhone == null || address == null) {
+        if (prodIdParam == null || qtyParam == null || recipientName == null
+                || recipientPhone == null || address == null) {
             req.setAttribute("error", "Vui lòng nhập đầy đủ thông tin giao hàng.");
             doGet(req, resp);
             return;
@@ -126,78 +110,38 @@ public class CheckoutServlet extends HttpServlet {
             return;
         }
 
-        ProductDAO productDAO = new ProductDAO();
-        VoucherDAO voucherDAO = new VoucherDAO();
-        OrderDAO orderDAO = new OrderDAO();
-
         try {
-            Product product = productDAO.getProductById(productId);
-            if (product == null || product.isIsDelete() || product.getStatus() != 1) {
-                req.setAttribute("error", "Sản phẩm không tồn tại hoặc đã ngừng bán.");
-                doGet(req, resp);
-                return;
-            }
+            OrderService orderService = new OrderService();
+            PlaceOrderResult result = orderService.placeOrder(
+                    account.getId(), productId, quantity, recipientName, recipientPhone,
+                    address, paymentMethod, note, voucherCode);
 
-            if (product.getStockQuantity() < quantity) {
-                req.setAttribute("error", "Tồn kho không đủ (chỉ còn " + product.getStockQuantity() + " " + product.getUnit() + ").");
-                doGet(req, resp);
-                return;
-            }
-
-            double unitPrice = product.getSalePrice() > 0 && product.getSalePrice() < product.getOriginalPrice()
-                    ? product.getSalePrice() : product.getOriginalPrice();
-            double totalCost = unitPrice * quantity;
-
-            // Free shipping on orders from 200,000 VND
-            double shippingFee = totalCost >= 200000 ? 0.0 : 20000.0;
-            double discountAmount = 0.0;
-            Integer voucherId = null;
-
-            if (voucherCode != null && !voucherCode.trim().isEmpty()) {
-                Voucher voucher = voucherDAO.findByCode(voucherCode);
-                if (voucher != null && voucher.isValid(totalCost)) {
-                    voucherId = voucher.getId();
-                    discountAmount = voucher.calculateDiscount(totalCost);
+            if (result.isSuccess()) {
+                CartService cartService = new CartService();
+                try {
+                    model.Cart cart = cartService.getCartByCustomerId(account.getId());
+                    if (cart != null) {
+                        session.setAttribute("cart", cart);
+                        session.setAttribute("cartCount", cart.getTotalQuantity());
+                    } else {
+                        session.removeAttribute("cart");
+                        session.setAttribute("cartCount", 0);
+                    }
+                } catch (Exception e) {
+                    System.err.println("[CheckoutServlet] Error updating cart session: " + e.getMessage());
+                } finally {
+                    cartService.close();
                 }
-            }
-
-            double finalCost = totalCost - discountAmount + shippingFee;
-
-            Order order = new Order();
-            order.setCustomerId(Account.getId());
-            order.setVoucherId(voucherId);
-            order.setRecipientName(recipientName.trim());
-            order.setRecipientPhone(recipientPhone.trim());
-            order.setAddress(address.trim());
-            order.setPaymentMethod(paymentMethod != null ? paymentMethod.trim() : "COD");
-            order.setStatus(1); // 1 = Pending
-            order.setPaymentStatus(0); // 0 = Unpaid
-            order.setTotalCost(totalCost);
-            order.setDiscountAmount(discountAmount);
-            order.setShippingFee(shippingFee);
-            order.setFinalCost(finalCost);
-            order.setNote(note != null ? note.trim() : "");
-
-            OrderDetail detail = new OrderDetail();
-            detail.setProductId(productId);
-            detail.setQuantity(quantity);
-            detail.setUnitPrice(unitPrice);
-            detail.setTotalPrice(totalCost);
-
-            boolean success = orderDAO.createOrder(order, detail);
-
-            if (success) {
                 session.setAttribute("message", "Đặt hàng thành công!");
                 resp.sendRedirect(req.getContextPath() + "/my-orders");
             } else {
-                req.setAttribute("error", "Đặt hàng thất bại. Vui lòng thử lại.");
+                req.setAttribute("error", result.getError());
                 doGet(req, resp);
             }
-
-        } finally {
-            productDAO.close();
-            voucherDAO.close();
-            orderDAO.close();
+        } catch (Exception e) {
+            System.err.println("[CheckoutServlet] Error during checkout doPost: " + e.getMessage());
+            req.setAttribute("error", "Lỗi hệ thống: " + e.getMessage());
+            doGet(req, resp);
         }
     }
 
@@ -215,34 +159,13 @@ public class CheckoutServlet extends HttpServlet {
             // ignore
         }
 
-        VoucherDAO voucherDAO = new VoucherDAO();
-        try {
-            Voucher voucher = voucherDAO.findByCode(code);
-            resp.setContentType("application/json");
-            resp.setCharacterEncoding("UTF-8");
-            PrintWriter out = resp.getWriter();
+        CheckoutService checkoutService = new CheckoutService();
+        VoucherCheckResult result = checkoutService.validateVoucher(code, total);
 
-            if (voucher == null) {
-                out.write("{\"valid\": false, \"msg\": \"Mã giảm giá không tồn tại.\"}");
-            } else if (!voucher.isStatus()) {
-                out.write("{\"valid\": false, \"msg\": \"Mã giảm giá đã bị khóa.\"}");
-            } else if (voucher.getUsedCount() >= voucher.getQuantity()) {
-                out.write("{\"valid\": false, \"msg\": \"Mã giảm giá đã hết lượt sử dụng.\"}");
-            } else if (voucher.getStartDate() != null && new java.util.Date().before(voucher.getStartDate())) {
-                out.write("{\"valid\": false, \"msg\": \"Mã giảm giá chưa đến hạn sử dụng.\"}");
-            } else if (voucher.getEndDate() != null && new java.util.Date().after(voucher.getEndDate())) {
-                out.write("{\"valid\": false, \"msg\": \"Mã giảm giá đã hết hạn sử dụng.\"}");
-            } else if (total < voucher.getMinimumOrder()) {
-                out.write(String.format("{\"valid\": false, \"msg\": \"Giá trị đơn hàng chưa đạt mức tối thiểu (%,.0f đ).\"}", voucher.getMinimumOrder()));
-            } else {
-                double discount = voucher.calculateDiscount(total);
-                out.write(String.format("{\"valid\": true, \"discount\": %.2f, \"voucherId\": %d, \"msg\": \"Áp dụng mã giảm giá thành công!\"}",
-                        discount, voucher.getId()));
-            }
-            out.flush();
-        } finally {
-            voucherDAO.close();
-        }
+        resp.setContentType("application/json");
+        resp.setCharacterEncoding("UTF-8");
+        PrintWriter out = resp.getWriter();
+        out.write(result.toJson());
+        out.flush();
     }
 }
-

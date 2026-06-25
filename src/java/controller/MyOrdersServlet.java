@@ -1,6 +1,6 @@
 package controller;
 
-import dao.OrderDAO;
+import service.OrderService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -8,13 +8,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import model.Account;
-import model.Order;
-import model.OrderDetail;
+import model.CancelCustomerOrderResult;
+import model.CustomerOrdersData;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @WebServlet("/my-orders")
 public class MyOrdersServlet extends HttpServlet {
@@ -27,25 +24,24 @@ public class MyOrdersServlet extends HttpServlet {
             resp.sendRedirect(req.getContextPath() + "/login");
             return;
         }
-        Account Account = (Account) session.getAttribute("Account");
+        Account account = (Account) session.getAttribute("Account");
 
-        OrderDAO orderDAO = new OrderDAO();
-        try {
-            List<Order> orders = orderDAO.getOrdersByCustomerId(Account.getId());
-            Map<Integer, List<OrderDetail>> orderDetailsMap = new HashMap<>();
-
-            for (Order o : orders) {
-                List<OrderDetail> details = orderDAO.getOrderDetails(o.getId());
-                orderDetailsMap.put(o.getId(), details);
+        OrderService orderService = new OrderService();
+        String statusParam = req.getParameter("status");
+        Integer statusFilter = null;
+        if (statusParam != null && !statusParam.trim().isEmpty()) {
+            try {
+                statusFilter = Integer.parseInt(statusParam.trim());
+            } catch (NumberFormatException e) {
+                statusFilter = null;
             }
-
-            req.setAttribute("orders", orders);
-            req.setAttribute("detailsMap", orderDetailsMap);
-
-            req.getRequestDispatcher("/my-orders.jsp").forward(req, resp);
-        } finally {
-            orderDAO.close();
         }
+        CustomerOrdersData data = orderService.getCustomerOrdersWithDetails(account.getId(), statusFilter);
+
+        req.setAttribute("orders", data.getOrders());
+        req.setAttribute("detailsMap", data.getDetailsMap());
+        req.setAttribute("activeStatus", statusFilter);
+        req.getRequestDispatcher("/my-orders.jsp").forward(req, resp);
     }
 
     @Override
@@ -56,7 +52,7 @@ public class MyOrdersServlet extends HttpServlet {
             resp.sendRedirect(req.getContextPath() + "/login");
             return;
         }
-        Account Account = (Account) session.getAttribute("Account");
+        Account account = (Account) session.getAttribute("Account");
 
         String action = req.getParameter("action");
         String orderIdParam = req.getParameter("orderId");
@@ -71,29 +67,15 @@ public class MyOrdersServlet extends HttpServlet {
                 return;
             }
 
-            OrderDAO orderDAO = new OrderDAO();
-            try {
-                Order order = orderDAO.getOrderById(orderId);
-                if (order != null && order.getCustomerId() == Account.getId()) {
-                    if (order.getStatus() == 1) { // Only pending orders can be canceled
-                        boolean ok = orderDAO.updateOrderStatus(orderId, 5); // 5 = Canceled
-                        if (ok) {
-                            session.setAttribute("message", "Đã hủy đơn hàng thành công!");
-                        } else {
-                            session.setAttribute("error", "Hủy đơn hàng thất bại.");
-                        }
-                    } else {
-                        session.setAttribute("error", "Chỉ có thể hủy đơn hàng ở trạng thái Chờ xác nhận.");
-                    }
-                } else {
-                    session.setAttribute("error", "Đơn hàng không tồn tại hoặc không thuộc quyền sở hữu của bạn.");
-                }
-            } finally {
-                orderDAO.close();
+            OrderService orderService = new OrderService();
+            CancelCustomerOrderResult result = orderService.cancelCustomerOrder(orderId, account.getId());
+            if (result.isSuccess()) {
+                session.setAttribute("message", result.getMessage());
+            } else {
+                session.setAttribute("error", result.getMessage());
             }
         }
 
         resp.sendRedirect(req.getContextPath() + "/my-orders");
     }
 }
-

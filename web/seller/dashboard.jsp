@@ -1,6 +1,8 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="model.Account" %>
 <%@ page import="model.Shop" %>
+<%@ page import="model.Order" %>
+<%@ page import="java.util.List" %>
 <%@ page import="java.text.NumberFormat" %>
 <%@ page import="java.util.Locale" %>
 <%
@@ -26,6 +28,7 @@
     Integer totalOrders = (Integer) request.getAttribute("totalOrders");
     Integer pendingOrders = (Integer) request.getAttribute("pendingOrders");
     Double totalRevenue = (Double) request.getAttribute("totalRevenue");
+    List<Order> orders = (List<Order>) request.getAttribute("orders");
 
     String message = (String) session.getAttribute("message");
     String error = (String) session.getAttribute("error");
@@ -315,6 +318,95 @@
         .action-title i { color: var(--green); }
         .action-desc { font-size: 0.8rem; color: var(--gray-600); line-height: 1.4; }
 
+        /* Badge status colors */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 100px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .badge-green  { background: #dcfce7; color: #166534; }
+        .badge-yellow { background: #fef9c3; color: #854d0e; }
+        .badge-red    { background: #fee2e2; color: #991b1b; }
+        .badge-blue   { background: #dbeafe; color: #1e40af; }
+        .badge-gray   { background: var(--gray-100); color: var(--gray-600); }
+
+        /* Order Tracking breakdown styles */
+        .tracking-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        .tracking-card {
+            background: var(--gray-50);
+            border: 1px solid var(--gray-100);
+            border-radius: var(--radius-sm);
+            padding: 1rem;
+            text-align: center;
+            transition: all 0.2s;
+            text-decoration: none;
+            color: inherit;
+        }
+        .tracking-card:hover {
+            border-color: var(--green-mid);
+            background: #fff;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
+        }
+        .tracking-num {
+            font-size: 1.6rem;
+            font-weight: 800;
+            margin-bottom: 0.25rem;
+        }
+        .tracking-lbl {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--gray-600);
+            text-transform: uppercase;
+        }
+        .tracking-lbl.pending { color: #854d0e; }
+        .tracking-lbl.confirmed { color: #1e40af; }
+        .tracking-lbl.shipping { color: #854d0e; }
+        .tracking-lbl.delivered { color: #166534; }
+        .tracking-lbl.canceled { color: #991b1b; }
+
+        /* Recent orders table styles */
+        .orders-table-wrapper {
+            overflow-x: auto;
+            margin-top: 0.5rem;
+        }
+        .orders-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.875rem;
+        }
+        .orders-table th, .orders-table td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--gray-100);
+        }
+        .orders-table th {
+            font-weight: 700;
+            color: var(--gray-600);
+            background: var(--gray-50);
+        }
+        .orders-table tr:hover td {
+            background: var(--gray-50);
+        }
+        .orders-table td a {
+            color: var(--green-dark);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .orders-table td a:hover {
+            text-decoration: underline;
+        }
+
         /* ======= RESPONSIVE ======= */
         @media (max-width: 900px) {
             .layout { flex-direction: column; }
@@ -432,6 +524,98 @@
                             <span class="stat-label">Số sản phẩm</span>
                             <span class="stat-value"><%= totalProducts %></span>
                         </div>
+                    </div>
+                </div>
+
+                <%
+                    // Calculate order status distribution
+                    int statusPending = 0;
+                    int statusConfirmed = 0;
+                    int statusShipping = 0;
+                    int statusDelivered = 0;
+                    int statusCanceled = 0;
+                    if (orders != null) {
+                        for (Order o : orders) {
+                            switch (o.getStatus()) {
+                                case 1: statusPending++; break;
+                                case 2: statusConfirmed++; break;
+                                case 3: statusShipping++; break;
+                                case 4: statusDelivered++; break;
+                                case 5: statusCanceled++; break;
+                            }
+                        }
+                    }
+                %>
+                <!-- Order Tracking Breakdown -->
+                <div class="panel">
+                    <div class="panel-title">
+                        <i class="fa-solid fa-truck-fast"></i> Tracking Trạng Thái Đơn Hàng
+                    </div>
+                    <div class="tracking-grid">
+                        <a href="orders" class="tracking-card">
+                            <div class="tracking-num" style="color: #ff9800;"><%= statusPending %></div>
+                            <div class="tracking-lbl pending">Chờ xác nhận</div>
+                        </a>
+                        <a href="orders" class="tracking-card">
+                            <div class="tracking-num" style="color: #2196f3;"><%= statusConfirmed %></div>
+                            <div class="tracking-lbl confirmed">Đã xác nhận</div>
+                        </a>
+                        <a href="orders" class="tracking-card">
+                            <div class="tracking-num" style="color: #ff9800;"><%= statusShipping %></div>
+                            <div class="tracking-lbl shipping">Đang giao</div>
+                        </a>
+                        <a href="orders" class="tracking-card">
+                            <div class="tracking-num" style="color: #4caf50;"><%= statusDelivered %></div>
+                            <div class="tracking-lbl delivered">Đã giao</div>
+                        </a>
+                        <a href="orders" class="tracking-card">
+                            <div class="tracking-num" style="color: #f44336;"><%= statusCanceled %></div>
+                            <div class="tracking-lbl canceled">Đã hủy</div>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Recent Orders Table -->
+                <div class="panel">
+                    <div class="panel-title">
+                        <i class="fa-solid fa-list-check"></i> Đơn Hàng Mới Nhận Gần Đây
+                    </div>
+                    <div class="orders-table-wrapper">
+                        <% if (orders != null && !orders.isEmpty()) { %>
+                            <table class="orders-table">
+                                <thead>
+                                    <tr>
+                                        <th>Mã Đơn</th>
+                                        <th>Khách Hàng</th>
+                                        <th>Ngày Đặt</th>
+                                        <th>Thực Thu</th>
+                                        <th>Trạng Thái</th>
+                                        <th>Hành Động</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <%
+                                        // Show up to 5 recent orders
+                                        int count = 0;
+                                        for (Order o : orders) {
+                                            if (count >= 5) break;
+                                            count++;
+                                            String dateStr = new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(o.getOrderDate());
+                                    %>
+                                        <tr>
+                                            <td><strong>#<%= o.getId() %></strong></td>
+                                            <td><%= o.getRecipientName() != null ? o.getRecipientName() : "Khách vãng lai" %></td>
+                                            <td><%= dateStr %></td>
+                                            <td><span style="color: var(--green-dark); font-weight: 700;"><%= nf.format((long) o.getFinalCost()) %> đ</span></td>
+                                            <td><span class="badge <%= o.getStatusClass() %>"><%= o.getStatusLabel() %></span></td>
+                                            <td><a href="orders"><i class="fa-solid fa-eye"></i> Chi tiết</a></td>
+                                        </tr>
+                                    <% } %>
+                                </tbody>
+                            </table>
+                        <% } else { %>
+                            <p style="font-size: 0.875rem; color: var(--gray-600); text-align: center; padding: 1.5rem;">Không có đơn hàng nào.</p>
+                        <% } %>
                     </div>
                 </div>
 

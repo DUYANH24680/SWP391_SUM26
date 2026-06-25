@@ -749,8 +749,8 @@
                 </span>
             </div>
 
-            <form id="checkoutForm" action="checkout" method="POST">
-                <input type="hidden" name="removeFromCart" id="removeFromCart" value="true">
+            <form id="checkoutForm" action="checkout-cart" method="POST">
+                <input type="hidden" name="selectedProducts" id="selectedProducts">
 
                 <table class="cart-table">
                     <thead>
@@ -1112,19 +1112,7 @@
 
         const selectedIds = Array.from(checkboxes).map(function(cb) { return cb.value; });
         document.getElementById('selectedProducts').value = selectedIds.join(',');
-        removeSelectedItemsFromCart(selectedIds);
     });
-
-    function removeSelectedItemsFromCart(selectedIds) {
-        fetch('remove-selected-items', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams({ 'selectedProducts': selectedIds.join(',') })
-        })
-        .catch(function(error) {
-            console.error('Loi xoa san pham da chon:', error);
-        });
-    }
 
     // ---- Khoi tao khi load trang ----
     document.addEventListener('DOMContentLoaded', function() {
