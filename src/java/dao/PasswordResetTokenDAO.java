@@ -1,5 +1,4 @@
 package dao;
-
 import Utils.DbContext;
 import java.sql.*;
 
@@ -15,7 +14,7 @@ public class PasswordResetTokenDAO extends DbContext {
             throw new RuntimeException("PasswordResetTokenDAO.createToken clear error: " + e.getMessage(), e);
         }
 
-        String sql = "INSERT INTO PasswordResetTokens (email, token, expiry_time, is_used) VALUES (?, ?, ?, 0)";
+        String sql = "INSERT INTO PasswordResetTokens (email, token, expiry_time, is_used, created_at) VALUES (?, ?, ?, 0, GETDATE())";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, email);
             ps.setString(2, token);

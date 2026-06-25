@@ -111,11 +111,23 @@ public class CustomerService {
             base = base.substring(0, 50);
         }
 
+<<<<<<< HEAD
         String username = base;
         int suffix = 1;
         while (dao.existsByUsername(username)) {
             username = base + suffix++;
         }
         return username;
+=======
+        // Lấy dữ liệu từ DB (DAO)
+        Customer customer = dao.findByUsernameOrEmail(username);
+
+        // Kiểm tra (Logic) - so sánh SHA-256 hash của mật khẩu nhập vào với hash trong DB
+        if (customer != null && customer.getPasswordHash().equals(UserService.hashPassword(password))) {
+            return customer;
+        }
+
+        return null;
+>>>>>>> main
     }
 }

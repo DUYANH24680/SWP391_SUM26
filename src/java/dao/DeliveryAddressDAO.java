@@ -12,7 +12,7 @@ import java.util.List;
 public class DeliveryAddressDAO extends DbContext {
 
     /**
-     * Get all addresses for a customer.
+     * Get all addresses for a user.
      * @param customerId
      * @return 
      */
@@ -20,7 +20,7 @@ public class DeliveryAddressDAO extends DbContext {
         List<DeliveryAddress> list = new ArrayList<>();
         String sql = "SELECT id, customer_id, recipient_name, recipient_phone, address, note, isDefault, created_at "
                    + "FROM DeliveryAddresses WHERE customer_id = ? ORDER BY isDefault DESC, created_at DESC";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
             ps.setInt(1, customerId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -34,22 +34,22 @@ public class DeliveryAddressDAO extends DbContext {
     }
 
     /**
-     * Find a single address by id and customer id (ownership check).
+     * Find a single address by id and user id (ownership check).
      * @param id
      * @param customerId
      * @return 
      */
-    public DeliveryAddress findByIdAndCustomer(int id, int customerId) {
+    public DeliveryAddress findByIdAndUser(int id, int customerId) {
         String sql = "SELECT id, customer_id, recipient_name, recipient_phone, address, note, isDefault, created_at "
                    + "FROM DeliveryAddresses WHERE id = ? AND customer_id = ?";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
             ps.setInt(1, id);
             ps.setInt(2, customerId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) return mapRow(rs);
             }
         } catch (SQLException e) {
-            throw new RuntimeException("DeliveryAddressDAO.findByIdAndCustomer error: " + e.getMessage(), e);
+            throw new RuntimeException("DeliveryAddressDAO.findByIdAndUser error: " + e.getMessage(), e);
         }
         return null;
     }
@@ -62,7 +62,7 @@ public class DeliveryAddressDAO extends DbContext {
     public boolean insert(DeliveryAddress da) {
         String sql = "INSERT INTO DeliveryAddresses (customer_id, recipient_name, recipient_phone, address, note, isDefault) "
                    + "VALUES (?, ?, ?, ?, ?, ?)";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
             ps.setInt(1, da.getCustomerId());
             ps.setString(2, da.getRecipientName());
             ps.setString(3, da.getRecipientPhone());
@@ -83,7 +83,7 @@ public class DeliveryAddressDAO extends DbContext {
     public boolean update(DeliveryAddress da) {
         String sql = "UPDATE DeliveryAddresses SET recipient_name = ?, recipient_phone = ?, address = ?, note = ?, isDefault = ? "
                    + "WHERE id = ? AND customer_id = ?";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
             ps.setString(1, da.getRecipientName());
             ps.setString(2, da.getRecipientPhone());
             ps.setString(3, da.getAddress());
@@ -103,9 +103,10 @@ public class DeliveryAddressDAO extends DbContext {
      * @param customerId
      * @return 
      */
+    
     public boolean delete(int id, int customerId) {
         String sql = "DELETE FROM DeliveryAddresses WHERE id = ? AND customer_id = ?";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
             ps.setInt(1, id);
             ps.setInt(2, customerId);
             return ps.executeUpdate() > 0;
@@ -115,32 +116,36 @@ public class DeliveryAddressDAO extends DbContext {
     }
 
     /**
-     * Unset all default addresses for a customer, then set the given one as default.
+     * Unset all default addresses for a user, then set the given one as default.
      * @param id
      * @param customerId
      * @return 
      */
     public boolean setDefault(int id, int customerId) {
+        Connection conn = null;
         try {
-            connection.setAutoCommit(false);
+            conn = getConnection();
+            conn.setAutoCommit(false);
             String clearSql = "UPDATE DeliveryAddresses SET isDefault = 0 WHERE customer_id = ?";
-            try (PreparedStatement ps = connection.prepareStatement(clearSql)) {
+            try (PreparedStatement ps = conn.prepareStatement(clearSql)) {
                 ps.setInt(1, customerId);
                 ps.executeUpdate();
             }
             String setSql = "UPDATE DeliveryAddresses SET isDefault = 1 WHERE id = ? AND customer_id = ?";
-            try (PreparedStatement ps = connection.prepareStatement(setSql)) {
+            try (PreparedStatement ps = conn.prepareStatement(setSql)) {
                 ps.setInt(1, id);
                 ps.setInt(2, customerId);
                 int rows = ps.executeUpdate();
-                connection.commit();
+                conn.commit();
                 return rows > 0;
             }
         } catch (SQLException e) {
-            try { connection.rollback(); } catch (SQLException ex) { /* ignore */ }
+            if (conn != null) try { conn.rollback(); } catch (SQLException ex) { /* ignore */ }
             throw new RuntimeException("DeliveryAddressDAO.setDefault error: " + e.getMessage(), e);
         } finally {
-            try { connection.setAutoCommit(true); } catch (SQLException e) { /* ignore */ }
+            if (conn != null) {
+                try { conn.setAutoCommit(true); conn.close(); } catch (SQLException e) { /* ignore */ }
+            }
         }
     }
 
