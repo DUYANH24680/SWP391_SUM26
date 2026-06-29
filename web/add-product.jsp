@@ -3,21 +3,21 @@
 <%@ page import="model.Category" %>
 <%@ page import="java.util.List" %>
 <%
-    Object rawUser = session.getAttribute("Account");
+    Object rawUser = session.getAttribute("user");
     Object rawUserId = session.getAttribute("userId");
     System.out.println("[add-product.jsp] rawUser=" + rawUser + " type=" + (rawUser != null ? rawUser.getClass().getName() : "null"));
     System.out.println("[add-product.jsp] rawUserId=" + rawUserId + " type=" + (rawUserId != null ? rawUserId.getClass().getName() : "null"));
 
-    Account Account = (Account) rawUser;
-    if (Account == null) {
+    Account user = (Account) rawUser;
+    if (user == null) {
         response.sendRedirect(request.getContextPath() + "/login");
         return;
     }
 
     String role = (String) session.getAttribute("role");
-    String avatarUrl = Account.getAvatar();
+    String avatarUrl = user.getAvatar();
     if (avatarUrl == null || avatarUrl.trim().isEmpty()) {
-        String fullname = Account.getFullname() != null ? Account.getFullname() : Account.getUsername();
+        String fullname = user.getFullname() != null ? user.getFullname() : user.getUsername();
         avatarUrl = "https://ui-avatars.com/api/?name="
                   + java.net.URLEncoder.encode(fullname, "UTF-8")
                   + "&background=4caf50&color=fff&size=80&bold=true&rounded=true";
@@ -455,6 +455,130 @@
             .topnav { padding: 0 1rem; }
             .nav-links { display: none; }
         }
+
+        /* ======= VARIANT TABLE ======= */
+        .variant-table-wrap {
+            overflow-x: auto;
+            border-radius: var(--radius-sm);
+            border: 1.5px solid var(--gray-200);
+        }
+
+        .variant-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+
+        .variant-table thead th {
+            background: var(--gray-50);
+            color: var(--gray-600);
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0.7rem 0.85rem;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        .variant-table tbody tr {
+            border-top: 1px solid var(--gray-100);
+        }
+
+        .variant-table tbody td {
+            padding: 0.5rem 0.85rem;
+            vertical-align: middle;
+        }
+
+        .variant-table input,
+        .variant-table select {
+            width: 100%;
+            background: var(--gray-50);
+            border: 1.5px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            padding: 0.5rem 0.65rem;
+            font-size: 0.82rem;
+            font-family: 'Inter', sans-serif;
+            color: var(--gray-800);
+            outline: none;
+            transition: border-color 0.18s;
+        }
+
+        .variant-table input:focus,
+        .variant-table select:focus {
+            border-color: var(--green);
+            background: var(--white);
+            box-shadow: 0 0 0 3px rgba(76,175,80,0.12);
+        }
+
+        .variant-table input[type="number"] {
+            -moz-appearance: textfield;
+        }
+
+        .variant-table input::-webkit-outer-spin-button,
+        .variant-table input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+        }
+
+        .col-weight { width: 130px; }
+        .col-unit   { width: 100px; }
+        .col-price  { width: 140px; }
+        .col-stock  { width: 120px; }
+        .col-action { width: 50px; text-align: center; }
+
+        .btn-remove-variant {
+            background: #fee2e2;
+            border: 1.5px solid #fecaca;
+            color: #dc2626;
+            width: 32px;
+            height: 32px;
+            border-radius: var(--radius-sm);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-size: 0.8rem;
+        }
+
+        .btn-remove-variant:hover {
+            background: #fecaca;
+            border-color: #fca5a5;
+        }
+
+        .btn-add-variant {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.55rem 1rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.82rem;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            border: none;
+            background: var(--green-light);
+            color: var(--green-dark);
+            border: 1.5px solid var(--green-mid);
+            transition: all 0.15s;
+            margin-top: 0.75rem;
+        }
+
+        .btn-add-variant:hover {
+            background: var(--green-mid);
+            border-color: var(--green);
+        }
+
+        .variant-hint {
+            font-size: 0.72rem;
+            color: var(--gray-400);
+            margin-top: 0.6rem;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .variant-hint i { color: var(--green); }
     </style>
 </head>
 <body>
@@ -480,7 +604,7 @@
     <!-- SIDEBAR -->
     <aside class="sidebar">
         <div class="sidebar-nav">
-            <a href="profile"><i class="fa-regular fa-Account"></i> Hồ Sơ</a>
+            <a href="profile"><i class="fa-regular fa-user"></i> Hồ Sơ</a>
             <a href="products"><i class="fa-brands fa-opencart"></i> Sản Phẩm</a>
             <a href="#" class="active"><i class="fa-solid fa-plus"></i> Thêm Sản Phẩm</a>
             <a href="#"><i class="fa-solid fa-basket-shopping"></i> Đơn Hàng</a>
@@ -593,6 +717,46 @@
                 </div>
             </div>
 
+            <!-- Variants theo trong luong -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fa-solid fa-scale-balanced" style="color:var(--green);font-size:1rem;"></i>
+                    <div class="card-title">Variants theo Trọng Lượng</div>
+                </div>
+                <div class="card-body">
+                    <div class="section-label">
+                        <i class="fa-solid fa-plus" style="font-size:0.5rem;color:var(--green);"></i>
+                        Khai bao cac tuy chon trong luong (khong bat buoc)
+                    </div>
+
+                    <div class="variant-table-wrap">
+                        <table class="variant-table" id="variantTable">
+                            <thead>
+                                <tr>
+                                    <th class="col-weight">Trọng lượng</th>
+                                    <th class="col-unit">Đơn vị</th>
+                                    <th class="col-price">Giá bán (VNĐ)</th>
+                                    <th class="col-stock">Stock</th>
+                                    <th class="col-action"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="variantTableBody">
+                                <!-- Dynamic rows inserted by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <button type="button" class="btn-add-variant" id="btnAddVariant">
+                        <i class="fa-solid fa-plus"></i> Thêm Variant
+                    </button>
+
+                    <div class="variant-hint">
+                        <i class="fa-solid fa-circle-info"></i>
+                        Bo trong tat ca neu san pham khong co tuy chon trong luong. Gia salePrice ben duoi se duoc su dung lam gia mac dinh.
+                    </div>
+                </div>
+            </div>
+
             <!-- Hinh anh -->
             <div class="card">
                 <div class="card-header">
@@ -656,6 +820,57 @@
     <span class="footer-copy">&copy; 2024 Sena Shop. Trái cây tươi ngon mỗi ngày.</span>
 </footer>
 
+<script>
+(function() {
+    const tableBody = document.getElementById('variantTableBody');
+    const btnAdd   = document.getElementById('btnAddVariant');
+
+    function buildRow(weightVal, unitVal, priceVal, stockVal) {
+        const tr = document.createElement('tr');
+
+        const tdWeight = document.createElement('td');
+        tdWeight.innerHTML = '<input type="number" name="variantWeight" '
+            + 'placeholder="VD: 500" min="1" step="1" value="' + (weightVal || '') + '">';
+
+        const tdUnit = document.createElement('td');
+        tdUnit.innerHTML = '<select name="variantUnit" class="form-control">'
+            + '<option value="kg"' + (unitVal === 'kg' ? ' selected' : '') + '>kg</option>'
+            + '<option value="g"'  + (unitVal === 'g'  ? ' selected' : '') + '>g</option>'
+            + '<option value="ml"' + (unitVal === 'ml' ? ' selected' : '') + '>ml</option>'
+            + '<option value="l"'  + (unitVal === 'l'  ? ' selected' : '') + '>l</option>'
+            + '</select>';
+
+        const tdPrice = document.createElement('td');
+        tdPrice.innerHTML = '<input type="number" name="variantPrice" '
+            + 'placeholder="VD: 120000" min="0" step="1000" value="' + (priceVal || '') + '">';
+
+        const tdStock = document.createElement('td');
+        tdStock.innerHTML = '<input type="number" name="variantStock" '
+            + 'placeholder="VD: 50" min="0" value="' + (stockVal || '') + '">';
+
+        const tdAction = document.createElement('td');
+        tdAction.className = 'col-action';
+        tdAction.innerHTML = '<button type="button" class="btn-remove-variant" '
+            + 'onclick="this.closest(\'tr\').remove()" title="Xoa variant">'
+            + '<i class="fa-solid fa-trash-can"></i></button>';
+
+        tr.appendChild(tdWeight);
+        tr.appendChild(tdUnit);
+        tr.appendChild(tdPrice);
+        tr.appendChild(tdStock);
+        tr.appendChild(tdAction);
+
+        return tr;
+    }
+
+    btnAdd.addEventListener('click', function() {
+        tableBody.appendChild(buildRow());
+    });
+
+    // Optional: start with one empty row so the user sees the table
+    tableBody.appendChild(buildRow());
+})();
+</script>
+
 </body>
 </html>
-

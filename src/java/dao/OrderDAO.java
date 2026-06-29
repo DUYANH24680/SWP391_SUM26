@@ -13,6 +13,15 @@ public class OrderDAO extends DbContext {
      * Create a new order with its details in a transaction.
      */
     public boolean createOrder(Order order, OrderDetail detail) {
+        List<OrderDetail> list = new ArrayList<>();
+        list.add(detail);
+        return createOrder(order, list);
+    }
+
+    /**
+     * Create a new order with multiple details in a transaction.
+     */
+    public boolean createOrder(Order order, List<OrderDetail> details) {
         String sqlOrder = "INSERT INTO Orders (customer_id, voucher_id, recipient_name, recipient_phone, address, payment_method, status, payment_status, total_cost, discount_amount, shipping_fee, final_cost, note, order_date) "
                         + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, GETDATE())";
         
@@ -60,17 +69,22 @@ public class OrderDAO extends DbContext {
             int generatedOrderId = rsKeys.getInt(1);
 
             psDetail = conn.prepareStatement(sqlDetail);
-            psDetail.setInt(1, generatedOrderId);
-            psDetail.setInt(2, detail.getProductId());
-            psDetail.setInt(3, detail.getQuantity());
-            psDetail.setDouble(4, detail.getUnitPrice());
-            psDetail.setDouble(5, detail.getTotalPrice());
+            for (OrderDetail detail : details) {
+                psDetail.setInt(1, generatedOrderId);
+                psDetail.setInt(2, detail.getProductId());
+                psDetail.setInt(3, detail.getQuantity());
+                psDetail.setDouble(4, detail.getUnitPrice());
+                psDetail.setDouble(5, detail.getTotalPrice());
+                psDetail.addBatch();
+            }
 
-            psDetail.executeUpdate();
+            psDetail.executeBatch();
 
             conn.commit();
             order.setId(generatedOrderId);
-            detail.setOrderId(generatedOrderId);
+            for (OrderDetail d : details) {
+                d.setOrderId(generatedOrderId);
+            }
             System.out.println("[OrderDAO] Order created successfully, id = " + generatedOrderId);
             return true;
         } catch (SQLException e) {
@@ -253,4 +267,3 @@ public class OrderDAO extends DbContext {
         return o;
     }
 }
-

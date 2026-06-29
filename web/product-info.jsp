@@ -1,5 +1,6 @@
+//Duy Anh
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ page import="model.Account" %>
+<%@ page import="model.Customer" %>
 <%@ page import="model.Product" %>
 <%@ page import="model.Shop" %>
 <%@ page import="dao.CategoryDAO" %>
@@ -7,8 +8,8 @@
 <%@ page import="java.util.List" %>
 <%
     // ---- Auth guard ----
-    Account Account = (Account) session.getAttribute("Account");
-    if (Account == null) {
+    Customer user = (Customer) session.getAttribute("user");
+    if (user == null) {
         response.sendRedirect(request.getContextPath() + "/login");
         return;
     }
@@ -46,6 +47,16 @@
     boolean hasDiscount = salePrice > 0 && salePrice < originalPrice;
     int discountPercent = (int) Math.round(product.getDiscountPercent());
     java.text.NumberFormat nf = java.text.NumberFormat.getNumberInstance(java.util.Locale.forLanguageTag("vi"));
+
+    // ---- Image URL helper ----
+    java.util.function.Function<String, String> imgUrl = (String path) -> {
+        if (path == null || path.trim().isEmpty()) return null;
+        String trimmed = path.trim();
+        if (trimmed.startsWith("uploads/")) {
+            return request.getContextPath() + "/image?path=" + java.net.URLEncoder.encode(trimmed);
+        }
+        return trimmed;
+    };
 %>
 <!DOCTYPE html>
 <html lang="vi">
@@ -73,7 +84,7 @@
         }
         body {
             font-family: 'Inter', sans-serif;
-            background: rgba(31, 41, 55, 0.95);
+            background: rgba(31, 41, 55, 0.95); /* Dark overlay */
             display: flex;
             align-items: center;
             justify-content: center;
@@ -108,13 +119,14 @@
             background: #fff;
             border-radius: var(--radius);
             width: 100%;
-            max-width: 1100px;
+            max-width: 1000px;
             max-height: 90vh;
             overflow-y: auto;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
             padding: 2rem;
             position: relative;
         }
+        /* Tùy chỉnh thanh cuộn cho modal-container */
         .modal-container::-webkit-scrollbar { width: 8px; }
         .modal-container::-webkit-scrollbar-track { background: #f1f1f1; border-radius: var(--radius); }
         .modal-container::-webkit-scrollbar-thumb { background: #ccc; border-radius: var(--radius); }
@@ -145,7 +157,7 @@
         
         .detail-grid {
             display: grid;
-            grid-template-columns: 1fr 1.2fr;
+            grid-template-columns: 1fr 1fr;
             gap: 2rem;
         }
         @media (max-width: 768px) {
@@ -199,7 +211,7 @@
         .badge-red { background: #fee2e2; color: #991b1b; }
         .badge-gray { background: var(--gray-100); color: var(--gray-600); }
         
-        .section-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--gray-400); margin-bottom: 0.7rem; }
+        .section-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--gray-400); margin-bottom: 0.5rem; }
         
         .shop-card {
             background: var(--gray-50); border: 1px solid var(--gray-200);
@@ -387,7 +399,7 @@
             color: var(--green-dark);
         }
         
-        .action-buttons { display: flex; gap: 0.75rem; margin-top: 0; flex-wrap: wrap;}
+        .action-buttons { display: flex; gap: 0.75rem; margin-top: 0.5rem; flex-wrap: wrap;}
         .btn {
             display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
             padding: 0.75rem 1.5rem; border-radius: var(--radius-sm); font-size: 0.9rem; font-weight: 600;
@@ -432,7 +444,7 @@
         .summary-score h2 {
             font-size: 3rem;
             font-weight: 800;
-            color: #f59e0b;
+            color: #f59e0b; /* yellow star color */
             line-height: 1;
         }
         .summary-score p {
@@ -498,7 +510,7 @@
         .comment-content {
             flex: 1;
         }
-        .comment-Account {
+        .comment-user {
             font-weight: 700;
             font-size: 1rem;
             color: var(--gray-800);
@@ -587,7 +599,7 @@
             <div>
                 <% if (product.getImage() != null && !product.getImage().trim().isEmpty()) { %>
                 <div class="product-image-wrap">
-                    <img src="<%= product.getImage() %>" alt="<%= product.getTitle() %>" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                    <img src="<%= imgUrl.apply(product.getImage()) %>" alt="<%= product.getTitle() %>" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
                     <div class="product-image-placeholder" style="display:none;">🍎</div>
                 </div>
                 <% } else { %>
@@ -672,7 +684,7 @@
                     <div class="section-label"><i class="fa-solid fa-shop" style="color:var(--green);"></i> Cua Hang Ban</div>
                     <div class="shop-card">
                         <% if (shopInfo.getLogo() != null && !shopInfo.getLogo().trim().isEmpty()) { %>
-                        <img class="shop-avatar" src="<%= shopInfo.getLogo() %>" alt="<%= shopInfo.getName() %>" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                        <img class="shop-avatar" src="<%= imgUrl.apply(shopInfo.getLogo()) %>" alt="<%= shopInfo.getName() %>" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
                         <div class="shop-avatar-placeholder" style="display:none;">&#127974;</div>
                         <% } else { %><div class="shop-avatar-placeholder">&#127974;</div><% } %>
                         <div class="shop-info">
@@ -741,22 +753,11 @@
 
                 <!-- Action buttons -->
                 <div class="action-buttons">
-                    <button class="btn btn-green" onclick="addToCart()">
-                        <i class="fa-solid fa-basket-shopping"></i> Thêm Vào Giỏ Hàng
-                    </button>
-                    <% if (product.isActive()) { %>
-                    <form action="add-to-wishlist" method="POST" style="display:inline;">
-                        <input type="hidden" name="productId" value="<%= product.getId() %>">
-                        <button type="submit" class="btn btn-outline">
-                            <i class="fa-regular fa-heart"></i> Thêm vào Wishlist
-                        </button>
-                    </form>
-                    <% } %>
-                    <button class="btn btn-outline" onclick="buyNow()">
-                        <i class="fa-solid fa-bolt"></i> Mua Ngay
+                    <button class="btn btn-green" onclick="alert('Chuc nang them vao gio hang chua duoc trien khai.')">
+                        <i class="fa-solid fa-basket-shopping"></i> Them Vao Gio Hang
                     </button>
                     <a href="home.jsp" class="btn btn-outline">
-                        <i class="fa-solid fa-arrow-left"></i> Quay Lại
+                        <i class="fa-solid fa-arrow-left"></i> Quay Lai
                     </a>
                 </div>
                 <form id="cartForm" action="cart" method="post" style="display:none;">
@@ -797,7 +798,7 @@
                 <div class="comment-item">
                     <div class="comment-avatar">H</div>
                     <div class="comment-content">
-                        <div class="comment-Account">Hoàng Văn A <span class="comment-date">2 ngày trước</span></div>
+                        <div class="comment-user">Hoàng Văn A <span class="comment-date">2 ngày trước</span></div>
                         <div class="comment-stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
                         <div class="comment-text">Sản phẩm tuyệt vời, chất lượng rất tốt! Shop đóng gói cẩn thận, giao hàng nhanh chóng. Sẽ ủng hộ shop dài dài.</div>
                     </div>
@@ -806,7 +807,7 @@
                 <div class="comment-item">
                     <div class="comment-avatar">M</div>
                     <div class="comment-content">
-                        <div class="comment-Account">Mai Thị B <span class="comment-date">1 tuần trước</span></div>
+                        <div class="comment-user">Mai Thị B <span class="comment-date">1 tuần trước</span></div>
                         <div class="comment-stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-regular fa-star"></i></div>
                         <div class="comment-text">Chất lượng khá ổn trong tầm giá. Hàng giao đúng như mô tả. Lần sau có dịp sẽ mua tiếp nha.</div>
                     </div>
@@ -825,7 +826,7 @@
                     <i class="fa-solid fa-star active" data-val="5"></i>
                 </div>
                 <textarea class="comment-textarea" placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm này..."></textarea>
-                <button class="btn btn-green" onclick="submitReview()">Gửi Đánh Giá</button>
+                <button class="btn btn-green" onclick="alert('Cảm ơn bạn đã gửi đánh giá! (Chức năng đang phát triển)')">Gửi Đánh Giá</button>
             </div>
         </div>
         <!-- END REVIEWS SECTION -->
@@ -929,4 +930,3 @@
     </script>
 </body>
 </html>
-

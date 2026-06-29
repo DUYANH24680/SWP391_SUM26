@@ -16,6 +16,9 @@ import model.Product;
 import model.Voucher;
 import model.Order;
 import model.OrderDetail;
+import model.Cart;
+import model.CartItem;
+import service.CartService;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -28,11 +31,11 @@ public class CheckoutServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         HttpSession session = req.getSession(false);
-        if (session == null || session.getAttribute("Account") == null) {
+        if (session == null || session.getAttribute("user") == null) {
             resp.sendRedirect(req.getContextPath() + "/login");
             return;
         }
-        Account Account = (Account) session.getAttribute("Account");
+        Account user = (Account) session.getAttribute("user");
 
         String action = req.getParameter("action");
         if ("checkVoucher".equals(action)) {
@@ -40,53 +43,75 @@ public class CheckoutServlet extends HttpServlet {
             return;
         }
 
-        // Load Product info
-        String prodIdParam = req.getParameter("productId");
-        if (prodIdParam == null || prodIdParam.trim().isEmpty()) {
-            resp.sendRedirect(req.getContextPath() + "/home.jsp");
-            return;
-        }
-
-        int productId;
-        int quantity = 1;
+        DeliveryAddressDAO addressDAO = new DeliveryAddressDAO();
+        VoucherDAO voucherDAO = new VoucherDAO();
+        ProductDAO productDAO = new ProductDAO();
+        
         try {
-            productId = Integer.parseInt(prodIdParam.trim());
-            String qtyParam = req.getParameter("quantity");
-            if (qtyParam != null && !qtyParam.trim().isEmpty()) {
-                quantity = Integer.parseInt(qtyParam.trim());
+            List<DeliveryAddress> addresses = addressDAO.findByCustomerId(user.getId());
+            List<Voucher> vouchers = voucherDAO.getAllActiveVouchers();
+            
+            req.setAttribute("addresses", addresses);
+            req.setAttribute("vouchers", vouchers);
+
+            String prodIdParam = req.getParameter("productId");
+            if (prodIdParam != null && !prodIdParam.trim().isEmpty()) {
+                // 1. Buy Now Flow
+                int productId = Integer.parseInt(prodIdParam.trim());
+                int quantity = 1;
+                String qtyParam = req.getParameter("quantity");
+                if (qtyParam != null && !qtyParam.trim().isEmpty()) {
+                    quantity = Integer.parseInt(qtyParam.trim());
+                }
+
+                Product product = productDAO.getProductById(productId);
+                if (product == null || product.isIsDelete() || product.getStatus() != 1) {
+                    session.setAttribute("error", "Sản phẩm không tồn tại hoặc đã ngừng bán.");
+                    resp.sendRedirect(req.getContextPath() + "/home.jsp");
+                    return;
+                }
+                
+                req.setAttribute("product", product);
+                req.setAttribute("quantity", quantity);
+                req.setAttribute("isBuyNow", true);
+            } else {
+                // 2. Cart Checkout Flow
+                CartService cartService = new CartService();
+                Cart cart = cartService.getCartByCustomerId(user.getId());
+                if (cart == null || cart.isEmpty()) {
+                    session.setAttribute("error", "Giỏ hàng của bạn đang trống.");
+                    resp.sendRedirect(req.getContextPath() + "/cart");
+                    return;
+                }
+                
+                // Validate stock for all items
+                for (CartItem item : cart.getItems()) {
+                    Product p = productDAO.getProductById(item.getProductId());
+                    if (p == null || p.isIsDelete() || p.getStatus() != 1) {
+                        session.setAttribute("error", "Sản phẩm " + item.getTitle() + " không còn khả dụng.");
+                        resp.sendRedirect(req.getContextPath() + "/cart");
+                        return;
+                    }
+                    if (p.getStockQuantity() < item.getQuantity()) {
+                        session.setAttribute("error", "Sản phẩm " + item.getTitle() + " không đủ hàng trong kho.");
+                        resp.sendRedirect(req.getContextPath() + "/cart");
+                        return;
+                    }
+                }
+                
+                req.setAttribute("cart", cart);
+                req.setAttribute("isBuyNow", false);
             }
+
+            req.getRequestDispatcher("/checkout.jsp").forward(req, resp);
+            
         } catch (NumberFormatException e) {
             session.setAttribute("error", "Tham số không hợp lệ.");
             resp.sendRedirect(req.getContextPath() + "/home.jsp");
-            return;
-        }
-
-        ProductDAO productDAO = new ProductDAO();
-        DeliveryAddressDAO addressDAO = new DeliveryAddressDAO();
-        VoucherDAO voucherDAO = new VoucherDAO();
-
-        try {
-            Product product = productDAO.getProductById(productId);
-            if (product == null || product.isIsDelete() || product.getStatus() != 1) {
-                session.setAttribute("error", "Sản phẩm không tồn tại hoặc ngừng bán.");
-                resp.sendRedirect(req.getContextPath() + "/home.jsp");
-                return;
-            }
-
-            List<DeliveryAddress> addresses = addressDAO.findByUserId(Account.getId());
-            List<Voucher> vouchers = voucherDAO.getAllActiveVouchers();
-
-            req.setAttribute("product", product);
-            req.setAttribute("addresses", addresses);
-            req.setAttribute("vouchers", vouchers);
-            req.setAttribute("quantity", quantity);
-
-            req.getRequestDispatcher("/checkout.jsp").forward(req, resp);
-
         } finally {
-            productDAO.close();
             addressDAO.close();
             voucherDAO.close();
+            productDAO.close();
         }
     }
 
@@ -94,14 +119,12 @@ public class CheckoutServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         HttpSession session = req.getSession(false);
-        if (session == null || session.getAttribute("Account") == null) {
+        if (session == null || session.getAttribute("user") == null) {
             resp.sendRedirect(req.getContextPath() + "/login");
             return;
         }
-        Account Account = (Account) session.getAttribute("Account");
+        Account user = (Account) session.getAttribute("user");
 
-        String prodIdParam = req.getParameter("productId");
-        String qtyParam = req.getParameter("quantity");
         String recipientName = req.getParameter("recipientName");
         String recipientPhone = req.getParameter("recipientPhone");
         String address = req.getParameter("address");
@@ -109,95 +132,40 @@ public class CheckoutServlet extends HttpServlet {
         String note = req.getParameter("note");
         String voucherCode = req.getParameter("voucherCode");
 
-        if (prodIdParam == null || qtyParam == null || recipientName == null || recipientPhone == null || address == null) {
-            req.setAttribute("error", "Vui lòng nhập đầy đủ thông tin giao hàng.");
-            doGet(req, resp);
-            return;
-        }
-
-        int productId;
-        int quantity;
-        try {
-            productId = Integer.parseInt(prodIdParam.trim());
-            quantity = Integer.parseInt(qtyParam.trim());
-        } catch (NumberFormatException e) {
-            req.setAttribute("error", "Tham số không hợp lệ.");
-            doGet(req, resp);
-            return;
-        }
-
-        ProductDAO productDAO = new ProductDAO();
-        VoucherDAO voucherDAO = new VoucherDAO();
-        OrderDAO orderDAO = new OrderDAO();
+        String prodIdParam = req.getParameter("productId");
+        Integer buyNowProductId = null;
+        Integer buyNowQuantity = null;
 
         try {
-            Product product = productDAO.getProductById(productId);
-            if (product == null || product.isIsDelete() || product.getStatus() != 1) {
-                req.setAttribute("error", "Sản phẩm không tồn tại hoặc đã ngừng bán.");
-                doGet(req, resp);
-                return;
+            if (prodIdParam != null && !prodIdParam.trim().isEmpty()) {
+                buyNowProductId = Integer.parseInt(prodIdParam.trim());
+                buyNowQuantity = Integer.parseInt(req.getParameter("quantity").trim());
             }
 
-            if (product.getStockQuantity() < quantity) {
-                req.setAttribute("error", "Tồn kho không đủ (chỉ còn " + product.getStockQuantity() + " " + product.getUnit() + ").");
-                doGet(req, resp);
-                return;
-            }
+            service.OrderService orderService = new service.OrderService();
+            orderService.placeOrder(
+                user.getId(),
+                recipientName,
+                recipientPhone,
+                address,
+                paymentMethod,
+                note,
+                voucherCode,
+                buyNowProductId,
+                buyNowQuantity
+            );
 
-            double unitPrice = product.getSalePrice() > 0 && product.getSalePrice() < product.getOriginalPrice()
-                    ? product.getSalePrice() : product.getOriginalPrice();
-            double totalCost = unitPrice * quantity;
+            session.setAttribute("message", "Đặt hàng thành công!");
+            resp.sendRedirect(req.getContextPath() + "/my-orders");
 
-            // Free shipping on orders from 200,000 VND
-            double shippingFee = totalCost >= 200000 ? 0.0 : 20000.0;
-            double discountAmount = 0.0;
-            Integer voucherId = null;
-
-            if (voucherCode != null && !voucherCode.trim().isEmpty()) {
-                Voucher voucher = voucherDAO.findByCode(voucherCode);
-                if (voucher != null && voucher.isValid(totalCost)) {
-                    voucherId = voucher.getId();
-                    discountAmount = voucher.calculateDiscount(totalCost);
-                }
-            }
-
-            double finalCost = totalCost - discountAmount + shippingFee;
-
-            Order order = new Order();
-            order.setCustomerId(Account.getId());
-            order.setVoucherId(voucherId);
-            order.setRecipientName(recipientName.trim());
-            order.setRecipientPhone(recipientPhone.trim());
-            order.setAddress(address.trim());
-            order.setPaymentMethod(paymentMethod != null ? paymentMethod.trim() : "COD");
-            order.setStatus(1); // 1 = Pending
-            order.setPaymentStatus(0); // 0 = Unpaid
-            order.setTotalCost(totalCost);
-            order.setDiscountAmount(discountAmount);
-            order.setShippingFee(shippingFee);
-            order.setFinalCost(finalCost);
-            order.setNote(note != null ? note.trim() : "");
-
-            OrderDetail detail = new OrderDetail();
-            detail.setProductId(productId);
-            detail.setQuantity(quantity);
-            detail.setUnitPrice(unitPrice);
-            detail.setTotalPrice(totalCost);
-
-            boolean success = orderDAO.createOrder(order, detail);
-
-            if (success) {
-                session.setAttribute("message", "Đặt hàng thành công!");
-                resp.sendRedirect(req.getContextPath() + "/my-orders");
-            } else {
-                req.setAttribute("error", "Đặt hàng thất bại. Vui lòng thử lại.");
-                doGet(req, resp);
-            }
-
-        } finally {
-            productDAO.close();
-            voucherDAO.close();
-            orderDAO.close();
+        } catch (IllegalArgumentException e) {
+            req.setAttribute("error", e.getMessage());
+            doGet(req, resp);
+        } catch (Exception e) {
+            System.err.println("[CheckoutServlet] doPost error: " + e.getMessage());
+            e.printStackTrace();
+            req.setAttribute("error", "Lỗi xử lý đơn hàng: " + e.getMessage());
+            doGet(req, resp);
         }
     }
 
@@ -245,4 +213,3 @@ public class CheckoutServlet extends HttpServlet {
         }
     }
 }
-

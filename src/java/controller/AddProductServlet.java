@@ -2,6 +2,7 @@ package controller;
 
 import dao.CategoryDAO;
 import dao.ProductDAO;
+import dao.ProductVariantDAO;
 import dao.ShopDAO;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
@@ -13,6 +14,7 @@ import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.Part;
 import model.Category;
 import model.Product;
+import model.ProductVariant;
 import model.Shop;
 import Utils.FileUploadUtil;
 
@@ -62,7 +64,7 @@ public class AddProductServlet extends HttpServlet {
 
         CategoryDAO categoryDAO = new CategoryDAO();
         try {
-            List<Category> categories = categoryDAO.getAllActiveCategories();
+            List<Category> categories = categoryDAO.getAllCategories(false);
             req.setAttribute("categories", categories);
             System.out.println("[AddProductServlet] Forwarding to add-product.jsp with " + categories.size() + " categories");
         } catch (RuntimeException e) {
@@ -201,7 +203,7 @@ public class AddProductServlet extends HttpServlet {
         for (Part part : fileParts) {
             if (part.getSize() > 0) {
                 try {
-                    String imagePath = FileUploadUtil.saveProductImage(part, String.valueOf(shopId));
+                    String imagePath = FileUploadUtil.saveProductImage(part, String.valueOf(shopId), getServletContext());
                     imageUrls.add(imagePath);
                 } catch (Exception e) {
                     uploadError = true;
@@ -229,7 +231,6 @@ public class AddProductServlet extends HttpServlet {
         product.setSalePrice(salePrice);
         product.setCategoryId(categoryId);
         product.setShopId(shopId);
-        product.setSellerId(ownerId);
         product.setExpiredDate(expiredDate);
         product.setStatus(0);
 
@@ -237,6 +238,17 @@ public class AddProductServlet extends HttpServlet {
         try {
             boolean success = productDAO.addProduct(product, imageUrls);
             if (success) {
+                // Parse & insert variants
+                List<ProductVariant> variants = parseVariants(req);
+                if (!variants.isEmpty()) {
+                    ProductVariantDAO variantDAO = new ProductVariantDAO();
+                    try {
+                        variantDAO.insertVariants(product.getId(), variants);
+                    } finally {
+                        variantDAO.close();
+                    }
+                }
+
                 if (session != null) {
                     session.setAttribute("message", "San pham da duoc tao thanh cong va dang cho duyet!");
                 }
@@ -251,5 +263,51 @@ public class AddProductServlet extends HttpServlet {
             productDAO.close();
         }
     }
+
+    // ===== Parse variant parameters =====
+    private List<ProductVariant> parseVariants(HttpServletRequest req) {
+        List<ProductVariant> variants = new ArrayList<>();
+        String[] weights  = req.getParameterValues("variantWeight");
+        String[] units    = req.getParameterValues("variantUnit");
+        String[] prices   = req.getParameterValues("variantPrice");
+        String[] stocks   = req.getParameterValues("variantStock");
+
+        if (weights == null) {
+            return variants;
+        }
+
+        for (int i = 0; i < weights.length; i++) {
+            String weight = weights[i];
+            if (weight == null || weight.trim().isEmpty()) {
+                continue; // skip empty rows
+            }
+
+            ProductVariant v = new ProductVariant();
+
+            String w = weight.trim();
+            String u = (units != null && units.length > i && units[i] != null) ? units[i].trim() : "";
+            v.setWeightValue(w);
+            v.setWeightUnit(u);
+
+            if (prices != null && prices.length > i && prices[i] != null && !prices[i].trim().isEmpty()) {
+                try {
+                    v.setPrice(Double.parseDouble(prices[i].trim()));
+                } catch (NumberFormatException ignored) {}
+            }
+
+            if (stocks != null && stocks.length > i && stocks[i] != null && !stocks[i].trim().isEmpty()) {
+                try {
+                    v.setStockQuantity(Integer.parseInt(stocks[i].trim()));
+                } catch (NumberFormatException ignored) {}
+            }
+
+            variants.add(v);
+        }
+
+        System.out.println("[AddProductServlet] parseVariants() parsed " + variants.size() + " valid variants");
+        return variants;
+    }
 }
+
+
 

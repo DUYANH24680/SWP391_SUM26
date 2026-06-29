@@ -47,6 +47,52 @@ public class ProductDAO extends DbContext {
             return 0;
         }
     }
+    
+        public List<Product> getPendingProducts() {
+        String sql = "SELECT p.id, p.category_id, p.seller_id, p.shop_id, p.title, p.image, p.description, p.unit, "
+                   + "p.stock_quantity, p.sold_quantity, p.original_price, p.sale_price, p.expired_date, "
+                   + "p.average_rating, p.is_featured, p.status, p.isDelete, p.created_at, "
+                   + "s.shop_name "
+                   + "FROM Products p "
+                   + "LEFT JOIN Shops s ON p.shop_id = s.id "
+                   + "WHERE p.status = 0 AND p.isDelete = 0 "
+                   + "ORDER BY p.created_at ASC";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            List<Product> list = new ArrayList<>();
+            while (rs.next()) {
+                list.add(mapRow(rs));
+            }
+            System.out.println("[ProductDAO] getPendingProducts() returned " + list.size() + " products");
+            return list;
+        } catch (SQLException e) {
+            System.err.println("[ProductDAO] getPendingProducts() error: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("ProductDAO.getPendingProducts error: " + e.getMessage(), e);
+        }
+    }
+        
+            /**
+     * Duyệt sản phẩm: đổi status từ 0 → 1.
+     * Chỉ admin mới gọi được, không cần kiểm tra ownership.
+     */
+    public boolean approveProduct(int productId) {
+        String sql = "UPDATE Products SET status = 1 WHERE id = ? AND status = 0 AND isDelete = 0";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            ps.setInt(1, productId);
+            int rowsUpdated = ps.executeUpdate();
+            if (rowsUpdated > 0) {
+                System.out.println("[ProductDAO] approveProduct(id=" + productId + ") success");
+            } else {
+                System.out.println("[ProductDAO] approveProduct(id=" + productId + ") — product not found or already approved");
+            }
+            return rowsUpdated > 0;
+        } catch (SQLException e) {
+            System.err.println("[ProductDAO] approveProduct(" + productId + ") error: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("ProductDAO.approveProduct error: " + e.getMessage(), e);
+        }
+    }
 
     public List<Product> searchProducts(String keyword) {
         String sql = "SELECT p.id, p.category_id, p.seller_id, p.shop_id, p.title, p.image, p.description, p.unit, "
@@ -206,6 +252,7 @@ public class ProductDAO extends DbContext {
                 return false;
             }
             int generatedProductId = rsKeys.getInt(1);
+            product.setId(generatedProductId);
 
             if (imageUrls != null && !imageUrls.isEmpty()) {
                 psImage = conn.prepareStatement(sqlImage);

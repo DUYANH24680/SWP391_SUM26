@@ -102,7 +102,7 @@ public class ViewCartServlet extends HttpServlet {
                 session.setAttribute("cartCount", cart.getTotalQuantity());
 
                 if ("buyNow".equals(action)) {
-                    response.sendRedirect(request.getContextPath() + "/checkout");
+                    response.sendRedirect(request.getContextPath() + "/checkout?productId=" + productId + "&quantity=" + quantity);
                 } else {
                     session.setAttribute("message", "Da them san pham vao gio hang!");
                     response.sendRedirect(request.getContextPath() + "/view-cart");

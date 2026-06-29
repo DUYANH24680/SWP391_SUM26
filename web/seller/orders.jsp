@@ -408,7 +408,7 @@
         </div>
         <div class="nav-right" style="display:flex;align-items:center;gap:0.5rem;">
             <% if (shop != null) { %>
-                <span class="badge badge-green" style="font-weight:700;"><%= shop.getName() %></span>
+                <span class="badge badge-green" style="font-weight:700;"><%= shop.getShopName() %></span>
             <% } %>
             <img class="nav-avatar" src="<%= avatarUrl %>" alt="avatar">
         </div>
@@ -475,7 +475,7 @@
                                     Khách hàng: <strong><%= o.getCustomerName() != null ? o.getCustomerName() : "Khách vãng lai" %></strong>
                                     <span style="color:var(--gray-400); margin:0 0.5rem;">|</span>
                                     Đặt ngày: <strong><%= new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(o.getOrderDate()) %></strong>
-                                    <span class="order-id">Mã đơn: #<%= o.getId() %></span>
+                                    <span class="order-id"></span>
                                 </div>
                                 <span class="badge <%= o.getStatusClass() %>"><%= o.getStatusLabel() %></span>
                             </div>
@@ -544,13 +544,17 @@
                                                 </button>
                                             </form>
 
-                                            <form method="post" action="orders" style="display:inline-block;" onsubmit="return confirm('Bạn có chắc chắn muốn HỦY đơn hàng này không?');">
+                                            <form method="post" action="orders" style="display:inline-block;" onsubmit="return confirm('Bạn có chắc chắn muốn TỪ CHỐI đơn hàng này không?');">
                                                 <input type="hidden" name="action" value="cancel">
                                                 <input type="hidden" name="orderId" value="<%= o.getId() %>">
                                                 <button type="submit" class="btn btn-danger-outline">
                                                     <i class="fa-solid fa-rectangle-xmark"></i> Từ Chối
                                                 </button>
                                             </form>
+                                        <% } else if (o.getStatus() == 2) { %>
+                                            <span class="text-muted" style="font-size:0.875rem;color:#64748b;">
+                                                <i class="fa-solid fa-lock"></i> Đã xác nhận — không thể từ chối
+                                            </span>
                                         <% } %>
                                     </div>
                                 </div>

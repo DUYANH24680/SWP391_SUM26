@@ -104,7 +104,7 @@ public class EditProductServlet extends HttpServlet {
         CategoryDAO categoryDAO = new CategoryDAO();
         List<Category> categories;
         try {
-            categories = categoryDAO.getAllActiveCategories();
+            categories = categoryDAO.getAllCategories(false);
         } catch (RuntimeException e) {
             System.err.println("[EditProductServlet] Failed to load categories: " + e.getMessage());
             categories = java.util.Collections.emptyList();
@@ -276,7 +276,6 @@ public class EditProductServlet extends HttpServlet {
         product.setSalePrice(salePrice);
         product.setCategoryId(categoryId);
         product.setShopId(shopId);
-        product.setSellerId(ownerId);
         product.setExpiredDate(expiredDate);
         product.setStatus(status);
 
@@ -300,12 +299,14 @@ public class EditProductServlet extends HttpServlet {
             for (Part part : fileParts) {
                 if (part.getSize() > 0) {
                     try {
-                        String imagePath = FileUploadUtil.saveProductImage(part, String.valueOf(shopId));
+                        String imagePath = FileUploadUtil.saveProductImage(part, String.valueOf(shopId), getServletContext());
                         newImageUrls = (newImageUrls == null) ? new ArrayList<>() : newImageUrls;
                         newImageUrls.add(imagePath);
                     } catch (Exception e) {
+                        e.printStackTrace(); // IN CHI TIET LOI
                         uploadError = true;
-                        uploadErrorMsg = e.getMessage();
+                        uploadErrorMsg = "Loi upload: " + e.getClass().getName() + " — " + e.getMessage();
+                        System.out.println("[EditProductServlet] Upload error detail: " + uploadErrorMsg);
                         break;
                     }
                 }
@@ -341,3 +342,5 @@ public class EditProductServlet extends HttpServlet {
 }
 
  
+
+

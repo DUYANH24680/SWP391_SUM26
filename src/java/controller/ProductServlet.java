@@ -211,7 +211,7 @@ public class ProductServlet extends HttpServlet {
 
             // Buoc 2: lay shop info
             Shop shop = shopDAO.getShopByOwnerId(userId);
-            System.out.println("[ProductServlet.loadSellerProducts] shop=" + (shop != null ? shop.getId() + "/" + shop.getName() : "null"));
+            System.out.println("[ProductServlet.loadSellerProducts] shop=" + (shop != null ? shop.getId() + "/" + shop.getShopName() : "null"));
 
             if (shop == null) {
                 throw new IllegalStateException("Khong tim thay thong tin cua hang. Lien he admin.");
