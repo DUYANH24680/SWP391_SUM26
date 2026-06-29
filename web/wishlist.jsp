@@ -108,16 +108,6 @@
 
         .nav-icon-btn:hover { background: var(--green-light); color: var(--green-dark); }
 
-        .cart-badge {
-            position: absolute; top: -4px; right: -4px;
-            min-width: 18px; height: 18px;
-            background: var(--orange); color: #fff;
-            font-size: 0.62rem; font-weight: 700;
-            border-radius: 999px;
-            display: flex; align-items: center; justify-content: center;
-            padding: 0 4px;
-        }
-
         .wishlist-badge {
             position: absolute; top: -4px; right: -4px;
             min-width: 18px; height: 18px;
@@ -451,13 +441,6 @@
             <span class="wishlist-badge"><%= wlCount %></span>
             <% } %>
         </a>
-        <a href="cart" class="nav-icon-btn" title="Gio hang">
-            <i class="fa-solid fa-basket-shopping"></i>
-            <% Integer cartCount = (Integer) session.getAttribute("cartCount"); %>
-            <% if (cartCount != null && cartCount > 0) { %>
-            <span class="cart-badge"><%= cartCount %></span>
-            <% } %>
-        </a>
         <img class="nav-avatar" src="<%= Account.getAvatar() != null ? Account.getAvatar() : "https://ui-avatars.com/api/?name=" + java.net.URLEncoder.encode(Account.getFullname(), "UTF-8") + "&background=4caf50&color=fff&size=80&bold=true&rounded=true" %>" alt="avatar">
     </div>
 </nav>
@@ -724,12 +707,55 @@
         });
     }
 
+    // ---- Mua cac san pham da chon ----
+    function buySelected() {
+        const checkedBoxes = document.querySelectorAll('.product-checkbox:checked');
+        if (checkedBoxes.length === 0) return;
+
+        const selectedIds = Array.from(checkedBoxes).map(function(cb) { return cb.value; });
+
+        // Neu chi 1 san pham -> chuyen thang den trang chi tiet san pham
+        if (selectedIds.length === 1) {
+            window.location.href = 'info?id=' + selectedIds[0];
+            return;
+        }
+
+        // Neu nhieu san pham -> chuyen tat ca vao gio hang roi chuyen den trang gio hang
+        let completed = 0;
+        const total = selectedIds.length;
+
+        checkedBoxes.forEach(function(checkbox) {
+            const productId = checkbox.value;
+
+            const data = new URLSearchParams();
+            data.append('productId', productId);
+
+            fetch('move-wishlist-to-cart', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: data
+            })
+            .then(function(response) {
+                completed++;
+                if (completed === total) {
+                    window.location.href = 'view-cart';
+                }
+            })
+            .catch(function(error) {
+                completed++;
+                console.error('Loi chuyen san pham ' + productId + ' vao gio hang:', error);
+                if (completed === total) {
+                    window.location.href = 'view-cart';
+                }
+            });
+        });
+    }
+
     // ---- Chuyen cac san pham da chon vao gio hang ----
     function moveSelectedToCart() {
         const checkedBoxes = document.querySelectorAll('.product-checkbox:checked');
         if (checkedBoxes.length === 0) return;
 
-        // Gui AJAX cho tung san pham da chon
         let completed = 0;
         const total = checkedBoxes.length;
 
@@ -747,7 +773,6 @@
             .then(function(response) {
                 completed++;
                 if (completed === total) {
-                    // Tat ca hoan thanh, reload trang
                     window.location.reload();
                 }
             })
