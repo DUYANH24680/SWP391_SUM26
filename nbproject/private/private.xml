@@ -13,6 +13,16 @@
             <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/dao/OrderDAO.java</file>
             <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/dao/PasswordResetTokenDAO.java</file>
             <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/dao/CategoryDAO.java</file>
+            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/controller/EditProductServlet.java</file>
+            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/Utils/FileUploadUtil.java</file>
+            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/Utils/ProductSorter.java</file>
+            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/Utils/MultipartRequestWrapper.java</file>
+            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/dao/DeliveryAddressDAO.java</file>
+            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/controller/LoginServlet.java</file>
+            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/controller/MoveWishlistToCartServlet.java</file>
+            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/controller/LogoutServlet.java</file>
+            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/web/WEB-INF/web.xml</file>
+            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/web/META-INF/context.xml</file>
         </group>
     </open-files>
 </project-private>

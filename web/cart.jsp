@@ -749,7 +749,7 @@
                 </span>
             </div>
 
-            <form id="checkoutForm" action="checkout-cart" method="POST">
+            <form id="checkoutForm" action="checkout-cart" method="GET">
                 <input type="hidden" name="selectedProducts" id="selectedProducts">
 
                 <table class="cart-table">
