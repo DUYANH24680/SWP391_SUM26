@@ -12,7 +12,6 @@ public class CartItem {
     private String unit;
     private double unitPrice;
     private int quantity;
-    private String size;
     private String note;
     private int voucherId;
     private String discountCode;
@@ -26,7 +25,7 @@ public class CartItem {
     }
 
     public CartItem(int productId, int shopId, String title, String image, String unit,
-                    double unitPrice, int quantity, String size, String note, String discountCode) {
+                    double unitPrice, int quantity, String note, String discountCode) {
         this.productId = productId;
         this.shopId = shopId;
         this.title = title;
@@ -34,7 +33,6 @@ public class CartItem {
         this.unit = unit;
         this.unitPrice = unitPrice;
         this.quantity = quantity;
-        this.size = size;
         this.note = note;
         this.discountCode = discountCode;
         this.discountAmount = 0;
@@ -114,10 +112,6 @@ public class CartItem {
         this.quantity = quantity;
     }
 
-    public String getSize() {
-        return size;
-    }
-
     public int getVoucherId() {
         return voucherId;
     }
@@ -164,10 +158,6 @@ public class CartItem {
 
     public void setUpdatedAt(Timestamp updatedAt) {
         this.updatedAt = updatedAt;
-    }
-
-    public void setSize(String size) {
-        this.size = size;
     }
 
     public String getNote() {

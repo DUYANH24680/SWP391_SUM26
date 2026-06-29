@@ -30,7 +30,6 @@ public class RemoveFromCartServlet extends HttpServlet {
             }
 
             String productIdStr = request.getParameter("productId");
-            String size = request.getParameter("size");
 
             if (productIdStr == null || productIdStr.trim().isEmpty()) {
                 System.out.println("RemoveFromCartServlet: Khong tim thay ID san pham");

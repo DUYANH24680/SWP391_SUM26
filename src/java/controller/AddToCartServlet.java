@@ -38,9 +38,7 @@ public class AddToCartServlet extends HttpServlet {
         String voucherCode = trimParam(req.getParameter("voucherCode"));
         String note = trimParam(req.getParameter("note"));
 
-        int productId = parsePositiveInt(productIdParam, 0);
-        int quantity = parsePositiveInt(quantityParam, 1);
-
+        // ---- Buoc 5: Them vao gio hang ----
         try {
             cartService.addToCart(user.getId(), productId, size, quantity, voucherCode, note);
             session.setAttribute("message", "Thêm giỏ hàng thành công.");

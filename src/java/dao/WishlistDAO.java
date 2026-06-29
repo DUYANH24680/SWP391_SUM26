@@ -312,7 +312,7 @@ public class WishlistDAO extends DbContext {
 
             Integer existingItemId = null;
             int existingQuantity = 0;
-            String sqlCheckItem = "SELECT id, quantity FROM CartItems WITH(NOLOCK) WHERE cart_id = ? AND product_id = ? AND (size IS NULL OR size = '')";
+            String sqlCheckItem = "SELECT id, quantity FROM CartItems WITH(NOLOCK) WHERE cart_id = ? AND product_id = ?";
             try (PreparedStatement ps = conn.prepareStatement(sqlCheckItem)) {
                 ps.setInt(1, cartId);
                 ps.setInt(2, productId);
@@ -336,14 +336,13 @@ public class WishlistDAO extends DbContext {
                     ps.executeUpdate();
                 }
             } else {
-                String sqlInsertItem = "INSERT INTO CartItems (cart_id, product_id, size, quantity, unit_price, discount_amount, total_price, created_at, updated_at) VALUES (?, ?, ?, ?, ?, 0, ?, GETDATE(), GETDATE())";
+                String sqlInsertItem = "INSERT INTO CartItems (cart_id, product_id, quantity, unit_price, discount_amount, total_price, created_at, updated_at) VALUES (?, ?, ?, ?, 0, ?, GETDATE(), GETDATE())";
                 try (PreparedStatement ps = conn.prepareStatement(sqlInsertItem)) {
                     ps.setInt(1, cartId);
                     ps.setInt(2, productId);
-                    ps.setNull(3, Types.VARCHAR);
-                    ps.setInt(4, 1);
-                    ps.setDouble(5, unitPrice);
-                    ps.setDouble(6, unitPrice * 1);
+                    ps.setInt(3, 1);
+                    ps.setDouble(4, unitPrice);
+                    ps.setDouble(5, unitPrice * 1);
                     ps.executeUpdate();
                 }
             }
