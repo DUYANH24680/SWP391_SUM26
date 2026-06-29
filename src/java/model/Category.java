@@ -5,17 +5,15 @@ public class Category {
     private String name;
     private String image;
     private boolean isDelete;
-    private int sortOrder;
 
     public Category() {
     }
 
-    public Category(int id, String name, String image, boolean isDelete, int sortOrder) {
+    public Category(int id, String name, String image, boolean isDelete) {
         this.id = id;
         this.name = name;
         this.image = image;
         this.isDelete = isDelete;
-        this.sortOrder = sortOrder;
     }
 
     public int getId() {
@@ -48,14 +46,6 @@ public class Category {
 
     public void setIsDelete(boolean isDelete) {
         this.isDelete = isDelete;
-    }
-
-    public int getSortOrder() {
-        return sortOrder;
-    }
-
-    public void setSortOrder(int sortOrder) {
-        this.sortOrder = sortOrder;
     }
 }
 

@@ -238,6 +238,3 @@ public class FileUploadUtil {
         return fileName.substring(lastDot + 1);
     }
 }
-
-
-

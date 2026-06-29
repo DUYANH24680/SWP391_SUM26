@@ -3,6 +3,8 @@
 <%@ page import="model.Product" %>
 <%@ page import="model.DeliveryAddress" %>
 <%@ page import="model.Voucher" %>
+<%@ page import="model.Cart" %>
+<%@ page import="model.CartItem" %>
 <%@ page import="java.util.List" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
@@ -13,19 +15,35 @@
         return;
     }
 
+    Boolean isBuyNow = (Boolean) request.getAttribute("isBuyNow");
+    if (isBuyNow == null) isBuyNow = false;
+
     Product product = (Product) request.getAttribute("product");
-    if (product == null) {
-        response.sendRedirect(request.getContextPath() + "/home.jsp");
-        return;
+    int quantity = 0;
+    double totalCost = 0.0;
+    double unitPrice = 0.0;
+
+    if (isBuyNow) {
+        if (product == null) {
+            response.sendRedirect(request.getContextPath() + "/home.jsp");
+            return;
+        }
+        quantity = (Integer) request.getAttribute("quantity");
+        unitPrice = product.getSalePrice() > 0 && product.getSalePrice() < product.getOriginalPrice()
+                ? product.getSalePrice() : product.getOriginalPrice();
+        totalCost = unitPrice * quantity;
+    } else {
+        Cart cart = (Cart) request.getAttribute("cart");
+        if (cart == null || cart.isEmpty()) {
+            response.sendRedirect(request.getContextPath() + "/cart");
+            return;
+        }
+        totalCost = cart.getTotalPrice();
     }
 
     List<DeliveryAddress> addresses = (List<DeliveryAddress>) request.getAttribute("addresses");
     List<Voucher> vouchers = (List<Voucher>) request.getAttribute("vouchers");
-    int quantity = (Integer) request.getAttribute("quantity");
 
-    double unitPrice = product.getSalePrice() > 0 && product.getSalePrice() < product.getOriginalPrice()
-            ? product.getSalePrice() : product.getOriginalPrice();
-    double totalCost = unitPrice * quantity;
     double shippingFee = totalCost >= 200000 ? 0.0 : 20000.0;
     double finalCost = totalCost + shippingFee;
 
@@ -353,8 +371,10 @@
         </c:if>
 
         <form method="post" action="checkout" id="checkoutForm">
-            <input type="hidden" name="productId" value="<%= product.getId() %>">
-            <input type="hidden" name="quantity" value="<%= quantity %>">
+            <% if (isBuyNow) { %>
+                <input type="hidden" name="productId" value="<%= product.getId() %>">
+                <input type="hidden" name="quantity" value="<%= quantity %>">
+            <% } %>
 
             <div class="checkout-grid">
                 
@@ -468,6 +488,7 @@
                             <i class="fa-solid fa-basket-shopping"></i> Tóm Tắt Đơn Hàng
                         </div>
 
+                        <% if (isBuyNow) { %>
                         <div class="product-summary" style="margin-bottom:1.25rem;">
                             <% if (product.getImage() != null && !product.getImage().trim().isEmpty()) { %>
                                 <img src="<%= product.getImage() %>" alt="<%= product.getTitle() %>" class="product-img" onerror="this.src='https://ui-avatars.com/api/?name=F&background=4caf50&color=fff&size=80&bold=true';">
@@ -479,6 +500,27 @@
                                 <div class="product-qty-price">Số lượng: <strong><%= quantity %></strong> &times; <%= nf.format((long) unitPrice) %> đ</div>
                             </div>
                         </div>
+                        <% } else { 
+                            Cart cart = (Cart) request.getAttribute("cart");
+                            if (cart != null && cart.getItems() != null) {
+                                for (CartItem item : cart.getItems()) {
+                        %>
+                        <div class="product-summary" style="margin-bottom:1.25rem; border-bottom: 1px dashed var(--gray-100); padding-bottom: 0.75rem;">
+                            <% if (item.getImage() != null && !item.getImage().trim().isEmpty()) { %>
+                                <img src="<%= item.getImage() %>" alt="<%= item.getTitle() %>" class="product-img" onerror="this.src='https://ui-avatars.com/api/?name=F&background=4caf50&color=fff&size=80&bold=true';">
+                            <% } else { %>
+                                <div class="product-img" style="background:var(--green-light); display:flex; align-items:center; justify-content:center; font-size:1.8rem;">🍎</div>
+                            <% } %>
+                            <div class="product-details">
+                                <div class="product-name"><%= item.getTitle() %></div>
+                                <div class="product-qty-price">Số lượng: <strong><%= item.getQuantity() %></strong> &times; <%= nf.format((long) item.getUnitPrice()) %> đ</div>
+                            </div>
+                        </div>
+                        <% 
+                                }
+                            }
+                        } 
+                        %>
 
                         <!-- Voucher Code input -->
                         <div class="form-group" style="margin-bottom: 1.25rem;">

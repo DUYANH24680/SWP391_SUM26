@@ -124,6 +124,3 @@ public class ProductVariant {
         return !isDelete;
     }
 }
-
-
-

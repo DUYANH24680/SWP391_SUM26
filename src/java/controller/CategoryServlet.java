@@ -312,6 +312,3 @@ public class CategoryServlet extends HttpServlet {
         return ROLE_ADMIN.equals(role) || ROLE_SELLER.equals(role);
     }
 }
-
-
-

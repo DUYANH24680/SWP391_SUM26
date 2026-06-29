@@ -162,6 +162,3 @@ public class ProductVariantDAO extends DbContext {
         return v;
     }
 }
-
-
-

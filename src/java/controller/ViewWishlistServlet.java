@@ -20,14 +20,13 @@ public class ViewWishlistServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         HttpSession session = req.getSession(false);
-        if (session == null || session.getAttribute("Account") == null) {
+        if (session == null || session.getAttribute("user") == null) {
             resp.sendRedirect(req.getContextPath() + "/login");
             return;
         }
 
-        Account Account = (Account) session.getAttribute("Account");
-        req.setAttribute("wishlist", wishlistService.getWishlistByCustomerId(Account.getId()));
+        Account user = (Account) session.getAttribute("user");
+        req.setAttribute("wishlist", wishlistService.getWishlistByCustomerId(user.getId()));
         req.getRequestDispatcher("/wishlist.jsp").forward(req, resp);
     }
 }
-

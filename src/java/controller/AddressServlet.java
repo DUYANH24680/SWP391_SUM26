@@ -1,5 +1,5 @@
 package controller;
-
+//DUy Anh
 import dao.DeliveryAddressDAO;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -20,15 +20,15 @@ public class AddressServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         HttpSession session = req.getSession(true);
-        Account Account = (Account) session.getAttribute("Account");
+        Account user = (Account) session.getAttribute("user");
 
-        if (Account == null) {
+        if (user == null) {
             resp.sendRedirect(req.getContextPath() + "/login");
             return;
         }
 
         DeliveryAddressDAO dao = new DeliveryAddressDAO();
-        List<DeliveryAddress> addresses = dao.findByUserId(Account.getId());
+        List<DeliveryAddress> addresses = dao.findByCustomerId(user.getId());
         req.setAttribute("addresses", addresses);
 
         req.getRequestDispatcher("/address.jsp").forward(req, resp);
@@ -38,9 +38,9 @@ public class AddressServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         HttpSession session = req.getSession(true);
-        Account Account = (Account) session.getAttribute("Account");
+        Account user = (Account) session.getAttribute("user");
 
-        if (Account == null) {
+        if (user == null) {
             resp.sendRedirect(req.getContextPath() + "/login");
             return;
         }
@@ -53,23 +53,23 @@ public class AddressServlet extends HttpServlet {
 
         switch (action) {
             case "addAddress":
-                handleAddAddress(req, session, Account);
+                handleAddAddress(req, session, user);
                 break;
             case "updateAddress":
-                handleUpdateAddress(req, session, Account);
+                handleUpdateAddress(req, session, user);
                 break;
             case "deleteAddress":
-                handleDeleteAddress(req, session, Account);
+                handleDeleteAddress(req, session, user);
                 break;
             case "setDefaultAddress":
-                handleSetDefaultAddress(req, session, Account);
+                handleSetDefaultAddress(req, session, user);
                 break;
         }
 
         resp.sendRedirect(req.getContextPath() + "/address");
     }
 
-    private void handleAddAddress(HttpServletRequest req, HttpSession session, Account Account) {
+    private void handleAddAddress(HttpServletRequest req, HttpSession session, Account user) {
         String name = req.getParameter("recipientName");
         String phone = req.getParameter("recipientPhone");
         String address = req.getParameter("address");
@@ -77,7 +77,7 @@ public class AddressServlet extends HttpServlet {
         boolean isDefault = "on".equals(req.getParameter("isDefault"));
 
         DeliveryAddress da = new DeliveryAddress();
-        da.setUserId(Account.getId());
+        da.setCustomerId(user.getId());
         da.setRecipientName(name);
         da.setRecipientPhone(phone);
         da.setAddress(address);
@@ -92,7 +92,7 @@ public class AddressServlet extends HttpServlet {
         }
     }
 
-    private void handleUpdateAddress(HttpServletRequest req, HttpSession session, Account Account) {
+    private void handleUpdateAddress(HttpServletRequest req, HttpSession session, Account user) {
         try {
             int id = Integer.parseInt(req.getParameter("id"));
             String name = req.getParameter("recipientName");
@@ -103,7 +103,7 @@ public class AddressServlet extends HttpServlet {
 
             DeliveryAddress da = new DeliveryAddress();
             da.setId(id);
-            da.setUserId(Account.getId());
+            da.setCustomerId(user.getId());
             da.setRecipientName(name);
             da.setRecipientPhone(phone);
             da.setAddress(address);
@@ -113,7 +113,7 @@ public class AddressServlet extends HttpServlet {
             DeliveryAddressDAO dao = new DeliveryAddressDAO();
             if (dao.update(da)) {
                 if (isDefault) {
-                    dao.setDefault(id, Account.getId());
+                    dao.setDefault(id, user.getId());
                 }
                 session.setAttribute("message", "Cập nhật địa chỉ thành công!");
             } else {
@@ -124,11 +124,11 @@ public class AddressServlet extends HttpServlet {
         }
     }
 
-    private void handleDeleteAddress(HttpServletRequest req, HttpSession session, Account Account) {
+    private void handleDeleteAddress(HttpServletRequest req, HttpSession session, Account user) {
         try {
             int id = Integer.parseInt(req.getParameter("id"));
             DeliveryAddressDAO dao = new DeliveryAddressDAO();
-            if (dao.delete(id, Account.getId())) {
+            if (dao.delete(id, user.getId())) {
                 session.setAttribute("message", "Đã xóa địa chỉ!");
             } else {
                 session.setAttribute("error", "Không thể xóa địa chỉ này!");
@@ -138,11 +138,11 @@ public class AddressServlet extends HttpServlet {
         }
     }
 
-    private void handleSetDefaultAddress(HttpServletRequest req, HttpSession session, Account Account) {
+    private void handleSetDefaultAddress(HttpServletRequest req, HttpSession session, Account user) {
         try {
             int id = Integer.parseInt(req.getParameter("id"));
             DeliveryAddressDAO dao = new DeliveryAddressDAO();
-            if (dao.setDefault(id, Account.getId())) {
+            if (dao.setDefault(id, user.getId())) {
                 session.setAttribute("message", "Đã đặt làm địa chỉ mặc định!");
             } else {
                 session.setAttribute("error", "Không thể đặt mặc định!");
@@ -152,4 +152,3 @@ public class AddressServlet extends HttpServlet {
         }
     }
 }
-

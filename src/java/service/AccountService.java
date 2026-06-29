@@ -7,32 +7,12 @@ import java.security.NoSuchAlgorithmException;
 
 /**
  * AccountService - All business logic for Account profile management.
- * No request/response dependencies here.
  */
 public class AccountService {
 
-    private AccountDAO dao = new AccountDAO();
-
-    // ---- Login ----
-
-    public Account login(String username, String password) {
-        if (username == null || username.trim().isEmpty()) {
-            return null;
-        }
-        if (password == null || password.trim().isEmpty()) {
-            return null;
-        }
-
-        Account account = dao.findByUsernameOrEmail(username);
-        if (account != null && account.getPasswordHash().equals(password)) {
-            return account;
-        }
-        return null;
-    }
-
     // ---- Profile ----
 
-    public String updateProfile(int accountId, String fullname, String email, String phone, String address, Boolean gender, String avatar) {
+    public String updateProfile(int userId, String fullname, String email, String phone, String address, Boolean gender, String avatar) {
         if (fullname == null || fullname.trim().isEmpty()) {
             return "Họ và tên không được để trống.";
         }
@@ -45,40 +25,52 @@ public class AccountService {
         if (phone != null && !phone.isEmpty() && !phone.matches("^[0-9]{9,11}$")) {
             return "Số điện thoại không hợp lệ (9-11 chữ số).";
         }
+        AccountDAO dao = new AccountDAO();
         try {
-            if (dao.isEmailTaken(email.trim(), accountId)) {
+            if (dao.isEmailTaken(email.trim(), userId)) {
                 return "Email này đã được sử dụng bởi một tài khoản khác.";
             }
-            boolean ok = dao.updateProfile(accountId, fullname.trim(), email.trim(), phone, address, gender, avatar);
+            boolean ok = dao.updateProfile(userId, fullname.trim(), email.trim(), phone, address, gender, avatar);
             return ok ? null : "Cập nhật thất bại. Vui lòng thử lại.";
         } finally {
             dao.close();
         }
     }
 
-    // ---- Get Account by ID ----
-
-    public Account getAccountById(int id) {
-        return dao.findById(id);
-    }
-
     // ---- Change Password ----
 
-    public String changePassword(int accountId, String currentPassword, String newPassword, String confirmPassword) {
+    /**
+     * Change password after verifying the current password.
+     * Returns an error message or null on success.
+     */
+    public String changePassword(int userId, String currentPassword, String newPassword, String confirmPassword) {
         if (newPassword == null || newPassword.length() < 6) {
             return "Mật khẩu mới phải có ít nhất 6 ký tự.";
         }
         if (!newPassword.equals(confirmPassword)) {
             return "Xác nhận mật khẩu không khớp.";
         }
+        AccountDAO dao = new AccountDAO();
         try {
-            Account account = dao.findById(accountId);
-            if (account == null) return "Không tìm thấy tài khoản.";
-            if (!currentPassword.equals(account.getPasswordHash())) {
+            Account c = dao.findById(userId);
+            if (c == null) return "Không tìm thấy tài khoản.";
+            if (!currentPassword.equals(c.getPasswordHash())) {
                 return "Mật khẩu hiện tại không đúng.";
             }
-            boolean ok = dao.updatePassword(accountId, newPassword);
+            boolean ok = dao.updatePassword(userId, newPassword);
             return ok ? null : "Đổi mật khẩu thất bại. Vui lòng thử lại.";
+        } finally {
+            dao.close();
+        }
+    }
+
+    /**
+     * Get a fresh account object.
+     */
+    public Account getUserById(int id) {
+        AccountDAO dao = new AccountDAO();
+        try {
+            return dao.findById(id);
         } finally {
             dao.close();
         }
@@ -102,8 +94,29 @@ public class AccountService {
             throw new RuntimeException("SHA-256 not available", e);
         }
     }
+    
+    public Account login(String username, String password) {
+        // Validate basic
+        if (username == null || username.trim().isEmpty()) {
+            return null;
+        }
+        if (password == null || password.trim().isEmpty()) {
+            return null;
+        }
 
-    public void close() {
-        dao.close();
+        // Lấy dữ liệu từ DB (DAO)
+        AccountDAO dao = new AccountDAO();
+        try {
+            Account account = dao.findByUsernameOrEmail(username);
+            
+            // Kiểm tra (Logic)
+            if (account != null && account.getPasswordHash().equals(password)) {
+                return account;
+            }
+            
+            return null;
+        } finally {
+            dao.close();
+        }
     }
 }

@@ -1,7 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="model.Account" %>
 <%
-    Account user = (Account) session.getAttribute("Account");
+    Account user = (Account) session.getAttribute("user");
     String role   = (String) session.getAttribute("role");
 
     if (user == null) {
@@ -217,8 +217,7 @@
 
         .sidebar-nav { padding: 0.5rem; }
 
-        .sidebar-nav button,
-        .sidebar-nav a {
+        .sidebar-nav button {
             display: flex;
             align-items: center;
             gap: 0.65rem;
@@ -233,22 +232,16 @@
             cursor: pointer;
             font-family: 'Inter', sans-serif;
             text-align: left;
-            text-decoration: none;
             transition: all 0.15s;
         }
 
-        .sidebar-nav button:hover,
-        .sidebar-nav a:hover { background: var(--green-light); color: var(--green-dark); }
+        .sidebar-nav button:hover { background: var(--green-light); color: var(--green-dark); }
 
-        .sidebar-nav button.active,
-        .sidebar-nav a.active {
+        .sidebar-nav button.active {
             background: var(--green);
             color: #fff;
             font-weight: 600;
         }
-
-        .sidebar-nav a.logout { color: #e53e3e; }
-        .sidebar-nav a.logout:hover { background: #fff5f5; color: #c53030; }
 
         /* ======= MAIN CONTENT ======= */
         .main { flex: 1; display: flex; flex-direction: column; gap: 1.25rem; min-width: 0; }
@@ -693,39 +686,26 @@
         </div>
 
         <div class="sidebar-nav">
-            <% if (!"seller".equalsIgnoreCase(role)) { %>
-            <a href="customer-dashboard"><i class="fa-solid fa-gauge"></i> Dashboard</a>
-            <% } %>
-            <% if ("seller".equalsIgnoreCase(role)) { %>
-            <a href="seller/dashboard">
-                <i class="fa-solid fa-store"></i> Dashboard Shop
-            </a>
-            <% } %>
             <button class="active" id="nav-profile" onclick="showPanel('profile')">
                 <i class="fa-regular fa-user"></i> Ho So
             </button>
-            <a href="address">
+            <a href="address" style="display:flex; align-items:center; gap:0.65rem; width:100%; padding:0.65rem 0.9rem; border-radius:var(--radius-sm); font-size:0.875rem; font-weight:500; color:var(--gray-600); border:none; background:transparent; cursor:pointer; text-decoration:none; transition:all 0.15s;" onmouseover="this.style.background='var(--green-light)'; this.style.color='var(--green-dark)';" onmouseout="this.style.background='transparent'; this.style.color='var(--gray-600)';">
                 <i class="fa-solid fa-map-location-dot"></i> Sổ Địa Chỉ
             </a>
             <button id="nav-security" onclick="showPanel('security')">
                 <i class="fa-solid fa-shield-halved"></i> Bảo Mật
             </button>
             <% if ("admin".equalsIgnoreCase(role) || "seller".equalsIgnoreCase(role)) { %>
-            <a href="category">
+            <a href="category" style="display:flex; align-items:center; gap:0.65rem; width:100%; padding:0.65rem 0.9rem; border-radius:var(--radius-sm); font-size:0.875rem; font-weight:500; color:var(--gray-600); border:none; background:transparent; cursor:pointer; text-decoration:none; transition:all 0.15s;" onmouseover="this.style.background='var(--green-light)'; this.style.color='var(--green-dark)';" onmouseout="this.style.background='transparent'; this.style.color='var(--gray-600)';">
                 <i class="fa-solid fa-layer-group"></i> Quản Lý Danh Mục
             </a>
             <% } %>
             <% if ("admin".equalsIgnoreCase(role) || "seller".equalsIgnoreCase(role)) { %>
-            <a href="products">
+            <a href="products" style="display:flex; align-items:center; gap:0.65rem; width:100%; padding:0.65rem 0.9rem; border-radius:var(--radius-sm); font-size:0.875rem; font-weight:500; color:var(--gray-600); border:none; background:transparent; cursor:pointer; text-decoration:none; transition:all 0.15s;" onmouseover="this.style.background='var(--green-light)'; this.style.color='var(--green-dark)';" onmouseout="this.style.background='transparent'; this.style.color='var(--gray-600)';">
                 <i class="fa-brands fa-opencart"></i> Quản Lý Sản Phẩm
             </a>
             <% } %>
-            <% if ("seller".equalsIgnoreCase(role)) { %>
-            <a href="seller/orders">
-                <i class="fa-solid fa-basket-shopping"></i> Quản Lý Đơn Hàng
-            </a>
-            <% } %>
-            <a href="logout" class="logout">
+            <a href="logout" style="text-decoration:none; display:flex; align-items:center; gap:0.75rem; padding:12px 16px; border-radius:12px; color:#e53e3e; font-weight:600; font-size:0.95rem; margin-bottom:8px; border:1px solid transparent; transition:all 0.2s;" onmouseover="this.style.background='#fff5f5'; this.style.borderColor='#fed7d7';" onmouseout="this.style.background='transparent'; this.style.borderColor='transparent';">
                 <i class="fa-solid fa-right-from-bracket" style="width:20px;text-align:center;"></i> Đăng Xuất
             </a>
         </div>
@@ -994,5 +974,3 @@
 </script>
 </body>
 </html>
-
-

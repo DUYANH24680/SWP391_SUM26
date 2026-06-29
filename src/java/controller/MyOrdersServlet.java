@@ -1,6 +1,5 @@
 package controller;
 
-import service.OrderService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -8,10 +7,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import model.Account;
-import model.CancelCustomerOrderResult;
-import model.CustomerOrdersData;
+import model.Order;
+import model.OrderDetail;
+import service.OrderService;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 
 @WebServlet("/my-orders")
 public class MyOrdersServlet extends HttpServlet {
@@ -20,27 +22,19 @@ public class MyOrdersServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         HttpSession session = req.getSession(false);
-        if (session == null || session.getAttribute("Account") == null) {
+        if (session == null || session.getAttribute("user") == null) {
             resp.sendRedirect(req.getContextPath() + "/login");
             return;
         }
-        Account account = (Account) session.getAttribute("Account");
+        Account user = (Account) session.getAttribute("user");
 
         OrderService orderService = new OrderService();
-        String statusParam = req.getParameter("status");
-        Integer statusFilter = null;
-        if (statusParam != null && !statusParam.trim().isEmpty()) {
-            try {
-                statusFilter = Integer.parseInt(statusParam.trim());
-            } catch (NumberFormatException e) {
-                statusFilter = null;
-            }
-        }
-        CustomerOrdersData data = orderService.getCustomerOrdersWithDetails(account.getId(), statusFilter);
+        List<Order> orders = orderService.getOrdersByCustomerId(user.getId());
+        Map<Integer, List<OrderDetail>> orderDetailsMap = orderService.getOrderDetailsMap(orders);
 
-        req.setAttribute("orders", data.getOrders());
-        req.setAttribute("detailsMap", data.getDetailsMap());
-        req.setAttribute("activeStatus", statusFilter);
+        req.setAttribute("orders", orders);
+        req.setAttribute("detailsMap", orderDetailsMap);
+
         req.getRequestDispatcher("/my-orders.jsp").forward(req, resp);
     }
 
@@ -48,31 +42,25 @@ public class MyOrdersServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         HttpSession session = req.getSession(false);
-        if (session == null || session.getAttribute("Account") == null) {
+        if (session == null || session.getAttribute("user") == null) {
             resp.sendRedirect(req.getContextPath() + "/login");
             return;
         }
-        Account account = (Account) session.getAttribute("Account");
+        Account user = (Account) session.getAttribute("user");
 
         String action = req.getParameter("action");
         String orderIdParam = req.getParameter("orderId");
 
         if ("cancel".equals(action) && orderIdParam != null) {
-            int orderId;
             try {
-                orderId = Integer.parseInt(orderIdParam.trim());
+                int orderId = Integer.parseInt(orderIdParam.trim());
+                OrderService orderService = new OrderService();
+                orderService.cancelOrderByCustomer(orderId, user.getId());
+                session.setAttribute("message", "Đã hủy đơn hàng thành công!");
             } catch (NumberFormatException e) {
                 session.setAttribute("error", "ID đơn hàng không hợp lệ.");
-                resp.sendRedirect(req.getContextPath() + "/my-orders");
-                return;
-            }
-
-            OrderService orderService = new OrderService();
-            CancelCustomerOrderResult result = orderService.cancelCustomerOrder(orderId, account.getId());
-            if (result.isSuccess()) {
-                session.setAttribute("message", result.getMessage());
-            } else {
-                session.setAttribute("error", result.getMessage());
+            } catch (IllegalArgumentException | RuntimeException e) {
+                session.setAttribute("error", e.getMessage());
             }
         }
 

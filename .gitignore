@@ -3,7 +3,7 @@ nbproject/private/
 nbproject/ant-deploy.xml
 nbbuild/
 dist/
-
+nbproject/private/
 # Build output
 build/
 *.html

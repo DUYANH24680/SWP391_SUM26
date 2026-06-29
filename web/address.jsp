@@ -3,10 +3,10 @@
 <%@ page import="model.DeliveryAddress" %>
 <%@ page import="java.util.List" %>
 <%
-    Account Account = (Account) session.getAttribute("Account");
+    Account user = (Account) session.getAttribute("user");
     String role   = (String) session.getAttribute("role");
 
-    if (Account == null) {
+    if (user == null) {
         response.sendRedirect(request.getContextPath() + "/login");
         return;
     }
@@ -16,8 +16,8 @@
     else if ("seller".equalsIgnoreCase(role))   roleDisplay = "Nhân Viên Bán Hàng";
     else if ("delivery".equalsIgnoreCase(role)) roleDisplay = "Nhân Viên Giao Hàng";
 
-    String fullname    = Account.getFullname();
-    String avatarUrl   = Account.getAvatar();
+    String fullname    = user.getFullname();
+    String avatarUrl   = user.getAvatar();
     if (avatarUrl == null || avatarUrl.trim().isEmpty())
         avatarUrl = "https://ui-avatars.com/api/?name="
                   + java.net.URLEncoder.encode(fullname, "UTF-8")
@@ -116,9 +116,9 @@
             position: sticky;
             top: 76px;
         }
-        .sidebar-Account { padding: 1.25rem 1rem; border-bottom: 1px solid var(--gray-100); }
-        .sidebar-Account-row { display: flex; align-items: center; gap: 0.65rem; margin-bottom: 0.3rem; }
-        .sidebar-Account-avatar { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 2px solid var(--green); }
+        .sidebar-user { padding: 1.25rem 1rem; border-bottom: 1px solid var(--gray-100); }
+        .sidebar-user-row { display: flex; align-items: center; gap: 0.65rem; margin-bottom: 0.3rem; }
+        .sidebar-user-avatar { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 2px solid var(--green); }
         .sidebar-welcome { font-size: 0.8rem; font-weight: 700; color: var(--gray-800); }
         .sidebar-role-text { font-size: 0.72rem; color: var(--gray-400); padding-left: 0.1rem; }
 
@@ -131,8 +131,6 @@
         }
         .sidebar-nav a:hover { background: var(--green-light); color: var(--green-dark); }
         .sidebar-nav a.active { background: var(--green); color: #fff; font-weight: 600; }
-        .sidebar-nav a.logout { color: #e53e3e; }
-        .sidebar-nav a.logout:hover { background: #fff5f5; color: #c53030; }
 
         /* ======= MAIN CONTENT ======= */
         .main { flex: 1; display: flex; flex-direction: column; gap: 1.25rem; min-width: 0; }
@@ -331,9 +329,9 @@
 <div class="layout">
     <!-- SIDEBAR -->
     <aside class="sidebar">
-        <div class="sidebar-Account">
-            <div class="sidebar-Account-row">
-                <img class="sidebar-Account-avatar" src="<%= avatarUrl %>" alt="avatar">
+        <div class="sidebar-user">
+            <div class="sidebar-user-row">
+                <img class="sidebar-user-avatar" src="<%= avatarUrl %>" alt="avatar">
                 <div>
                     <div class="sidebar-welcome"><%= fullname.split(" ")[fullname.split(" ").length - 1] %></div>
                 </div>
@@ -342,14 +340,6 @@
         </div>
 
         <div class="sidebar-nav">
-            <% if (!"seller".equalsIgnoreCase(role)) { %>
-            <a href="customer-dashboard"><i class="fa-solid fa-gauge"></i> Dashboard</a>
-            <% } %>
-            <% if ("seller".equalsIgnoreCase(role)) { %>
-            <a href="seller/dashboard">
-                <i class="fa-solid fa-store"></i> Dashboard Shop
-            </a>
-            <% } %>
             <a href="profile?tab=profile">
                 <i class="fa-regular fa-user"></i> Ho So
             </a>
@@ -359,22 +349,7 @@
             <a href="profile?tab=security">
                 <i class="fa-solid fa-shield-halved"></i> Bảo Mật
             </a>
-            <% if ("admin".equalsIgnoreCase(role) || "seller".equalsIgnoreCase(role)) { %>
-            <a href="category">
-                <i class="fa-solid fa-layer-group"></i> Quản Lý Danh Mục
-            </a>
-            <% } %>
-            <% if ("admin".equalsIgnoreCase(role) || "seller".equalsIgnoreCase(role)) { %>
-            <a href="products">
-                <i class="fa-brands fa-opencart"></i> Quản Lý Sản Phẩm
-            </a>
-            <% } %>
-            <% if ("seller".equalsIgnoreCase(role)) { %>
-            <a href="seller/orders">
-                <i class="fa-solid fa-basket-shopping"></i> Quản Lý Đơn Hàng
-            </a>
-            <% } %>
-            <a href="logout" class="logout">
+            <a href="logout" style="color:#e53e3e;">
                 <i class="fa-solid fa-right-from-bracket" style="width:20px;text-align:center;"></i> Đăng Xuất
             </a>
         </div>
@@ -551,4 +526,3 @@
 </script>
 </body>
 </html>
-
