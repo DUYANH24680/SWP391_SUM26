@@ -94,9 +94,6 @@ public class ViewCartServlet extends HttpServlet {
                 } catch (NumberFormatException ignored) {}
             }
 
-            // Size mac dinh la "M" neu khong chon
-            // Size da duoc loai bo khoi he thong
-
             try {
                 Cart cart = cartService.addToCart(
                         account.getId(), productId, quantity, discountCode, note);

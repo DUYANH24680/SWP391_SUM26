@@ -72,9 +72,7 @@ public class AddToCartServlet extends HttpServlet {
             }
         }
 
-        // ---- Buoc 5: Size khong con su dung ----
-
-        // ---- Buoc 6: Them vao gio hang ----
+        // ---- Buoc 5: Them vao gio hang ----
         try {
             System.out.println("[AddToCartServlet] Goi cartService.addToCart(customerId="
                     + account.getId() + ", productId=" + productId

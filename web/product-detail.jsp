@@ -616,32 +616,6 @@
             color: #ef4444;
         }
 
-        /* Size selector */
-        .size-btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 44px;
-            height: 44px;
-            border: 2px solid var(--gray-200);
-            border-radius: var(--radius-sm);
-            font-size: 0.875rem;
-            font-weight: 600;
-            color: var(--gray-600);
-            transition: all 0.15s;
-        }
-
-        .size-option input:checked + .size-btn {
-            border-color: var(--green);
-            background: var(--green-light);
-            color: var(--green-dark);
-        }
-
-        .size-option:hover .size-btn {
-            border-color: var(--green);
-            color: var(--green-dark);
-        }
-
         /* Toast notification */
         .toast {
             position: fixed;
@@ -957,37 +931,8 @@
                         <div class="action-buttons">
                             <% if (product.isActive() && product.getStockQuantity() > 0) { %>
 
-                                <% if (product.getUnit() != null && (product.getUnit().toLowerCase().contains("size") || product.getUnit().toLowerCase().contains("kich co") || product.getUnit().toLowerCase().contains("kg") || product.getUnit().toLowerCase().contains("ml"))) { %>
-                                <!-- Size selector -->
-                                <div style="margin-bottom: 0.75rem;">
-                                    <div class="section-label" style="margin-bottom: 0.5rem;">
-                                        <i class="fa-solid fa-ruler" style="font-size:0.75rem;color:var(--green);"></i>
-                                        Chon Kich Co
-                                    </div>
-                                    <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-                                        <label class="size-option" style="cursor:pointer;">
-                                            <input type="radio" name="selectedSize" value="S" style="display:none;">
-                                            <span class="size-btn">S</span>
-                                        </label>
-                                        <label class="size-option" style="cursor:pointer;">
-                                            <input type="radio" name="selectedSize" value="M" style="display:none;" checked>
-                                            <span class="size-btn active">M</span>
-                                        </label>
-                                        <label class="size-option" style="cursor:pointer;">
-                                            <input type="radio" name="selectedSize" value="L" style="display:none;">
-                                            <span class="size-btn">L</span>
-                                        </label>
-                                        <label class="size-option" style="cursor:pointer;">
-                                            <input type="radio" name="selectedSize" value="XL" style="display:none;">
-                                            <span class="size-btn">XL</span>
-                                        </label>
-                                    </div>
-                                </div>
-                                <% } %>
-
                                 <form action="add-to-cart" method="POST" id="addToCartForm" style="display:inline;">
                                     <input type="hidden" name="productId" value="<%= product.getId() %>">
-                                    <input type="hidden" name="size" id="selectedSizeInput" value="M">
                                     <input type="hidden" name="quantity" id="quantityInput" value="1">
                                     <button type="submit" class="btn btn-green" id="addToCartBtn">
                                         <i class="fa-solid fa-basket-shopping"></i>
@@ -1074,22 +1019,6 @@
         setTimeout(function() {
             toast.classList.remove('show');
         }, 3000);
-    }
-
-    // ---- Set size truoc khi submit ----
-    var addToCartForm = document.getElementById('addToCartForm');
-    if (addToCartForm) {
-        addToCartForm.addEventListener('submit', function(e) {
-            var sizeInputs = document.getElementsByName('selectedSize');
-            if (sizeInputs.length > 0) {
-                for (var i = 0; i < sizeInputs.length; i++) {
-                    if (sizeInputs[i].checked) {
-                        document.getElementById('selectedSizeInput').value = sizeInputs[i].value;
-                        break;
-                    }
-                }
-            }
-        });
     }
 
     // ---- AJAX Toggle Wishlist ----
