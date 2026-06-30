@@ -13,6 +13,8 @@ import jakarta.servlet.http.HttpSession;
 import model.Category;
 import model.Product;
 import model.Shop;
+import model.ProductReview;
+import java.util.Map;
 
 import java.io.IOException;
 import java.util.List;
@@ -88,6 +90,21 @@ public class ProductInfoServlet extends HttpServlet {
             req.setAttribute("categoryName", categoryName);
             if (shopInfo != null) {
                 req.setAttribute("shopInfo", shopInfo);
+            }
+
+            // Load reviews & rating summary
+            try {
+                dao.ProductReviewDAO reviewDAO = new dao.ProductReviewDAO();
+                try {
+                    java.util.List<ProductReview> reviews = reviewDAO.getReviewsByProductId(productId);
+                    Map<String, Object> ratingStats = reviewDAO.getRatingSummary(productId);
+                    req.setAttribute("reviews", reviews);
+                    req.setAttribute("ratingStats", ratingStats);
+                } finally {
+                    reviewDAO.close();
+                }
+            } catch (Exception e) {
+                System.err.println("[ProductInfoServlet] load reviews failed: " + e.getMessage());
             }
 
             req.getRequestDispatcher("/product-info.jsp").forward(req, resp);

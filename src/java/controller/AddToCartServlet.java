@@ -40,6 +40,8 @@ public class AddToCartServlet extends HttpServlet {
 
         // ---- Buoc 5: Them vao gio hang ----
         try {
+            int productId = Integer.parseInt(productIdParam);
+            int quantity = Integer.parseInt(quantityParam);
             cartService.addToCart(user.getId(), productId, quantity, voucherCode, note);
             session.setAttribute("message", "Thêm giỏ hàng thành công.");
         } catch (IllegalArgumentException e) {
