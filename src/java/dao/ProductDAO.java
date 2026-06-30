@@ -337,9 +337,76 @@ public class ProductDAO extends DbContext {
         p.setStatus(rs.getInt("status"));
         p.setIsDelete(rs.getBoolean("isDelete"));
         p.setCreatedAt(rs.getTimestamp("created_at"));
+                try {
+            p.setRemovedReason(rs.getString("removed_reason"));
+        } catch (SQLException ignored) {
+            p.setRemovedReason(null);
+        }
         return p;
     }
+    /**
+     * Xóa sản phẩm vi phạm (inappropriate product) bởi Admin.
+     * Soft delete: đánh dấu isDelete = 1, đồng thời lưu lý do + thời gian gỡ.
+     * Tự động tạo cột removed_reason / removed_at nếu chưa tồn tại (backward compatible).
+     */
+    public boolean removeInappropriateProduct(int productId, String reason) {
+        ensureRemovedColumnsExist();
 
+        String sql = "UPDATE Products SET isDelete = 1, removed_reason = ?, removed_at = GETDATE() WHERE id = ? AND isDelete = 0";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            ps.setString(1, reason);
+            ps.setInt(2, productId);
+            int rowsUpdated = ps.executeUpdate();
+            if (rowsUpdated > 0) {
+                System.out.println("[ProductDAO] removeInappropriateProduct(id=" + productId + ", reason='" + reason + "') success");
+            } else {
+                System.out.println("[ProductDAO] removeInappropriateProduct(id=" + productId + ") — product not found or already removed");
+            }
+            return rowsUpdated > 0;
+        } catch (SQLException e) {
+            System.err.println("[ProductDAO] removeInappropriateProduct(" + productId + ") error: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("ProductDAO.removeInappropriateProduct error: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Đảm bảo các cột removed_reason và removed_at tồn tại trong bảng Products.
+     * Nếu chưa có, tự động ALTER TABLE để thêm.
+     */
+    private void ensureRemovedColumnsExist() {
+        try {
+            DatabaseMetaData meta = getConnection().getMetaData();
+            boolean reasonExists = false, atExists = false;
+            try (ResultSet cols = meta.getColumns(null, null, "Products", "removed_reason")) {
+                reasonExists = cols.next();
+            }
+            try (ResultSet cols = meta.getColumns(null, null, "Products", "removed_at")) {
+                atExists = cols.next();
+            }
+            if (!reasonExists || !atExists) {
+                String alter = "ALTER TABLE Products ADD "
+                    + (reasonExists ? "" : "removed_reason NVARCHAR(500) NULL")
+                    + (reasonExists || atExists ? "" : ", ")
+                    + (atExists ? "" : "removed_at DATETIME NULL");
+                if (!reasonExists && !atExists) {
+                    // run separately to avoid comma issues
+                    try (Statement st = getConnection().createStatement()) {
+                        st.execute("ALTER TABLE Products ADD removed_reason NVARCHAR(500) NULL");
+                        System.out.println("[ProductDAO] Added removed_reason column to Products");
+                    }
+                }
+                if (!atExists) {
+                    try (Statement st = getConnection().createStatement()) {
+                        st.execute("ALTER TABLE Products ADD removed_at DATETIME NULL");
+                        System.out.println("[ProductDAO] Added removed_at column to Products");
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[ProductDAO] ensureRemovedColumnsExist() warning: " + e.getMessage());
+        }
+    }
     /**
      * Soft delete: danh dau san pham la da xoa (isDelete = 1).
      * Chi seller cua shop so huu moi duoc phep xoa san pham cua minh.
