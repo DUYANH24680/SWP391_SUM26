@@ -1814,17 +1814,11 @@
                         <i class="fa-solid fa-apple-whole"></i> Sena Shop
                     </a>
 
-                    <div class="nav-search">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                        <input type="text" placeholder="Tìm kiếm trái cây, rau củ...">
-                    </div>
+                    <jsp:include page="search-product.jsp" />
 
                     <div class="nav-links">
                         <a href="#" class="active">Trang Chủ</a>
-                        <a href="#">Trái Cây</a>
-                        <a href="#">Rau Củ</a>
-                        <a href="#">Nhập Khẩu</a>
-                        <a href="#">Khuyến Mãi</a>
+                        <a href="danh-muc">Danh Mục</a>
                                                 <% if ("admin".equals(user.getRoleName())) { %>
                             <a href="<%= request.getContextPath() %>/admin/customers">
                                 <i class="fa-solid fa-users" style="margin-right:4px;"></i> Khách Hàng
@@ -1847,8 +1841,17 @@
                         <% if (user !=null) { %>
                             <!-- Avatar with dropdown -->
                             <div class="avatar-wrap">
+                                <%
+                                    String _navName = (user.getFullname() != null && !user.getFullname().trim().isEmpty())
+                                        ? user.getFullname() : user.getUsername();
+                                    String _navAvatarUrl = (user.getAvatar() != null && !user.getAvatar().trim().isEmpty())
+                                        ? user.getAvatar()
+                                        : "https://ui-avatars.com/api/?name="
+                                          + java.net.URLEncoder.encode(_navName, "UTF-8")
+                                          + "&background=4caf50&color=fff&size=80&bold=true&rounded=true";
+                                %>
                                 <img class="nav-avatar"
-                                    src="https://ui-avatars.com/api/?name=<%= user.getFullname() != null ? user.getFullname().replace(" ", "+") : "User" %>&background=4caf50&color=fff&size=80&bold=true"
+                                    src="<%= _navAvatarUrl %>"
                                 alt="avatar">
                                 <div class="avatar-dropdown">
                                     <div class="avatar-dropdown-inner">
@@ -2011,42 +2014,6 @@
                         <!-- FILTER SIDEBAR -->
                         <aside class="filter-sidebar">
 
-                            <!-- Category filter -->
-                            <div class="filter-card">
-                                <div class="filter-header">
-                                    <div class="filter-title"><i class="fa-solid fa-list"></i> Danh Mục</div>
-                                </div>
-                                <div class="filter-body" style="display:flex;flex-direction:column;gap:0.1rem;">
-                                    <div class="filter-check">
-                                        <div class="filter-check-left">
-                                            <div class="check-box checked"></div>
-                                            <span class="check-label">Nhập Khẩu</span>
-                                        </div>
-                                        <span class="check-num">12</span>
-                                    </div>
-                                    <div class="filter-check">
-                                        <div class="filter-check-left">
-                                            <div class="check-box"></div>
-                                            <span class="check-label">Noi Dia</span>
-                                        </div>
-                                        <span class="check-num">24</span>
-                                    </div>
-                                    <div class="filter-check">
-                                        <div class="filter-check-left">
-                                            <div class="check-box"></div>
-                                            <span class="check-label">Huu Co</span>
-                                        </div>
-                                        <span class="check-num">8</span>
-                                    </div>
-                                    <div class="filter-check">
-                                        <div class="filter-check-left">
-                                            <div class="check-box"></div>
-                                            <span class="check-label">Cao Cap</span>
-                                        </div>
-                                        <span class="check-num">6</span>
-                                    </div>
-                                </div>
-                            </div>
 
                             <!-- Price filter -->
                             <div class="filter-card">

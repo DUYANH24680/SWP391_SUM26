@@ -59,7 +59,7 @@ public class MyOrdersServlet extends HttpServlet {
                 session.setAttribute("message", "Đã hủy đơn hàng thành công!");
             } catch (NumberFormatException e) {
                 session.setAttribute("error", "ID đơn hàng không hợp lệ.");
-            } catch (IllegalArgumentException | RuntimeException e) {
+            } catch (RuntimeException e) {
                 session.setAttribute("error", e.getMessage());
             }
         }

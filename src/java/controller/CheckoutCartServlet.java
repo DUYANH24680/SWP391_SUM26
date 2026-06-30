@@ -88,7 +88,7 @@ public class CheckoutCartServlet extends HttpServlet {
                 }
             }
 
-            List<DeliveryAddress> addresses = addressDAO.findByUserId(account.getId());
+            List<DeliveryAddress> addresses = addressDAO.findByCustomerId(account.getId());
             List<Voucher> vouchers = voucherDAO.getAllActiveVouchers();
 
             req.setAttribute("selectedItems", selectedItems);

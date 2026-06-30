@@ -29,11 +29,11 @@ public class AddToWishlistServlet extends HttpServlet {
         int productId = parsePositiveInt(req.getParameter("productId"), 0);
 
         try {
-            boolean added = wishlistService.addToWishlist(user.getId(), productId);
-            if (added) {
+            WishlistService.AddResult added = wishlistService.addToWishlist(user.getId(), productId);
+            if (added.isSuccess()) {
                 session.setAttribute("message", "Đã thêm sản phẩm vào wishlist.");
             } else {
-                session.setAttribute("message", "Sản phẩm đã có trong wishlist.");
+                session.setAttribute("error", added.getMessage());
             }
         } catch (IllegalArgumentException e) {
             session.setAttribute("error", e.getMessage());

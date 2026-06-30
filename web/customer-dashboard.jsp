@@ -527,6 +527,8 @@
             <i class="fa-solid fa-apple-whole"></i> Sena Shop
         </a>
         <div class="nav-links">
+            <a href="home.jsp">Trang Chủ</a>
+            <a href="danh-muc">Danh Mục</a>
             <a href="products">Sản Phẩm</a>
         </div>
         <div class="nav-right">

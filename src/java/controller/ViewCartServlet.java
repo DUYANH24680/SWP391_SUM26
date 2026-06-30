@@ -12,7 +12,7 @@ import service.CartService;
 
 import java.io.IOException;
 
-@WebServlet(name = "ViewCartServlet", urlPatterns = {"/cart", "/view-cart"})
+@WebServlet(name = "ViewCartServlet", urlPatterns = {"/view-cart"})
 public class ViewCartServlet extends HttpServlet {
 
     private final CartService cartService = new CartService();
@@ -93,9 +93,6 @@ public class ViewCartServlet extends HttpServlet {
                     quantity = Integer.parseInt(quantityStr.trim());
                 } catch (NumberFormatException ignored) {}
             }
-
-            // Size mac dinh la "M" neu khong chon
-            // Size da duoc loai bo khoi he thong
 
             try {
                 Cart cart = cartService.addToCart(
