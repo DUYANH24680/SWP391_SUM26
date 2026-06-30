@@ -23,6 +23,7 @@ public class Order {
     // Additional fields for displaying info in views
     private String customerName;
     private String voucherCode;
+        private String shopName;
 
     public Order() {
     }
@@ -191,6 +192,13 @@ public class Order {
 
     public void setVoucherCode(String voucherCode) {
         this.voucherCode = voucherCode;
+    }
+        public String getShopName() {
+        return shopName;
+    }
+
+    public void setShopName(String shopName) {
+        this.shopName = shopName;
     }
 
     // Helper status strings
