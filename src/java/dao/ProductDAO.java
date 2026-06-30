@@ -176,6 +176,36 @@ public class ProductDAO extends DbContext {
         }
     }
 
+    /**
+     * Lay danh sach san pham theo category_id (active, da duyet, con hang).
+     */
+    public List<Product> getProductsByCategoryId(int categoryId) {
+        String sql = "SELECT p.id, p.category_id, p.seller_id, p.shop_id, p.title, p.image, p.description, p.unit, "
+                   + "p.stock_quantity, p.sold_quantity, p.original_price, p.sale_price, p.expired_date, "
+                   + "p.average_rating, p.is_featured, p.status, p.isDelete, p.created_at, "
+                   + "s.shop_name "
+                   + "FROM Products p "
+                   + "LEFT JOIN Shops s ON p.shop_id = s.id "
+                   + "WHERE p.category_id = ? AND p.isDelete = 0 AND p.status = 1 "
+                   + "ORDER BY p.created_at DESC";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            ps.setInt(1, categoryId);
+            try (ResultSet rs = ps.executeQuery()) {
+                List<Product> list = new ArrayList<>();
+                while (rs.next()) {
+                    list.add(mapRow(rs));
+                }
+                System.out.println("[ProductDAO] getProductsByCategoryId(" + categoryId + ") returned " + list.size() + " products");
+                return list;
+            }
+        } catch (SQLException e) {
+            System.err.println("[ProductDAO] getProductsByCategoryId(" + categoryId + ") error: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("ProductDAO.getProductsByCategoryId error: " + e.getMessage(), e);
+        }
+    }
+
+
     public int countProductsByShopId(int shopId) {
         String sql = "SELECT COUNT(*) FROM Products WHERE shop_id = ? AND isDelete = 0";
         try (PreparedStatement ps = getConnection().prepareStatement(sql)) {

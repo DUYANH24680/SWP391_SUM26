@@ -1,5 +1,5 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ page import="model.Customer" %>
+﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page import="model.Account" %>
 <%@ page import="model.Category" %>
 <%@ page import="java.util.List" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
@@ -18,7 +18,7 @@
 %>
 <%
     Object rawUser = session.getAttribute("user");
-    Customer user = (Customer) rawUser;
+    Account user = (Account) rawUser;
     if (user == null) {
         response.sendRedirect(request.getContextPath() + "/login");
         return;
@@ -571,6 +571,7 @@
     </a>
     <div class="nav-links">
         <a href="home.jsp">Trang Chủ</a>
+        <a href="../danh-muc">Danh Mục</a>
         <a href="products">Sản Phẩm</a>
     </div>
     <div class="nav-right">
@@ -784,3 +785,4 @@
 
 </body>
 </html>
+

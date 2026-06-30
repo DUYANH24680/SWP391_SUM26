@@ -12,7 +12,7 @@ import service.CartService;
 
 import java.io.IOException;
 
-@WebServlet(name = "ViewCartServlet", urlPatterns = {"/cart", "/view-cart"})
+@WebServlet(name = "ViewCartServlet", urlPatterns = {"/view-cart"})
 public class ViewCartServlet extends HttpServlet {
 
     private final CartService cartService = new CartService();

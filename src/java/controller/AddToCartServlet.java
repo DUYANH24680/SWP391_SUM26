@@ -19,7 +19,7 @@ public class AddToCartServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
-        resp.sendRedirect(req.getContextPath() + "/home");
+        resp.sendRedirect(req.getContextPath() + "/home.jsp");
     }
 
     @Override
@@ -40,7 +40,7 @@ public class AddToCartServlet extends HttpServlet {
 
         // ---- Buoc 5: Them vao gio hang ----
         try {
-            cartService.addToCart(user.getId(), productId, size, quantity, voucherCode, note);
+            cartService.addToCart(user.getId(), productId, quantity, voucherCode, note);
             session.setAttribute("message", "Thêm giỏ hàng thành công.");
         } catch (IllegalArgumentException e) {
             session.setAttribute("error", e.getMessage());

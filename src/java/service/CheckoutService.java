@@ -49,7 +49,7 @@ public class CheckoutService {
                 return CheckoutPageResult.error("Sản phẩm không tồn tại hoặc ngừng bán.");
             }
 
-            List<DeliveryAddress> addresses = addressDAO.findByUserId(customerId);
+            List<DeliveryAddress> addresses = addressDAO.findByCustomerId(customerId);
             List<Voucher> vouchers = voucherDAO.getAllActiveVouchers();
 
             return CheckoutPageResult.success(product, addresses, vouchers, quantity);

@@ -1,4 +1,4 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="model.Account" %>
 <%@ page import="model.Order" %>
 <%@ page import="model.OrderDetail" %>
@@ -318,6 +318,7 @@
         </a>
         <div class="nav-links">
             <a href="<%= request.getContextPath() %>/home.jsp">Trang Chủ</a>
+            <a href="../danh-muc">Danh Mục</a>
             <a href="<%= request.getContextPath() %>/products">Sản Phẩm</a>
             <a href="<%= request.getContextPath() %>/admin/customers" class="active">
                 <i class="fa-solid fa-users"></i> Khách Hàng
@@ -473,3 +474,4 @@
     </script>
 </body>
 </html>
+

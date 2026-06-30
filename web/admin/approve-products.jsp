@@ -1,4 +1,4 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="model.Account" %>
 <%@ page import="model.Product" %>
 <%@ page import="java.util.List" %>
@@ -352,6 +352,7 @@
         </a>
         <div class="nav-links">
             <a href="../home.jsp">Trang Chủ</a>
+            <a href="../danh-muc">Danh Mục</a>
             <a href="../products">Sản Phẩm</a>
             <a href="../admin/customers">Khách Hàng</a>
             <a href="#" class="active">Duyệt Sản Phẩm</a>
@@ -506,3 +507,4 @@
     </div>
 </body>
 </html>
+
