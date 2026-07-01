@@ -17,6 +17,9 @@
                   + "&background=4caf50&color=fff&size=80&bold=true&rounded=true";
     }
 
+    String role = (String) session.getAttribute("role");
+    if (role == null) role = "member";
+
     String error = (String) request.getAttribute("error");
 %>
 <!DOCTYPE html>
@@ -189,6 +192,37 @@
             background: var(--green);
             color: #fff;
             font-weight: 600;
+        }
+
+        #inventory-submenu {
+            display: none;
+            flex-direction: column;
+            gap: 2px;
+            padding-left: 1.1rem;
+            margin-bottom: 4px;
+        }
+
+        #inventory-submenu .submenu-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.45rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--gray-600);
+            text-decoration: none;
+            transition: all 0.15s;
+        }
+
+        #inventory-submenu .submenu-item:hover {
+            background: var(--green-light);
+            color: var(--green-dark);
+        }
+
+        #inventory-submenu .submenu-item.active {
+            background: var(--green);
+            color: #fff;
         }
 
         .sidebar-nav a.logout {
@@ -868,6 +902,28 @@
     <a href="home.jsp" class="footer-logo"><i class="fa-solid fa-apple-whole"></i> Sena Shop</a>
     <span class="footer-copy">&copy; 2024 Sena Shop. Trai cay tuoi ngon moi ngay.</span>
 </footer>
+
+<script>
+(function() {
+    var path = window.location.pathname;
+    var subItems = document.querySelectorAll('#inventory-submenu .submenu-item');
+    subItems.forEach(function(item) {
+        if (item.getAttribute('href') === path) item.classList.add('active');
+    });
+})();
+
+function toggleInventoryMenu() {
+    var sub = document.getElementById('inventory-submenu');
+    var chev = document.getElementById('inventory-chevron');
+    if (sub.style.display === 'none' || sub.style.display === '') {
+        sub.style.display = 'flex';
+        chev.style.transform = 'rotate(180deg)';
+    } else {
+        sub.style.display = 'none';
+        chev.style.transform = '';
+    }
+}
+</script>
 
 </body>
 </html>

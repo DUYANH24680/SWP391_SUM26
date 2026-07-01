@@ -81,29 +81,6 @@
             padding: 2rem;
             color: var(--gray-800);
         }
-        .close-btn {
-            position: fixed;
-            top: 20px;
-            right: 30px;
-            background: rgba(255, 255, 255, 0.1);
-            color: #fff;
-            border: none;
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            cursor: pointer;
-            text-decoration: none;
-            transition: all 0.2s;
-            z-index: 1000;
-        }
-        .close-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: scale(1.05);
-        }
         .modal-container {
             background: #fff;
             border-radius: var(--radius);
@@ -152,7 +129,6 @@
             .detail-grid { grid-template-columns: 1fr; }
             .modal-container { padding: 1.5rem; }
             body { padding: 1rem; }
-            .close-btn { top: 10px; right: 10px; }
         }
         
         .product-image-wrap {
@@ -567,7 +543,6 @@
 </head>
 <body>
 
-    <a href="home.jsp" class="close-btn" title="Đóng"><i class="fa-solid fa-xmark"></i></a>
 
     <div class="modal-container">
         <!-- Breadcrumb -->
