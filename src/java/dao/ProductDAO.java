@@ -287,6 +287,208 @@ public class ProductDAO extends DbContext {
     }
 
     /**
+     * Thuc hien nhap kho: lock san pham, kiem tra ownership, cap nhat stock,
+     * ghi log trong 1 transaction. Tat ca thao tac deu nam trong transaction.
+     *
+     * @param productId  id san pham
+     * @param shopId     id cua hang (dung de kiem tra ownership)
+     * @param accountId  id tai khoan thuc hien nhap
+     * @param quantity   so luong nhap (> 0)
+     * @param note       ghi chu (co the null)
+     * @return int[2] = {previousStock, newStock} neu thanh cong;
+     *         null neu san pham khong ton tai hoac khong thuoc shop
+     * @throws SQLException
+     */
+    public int[] importStock(int productId, int shopId, int accountId, int quantity, String note, Timestamp expiredDate) throws SQLException {
+        String txType = "IMPORT";
+        String sqlLock = "SELECT stock_quantity, shop_id FROM Products WHERE id = ? AND isDelete = 0";
+        String sqlUpdate = "UPDATE Products SET stock_quantity = ? WHERE id = ? AND isDelete = 0";
+        String sqlLog = "INSERT INTO InventoryTransactions "
+                      + "(product_id, account_id, quantity, previous_stock, new_stock, note, transaction_type, expired_date) "
+                      + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+
+        Connection conn = null;
+        PreparedStatement psLock = null;
+        PreparedStatement psUpdate = null;
+        PreparedStatement psLog = null;
+        ResultSet rs = null;
+
+        try {
+            conn = getConnection();
+            conn.setAutoCommit(false);
+
+            // Lay stock hien tai + lock row
+            psLock = conn.prepareStatement(sqlLock);
+            psLock.setInt(1, productId);
+            rs = psLock.executeQuery();
+            if (!rs.next()) {
+                conn.rollback();
+                return null;
+            }
+            int previousStock = rs.getInt("stock_quantity");
+            int actualShopId = rs.getInt("shop_id");
+            rs.close();
+            rs = null;
+
+            // Kiem tra ownership
+            if (actualShopId != shopId) {
+                conn.rollback();
+                return null;
+            }
+
+            int newStock = previousStock + quantity;
+
+            // Cap nhat stock
+            psUpdate = conn.prepareStatement(sqlUpdate);
+            psUpdate.setInt(1, newStock);
+            psUpdate.setInt(2, productId);
+            int rowsUpdated = psUpdate.executeUpdate();
+            if (rowsUpdated == 0) {
+                conn.rollback();
+                return null;
+            }
+
+            // Ghi log nhap kho
+            psLog = conn.prepareStatement(sqlLog);
+            psLog.setInt(1, productId);
+            psLog.setInt(2, accountId);
+            psLog.setInt(3, quantity);
+            psLog.setInt(4, previousStock);
+            psLog.setInt(5, newStock);
+            if (note != null && !note.trim().isEmpty()) {
+                psLog.setString(6, note.trim());
+            } else {
+                psLog.setNull(6, Types.NVARCHAR);
+            }
+            psLog.setString(7, txType);
+            if (expiredDate != null) {
+                psLog.setTimestamp(8, expiredDate);
+            } else {
+                psLog.setNull(8, Types.TIMESTAMP);
+            }
+            psLog.executeUpdate();
+
+            conn.commit();
+            System.out.println("[ProductDAO] importStock(productId=" + productId + ", shopId=" + shopId
+                + ", qty=" + quantity + ", prev=" + previousStock + ", new=" + newStock + ") success");
+            return new int[]{previousStock, newStock};
+
+        } catch (SQLException e) {
+            if (conn != null) {
+                try { conn.rollback(); } catch (SQLException ignored) {}
+            }
+            throw e;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException ignored) {}
+            if (psLock != null) try { psLock.close(); } catch (SQLException ignored) {}
+            if (psUpdate != null) try { psUpdate.close(); } catch (SQLException ignored) {}
+            if (psLog != null) try { psLog.close(); } catch (SQLException ignored) {}
+            if (conn != null) {
+                try { conn.setAutoCommit(true); } catch (SQLException ignored) {}
+            }
+        }
+    }
+
+    /**
+     * Thuc hien xuat kho: lock san pham, kiem tra du stock, cap nhat stock,
+     * ghi log trong 1 transaction.
+     *
+     * @param productId  id san pham
+     * @param shopId     id cua hang (dung de kiem tra ownership)
+     * @param accountId  id tai khoan thuc hien xuat
+     * @param quantity   so luong xuat (> 0)
+     * @param note       ghi chu (co the null)
+     * @return int[2] = {previousStock, newStock} neu thanh cong;
+     *         null neu san pham khong ton tai, khong thuoc shop, hoac khong du stock
+     * @throws SQLException
+     */
+    public int[] exportStock(int productId, int shopId, int accountId, int quantity, String note) throws SQLException {
+        String txType = "EXPORT";
+        String sqlLock = "SELECT stock_quantity, shop_id FROM Products WHERE id = ? AND isDelete = 0";
+        String sqlUpdate = "UPDATE Products SET stock_quantity = ? WHERE id = ? AND isDelete = 0";
+        String sqlLog = "INSERT INTO InventoryTransactions "
+                      + "(product_id, account_id, quantity, previous_stock, new_stock, note, transaction_type) "
+                      + "VALUES (?, ?, ?, ?, ?, ?, ?)";
+
+        Connection conn = null;
+        PreparedStatement psLock = null;
+        PreparedStatement psUpdate = null;
+        PreparedStatement psLog = null;
+        ResultSet rs = null;
+
+        try {
+            conn = getConnection();
+            conn.setAutoCommit(false);
+
+            psLock = conn.prepareStatement(sqlLock);
+            psLock.setInt(1, productId);
+            rs = psLock.executeQuery();
+            if (!rs.next()) {
+                conn.rollback();
+                return null;
+            }
+            int previousStock = rs.getInt("stock_quantity");
+            int actualShopId = rs.getInt("shop_id");
+            rs.close();
+            rs = null;
+
+            if (actualShopId != shopId) {
+                conn.rollback();
+                return null;
+            }
+
+            if (previousStock < quantity) {
+                conn.rollback();
+                return null;
+            }
+
+            int newStock = previousStock - quantity;
+
+            psUpdate = conn.prepareStatement(sqlUpdate);
+            psUpdate.setInt(1, newStock);
+            psUpdate.setInt(2, productId);
+            int rowsUpdated = psUpdate.executeUpdate();
+            if (rowsUpdated == 0) {
+                conn.rollback();
+                return null;
+            }
+
+            psLog = conn.prepareStatement(sqlLog);
+            psLog.setInt(1, productId);
+            psLog.setInt(2, accountId);
+            psLog.setInt(3, quantity);
+            psLog.setInt(4, previousStock);
+            psLog.setInt(5, newStock);
+            if (note != null && !note.trim().isEmpty()) {
+                psLog.setString(6, note.trim());
+            } else {
+                psLog.setNull(6, Types.NVARCHAR);
+            }
+            psLog.setString(7, txType);
+            psLog.executeUpdate();
+
+            conn.commit();
+            System.out.println("[ProductDAO] exportStock(productId=" + productId + ", shopId=" + shopId
+                + ", qty=" + quantity + ", prev=" + previousStock + ", new=" + newStock + ") success");
+            return new int[]{previousStock, newStock};
+
+        } catch (SQLException e) {
+            if (conn != null) {
+                try { conn.rollback(); } catch (SQLException ignored) {}
+            }
+            throw e;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException ignored) {}
+            if (psLock != null) try { psLock.close(); } catch (SQLException ignored) {}
+            if (psUpdate != null) try { psUpdate.close(); } catch (SQLException ignored) {}
+            if (psLog != null) try { psLog.close(); } catch (SQLException ignored) {}
+            if (conn != null) {
+                try { conn.setAutoCommit(true); } catch (SQLException ignored) {}
+            }
+        }
+    }
+
+    /**
      * Lay san pham theo id co kiem tra ownership.
      * Tra ve null neu san pham khong ton tai hoac khong thuoc shop.
      */

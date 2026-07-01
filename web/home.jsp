@@ -1817,11 +1817,10 @@
                     </div>
 
                     <div class="nav-links">
-                        <a href="#" class="active">Trang Chủ</a>
-                        <a href="#">Trái Cây</a>
-                        <a href="#">Rau Củ</a>
-                        <a href="#">Nhập Khẩu</a>
-                        <a href="#">Khuyến Mãi</a>
+                        <a href="inventory-export">Xuất Kho</a>
+                        <a href="inventory-import">Nhập Kho</a>
+                        <a href="products">Sản Phẩm</a>
+                        <a href="category">Danh Mục</a>
                     </div>
 
                     <div class="nav-right">

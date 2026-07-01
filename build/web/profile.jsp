@@ -243,6 +243,38 @@
             font-weight: 600;
         }
 
+        .sidebar-nav button.has-submenu {
+            justify-content: flex-start;
+            gap: 0.65rem;
+        }
+
+        #inventory-submenu {
+            overflow: hidden;
+        }
+
+        #inventory-submenu .submenu-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.45rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--gray-600);
+            text-decoration: none;
+            transition: all 0.15s;
+        }
+
+        #inventory-submenu .submenu-item:hover {
+            background: var(--green-light);
+            color: var(--green-dark);
+        }
+
+        #inventory-submenu .submenu-item.active {
+            background: var(--green);
+            color: #fff;
+        }
+
         /* ======= MAIN CONTENT ======= */
         .main { flex: 1; display: flex; flex-direction: column; gap: 1.25rem; min-width: 0; }
 
@@ -696,6 +728,20 @@
                 <i class="fa-solid fa-shield-halved"></i> Bảo Mật
             </button>
             <% if ("admin".equalsIgnoreCase(role) || "seller".equalsIgnoreCase(role)) { %>
+            <button id="nav-inventory" onclick="toggleInventoryMenu()" class="has-submenu">
+                <i class="fa-solid fa-warehouse"></i> Kho
+                <i class="fa-solid fa-chevron-down" id="inventory-chevron" style="margin-left:auto; font-size:0.7rem; transition: transform 0.2s;"></i>
+            </button>
+            <div id="inventory-submenu" style="display:none; flex-direction:column; gap:2px; padding-left:1.1rem; margin-bottom:4px;">
+                <a href="inventory-import" class="submenu-item">
+                    <i class="fa-solid fa-arrow-down"></i> Nhập Kho
+                </a>
+                <a href="inventory-export" class="submenu-item">
+                    <i class="fa-solid fa-arrow-up"></i> Xuất Kho
+                </a>
+            </div>
+            <% } %>
+            <% if ("admin".equalsIgnoreCase(role) || "seller".equalsIgnoreCase(role)) { %>
             <a href="category" style="display:flex; align-items:center; gap:0.65rem; width:100%; padding:0.65rem 0.9rem; border-radius:var(--radius-sm); font-size:0.875rem; font-weight:500; color:var(--gray-600); border:none; background:transparent; cursor:pointer; text-decoration:none; transition:all 0.15s;" onmouseover="this.style.background='var(--green-light)'; this.style.color='var(--green-dark)';" onmouseout="this.style.background='transparent'; this.style.color='var(--gray-600)';">
                 <i class="fa-solid fa-layer-group"></i> Quản Lý Danh Mục
             </a>
@@ -936,6 +982,30 @@
         }
         localStorage.setItem('senaPanel', name);
     }
+
+    // Inventory dropdown
+    function toggleInventoryMenu() {
+        var sub = document.getElementById('inventory-submenu');
+        var chev = document.getElementById('inventory-chevron');
+        if (sub.style.display === 'none' || sub.style.display === '') {
+            sub.style.display = 'flex';
+            chev.style.transform = 'rotate(180deg)';
+        } else {
+            sub.style.display = 'none';
+            chev.style.transform = '';
+        }
+    }
+
+    // Highlight active submenu item
+    window.addEventListener('DOMContentLoaded', function() {
+        var path = window.location.pathname;
+        var subItems = document.querySelectorAll('#inventory-submenu .submenu-item');
+        subItems.forEach(function(item) {
+            if (item.getAttribute('href') === path) {
+                item.classList.add('active');
+            }
+        });
+    });
 
     // Restore last panel
     window.addEventListener('DOMContentLoaded', function() {
