@@ -14,6 +14,9 @@ import service.OrderService;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import 
+
+
 
 @WebServlet("/my-orders")
 public class MyOrdersServlet extends HttpServlet {
@@ -59,7 +62,9 @@ public class MyOrdersServlet extends HttpServlet {
                 session.setAttribute("message", "Đã hủy đơn hàng thành công!");
             } catch (NumberFormatException e) {
                 session.setAttribute("error", "ID đơn hàng không hợp lệ.");
-            } catch (IllegalArgumentException | RuntimeException e) {
+            } catch (IllegalArgumentException e) {
+                session.setAttribute("error", e.getMessage());
+            } catch (RuntimeException e) {
                 session.setAttribute("error", e.getMessage());
             }
         }
