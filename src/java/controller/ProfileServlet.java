@@ -28,7 +28,8 @@ public class ProfileServlet extends HttpServlet {
             try {
                 Account defaultCust = userDAO.findById(1);
                 if (defaultCust != null) {
-                    session.setAttribute("Account", defaultCust);
+                    
+                    session.setAttribute("user", defaultCust);
                     session.setAttribute("userId", defaultCust.getId());
                     session.setAttribute("role", defaultCust.getRoleName());
                 }
@@ -94,6 +95,7 @@ public class ProfileServlet extends HttpServlet {
         } else {
             Account updatedUser = userService.getUserById(user.getId());
             session.setAttribute("Account", updatedUser);
+            session.setAttribute("user", updatedUser);
             session.setAttribute("message", "Cập nhật hồ sơ thành công!");
         }
     }

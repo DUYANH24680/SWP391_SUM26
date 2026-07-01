@@ -603,11 +603,22 @@
 
     <!-- SIDEBAR -->
     <aside class="sidebar">
-        <div class="sidebar-nav">
-            <a href="profile"><i class="fa-regular fa-user"></i> Hồ Sơ</a>
+    <div class="sidebar-nav">
+        <% if ("customer".equalsIgnoreCase(role)) { %>
+        <a href="customer-dashboard"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+        <% } else if ("seller".equalsIgnoreCase(role)) { %>
+        <a href="seller/dashboard"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+        <% } %>
+        <a href="profile"><i class="fa-regular fa-user"></i> Hồ Sơ</a>
             <a href="products"><i class="fa-brands fa-opencart"></i> Sản Phẩm</a>
             <a href="#" class="active"><i class="fa-solid fa-plus"></i> Thêm Sản Phẩm</a>
-            <a href="#"><i class="fa-solid fa-basket-shopping"></i> Đơn Hàng</a>
+            <% if ("customer".equalsIgnoreCase(role)) { %>
+            <a href="my-orders"><i class="fa-solid fa-basket-shopping"></i> Đơn Hàng</a>
+            <% } else if ("seller".equalsIgnoreCase(role)) { %>
+            <a href="seller/orders"><i class="fa-solid fa-basket-shopping"></i> Đơn Hàng</a>
+            <% } else if ("admin".equalsIgnoreCase(role)) { %>
+            <a href="admin/orders"><i class="fa-solid fa-basket-shopping"></i> Đơn Hàng</a>
+            <% } %>
             <a href="#"><i class="fa-regular fa-heart"></i> Yêu Thích</a>
             <a href="logout" class="logout" style="margin-top:0.5rem;"><i class="fa-solid fa-right-from-bracket"></i> Đăng Xuất</a>
         </div>

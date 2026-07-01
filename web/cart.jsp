@@ -1,4 +1,4 @@
-﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="model.Cart" %>
 <%@ page import="model.CartItem" %>
 <%@ page import="model.Account" %>
@@ -739,7 +739,6 @@
                 </a>
             </div>
         <% } else { %>
-
             <!-- ===== SELECT ALL BAR ===== -->
             <div class="select-all-bar">
                 <label class="custom-checkbox" id="selectAllLabel">
@@ -754,8 +753,8 @@
                 </span>
             </div>
 
-            <form id="checkoutForm" action="checkout" method="POST">
-                <input type="hidden" name="removeFromCart" id="removeFromCart" value="true">
+            <form id="checkoutForm" action="checkout-cart" method="GET">
+                <input type="hidden" name="selectedProducts" id="selectedProducts">
 
                 <table class="cart-table">
                     <thead>
@@ -794,11 +793,16 @@
                                         <% if (item.getImage() != null && !item.getImage().trim().isEmpty()) { %>
                                             <img src="<%= item.getImage() %>" alt="<%= item.getTitle() %>">
                                         <% } else { %>
-                                            <span style="font-size: 1.5rem;">&#127822;</span>
+                                            <span style="font-size: 1.5rem;">🍎</span>
                                         <% } %>
                                     </div>
                                     <div class="cart-item-details">
                                         <div class="cart-item-title"><%= item.getTitle() %></div>
+                                        <div class="cart-item-meta">
+                                            <% if (item.getSize() != null && !item.getSize().isEmpty()) { %>
+                                                <span>Kich co: <strong><%= item.getSize() %></strong></span>
+                                            <% } %>
+                                        </div>
                                         <% if (item.getNote() != null && !item.getNote().isEmpty()) { %>
                                             <div class="notes-text">Ghi chu: <%= item.getNote() %></div>
                                         <% } %>
@@ -814,7 +818,7 @@
                                     <% if (item.getImage() != null && !item.getImage().trim().isEmpty()) { %>
                                         <img src="<%= item.getImage() %>" alt="<%= item.getTitle() %>">
                                     <% } else { %>
-                                        <span style="font-size: 1.2rem;">&#127822;</span>
+                                        <span style="font-size: 1.2rem;">🍎</span>
                                     <% } %>
                                 </div>
                             </td>
@@ -887,7 +891,6 @@
                         <button type="button" class="btn btn-danger" onclick="confirmClearCart()">
                             <i class="fa-solid fa-trash"></i> Xoa Gio Hang
                         </button>
-                        <input type="hidden" name="selectedProducts" id="selectedProducts">
                         <button type="submit" class="btn btn-orange" id="checkoutBtn">
                             <i class="fa-solid fa-credit-card"></i> Mua Hang
                         </button>
@@ -1117,19 +1120,7 @@
 
         const selectedIds = Array.from(checkboxes).map(function(cb) { return cb.value; });
         document.getElementById('selectedProducts').value = selectedIds.join(',');
-        removeSelectedItemsFromCart(selectedIds);
     });
-
-    function removeSelectedItemsFromCart(selectedIds) {
-        fetch('remove-selected-items', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams({ 'selectedProducts': selectedIds.join(',') })
-        })
-        .catch(function(error) {
-            console.error('Loi xoa san pham da chon:', error);
-        });
-    }
 
     // ---- Khoi tao khi load trang ----
     document.addEventListener('DOMContentLoaded', function() {

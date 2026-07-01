@@ -1,9 +1,12 @@
-﻿<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ page contentType="text/html;charset=UTF-8" %>
 <%@ page import="model.Account" %>
 <%@ page import="model.Product" %>
+<%@ page import="model.Category" %>
 <%@ page import="model.Cart" %>
 <%@ page import="java.util.List" %>
+<%@ page import="java.util.ArrayList" %>
 <%@ page import="dao.ProductDAO" %>
+<%@ page import="dao.CategoryDAO" %>
 <%@ page import="Utils.ProductSorter" %>
 <%@ page import="service.WishlistService" %>
 <%
@@ -29,11 +32,65 @@
         }
     }
     ProductDAO dao = new ProductDAO();
-    List<Product> productsList = dao.getAllProducts();
-    String sort = request.getParameter("sort");
-    if (sort != null) {
-        ProductSorter.sortProducts(productsList, sort);
+    
+    // Extract parameters
+    String search = request.getParameter("search");
+    if (search != null) search = search.trim();
+    
+    String categoryParam = request.getParameter("category");
+    List<Integer> categoryIds = null;
+    if (categoryParam != null && !categoryParam.isEmpty() && !"all".equals(categoryParam)) {
+        try {
+            categoryIds = new ArrayList<>();
+            categoryIds.add(Integer.parseInt(categoryParam));
+        } catch (NumberFormatException ignored) {}
     }
+    
+    Double minPrice = null;
+    String minPriceParam = request.getParameter("minPrice");
+    if (minPriceParam != null && !minPriceParam.isEmpty()) {
+        try { minPrice = Double.parseDouble(minPriceParam); } catch (NumberFormatException ignored) {}
+    }
+    
+    Double maxPrice = null;
+    String maxPriceParam = request.getParameter("maxPrice");
+    if (maxPriceParam != null && !maxPriceParam.isEmpty()) {
+        try { maxPrice = Double.parseDouble(maxPriceParam); } catch (NumberFormatException ignored) {}
+    }
+    
+    Double minRating = null;
+    String ratingParam = request.getParameter("rating");
+    if (ratingParam != null && !ratingParam.isEmpty()) {
+        try { minRating = Double.parseDouble(ratingParam); } catch (NumberFormatException ignored) {}
+    }
+    
+    String status = request.getParameter("status"); // "in_stock" or "out_of_stock"
+    
+    String sort = request.getParameter("sort");
+    if (sort == null || sort.isEmpty()) {
+        sort = "popular"; // default sort
+    }
+    
+    int pageNum = 1;
+    String pageParam = request.getParameter("page");
+    if (pageParam != null && !pageParam.isEmpty()) {
+        try { pageNum = Integer.parseInt(pageParam); } catch (NumberFormatException ignored) {}
+    }
+    
+    int pageSize = 12;
+    
+    // Fetch products
+    List<Product> productsList = dao.getFilteredProducts(search, categoryIds, minPrice, maxPrice, minRating, status, sort, pageNum, pageSize);
+    int totalProducts = dao.countFilteredProducts(search, categoryIds, minPrice, maxPrice, minRating, status);
+    int totalPages = (int) Math.ceil((double) totalProducts / pageSize);
+    if (totalPages == 0) totalPages = 1;
+    
+    // Category Counts
+    java.util.Map<Integer, Integer> categoryCounts = dao.getCategoryProductCounts();
+    
+    // Fetch active categories
+    CategoryDAO categoryDAO = new CategoryDAO();
+    List<Category> categoriesList = categoryDAO.getAllActiveCategories();
 %>
 <!DOCTYPE html>
             <html lang="vi">
@@ -2117,34 +2174,25 @@
                                     <div class="filter-title"><i class="fa-solid fa-list"></i> Danh Mục</div>
                                 </div>
                                 <div class="filter-body" style="display:flex;flex-direction:column;gap:0.1rem;">
-                                    <div class="filter-check">
+                                    <div class="filter-check category-filter-item <%= (categoryParam == null || "all".equals(categoryParam)) ? "active" : "" %>" data-category="all" style="cursor:pointer;">
                                         <div class="filter-check-left">
-                                            <div class="check-box checked"></div>
-                                            <span class="check-label">Nhập Khẩu</span>
+                                            <div class="check-box <%= (categoryParam == null || "all".equals(categoryParam)) ? "checked" : "" %>"></div>
+                                            <span class="check-label">Tất cả</span>
                                         </div>
-                                        <span class="check-num">12</span>
+                                        <span class="check-num"><%= totalProducts %></span>
                                     </div>
-                                    <div class="filter-check">
+                                    <% for (Category c : categoriesList) { 
+                                        int count = categoryCounts.getOrDefault(c.getId(), 0);
+                                        boolean isSelected = categoryParam != null && categoryParam.equals(String.valueOf(c.getId()));
+                                    %>
+                                    <div class="filter-check category-filter-item <%= isSelected ? "active" : "" %>" data-category="<%= c.getId() %>" style="cursor:pointer;">
                                         <div class="filter-check-left">
-                                            <div class="check-box"></div>
-                                            <span class="check-label">Noi Dia</span>
+                                            <div class="check-box <%= isSelected ? "checked" : "" %>"></div>
+                                            <span class="check-label"><%= c.getName() %></span>
                                         </div>
-                                        <span class="check-num">24</span>
+                                        <span class="check-num"><%= count %></span>
                                     </div>
-                                    <div class="filter-check">
-                                        <div class="filter-check-left">
-                                            <div class="check-box"></div>
-                                            <span class="check-label">Huu Co</span>
-                                        </div>
-                                        <span class="check-num">8</span>
-                                    </div>
-                                    <div class="filter-check">
-                                        <div class="filter-check-left">
-                                            <div class="check-box"></div>
-                                            <span class="check-label">Cao Cap</span>
-                                        </div>
-                                        <span class="check-num">6</span>
-                                    </div>
+                                    <% } %>
                                 </div>
                             </div>
 
@@ -2155,12 +2203,12 @@
                                 </div>
                                 <div class="filter-body">
                                     <div class="price-inputs">
-                                        <input type="text" class="price-input" placeholder="Từ 0">
-                                        <input type="text" class="price-input" placeholder="Đến 500k">
+                                        <input type="text" class="price-input" id="minPriceInput" placeholder="Từ 0" value="<%= minPriceParam != null ? minPriceParam : "" %>">
+                                        <input type="text" class="price-input" id="maxPriceInput" placeholder="Đến" value="<%= maxPriceParam != null ? maxPriceParam : "" %>">
                                     </div>
-                                    <button
+                                    <button id="btnApplyPrice"
                                         style="width:100%;padding:0.5rem;background:var(--green);color:#fff;border:none;border-radius:var(--radius-xs);font-size:0.8rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;">
-                                        Ap Dung
+                                        Áp Dụng
                                     </button>
                                 </div>
                             </div>
@@ -2171,38 +2219,21 @@
                                     <div class="filter-title"><i class="fa-solid fa-star"></i> Đánh Giá</div>
                                 </div>
                                 <div class="filter-body" style="display:flex;flex-direction:column;gap:0.35rem;">
-                                    <div class="rating-row">
-                                        <div class="check-box checked"
-                                            style="width:15px;height:15px;border-radius:3px;"></div>
+                                    <% 
+                                        double[] ratings = {5.0, 4.0, 3.0}; 
+                                        for (double r : ratings) {
+                                            boolean isSel = (minRating != null && minRating == r);
+                                    %>
+                                    <div class="rating-row rating-filter-item" data-rating="<%= r %>" style="cursor:pointer;">
+                                        <div class="check-box <%= isSel ? "checked" : "" %>"></div>
                                         <div class="stars-static">
-                                            <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
-                                            <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
-                                            <i class="fa-solid fa-star"></i>
+                                            <% for (int i = 1; i <= 5; i++) { %>
+                                                <i class="<%= i <= r ? "fa-solid fa-star" : "fa-regular fa-star empty" %>"></i>
+                                            <% } %>
                                         </div>
-                                        <span class="rating-label" style="font-size:0.78rem;color:var(--gray-400);">(5
-                                            sao)</span>
+                                        <span class="rating-label" style="font-size:0.78rem;color:var(--gray-400);"><%= r == 5.0 ? "(5 sao)" : "trở lên" %></span>
                                     </div>
-                                    <div class="rating-row">
-                                        <div class="check-box"></div>
-                                        <div class="stars-static">
-                                            <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
-                                            <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
-                                            <i class="fa-regular fa-star empty"></i>
-                                        </div>
-                                        <span class="rating-label" style="font-size:0.78rem;color:var(--gray-400);">trở
-                                            lên</span>
-                                    </div>
-                                    <div class="rating-row">
-                                        <div class="check-box"></div>
-                                        <div class="stars-static">
-                                            <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
-                                            <i class="fa-solid fa-star"></i>
-                                            <i class="fa-regular fa-star empty"></i><i
-                                                class="fa-regular fa-star empty"></i>
-                                        </div>
-                                        <span class="rating-label" style="font-size:0.78rem;color:var(--gray-400);">trở
-                                            lên</span>
-                                    </div>
+                                    <% } %>
                                 </div>
                             </div>
 
@@ -2212,15 +2243,15 @@
                                     <div class="filter-title"><i class="fa-solid fa-box"></i> Tình Trạng</div>
                                 </div>
                                 <div class="filter-body">
-                                    <div class="filter-check">
+                                    <div class="filter-check status-filter-item" data-status="in_stock" style="cursor:pointer;">
                                         <div class="filter-check-left">
-                                            <div class="check-box checked"></div>
+                                            <div class="check-box <%= "in_stock".equals(status) ? "checked" : "" %>"></div>
                                             <span class="check-label">Còn Hàng</span>
                                         </div>
                                     </div>
-                                    <div class="filter-check">
+                                    <div class="filter-check status-filter-item" data-status="out_of_stock" style="cursor:pointer;">
                                         <div class="filter-check-left">
-                                            <div class="check-box"></div>
+                                            <div class="check-box <%= "out_of_stock".equals(status) ? "checked" : "" %>"></div>
                                             <span class="check-label">Hết Hàng</span>
                                         </div>
                                     </div>
@@ -2233,10 +2264,9 @@
 
                             <!-- Sort bar -->
                             <div class="sort-bar">
-                                <div class="sort-bar-left">Hiển thị <strong>12</strong> / 50 sản phẩm</div>
+                                <div class="sort-bar-left">Hiển thị <strong><%= productsList.size() %></strong> / <%= totalProducts %> sản phẩm</div>
                                 <div class="sort-tabs">
-                                    <span style="font-size:0.8rem;color:var(--gray-400);margin-right:0.3rem;">Sắp
-                                        xếp:</span>
+                                    <span style="font-size:0.8rem;color:var(--gray-400);margin-right:0.3rem;">Sắp xếp:</span>
                                     <button class="sort-tab <%= "popular".equals(sort) || sort == null ? "active" : "" %>" data-sort="popular">Phổ Biến</button>
                                     <button class="sort-tab <%= "newest".equals(sort) ? "active" : "" %>" data-sort="newest">Mới Nhất</button>
                                     <button class="sort-tab <%= "price_asc".equals(sort) ? "active" : "" %>" data-sort="price_asc">Giá Tăng</button>
@@ -2333,13 +2363,32 @@
 
                             <!-- Pagination -->
                             <div class="pagination">
-                                <button class="page-btn" disabled><i class="fa-solid fa-chevron-left"></i></button>
-                                <button class="page-btn active">1</button>
-                                <button class="page-btn">2</button>
-                                <button class="page-btn">3</button>
-                                <span style="color:var(--gray-400);font-size:0.85rem;padding:0 0.3rem;">...</span>
-                                <button class="page-btn">8</button>
-                                <button class="page-btn"><i class="fa-solid fa-chevron-right"></i></button>
+                                <button class="page-btn" <%= pageNum <= 1 ? "disabled" : "" %> data-page="<%= pageNum - 1 %>">
+                                     <i class="fa-solid fa-chevron-left"></i>
+                                </button>
+                                <% 
+                                     int startPage = Math.max(1, pageNum - 2);
+                                     int endPage = Math.min(totalPages, pageNum + 2);
+                                     
+                                     if (startPage > 1) {
+                                 %>
+                                     <button class="page-btn" data-page="1">1</button>
+                                     <% if (startPage > 2) { %>
+                                         <span style="color:var(--gray-400);font-size:0.85rem;padding:0 0.3rem;">...</span>
+                                     <% } %>
+                                 <% } %>
+                                 <% for (int i = startPage; i <= endPage; i++) { %>
+                                     <button class="page-btn <%= i == pageNum ? "active" : "" %>" data-page="<%= i %>"><%= i %></button>
+                                 <% } %>
+                                 <% if (endPage < totalPages) { %>
+                                     <% if (endPage < totalPages - 1) { %>
+                                         <span style="color:var(--gray-400);font-size:0.85rem;padding:0 0.3rem;">...</span>
+                                     <% } %>
+                                     <button class="page-btn" data-page="<%= totalPages %>"><%= totalPages %></button>
+                                 <% } %>
+                                 <button class="page-btn" <%= pageNum >= totalPages ? "disabled" : "" %> data-page="<%= pageNum + 1 %>">
+                                     <i class="fa-solid fa-chevron-right"></i>
+                                 </button>
                             </div>
                         </div>
                     </div><!-- /shop-layout -->
@@ -2479,22 +2528,202 @@
 
                     autoSlide = setInterval(function () { changeSlide(1); }, 5000);
 
-                    // ── Sort tabs ──
-                    document.querySelectorAll('.sort-tab').forEach(function (btn) {
-                        btn.addEventListener('click', function () {
-                            document.querySelectorAll('.sort-tab').forEach(function (b) { b.classList.remove('active'); });
-                            btn.classList.add('active');
-                        });
-                    });
+                    // ── Central state for filters ──
+                    var filterState = {
+                        search: '<%= search != null ? search : "" %>',
+                        category: '<%= categoryParam != null ? categoryParam : "all" %>',
+                        minPrice: '<%= minPriceParam != null ? minPriceParam : "" %>',
+                        maxPrice: '<%= maxPriceParam != null ? maxPriceParam : "" %>',
+                        rating: '<%= ratingParam != null ? ratingParam : "" %>',
+                        status: '<%= status != null ? status : "" %>',
+                        sort: '<%= sort != null ? sort : "popular" %>',
+                        page: <%= pageNum %>
+                    };
 
-                    // ── Category cards ──
+                    function applyFilters() {
+                        var params = new URLSearchParams();
+                        if (filterState.search) params.set('search', filterState.search);
+                        if (filterState.category && filterState.category !== 'all') params.set('category', filterState.category);
+                        if (filterState.minPrice) params.set('minPrice', filterState.minPrice);
+                        if (filterState.maxPrice) params.set('maxPrice', filterState.maxPrice);
+                        if (filterState.rating) params.set('rating', filterState.rating);
+                        if (filterState.status) params.set('status', filterState.status);
+                        if (filterState.sort) params.set('sort', filterState.sort);
+                        if (filterState.page > 1) params.set('page', filterState.page);
+                        
+                        var url = 'home.jsp?' + params.toString();
+                        console.log("[AJAX Apply Filters]:", url);
+                        
+                        fetch(url)
+                            .then(res => res.text())
+                            .then(html => {
+                                const parser = new DOMParser();
+                                const doc = parser.parseFromString(html, 'text/html');
+                                
+                                // Update Products Grid
+                                const newGrid = doc.querySelector('.products-grid');
+                                const productsGrid = document.querySelector('.products-grid');
+                                if (newGrid && productsGrid) {
+                                    productsGrid.innerHTML = newGrid.innerHTML;
+                                }
+                                
+                                // Update Pagination
+                                const newPagination = doc.querySelector('.pagination');
+                                const pagination = document.querySelector('.pagination');
+                                if (newPagination && pagination) {
+                                    pagination.innerHTML = newPagination.innerHTML;
+                                }
+                                
+                                // Update Sort Bar Left (counts text)
+                                const newSortBarLeft = doc.querySelector('.sort-bar-left');
+                                const sortBarLeft = document.querySelector('.sort-bar-left');
+                                if (newSortBarLeft && sortBarLeft) {
+                                    sortBarLeft.innerHTML = newSortBarLeft.innerHTML;
+                                }
+                                
+                                // Scroll products grid into view
+                                const shopLayout = document.querySelector('.shop-layout');
+                                if (shopLayout) {
+                                    shopLayout.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                                }
+                            })
+                            .catch(err => console.error("Lỗi AJAX lọc:", err));
+                    }
+
+                    // ── Search input events ──
+                    const searchInput = document.getElementById('searchQuery');
+                    if (searchInput) {
+                        searchInput.addEventListener('keyup', function (e) {
+                            if (e.key === 'Enter') {
+                                filterState.search = this.value;
+                                filterState.page = 1;
+                                applyFilters();
+                            }
+                        });
+                        searchInput.addEventListener('blur', function () {
+                            if (filterState.search !== this.value) {
+                                filterState.search = this.value;
+                                filterState.page = 1;
+                                applyFilters();
+                            }
+                        });
+                    }
+
+                    // ── Category cards (if any rendered in main banner) ──
                     document.querySelectorAll('.category-card').forEach(function (card) {
                         card.addEventListener('click', function (e) {
                             e.preventDefault();
                             document.querySelectorAll('.category-card').forEach(function (c) { c.classList.remove('active'); });
                             card.classList.add('active');
+                            
+                            // Get category ID from some attribute or link if needed
                         });
                     });
+
+                    // ── Sidebar filter clicks delegation ──
+                    const filterSidebar = document.querySelector('.filter-sidebar');
+                    if (filterSidebar) {
+                        filterSidebar.addEventListener('click', function(e) {
+                            // Category Filter
+                            const catItem = e.target.closest('.category-filter-item');
+                            if (catItem) {
+                                e.preventDefault();
+                                document.querySelectorAll('.category-filter-item').forEach(el => el.classList.remove('active'));
+                                document.querySelectorAll('.category-filter-item .check-box').forEach(el => el.classList.remove('checked'));
+                                
+                                catItem.classList.add('active');
+                                const check = catItem.querySelector('.check-box');
+                                if (check) check.classList.add('checked');
+                                
+                                filterState.category = catItem.getAttribute('data-category');
+                                filterState.page = 1;
+                                applyFilters();
+                                return;
+                            }
+                            
+                            // Rating Filter
+                            const ratingItem = e.target.closest('.rating-filter-item');
+                            if (ratingItem) {
+                                e.preventDefault();
+                                const checkBox = ratingItem.querySelector('.check-box');
+                                if (checkBox.classList.contains('checked')) {
+                                    checkBox.classList.remove('checked');
+                                    filterState.rating = '';
+                                } else {
+                                    document.querySelectorAll('.rating-filter-item .check-box').forEach(el => el.classList.remove('checked'));
+                                    checkBox.classList.add('checked');
+                                    filterState.rating = ratingItem.getAttribute('data-rating');
+                                }
+                                filterState.page = 1;
+                                applyFilters();
+                                return;
+                            }
+                            
+                            // Status Filter (Availability)
+                            const statusItem = e.target.closest('.status-filter-item');
+                            if (statusItem) {
+                                e.preventDefault();
+                                const checkBox = statusItem.querySelector('.check-box');
+                                if (checkBox.classList.contains('checked')) {
+                                    checkBox.classList.remove('checked');
+                                    filterState.status = '';
+                                } else {
+                                    document.querySelectorAll('.status-filter-item .check-box').forEach(el => el.classList.remove('checked'));
+                                    checkBox.classList.add('checked');
+                                    filterState.status = statusItem.getAttribute('data-status');
+                                }
+                                filterState.page = 1;
+                                applyFilters();
+                                return;
+                            }
+                        });
+                    }
+
+                    // ── Price range Apply ──
+                    const btnApplyPrice = document.getElementById('btnApplyPrice');
+                    if (btnApplyPrice) {
+                        btnApplyPrice.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            const minVal = document.getElementById('minPriceInput').value.trim();
+                            const maxVal = document.getElementById('maxPriceInput').value.trim();
+                            
+                            filterState.minPrice = minVal;
+                            filterState.maxPrice = maxVal;
+                            filterState.page = 1;
+                            applyFilters();
+                        });
+                    }
+
+                    // ── Sort tabs delegation ──
+                    const sortTabsContainer = document.querySelector('.sort-tabs');
+                    if (sortTabsContainer) {
+                        sortTabsContainer.addEventListener('click', function(e) {
+                            const tab = e.target.closest('.sort-tab');
+                            if (!tab || tab.classList.contains('active')) return;
+                            
+                            document.querySelectorAll('.sort-tab').forEach(t => t.classList.remove('active'));
+                            tab.classList.add('active');
+                            
+                            filterState.sort = tab.getAttribute('data-sort');
+                            filterState.page = 1;
+                            applyFilters();
+                        });
+                    }
+
+                    // ── Event delegation for pagination clicks ──
+                    const paginationContainer = document.querySelector('.pagination');
+                    if (paginationContainer) {
+                        paginationContainer.addEventListener('click', function (e) {
+                            const btn = e.target.closest('.page-btn');
+                            if (!btn || btn.disabled || btn.classList.contains('active')) return;
+                            
+                            const pageNum = btn.getAttribute('data-page');
+                            if (pageNum) {
+                                filterState.page = parseInt(pageNum, 10);
+                                applyFilters();
+                            }
+                        });
+                    }
 
                     // ── Go to Profile tab ──
                     function goToProfile() {
@@ -2515,38 +2744,12 @@
                             const card = e.target.closest('.product-card');
                             if (!card) return;
                             // Không chuyển trang nếu người dùng bấm vào nút Wishlist hoặc Thêm Giỏ Hàng
-                            if (e.target.closest('.product-wishlist') || e.target.closest('.btn-cart')) return;
+                            if (e.target.closest('.product-wishlist') || e.target.closest('.btn-cart') || e.target.closest('.btn-add-cart') || e.target.closest('.btn-buy-now')) return;
                             
                             const productId = card.getAttribute('data-id');
                             if (productId) window.location.href = 'info?id=' + productId;
                         });
                     }
-
-                    // ── AJAX Lọc/Sắp Xếp Sản Phẩm Không Reload Trang ──
-                    document.querySelectorAll('.sort-tab').forEach(function(tab) {
-                        tab.addEventListener('click', function(e) {
-                            e.preventDefault();
-                            var sortType = this.getAttribute('data-sort');
-                            if (!sortType) return;
-                            
-                            // Đổi màu tab
-                            document.querySelectorAll('.sort-tab').forEach(function (t) { t.classList.remove('active'); });
-                            this.classList.add('active');
-                            
-                            // Gọi backend lấy danh sách mới
-                            fetch('home.jsp?sort=' + sortType)
-                                .then(res => res.text())
-                                .then(html => {
-                                    const parser = new DOMParser();
-                                    const doc = parser.parseFromString(html, 'text/html');
-                                    const newGrid = doc.querySelector('.products-grid');
-                                    if (newGrid && productsGrid) {
-                                        productsGrid.innerHTML = newGrid.innerHTML;
-                                    }
-                                })
-                                .catch(err => console.error("Lỗi AJAX Sắp xếp:", err));
-                        });
-                    });
 
                     // ── Cập nhật số giỏ hàng khi trang hiển thị lại từ cache/lịch sử ──
                     function refreshCartBadge() {

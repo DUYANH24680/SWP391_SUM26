@@ -7,7 +7,7 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%
-    Account Account = (Account) session.getAttribute("user");
+    Account Account = (Account) session.getAttribute("Account");
     if (Account == null) {
         response.sendRedirect(request.getContextPath() + "/login");
         return;
@@ -573,7 +573,7 @@
                 return;
             }
 
-            var url = "${pageContext.request.contextPath}/checkout?action=checkVoucher&code=" + encodeURIComponent(code) + "&total=" + originalTotal;
+            var url = "<%= request.getContextPath() %>/checkout?action=checkVoucher&code=" + encodeURIComponent(code) + "&total=" + originalTotal;
 
             fetch(url)
                 .then(response => response.json())
