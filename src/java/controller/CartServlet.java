@@ -26,7 +26,7 @@ public class CartServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         HttpSession session = req.getSession(false);
-        Account user = session != null ? (Account) session.getAttribute("user") : null;
+        Account user = session != null ? (Account) session.getAttribute("Account") : null;
         if (user == null) {
             resp.sendRedirect(req.getContextPath() + "/login");
             return;
@@ -54,7 +54,7 @@ public class CartServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         HttpSession session = req.getSession(false);
-        Account user = session != null ? (Account) session.getAttribute("user") : null;
+        Account user = session != null ? (Account) session.getAttribute("Account") : null;
         if (user == null) {
             resp.sendRedirect(req.getContextPath() + "/login");
             return;
@@ -92,7 +92,7 @@ public class CartServlet extends HttpServlet {
     private void handleAdd(HttpServletRequest req, HttpServletResponse resp,
                            HttpSession session, boolean redirectToCart)
             throws IOException {
-        Account user = (Account) session.getAttribute("user");
+        Account user = (Account) session.getAttribute("Account");
         int productId = parsePositiveInt(req.getParameter("productId"), 0);
         String size = trimParam(req.getParameter("size"));
         int quantity = parsePositiveInt(req.getParameter("quantity"), 1);
@@ -126,7 +126,7 @@ public class CartServlet extends HttpServlet {
     private void handleUpdate(HttpServletRequest req, HttpServletResponse resp,
                               HttpSession session)
             throws IOException {
-        Account user = (Account) session.getAttribute("user");
+        Account user = (Account) session.getAttribute("Account");
         int productId = parsePositiveInt(req.getParameter("productId"), 0);
         String size = trimParam(req.getParameter("size"));
         int quantity = parsePositiveInt(req.getParameter("quantity"), 1);
@@ -146,7 +146,7 @@ public class CartServlet extends HttpServlet {
     private void handleRemove(HttpServletRequest req, HttpServletResponse resp,
                               HttpSession session)
             throws IOException {
-        Account user = (Account) session.getAttribute("user");
+        Account user = (Account) session.getAttribute("Account");
         int productId = parsePositiveInt(req.getParameter("productId"), 0);
         String size = trimParam(req.getParameter("size"));
         try {
@@ -165,9 +165,10 @@ public class CartServlet extends HttpServlet {
     private void handleClear(HttpServletRequest req, HttpServletResponse resp,
                              HttpSession session)
             throws IOException {
-        Account user = (Account) session.getAttribute("user");
+        Account user = (Account) session.getAttribute("Account");
         try {
             cartService.clearCart(user.getId());
+            session.setAttribute("cartCount", 0);
             session.setAttribute("message", "Giỏ hàng đã được xóa.");
         } catch (IllegalArgumentException e) {
             session.setAttribute("error", e.getMessage());

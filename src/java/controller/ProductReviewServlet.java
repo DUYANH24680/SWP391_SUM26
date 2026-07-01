@@ -18,7 +18,7 @@ public class ProductReviewServlet extends HttpServlet {
         boolean isAjax = "XMLHttpRequest".equals(req.getHeader("X-Requested-With")) || "true".equals(req.getParameter("ajax"));
         
         HttpSession session = req.getSession(false);
-        if (session == null || session.getAttribute("user") == null) {
+        if (session == null || session.getAttribute("Account") == null) {
             if (isAjax) {
                 sendJson(resp, false, "Vui lòng đăng nhập để đánh giá sản phẩm.");
             } else {
@@ -29,7 +29,7 @@ public class ProductReviewServlet extends HttpServlet {
             return;
         }
 
-        Account account = (Account) session.getAttribute("user");
+        Account account = (Account) session.getAttribute("Account");
         
         try {
             int productId = Integer.parseInt(req.getParameter("productId"));

@@ -19,31 +19,38 @@ public class RemoveWishlistServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
+
         HttpSession session = req.getSession(false);
-        if (session == null || session.getAttribute("user") == null) {
+        if (session == null || session.getAttribute("Account") == null) {
             resp.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Vui lòng đăng nhập để sử dụng wishlist.");
             return;
         }
 
-        Account user = (Account) session.getAttribute("user");
+        Account Account = (Account) session.getAttribute("Account");
         int productId = parsePositiveInt(req.getParameter("productId"), 0);
 
         try {
-            boolean removed = wishlistService.removeFromWishlist(user.getId(), productId);
+            boolean removed = wishlistService.removeFromWishlist(Account.getId(), productId);
             if (removed) {
                 session.setAttribute("message", "Đã xóa sản phẩm khỏi wishlist.");
+                refreshWishlistCount(session, Account.getId());
             } else {
                 session.setAttribute("message", "Không tìm thấy sản phẩm trong wishlist.");
             }
         } catch (IllegalArgumentException e) {
             session.setAttribute("error", e.getMessage());
         } catch (Exception e) {
-            System.err.println("[RemoveWishlistServlet] " + e.getMessage());
-            e.printStackTrace();
             session.setAttribute("error", "Lỗi khi xóa sản phẩm khỏi wishlist.");
         }
 
         resp.sendRedirect(req.getContextPath() + "/wishlist");
+    }
+
+    private void refreshWishlistCount(HttpSession session, int customerId) {
+        try {
+            int count = wishlistService.getWishlistCount(customerId);
+            session.setAttribute("wishlistCount", count);
+        } catch (Exception ignored) {}
     }
 
     private int parsePositiveInt(String value, int defaultValue) {
@@ -58,3 +65,4 @@ public class RemoveWishlistServlet extends HttpServlet {
         }
     }
 }
+

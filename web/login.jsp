@@ -1,4 +1,4 @@
-<%@ page contentType="text/html;charset=UTF-8" %>
+﻿<%@ page contentType="text/html;charset=UTF-8" %>
 <%
     if (session.getAttribute("Account") != null) {
         response.sendRedirect("home.jsp");
@@ -431,3 +431,4 @@
 
 </body>
 </html>
+

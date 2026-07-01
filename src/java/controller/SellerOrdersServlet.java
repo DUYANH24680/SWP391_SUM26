@@ -26,11 +26,11 @@ public class SellerOrdersServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         HttpSession session = req.getSession(false);
-        if (session == null || session.getAttribute("user") == null) {
+        if (session == null || session.getAttribute("Account") == null) {
             resp.sendRedirect(req.getContextPath() + "/login");
             return;
         }
-        Account user = (Account) session.getAttribute("user");
+        Account user = (Account) session.getAttribute("Account");
 
         if (!ROLE_SELLER.equalsIgnoreCase(user.getRoleName())) {
             session.setAttribute("error", "Bạn không có quyền truy cập trang quản lý đơn hàng của Seller.");
@@ -63,11 +63,11 @@ public class SellerOrdersServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         HttpSession session = req.getSession(false);
-        if (session == null || session.getAttribute("user") == null) {
+        if (session == null || session.getAttribute("Account") == null) {
             resp.sendRedirect(req.getContextPath() + "/login");
             return;
         }
-        Account user = (Account) session.getAttribute("user");
+        Account user = (Account) session.getAttribute("Account");
 
         if (!ROLE_SELLER.equalsIgnoreCase(user.getRoleName())) {
             session.setAttribute("error", "Bạn không có quyền thực hiện thao tác này.");

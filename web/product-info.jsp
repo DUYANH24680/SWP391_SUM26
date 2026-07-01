@@ -1,15 +1,17 @@
-//Duy Anh
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="model.Account" %>
 <%@ page import="model.Product" %>
 <%@ page import="model.Shop" %>
 <%@ page import="dao.CategoryDAO" %>
 <%@ page import="dao.ShopDAO" %>
 <%@ page import="java.util.List" %>
-<%@ page import="java.util.Map" %>
-<%@ page import="model.ProductReview" %>
 <%
-    // No auth guard for viewing product
+    // ---- Auth guard ----
+    Account Account = (Account) session.getAttribute("Account");
+    if (Account == null) {
+        response.sendRedirect(request.getContextPath() + "/login");
+        return;
+    }
 
     // ---- Product ----
     Product product = (Product) request.getAttribute("product");
@@ -44,16 +46,6 @@
     boolean hasDiscount = salePrice > 0 && salePrice < originalPrice;
     int discountPercent = (int) Math.round(product.getDiscountPercent());
     java.text.NumberFormat nf = java.text.NumberFormat.getNumberInstance(java.util.Locale.forLanguageTag("vi"));
-
-    // ---- Image URL helper ----
-    java.util.function.Function<String, String> imgUrl = (String path) -> {
-        if (path == null || path.trim().isEmpty()) return null;
-        String trimmed = path.trim();
-        if (trimmed.startsWith("uploads/")) {
-            return request.getContextPath() + "/image?path=" + java.net.URLEncoder.encode(trimmed);
-        }
-        return trimmed;
-    };
 %>
 <!DOCTYPE html>
 <html lang="vi">
@@ -81,7 +73,7 @@
         }
         body {
             font-family: 'Inter', sans-serif;
-            background: rgba(31, 41, 55, 0.95); /* Dark overlay */
+            background: rgba(31, 41, 55, 0.95);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -116,14 +108,13 @@
             background: #fff;
             border-radius: var(--radius);
             width: 100%;
-            max-width: 1000px;
+            max-width: 1100px;
             max-height: 90vh;
             overflow-y: auto;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
             padding: 2rem;
             position: relative;
         }
-        /* Tùy chỉnh thanh cuộn cho modal-container */
         .modal-container::-webkit-scrollbar { width: 8px; }
         .modal-container::-webkit-scrollbar-track { background: #f1f1f1; border-radius: var(--radius); }
         .modal-container::-webkit-scrollbar-thumb { background: #ccc; border-radius: var(--radius); }
@@ -154,7 +145,7 @@
         
         .detail-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr 1.2fr;
             gap: 2rem;
         }
         @media (max-width: 768px) {
@@ -208,7 +199,7 @@
         .badge-red { background: #fee2e2; color: #991b1b; }
         .badge-gray { background: var(--gray-100); color: var(--gray-600); }
         
-        .section-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--gray-400); margin-bottom: 0.5rem; }
+        .section-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--gray-400); margin-bottom: 0.7rem; }
         
         .shop-card {
             background: var(--gray-50); border: 1px solid var(--gray-200);
@@ -396,7 +387,7 @@
             color: var(--green-dark);
         }
         
-        .action-buttons { display: flex; gap: 0.75rem; margin-top: 0.5rem; flex-wrap: wrap;}
+        .action-buttons { display: flex; gap: 0.75rem; margin-top: 0; flex-wrap: wrap;}
         .btn {
             display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
             padding: 0.75rem 1.5rem; border-radius: var(--radius-sm); font-size: 0.9rem; font-weight: 600;
@@ -407,97 +398,72 @@
         .btn-outline { background: #fff; color: var(--gray-600); border: 1.5px solid var(--gray-200); }
         .btn-outline:hover { background: var(--gray-50); color: var(--gray-800); }
 
-        /* ================= REVIEW SECTION (PREMIUM) ================= */
+        /* ================= REVIEW SECTION ================= */
         .reviews-section {
-            margin-top: 3rem;
-            padding-top: 2.5rem;
+            margin-top: 2.5rem;
+            padding-top: 2rem;
             border-top: 1px solid var(--gray-200);
         }
         .reviews-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
         }
         .reviews-title {
-            font-size: 1.4rem;
-            font-weight: 800;
+            font-size: 1.2rem;
+            font-weight: 700;
             color: var(--gray-800);
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-        .reviews-title i {
-            color: var(--green);
-            font-size: 1.6rem;
         }
         .reviews-summary {
             display: flex;
             align-items: center;
-            gap: 3rem;
-            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-            padding: 2rem 2.5rem;
-            border-radius: var(--radius-lg);
-            margin-bottom: 2.5rem;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
-            border: 1px solid rgba(226, 232, 240, 0.8);
+            gap: 2.5rem;
+            background: var(--gray-50);
+            padding: 1.5rem 2rem;
+            border-radius: var(--radius-sm);
+            margin-bottom: 2rem;
         }
         .summary-score {
             text-align: center;
-            padding-right: 3rem;
-            border-right: 2px dashed var(--gray-300);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            border-right: 1px solid var(--gray-200);
+            padding-right: 2.5rem;
         }
         .summary-score h2 {
-            font-size: 4rem;
-            font-weight: 900;
+            font-size: 3rem;
+            font-weight: 800;
             color: #f59e0b;
             line-height: 1;
-            text-shadow: 0 2px 4px rgba(245, 158, 11, 0.2);
-            margin-bottom: 0.5rem;
-        }
-        .summary-score .stars-display {
-            color: #f59e0b;
-            font-size: 1.3rem;
-            margin-bottom: 0.5rem;
-            letter-spacing: 2px;
         }
         .summary-score p {
-            font-size: 0.95rem;
-            color: var(--gray-500);
-            font-weight: 500;
+            font-size: 0.85rem;
+            color: var(--gray-400);
+            margin-top: 0.5rem;
         }
         .summary-stars {
             display: flex;
             flex-direction: column;
-            gap: 0.6rem;
+            gap: 0.4rem;
             flex: 1;
-            max-width: 350px;
+            max-width: 300px;
         }
         .star-row {
             display: flex;
             align-items: center;
-            gap: 1rem;
-            font-size: 0.9rem;
+            gap: 0.8rem;
+            font-size: 0.85rem;
             color: var(--gray-600);
-            font-weight: 600;
         }
         .star-bar {
             flex: 1;
-            height: 10px;
+            height: 8px;
             background: var(--gray-200);
-            border-radius: 5px;
+            border-radius: 4px;
             overflow: hidden;
-            box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
         }
         .star-fill {
             height: 100%;
-            background: linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%);
-            border-radius: 5px;
-            transition: width 1s ease-out;
+            background: #f59e0b;
         }
         
         .comment-list {
@@ -507,149 +473,95 @@
         }
         .comment-item {
             display: flex;
-            gap: 1.5rem;
-            padding: 1.5rem;
-            background: #fff;
-            border-radius: var(--radius-md);
-            border: 1px solid var(--gray-200);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            gap: 1.25rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--gray-100);
         }
-        .comment-item:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(0,0,0,0.05);
+        .comment-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
         }
         .comment-avatar {
-            width: 52px;
-            height: 52px;
+            width: 48px;
+            height: 48px;
             border-radius: 50%;
-            background: linear-gradient(135deg, var(--green-light) 0%, #dcfce7 100%);
+            background: var(--green-light);
             display: flex;
             align-items: center;
             justify-content: center;
             color: var(--green-dark);
-            font-weight: 800;
-            font-size: 1.4rem;
+            font-weight: 700;
+            font-size: 1.2rem;
             flex-shrink: 0;
-            border: 3px solid #fff;
-            box-shadow: 0 2px 6px rgba(34, 197, 94, 0.2);
+            border: 2px solid var(--green-mid);
         }
         .comment-content {
             flex: 1;
         }
-        .comment-user {
-            font-weight: 800;
-            font-size: 1.05rem;
+        .comment-Account {
+            font-weight: 700;
+            font-size: 1rem;
             color: var(--gray-800);
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            gap: 0.5rem;
         }
         .comment-date {
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             color: var(--gray-400);
-            font-weight: 500;
+            font-weight: 400;
         }
         .comment-stars {
             color: #f59e0b;
-            font-size: 0.95rem;
-            margin: 0.4rem 0 0.8rem 0;
-            letter-spacing: 1px;
+            font-size: 0.85rem;
+            margin: 0.3rem 0;
         }
         .comment-text {
-            font-size: 1rem;
-            color: var(--gray-700);
+            font-size: 0.95rem;
+            color: var(--gray-600);
             line-height: 1.6;
-            background: #f8fafc;
-            padding: 1rem 1.25rem;
-            border-radius: var(--radius-sm);
-            border-left: 4px solid var(--green);
+            margin-top: 0.5rem;
         }
         
         .add-comment-form {
-            margin-top: 3rem;
+            margin-top: 2rem;
             background: #fff;
-            padding: 2.5rem;
-            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            border-radius: var(--radius-sm);
             border: 1px solid var(--gray-200);
-            box-shadow: 0 8px 24px rgba(0,0,0,0.04);
-            position: relative;
-            overflow: hidden;
-        }
-        .add-comment-form::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 5px;
-            background: linear-gradient(90deg, var(--green-light) 0%, var(--green) 100%);
         }
         .form-title {
-            font-size: 1.3rem;
-            font-weight: 800;
-            margin-bottom: 1.5rem;
-            color: var(--gray-800);
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
         }
         .rating-input {
             display: flex;
             align-items: center;
-            gap: 0.6rem;
-            margin-bottom: 1.5rem;
-            font-size: 1.6rem;
-            background: #f8fafc;
-            padding: 0.75rem 1.25rem;
-            border-radius: var(--radius-sm);
-            width: max-content;
-            border: 1px solid var(--gray-200);
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
         }
-        .rating-input span {
-            font-size: 0.95rem;
-            color: var(--gray-600);
-            font-weight: 600;
-            margin-right: 0.75rem;
-        }
-        .rating-input i { 
-            color: var(--gray-300); 
-            cursor: pointer; 
-            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-        }
-        .rating-input i:hover {
-            transform: scale(1.15);
-            color: #fbbf24;
-        }
-        .rating-input i.active { 
-            color: #f59e0b; 
-            text-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
-        }
+        .rating-input i { color: var(--gray-200); cursor: pointer; transition: color 0.2s; }
+        .rating-input i:hover, .rating-input i.active { color: #f59e0b; }
         
         .comment-textarea {
             width: 100%;
-            padding: 1.25rem;
-            border: 2px solid var(--gray-200);
+            padding: 1rem;
+            border: 1px solid var(--gray-200);
             border-radius: var(--radius-sm);
             font-family: inherit;
-            font-size: 1rem;
+            font-size: 0.95rem;
             resize: vertical;
-            min-height: 140px;
-            margin-bottom: 1.5rem;
+            min-height: 120px;
+            margin-bottom: 1rem;
             outline: none;
-            transition: all 0.3s ease;
-            background: #f8fafc;
-            color: var(--gray-800);
+            transition: border-color 0.2s;
+            background: var(--gray-50);
         }
         .comment-textarea:focus {
             border-color: var(--green);
             background: #fff;
-            box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.1);
-        }
-        .btn-submit-review {
-            width: 100%;
-            padding: 1rem;
-            font-size: 1.1rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            border-radius: var(--radius-md);
         }
     </style>
 </head>
@@ -675,7 +587,7 @@
             <div>
                 <% if (product.getImage() != null && !product.getImage().trim().isEmpty()) { %>
                 <div class="product-image-wrap">
-                    <img src="<%= imgUrl.apply(product.getImage()) %>" alt="<%= product.getTitle() %>" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                    <img src="<%= product.getImage() %>" alt="<%= product.getTitle() %>" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
                     <div class="product-image-placeholder" style="display:none;">🍎</div>
                 </div>
                 <% } else { %>
@@ -760,7 +672,7 @@
                     <div class="section-label"><i class="fa-solid fa-shop" style="color:var(--green);"></i> Cua Hang Ban</div>
                     <div class="shop-card">
                         <% if (shopInfo.getLogo() != null && !shopInfo.getLogo().trim().isEmpty()) { %>
-                        <img class="shop-avatar" src="<%= imgUrl.apply(shopInfo.getLogo()) %>" alt="<%= shopInfo.getShopName() %>" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                        <img class="shop-avatar" src="<%= shopInfo.getLogo() %>" alt="<%= shopInfo.getShopName() %>" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
                         <div class="shop-avatar-placeholder" style="display:none;">&#127974;</div>
                         <% } else { %><div class="shop-avatar-placeholder">&#127974;</div><% } %>
                         <div class="shop-info">
@@ -814,29 +726,38 @@
                 </div>
 
                 <!-- Order Summary -->
-                <div class="order-summary">
+                <div class="order-summary" id="orderSummary" data-original-price="<%= originalPrice %>" data-sale-price="<%= salePrice %>">
                     <div class="summary-row">
                         <span>Thành tiền:</span>
                         <span class="summary-price" id="totalPrice"><%= nf.format((long) salePrice) %> đ</span>
                     </div>
-                    <% if (hasDiscount) { %>
-                    <div class="summary-row discount-row">
+                    <div class="summary-row discount-row" id="savingRow" style="display:none;">
                         <span>Tiết kiệm:</span>
-                        <span class="summary-saving"><%= nf.format((long) (originalPrice - salePrice)) %> đ</span>
+                        <span class="summary-saving" id="savingValue">0 đ</span>
                     </div>
-                    <% } %>
                 </div>
 
                 <!-- Action buttons -->
                 <div class="action-buttons">
-                    <button class="btn btn-green" onclick="alert('Chuc nang them vao gio hang chua duoc trien khai.')">
-                        <i class="fa-solid fa-basket-shopping"></i> Them Vao Gio Hang
+                    <button class="btn btn-green" onclick="addToCart()">
+                        <i class="fa-solid fa-basket-shopping"></i> Thêm Vào Giỏ Hàng
+                    </button>
+                    <% if (product.isActive()) { %>
+                    <form action="add-to-wishlist" method="POST" style="display:inline;">
+                        <input type="hidden" name="productId" value="<%= product.getId() %>">
+                        <button type="submit" class="btn btn-outline">
+                            <i class="fa-regular fa-heart"></i> Thêm vào Wishlist
+                        </button>
+                    </form>
+                    <% } %>
+                    <button class="btn btn-outline" onclick="buyNow()">
+                        <i class="fa-solid fa-bolt"></i> Mua Ngay
                     </button>
                     <a href="home.jsp" class="btn btn-outline">
-                        <i class="fa-solid fa-arrow-left"></i> Quay Lai
+                        <i class="fa-solid fa-arrow-left"></i> Quay Lại
                     </a>
                 </div>
-                <form id="cartForm" action="cart" method="post" style="display:none;">
+                <form id="cartForm" action="<%= request.getContextPath() %>/add-to-cart" method="post" style="display:none;">
                     <input type="hidden" id="cartAction" name="action" value="add">
                     <input type="hidden" name="productId" value="<%= product.getId() %>">
                     <input type="hidden" id="cartQty" name="quantity" value="1">
@@ -852,151 +773,189 @@
                 <div class="reviews-title"><i class="fa-regular fa-comments"></i> Đánh giá & Bình luận</div>
             </div>
 
-            <% 
-                List<ProductReview> reviews = (List<ProductReview>) request.getAttribute("reviews");
-                Map<String, Object> ratingStats = (Map<String, Object>) request.getAttribute("ratingStats");
-                
-                int totalRev = ratingStats != null ? (Integer) ratingStats.get("total") : 0;
-                double avgRev = ratingStats != null ? (Double) ratingStats.get("avg") : 0.0;
-                int s5 = ratingStats != null ? (Integer) ratingStats.get("star5") : 0;
-                int s4 = ratingStats != null ? (Integer) ratingStats.get("star4") : 0;
-                int s3 = ratingStats != null ? (Integer) ratingStats.get("star3") : 0;
-                int s2 = ratingStats != null ? (Integer) ratingStats.get("star2") : 0;
-                int s1 = ratingStats != null ? (Integer) ratingStats.get("star1") : 0;
-                
-                int pct5 = totalRev > 0 ? (s5 * 100 / totalRev) : 0;
-                int pct4 = totalRev > 0 ? (s4 * 100 / totalRev) : 0;
-                int pct3 = totalRev > 0 ? (s3 * 100 / totalRev) : 0;
-                int pct2 = totalRev > 0 ? (s2 * 100 / totalRev) : 0;
-                int pct1 = totalRev > 0 ? (s1 * 100 / totalRev) : 0;
-            %>
-
             <div class="reviews-summary">
                 <div class="summary-score">
-                    <h2><%= String.format(java.util.Locale.US, "%.1f", avgRev > 0 ? avgRev : 5.0) %></h2>
+                    <h2><%= String.format(java.util.Locale.US, "%.1f", product.getAverageRating() > 0 ? product.getAverageRating() : 5.0) %></h2>
                     <div style="color:#f59e0b; font-size:1.1rem; margin-top:0.3rem;">
-                        <% for (int i = 1; i <= 5; i++) { 
-                            if (i <= Math.round(avgRev)) { %>
-                                <i class="fa-solid fa-star"></i>
-                        <% } else { %>
-                                <i class="fa-regular fa-star"></i>
-                        <% } 
-                        } %>
+                        <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
                     </div>
-                    <p>Dựa trên <%= totalRev %> đánh giá</p>
+                    <p>Dựa trên 12 đánh giá</p>
                 </div>
                 <div class="summary-stars">
-                    <div class="star-row"><span>5 Sao</span> <div class="star-bar"><div class="star-fill" style="width: <%= pct5 %>%;"></div></div> <span><%= s5 %></span></div>
-                    <div class="star-row"><span>4 Sao</span> <div class="star-bar"><div class="star-fill" style="width: <%= pct4 %>%;"></div></div> <span><%= s4 %></span></div>
-                    <div class="star-row"><span>3 Sao</span> <div class="star-bar"><div class="star-fill" style="width: <%= pct3 %>%;"></div></div> <span><%= s3 %></span></div>
-                    <div class="star-row"><span>2 Sao</span> <div class="star-bar"><div class="star-fill" style="width: <%= pct2 %>%;"></div></div> <span><%= s2 %></span></div>
-                    <div class="star-row"><span>1 Sao</span> <div class="star-bar"><div class="star-fill" style="width: <%= pct1 %>%;"></div></div> <span><%= s1 %></span></div>
+                    <div class="star-row"><span>5 Sao</span> <div class="star-bar"><div class="star-fill" style="width: 80%;"></div></div> <span>10</span></div>
+                    <div class="star-row"><span>4 Sao</span> <div class="star-bar"><div class="star-fill" style="width: 15%;"></div></div> <span>2</span></div>
+                    <div class="star-row"><span>3 Sao</span> <div class="star-bar"><div class="star-fill" style="width: 0%;"></div></div> <span>0</span></div>
+                    <div class="star-row"><span>2 Sao</span> <div class="star-bar"><div class="star-fill" style="width: 0%;"></div></div> <span>0</span></div>
+                    <div class="star-row"><span>1 Sao</span> <div class="star-bar"><div class="star-fill" style="width: 0%;"></div></div> <span>0</span></div>
                 </div>
             </div>
 
             <div class="comment-list">
-                <% if (reviews != null && !reviews.isEmpty()) { 
-                    java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm");
-                    for (ProductReview rev : reviews) { 
-                        String name = rev.getFullname() != null && !rev.getFullname().isEmpty() ? rev.getFullname() : rev.getUsername();
-                        String initial = name.substring(0, 1).toUpperCase();
-                %>
+                <!-- Mock Comment 1 -->
                 <div class="comment-item">
-                    <div class="comment-avatar"><%= initial %></div>
+                    <div class="comment-avatar">H</div>
                     <div class="comment-content">
-                        <div class="comment-user"><%= name %> <span class="comment-date"><%= sdf.format(rev.getCreatedAt()) %></span></div>
-                        <div class="comment-stars">
-                            <% for (int i = 1; i <= 5; i++) { 
-                                if (i <= rev.getRating()) { %>
-                                    <i class="fa-solid fa-star"></i>
-                            <% } else { %>
-                                    <i class="fa-regular fa-star"></i>
-                            <% } 
-                            } %>
-                        </div>
-                        <div class="comment-text"><%= rev.getComment() != null ? rev.getComment() : "" %></div>
+                        <div class="comment-Account">Hoàng Văn A <span class="comment-date">2 ngày trước</span></div>
+                        <div class="comment-stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
+                        <div class="comment-text">Sản phẩm tuyệt vời, chất lượng rất tốt! Shop đóng gói cẩn thận, giao hàng nhanh chóng. Sẽ ủng hộ shop dài dài.</div>
                     </div>
                 </div>
-                <% } 
-                } else { %>
-                    <div style="text-align: center; color: var(--gray-400); padding: 2rem;">Chưa có đánh giá nào cho sản phẩm này. Hãy là người đầu tiên!</div>
-                <% } %>
+                <!-- Mock Comment 2 -->
+                <div class="comment-item">
+                    <div class="comment-avatar">M</div>
+                    <div class="comment-content">
+                        <div class="comment-Account">Mai Thị B <span class="comment-date">1 tuần trước</span></div>
+                        <div class="comment-stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-regular fa-star"></i></div>
+                        <div class="comment-text">Chất lượng khá ổn trong tầm giá. Hàng giao đúng như mô tả. Lần sau có dịp sẽ mua tiếp nha.</div>
+                    </div>
+                </div>
             </div>
 
             <!-- Form Add Comment -->
-            <% if (session.getAttribute("user") == null) { %>
-                <div class="add-comment-form" style="text-align:center;">
-                    <p style="margin-bottom: 1rem; color: var(--gray-600);">Bạn cần đăng nhập để đánh giá sản phẩm.</p>
-                    <a href="<%= request.getContextPath() %>/login" class="btn btn-green">Đăng Nhập Ngay</a>
+            <div class="add-comment-form">
+                <div class="form-title">Gửi đánh giá của bạn</div>
+                <div class="rating-input" id="ratingInput">
+                    <span style="font-size:0.9rem;color:var(--gray-600);margin-right:0.5rem;">Đánh giá sao:</span>
+                    <i class="fa-solid fa-star active" data-val="1"></i>
+                    <i class="fa-solid fa-star active" data-val="2"></i>
+                    <i class="fa-solid fa-star active" data-val="3"></i>
+                    <i class="fa-solid fa-star active" data-val="4"></i>
+                    <i class="fa-solid fa-star active" data-val="5"></i>
                 </div>
-            <% } else { 
-                model.Account curUser = (model.Account) session.getAttribute("user");
-                String curName = curUser.getFullname() != null && !curUser.getFullname().isEmpty() ? curUser.getFullname() : curUser.getUsername();
-            %>
-                <div class="add-comment-form">
-                    <div class="form-title">Gửi đánh giá của bạn</div>
-                    <form id="reviewForm" onsubmit="submitReview(event)">
-                        <input type="hidden" name="productId" value="<%= product.getId() %>">
-                        <input type="hidden" name="rating" id="ratingValue" value="5">
-                        
-                        <div class="rating-input" id="ratingInput">
-                            <span style="font-size:0.9rem;color:var(--gray-600);margin-right:0.5rem;">Đánh giá sao:</span>
-                            <i class="fa-solid fa-star active" data-val="1"></i>
-                            <i class="fa-solid fa-star active" data-val="2"></i>
-                            <i class="fa-solid fa-star active" data-val="3"></i>
-                            <i class="fa-solid fa-star active" data-val="4"></i>
-                            <i class="fa-solid fa-star active" data-val="5"></i>
-                        </div>
-                        <textarea name="comment" class="comment-textarea" placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm này... (Không bắt buộc)"></textarea>
-                        <button type="submit" class="btn btn-green btn-submit-review">Gửi Đánh Giá</button>
-                    </form>
-                </div>
-                <script>
-                    const CURRENT_USER_NAME = "<%= curName %>";
-                </script>
-            <% } %>
+                <textarea class="comment-textarea" placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm này..."></textarea>
+                <button class="btn btn-green" onclick="submitReview()">Gửi Đánh Giá</button>
+            </div>
         </div>
         <!-- END REVIEWS SECTION -->
     </div>
 
     <script>
         // ===== QUANTITY CONTROL =====
+        let currentDiscount = 0;
+
         function decreaseQuantity() {
             const input = document.getElementById('quantityInput');
             const val = parseInt(input.value);
-            if (val > 1) input.value = val - 1;
+            if (val > 1) {
+                input.value = val - 1;
+                resetSummary();
+            }
         }
         function increaseQuantity() {
             const input = document.getElementById('quantityInput');
             const val = parseInt(input.value);
-            if (val < 999) input.value = val + 1;
+            if (val < 999) {
+                input.value = val + 1;
+                resetSummary();
+            }
         }
 
         // ===== DISCOUNT CODE =====
+        function formatNumber(num) {
+            return Math.round(num).toLocaleString('vi-VN');
+        }
+
+        function resetSummary() {
+            const summary = document.getElementById('orderSummary');
+            const salePrice = parseFloat(summary.getAttribute('data-sale-price')) || 0;
+            const qty = parseInt(document.getElementById('quantityInput').value) || 1;
+            const totalPriceEl = document.getElementById('totalPrice');
+            const savingRow = document.getElementById('savingRow');
+            const savingValue = document.getElementById('savingValue');
+
+            if (currentDiscount > 0) {
+                const finalTotal = Math.max(0, salePrice * qty - currentDiscount);
+                totalPriceEl.textContent = formatNumber(finalTotal) + ' đ';
+                savingRow.style.display = 'flex';
+                savingValue.textContent = formatNumber(currentDiscount) + ' đ';
+            } else {
+                totalPriceEl.textContent = formatNumber(salePrice * qty) + ' đ';
+                savingRow.style.display = 'none';
+            }
+        }
+
         function applyDiscountCode() {
             const code = document.getElementById('discountCode').value.trim();
             const msg = document.getElementById('discountMessage');
-            
+            const totalPriceEl = document.getElementById('totalPrice');
+            const savingRow = document.getElementById('savingRow');
+            const savingValue = document.getElementById('savingValue');
+            const summary = document.getElementById('orderSummary');
+            const originalPrice = parseFloat(summary.getAttribute('data-original-price')) || 0;
+            const salePrice = parseFloat(summary.getAttribute('data-sale-price')) || 0;
+            const qty = parseInt(document.getElementById('quantityInput').value) || 1;
+
             if (!code) {
                 msg.textContent = 'Vui lòng nhập mã giảm giá';
                 msg.className = 'error';
                 msg.style.display = 'block';
+                currentDiscount = 0;
+                resetSummary();
                 return;
             }
-            
-            // Mock validation - replace with actual API call
-            if (code.toUpperCase() === 'SAVE10') {
-                msg.textContent = '✓ Mã giảm giá "SAVE10" đã được áp dụng! Giảm 10%';
+
+            let discountAmount = 0;
+            const upperCode = code.toUpperCase();
+            if (upperCode === 'WELCOME10') {
+                const orderTotal = salePrice * qty;
+                if (orderTotal < 100000) {
+                    msg.textContent = '✗ Đơn hàng tối thiểu 100.000đ để dùng WELCOME10';
+                    msg.className = 'error';
+                    msg.style.display = 'block';
+                    currentDiscount = 0;
+                    resetSummary();
+                    return;
+                }
+                discountAmount = Math.min(orderTotal * 0.1, 50000);
+                msg.textContent = '✓ Mã "WELCOME10" hợp lệ: giảm 10%, tối đa 50.000đ';
                 msg.className = 'success';
                 msg.style.display = 'block';
-            } else if (code.toUpperCase() === 'SAVE20') {
-                msg.textContent = '✓ Mã giảm giá "SAVE20" đã được áp dụng! Giảm 20%';
+            } else if (upperCode === 'SALE20') {
+                const orderTotal = salePrice * qty;
+                if (orderTotal < 200000) {
+                    msg.textContent = '✗ Đơn hàng tối thiểu 200.000đ để dùng SALE20';
+                    msg.className = 'error';
+                    msg.style.display = 'block';
+                    currentDiscount = 0;
+                    resetSummary();
+                    return;
+                }
+                discountAmount = Math.min(orderTotal * 0.2, 80000);
+                msg.textContent = '✓ Mã "SALE20" hợp lệ: giảm 20%, tối đa 80.000đ';
+                msg.className = 'success';
+                msg.style.display = 'block';
+            } else if (upperCode === 'FREESHIP') {
+                const orderTotal = salePrice * qty;
+                if (orderTotal < 50000) {
+                    msg.textContent = '✗ Đơn hàng tối thiểu 50.000đ để dùng FREESHIP';
+                    msg.className = 'error';
+                    msg.style.display = 'block';
+                    currentDiscount = 0;
+                    resetSummary();
+                    return;
+                }
+                discountAmount = 0;
+                msg.textContent = '✓ Mã "FREESHIP" hợp lệ';
                 msg.className = 'success';
                 msg.style.display = 'block';
             } else {
                 msg.textContent = '✗ Mã giảm giá không hợp lệ hoặc đã hết hạn';
                 msg.className = 'error';
                 msg.style.display = 'block';
+                currentDiscount = 0;
+                resetSummary();
+                return;
+            }
+
+            currentDiscount = discountAmount;
+            const finalTotal = Math.max(0, salePrice * qty - discountAmount);
+            totalPriceEl.textContent = formatNumber(finalTotal) + ' đ';
+
+            if (discountAmount > 0) {
+                savingRow.style.display = 'flex';
+                savingValue.textContent = formatNumber(discountAmount) + ' đ';
+            } else {
+                savingRow.style.display = 'none';
             }
         }
 
@@ -1035,98 +994,27 @@
             document.getElementById('cartForm').submit();
         }
 
-        // ===== SUBMIT REVIEW (AJAX) =====
-        function submitReview(event) {
-            event.preventDefault();
-            const form = event.target;
-            const commentText = form.querySelector('.comment-textarea').value.trim();
-            const rating = parseInt(document.getElementById('ratingValue').value) || 5;
-            
-            const params = new URLSearchParams();
-            params.append("productId", form.querySelector('input[name="productId"]').value);
-            params.append("rating", rating);
-            params.append("comment", commentText);
-            params.append("ajax", "true");
-
-            fetch("<%= request.getContextPath() %>/review", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/x-www-form-urlencoded",
-                    "X-Requested-With": "XMLHttpRequest"
-                },
-                body: params
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    const commentList = document.querySelector('.comment-list');
-                    if (commentList.innerHTML.includes("Chưa có đánh giá")) {
-                        commentList.innerHTML = "";
-                    }
-                    
-                    let starsHtml = "";
-                    for (let i = 1; i <= 5; i++) {
-                        if (i <= rating) {
-                            starsHtml += '<i class="fa-solid fa-star"></i>';
-                        } else {
-                            starsHtml += '<i class="fa-regular fa-star"></i>';
-                        }
-                    }
-
-                    const initial = CURRENT_USER_NAME.charAt(0).toUpperCase();
-                    const now = new Date();
-                    const dateStr = String(now.getDate()).padStart(2, '0') + '/' + 
-                                    String(now.getMonth() + 1).padStart(2, '0') + '/' + 
-                                    now.getFullYear() + ' ' + 
-                                    String(now.getHours()).padStart(2, '0') + ':' + 
-                                    String(now.getMinutes()).padStart(2, '0');
-
-                    const newComment = document.createElement('div');
-                    newComment.className = 'comment-item';
-                    newComment.innerHTML = `
-                        <div class="comment-avatar">${initial}</div>
-                        <div class="comment-content">
-                            <div class="comment-user">${CURRENT_USER_NAME} <span class="comment-date">${dateStr}</span></div>
-                            <div class="comment-stars">${starsHtml}</div>
-                            <div class="comment-text">${commentText}</div>
-                        </div>
-                    `;
-                    
-                    commentList.insertBefore(newComment, commentList.firstChild);
-                    form.reset();
-                    document.getElementById('ratingValue').value = 5;
-                    const stars = document.querySelectorAll('#ratingInput i');
-                    stars.forEach(s => s.classList.add('active'));
-                    
-                    alert("Cảm ơn bạn đã gửi đánh giá!");
-                } else {
-                    alert("Lỗi: " + data.message);
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                alert("Có lỗi xảy ra khi gửi bình luận.");
-            });
+        // ===== SUBMIT REVIEW =====
+        function submitReview() {
+            alert('Cảm ơn bạn đã gửi đánh giá! (Chức năng đang phát triển)');
         }
 
         // ===== RATING STARS =====
         const stars = document.querySelectorAll('#ratingInput i');
-        const ratingValue = document.getElementById('ratingValue');
-        if (stars && ratingValue) {
-            stars.forEach(star => {
-                star.addEventListener('click', function() {
-                    const val = this.getAttribute('data-val');
-                    ratingValue.value = val;
-                    stars.forEach(s => {
-                        if (parseInt(s.getAttribute('data-val')) <= parseInt(val)) {
-                            s.classList.add('active');
-                        } else {
-                            s.classList.remove('active');
-                        }
-                    });
+        stars.forEach(star => {
+            star.addEventListener('click', function() {
+                const val = this.getAttribute('data-val');
+                stars.forEach(s => {
+                    if (parseInt(s.getAttribute('data-val')) <= parseInt(val)) {
+                        s.classList.add('active');
+                    } else {
+                        s.classList.remove('active');
+                    }
                 });
             });
-        }
+        });
     </script>
 </body>
 </html>
+
+

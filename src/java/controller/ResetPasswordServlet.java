@@ -89,7 +89,7 @@ public class ResetPasswordServlet extends HttpServlet {
             return;
         }
 
-        if (!newPassword.equals(confirmPassword)) {
+        if (confirmPassword == null || !newPassword.equals(confirmPassword)) {
             request.setAttribute("error", "Mật khẩu xác nhận không trùng khớp");
             request.setAttribute("token", token);
             request.setAttribute("email", email);
@@ -100,37 +100,49 @@ public class ResetPasswordServlet extends HttpServlet {
         token = token.trim();
         email = email.trim();
 
-        // Get user by email to obtain account_id
-        Account user = userDAO.findByUsernameOrEmail(email);
-        if (user == null) {
-            request.setAttribute("error", "Email không tồn tại");
-            request.getRequestDispatcher("reset-password.jsp").forward(request, response);
-            return;
-        }
+        try {
+            // Get user by email to obtain account_id
+            Account user = userDAO.findByUsernameOrEmail(email);
+            if (user == null) {
+                request.setAttribute("error", "Email không tồn tại");
+                request.getRequestDispatcher("reset-password.jsp").forward(request, response);
+                return;
+            }
 
-        // Validate token again (dùng email, không dùng id)
-        boolean isValidToken = tokenDAO.validateToken(email, token);
-        if (!isValidToken) {
-            request.setAttribute("error", "Link đã hết hạn hoặc không tồn tại");
-            request.getRequestDispatcher("reset-password.jsp").forward(request, response);
-            return;
-        }
+            // Validate token again (dùng email, không dùng id)
+            boolean isValidToken = tokenDAO.validateToken(email, token);
+            if (!isValidToken) {
+                request.setAttribute("error", "Link đã hết hạn hoặc không tồn tại");
+                request.getRequestDispatcher("reset-password.jsp").forward(request, response);
+                return;
+            }
 
-        // Update password (lưu plain text)
-        boolean passwordUpdated = userDAO.updatePassword(user.getId(), newPassword);
-        if (!passwordUpdated) {
+            // Update password
+            boolean passwordUpdated = userDAO.updatePassword(user.getId(), newPassword);
+            if (!passwordUpdated) {
+                request.setAttribute("error", "Lỗi hệ thống, vui lòng thử lại sau");
+                request.setAttribute("token", token);
+                request.setAttribute("email", email);
+                request.getRequestDispatcher("reset-password.jsp").forward(request, response);
+                return;
+            }
+
+            // Mark token as used
+            tokenDAO.markTokenAsUsed(token);
+
+            // Success - redirect to login
+            request.setAttribute("success", "Mật khẩu đã được đặt lại thành công. Vui lòng đăng nhập.");
+            request.getRequestDispatcher("login.jsp").forward(request, response);
+        } catch (Exception e) {
+            System.err.println("[ResetPasswordServlet] error: " + e.getMessage());
+            e.printStackTrace();
             request.setAttribute("error", "Lỗi hệ thống, vui lòng thử lại sau");
             request.setAttribute("token", token);
             request.setAttribute("email", email);
             request.getRequestDispatcher("reset-password.jsp").forward(request, response);
-            return;
+        } finally {
+            userDAO.close();
+            tokenDAO.close();
         }
-
-        // Mark token as used
-        tokenDAO.markTokenAsUsed(token);
-
-        // Success - redirect to login
-        request.setAttribute("success", "Mật khẩu đã được đặt lại thành công. Vui lòng đăng nhập.");
-        request.getRequestDispatcher("login.jsp").forward(request, response);
     }
 }

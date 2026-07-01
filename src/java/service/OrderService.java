@@ -245,6 +245,10 @@ public class OrderService {
                 throw new RuntimeException("Đặt hàng thất bại. Vui lòng thử lại.");
             }
 
+            if (voucherId != null) {
+                voucherDAO.incrementUsedCount(voucherId);
+            }
+
             if (!isBuyNow) {
                 // Clear the cart
                 CartService cartService = new CartService();

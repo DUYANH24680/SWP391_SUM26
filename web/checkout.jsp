@@ -1,4 +1,4 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="model.Account" %>
 <%@ page import="model.Product" %>
 <%@ page import="model.DeliveryAddress" %>
@@ -9,7 +9,7 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%
-    Account Account = (Account) session.getAttribute("Account");
+    Account Account = (Account) session.getAttribute("user");
     if (Account == null) {
         response.sendRedirect(request.getContextPath() + "/login");
         return;
@@ -677,4 +677,5 @@
     </script>
 </body>
 </html>
+
 

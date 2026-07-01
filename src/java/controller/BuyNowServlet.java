@@ -57,10 +57,13 @@ public class BuyNowServlet extends HttpServlet {
             }
         }
 
+        String note = request.getParameter("note");
+        String discountCode = request.getParameter("discountCode");
+
         CartService cartService = new CartService();
         try {
             Cart cart = cartService.addToCart(
-                    account.getId(), productId, quantity, null, null);
+                    account.getId(), productId, quantity, discountCode, note);
 
             if (cart != null) {
                 session.setAttribute("cart", cart);
@@ -84,8 +87,8 @@ public class BuyNowServlet extends HttpServlet {
             cartService.close();
         }
 
-        // Success - go straight to checkout
-        response.sendRedirect(request.getContextPath() + "/checkout?productId=" + productId + "&quantity=" + quantity);
+        // Always redirect to cart after adding
+        response.sendRedirect(request.getContextPath() + "/cart");
     }
 
     @Override
@@ -103,3 +106,4 @@ public class BuyNowServlet extends HttpServlet {
         }
     }
 }
+

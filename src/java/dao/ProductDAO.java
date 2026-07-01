@@ -16,7 +16,8 @@ public class ProductDAO extends DbContext {
                    + "FROM Products p "
                    + "LEFT JOIN Shops s ON p.shop_id = s.id "
                    + "WHERE p.isDelete = 0 ORDER BY p.created_at DESC";
-        try (PreparedStatement ps = getConnection().prepareStatement(sql);
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             List<Product> list = new ArrayList<>();
             while (rs.next()) {
@@ -33,7 +34,8 @@ public class ProductDAO extends DbContext {
 
     public int countAllProducts() {
         String sql = "SELECT COUNT(*) FROM Products WHERE isDelete = 0";
-        try (PreparedStatement ps = getConnection().prepareStatement(sql);
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             if (rs.next()) {
                 int count = rs.getInt(1);
@@ -57,7 +59,8 @@ public class ProductDAO extends DbContext {
                    + "LEFT JOIN Shops s ON p.shop_id = s.id "
                    + "WHERE p.status = 0 AND p.isDelete = 0 "
                    + "ORDER BY p.created_at ASC";
-        try (PreparedStatement ps = getConnection().prepareStatement(sql);
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             List<Product> list = new ArrayList<>();
             while (rs.next()) {
@@ -104,7 +107,8 @@ public class ProductDAO extends DbContext {
                    + "WHERE p.isDelete = 0 "
                    + "  AND (p.title LIKE ? OR p.description LIKE ?) "
                    + "ORDER BY p.created_at DESC";
-        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             String pattern = "%" + keyword + "%";
             ps.setString(1, pattern);
             ps.setString(2, pattern);
@@ -131,7 +135,8 @@ public class ProductDAO extends DbContext {
                    + "FROM Products p "
                    + "LEFT JOIN Shops s ON p.shop_id = s.id "
                    + "WHERE p.id = ?";
-        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -159,7 +164,8 @@ public class ProductDAO extends DbContext {
                    + "LEFT JOIN Shops s ON p.shop_id = s.id "
                    + "WHERE p.shop_id = ? AND p.isDelete = 0 "
                    + "ORDER BY p.created_at DESC";
-        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, shopId);
             try (ResultSet rs = ps.executeQuery()) {
                 List<Product> list = new ArrayList<>();
@@ -188,7 +194,8 @@ public class ProductDAO extends DbContext {
                    + "LEFT JOIN Shops s ON p.shop_id = s.id "
                    + "WHERE p.category_id = ? AND p.isDelete = 0 AND p.status = 1 "
                    + "ORDER BY p.created_at DESC";
-        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, categoryId);
             try (ResultSet rs = ps.executeQuery()) {
                 List<Product> list = new ArrayList<>();
@@ -208,7 +215,8 @@ public class ProductDAO extends DbContext {
 
     public int countProductsByShopId(int shopId) {
         String sql = "SELECT COUNT(*) FROM Products WHERE shop_id = ? AND isDelete = 0";
-        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, shopId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -443,7 +451,8 @@ public class ProductDAO extends DbContext {
                    + "FROM Products p "
                    + "LEFT JOIN Shops s ON p.shop_id = s.id "
                    + "WHERE p.id = ? AND p.shop_id = ? AND p.isDelete = 0";
-        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, productId);
             ps.setInt(2, shopId);
             try (ResultSet rs = ps.executeQuery()) {
@@ -469,7 +478,8 @@ public class ProductDAO extends DbContext {
      */
     public List<String> getProductImageUrls(int productId) {
         String sql = "SELECT image_url FROM ProductImages WHERE product_id = ? ORDER BY sort_order ASC";
-        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, productId);
             try (ResultSet rs = ps.executeQuery()) {
                 List<String> urls = new ArrayList<>();
@@ -633,10 +643,10 @@ public class ProductDAO extends DbContext {
             sql.append(" AND p.category_id IN (");
             for (int i = 0; i < categoryIds.size(); i++) {
                 sql.append("?");
-                params.add(categoryIds.get(i));
                 if (i < categoryIds.size() - 1) {
                     sql.append(",");
                 }
+                params.add(categoryIds.get(i));
             }
             sql.append(") ");
         }
@@ -651,7 +661,8 @@ public class ProductDAO extends DbContext {
 
         sql.append(" ORDER BY p.created_at DESC");
 
-        try (PreparedStatement ps = getConnection().prepareStatement(sql.toString())) {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
             for (int i = 0; i < params.size(); i++) {
                 ps.setObject(i + 1, params.get(i));
             }

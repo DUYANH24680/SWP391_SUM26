@@ -65,5 +65,29 @@ public class VoucherDAO extends DbContext {
         v.setStatus(rs.getBoolean("status"));
         return v;
     }
+
+    public void incrementUsedCount(int voucherId) {
+        if (voucherId <= 0) return;
+        String sql = "UPDATE Vouchers SET used_count = used_count + 1 WHERE id = ?";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            ps.setInt(1, voucherId);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("[VoucherDAO] incrementUsedCount error: " + e.getMessage());
+            throw new RuntimeException("VoucherDAO.incrementUsedCount error: " + e.getMessage(), e);
+        }
+    }
+
+    public void decrementUsedCount(int voucherId) {
+        if (voucherId <= 0) return;
+        String sql = "UPDATE Vouchers SET used_count = CASE WHEN used_count > 0 THEN used_count - 1 ELSE 0 END WHERE id = ?";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            ps.setInt(1, voucherId);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("[VoucherDAO] decrementUsedCount error: " + e.getMessage());
+            throw new RuntimeException("VoucherDAO.decrementUsedCount error: " + e.getMessage(), e);
+        }
+    }
 }
 

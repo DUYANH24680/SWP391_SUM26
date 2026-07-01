@@ -140,3 +140,4 @@ public class UpdateCartServlet extends HttpServlet {
         response.sendRedirect(request.getContextPath() + "/view-cart");
     }
 }
+

@@ -20,33 +20,17 @@ public class AccountDAO extends Utils.DbContext {
                    + "JOIN Roles r ON u.role_id = r.id "
                    + "WHERE (u.username = ? OR u.email = ?) AND u.status = 1";
 
-        Connection conn = null;
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-        try {
-            conn = createConnection();
-            ps = conn.prepareStatement(sql);
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, usernameOrEmail);
             ps.setString(2, usernameOrEmail);
-            rs = ps.executeQuery();
-            if (rs.next()) {
-                return mapRow(rs);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return mapRow(rs);
+                }
             }
         } catch (SQLException e) {
             throw new RuntimeException("AccountDAO.findByUsernameOrEmail error: " + e.getMessage(), e);
-        } finally {
-            try {
-                if (rs != null) rs.close();
-            } catch (SQLException ignored) {
-            }
-            try {
-                if (ps != null) ps.close();
-            } catch (SQLException ignored) {
-            }
-            try {
-                if (conn != null && !conn.isClosed()) conn.close();
-            } catch (SQLException ignored) {
-            }
         }
         return null;
     }
@@ -59,7 +43,7 @@ public class AccountDAO extends Utils.DbContext {
                    + "FROM Accounts u "
                    + "JOIN Roles r ON u.role_id = r.id "
                    + "WHERE u.id = ? AND u.status = 1";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
             ps.setInt(1, id);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -152,7 +136,7 @@ public class AccountDAO extends Utils.DbContext {
      */
     public boolean updateProfile(int id, String fullname, String email, String phone, String address, Boolean gender, String avatar) {
         String sql = "UPDATE Accounts SET fullname = ?, email = ?, phone = ?, address = ?, gender = ?, avatar = ? WHERE id = ?";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
             ps.setString(1, fullname);
             ps.setString(2, email);
             ps.setString(3, phone);
@@ -175,7 +159,7 @@ public class AccountDAO extends Utils.DbContext {
      */
     public boolean updatePassword(int id, String newPasswordHash) {
         String sql = "UPDATE Accounts SET password_hash = ? WHERE id = ?";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
             ps.setString(1, newPasswordHash);
             ps.setInt(2, id);
             return ps.executeUpdate() > 0;
@@ -189,7 +173,7 @@ public class AccountDAO extends Utils.DbContext {
      */
     public boolean isEmailTaken(String email, int excludeId) {
         String sql = "SELECT COUNT(1) FROM Accounts WHERE email = ? AND id <> ? AND status = 1";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
             ps.setString(1, email);
             ps.setInt(2, excludeId);
             try (ResultSet rs = ps.executeQuery()) {
