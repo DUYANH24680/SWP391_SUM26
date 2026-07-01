@@ -78,6 +78,9 @@ public class CheckoutCartServlet extends HttpServlet {
         VoucherDAO voucherDAO = new VoucherDAO();
 
         try {
+            System.out.println("[CheckoutCartServlet] doGet: selectedProductIds=" + selectedProductIds);
+            System.out.println("[CheckoutCartServlet] doGet: customerId=" + account.getId());
+
             double totalCost = 0;
             for (CartItem item : selectedItems) {
                 Product product = productDAO.getProductById(item.getProductId());
@@ -86,10 +89,15 @@ public class CheckoutCartServlet extends HttpServlet {
                 } else if (product != null) {
                     totalCost += product.getOriginalPrice() * item.getQuantity();
                 }
+                System.out.println("[CheckoutCartServlet] doGet: productId=" + item.getProductId() + ", unitPrice=" + (product != null ? product.getOriginalPrice() : "NULL"));
             }
+            System.out.println("[CheckoutCartServlet] doGet: totalCost=" + totalCost);
 
             List<DeliveryAddress> addresses = addressDAO.findByCustomerId(account.getId());
+            System.out.println("[CheckoutCartServlet] doGet: addresses count=" + (addresses != null ? addresses.size() : "NULL"));
+
             List<Voucher> vouchers = voucherDAO.getAllActiveVouchers();
+            System.out.println("[CheckoutCartServlet] doGet: vouchers count=" + (vouchers != null ? vouchers.size() : "NULL"));
 
             req.setAttribute("selectedItems", selectedItems);
             req.setAttribute("totalCost", totalCost);
@@ -99,9 +107,9 @@ public class CheckoutCartServlet extends HttpServlet {
 
             req.getRequestDispatcher("/checkout-cart.jsp").forward(req, resp);
         } catch (Exception e) {
-            System.err.println("[CheckoutCartServlet] doGet error: " + e.getMessage());
+            System.err.println("[CheckoutCartServlet] doGet ERROR: " + e.getClass().getName() + ": " + e.getMessage());
             e.printStackTrace();
-            session.setAttribute("error", "Lỗi hệ thống khi tải trang thanh toán.");
+            session.setAttribute("error", "Lỗi hệ thống khi tải trang thanh toán: " + e.getMessage());
             resp.sendRedirect(req.getContextPath() + "/view-cart");
         } finally {
             checkoutService.close();
