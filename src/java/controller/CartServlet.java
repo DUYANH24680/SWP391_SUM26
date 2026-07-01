@@ -100,7 +100,7 @@ public class CartServlet extends HttpServlet {
         String note = trimParam(req.getParameter("note"));
 
         try {
-            cartService.addToCart(user.getId(), productId, size, quantity, voucherCode, note);
+            cartService.addToCart(user.getId(), productId, quantity, voucherCode, note);
             session.setAttribute("message", "Thêm sản phẩm vào giỏ hàng thành công.");
         } catch (IllegalArgumentException e) {
             session.setAttribute("error", e.getMessage());
@@ -131,7 +131,7 @@ public class CartServlet extends HttpServlet {
         String size = trimParam(req.getParameter("size"));
         int quantity = parsePositiveInt(req.getParameter("quantity"), 1);
         try {
-            cartService.updateQuantity(user.getId(), productId, size, quantity);
+            cartService.updateQuantity(user.getId(), productId, quantity);
             session.setAttribute("message", "Cập nhật số lượng giỏ hàng thành công.");
         } catch (IllegalArgumentException e) {
             session.setAttribute("error", e.getMessage());
@@ -150,7 +150,7 @@ public class CartServlet extends HttpServlet {
         int productId = parsePositiveInt(req.getParameter("productId"), 0);
         String size = trimParam(req.getParameter("size"));
         try {
-            cartService.removeItem(user.getId(), productId, size);
+            cartService.removeItem(user.getId(), productId);
             session.setAttribute("message", "Xóa sản phẩm khỏi giỏ hàng thành công.");
         } catch (IllegalArgumentException e) {
             session.setAttribute("error", e.getMessage());

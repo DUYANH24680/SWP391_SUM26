@@ -696,6 +696,7 @@
     </a>
     <div class="nav-links">
         <a href="home.jsp">Trang Chu</a>
+        <a href="danh-muc">Danh Mục</a>
         <a href="products">San Pham</a>
     </div>
     <div class="nav-right">

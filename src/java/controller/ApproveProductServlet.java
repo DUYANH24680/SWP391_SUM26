@@ -63,6 +63,7 @@ public class ApproveProductServlet extends HttpServlet {
         }
 
         String productIdParam = req.getParameter("productId");
+        String action = req.getParameter("action");
 
         if (productIdParam == null || productIdParam.trim().isEmpty()) {
             session.setAttribute("error", "ID sản phẩm không hợp lệ.");
@@ -76,22 +77,43 @@ public class ApproveProductServlet extends HttpServlet {
             ProductDAO dao = new ProductDAO();
             boolean success;
             try {
-                success = dao.approveProduct(productId);
+                if ("remove".equalsIgnoreCase(action)) {
+                    // ---- Remove inappropriate product ----
+                    String reason = req.getParameter("removeReason");
+                    if (reason == null || reason.trim().isEmpty()) {
+                        session.setAttribute("error", "Vui lòng nhập lý do xóa sản phẩm.");
+                        resp.sendRedirect(req.getContextPath() + "/admin/approve-products");
+                        return;
+                    }
+                    if (reason.trim().length() < 10) {
+                        session.setAttribute("error", "Lý do xóa phải có ít nhất 10 ký tự.");
+                        resp.sendRedirect(req.getContextPath() + "/admin/approve-products");
+                        return;
+                    }
+                    success = dao.removeInappropriateProduct(productId, reason.trim());
+                    if (success) {
+                        session.setAttribute("message", "Sản phẩm đã được gỡ bỏ thành công. Lý do: " + reason.trim());
+                    } else {
+                        session.setAttribute("error", "Sản phẩm không tìm thấy hoặc đã bị gỡ trước đó.");
+                    }
+                } else {
+                    // ---- Default: Approve product ----
+                    success = dao.approveProduct(productId);
+                    if (success) {
+                        session.setAttribute("message", "Sản phẩm đã được duyệt thành công.");
+                    } else {
+                        session.setAttribute("error", "Sản phẩm không tìm thấy hoặc đã được duyệt trước đó.");
+                    }
+                }
             } finally {
                 dao.close();
-            }
-
-            if (success) {
-                session.setAttribute("message", "Sản phẩm đã được duyệt thành công.");
-            } else {
-                session.setAttribute("error", "Sản phẩm không tìm thấy hoặc đã được duyệt trước đó.");
             }
         } catch (NumberFormatException e) {
             session.setAttribute("error", "ID sản phẩm phải là số.");
         } catch (Exception e) {
-            System.err.println("[ApproveProductServlet] approve error: " + e.getMessage());
+            System.err.println("[ApproveProductServlet] action error: " + e.getMessage());
             e.printStackTrace();
-            session.setAttribute("error", "Lỗi khi duyệt sản phẩm: " + e.getMessage());
+            session.setAttribute("error", "Lỗi khi xử lý: " + e.getMessage());
         }
 
         resp.sendRedirect(req.getContextPath() + "/admin/approve-products");

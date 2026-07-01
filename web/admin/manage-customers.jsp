@@ -1,4 +1,4 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="model.Account" %>
 <%@ page import="java.util.List" %>
 <%@ page import="java.text.SimpleDateFormat" %>
@@ -321,9 +321,13 @@
         </a>
         <div class="nav-links">
             <a href="<%= request.getContextPath() %>/home.jsp">Trang Chủ</a>
+            <a href="../danh-muc">Danh Mục</a>
             <a href="<%= request.getContextPath() %>/products">Sản Phẩm</a>
             <a href="<%= request.getContextPath() %>/admin/customers" class="active">
                 <i class="fa-solid fa-users"></i> Khách Hàng
+            </a>
+                            <a href="<%= request.getContextPath() %>/admin/orders">
+                <i class="fa-solid fa-chart-line"></i> Monitor Đơn Hàng
             </a>
         </div>
         <div class="nav-right">
@@ -399,7 +403,7 @@
                         if (customers != null && !customers.isEmpty()) {
                             for (Account c : customers) {
                                 int status = c.getStatus();
-                                int orderCount = c.getOrderCount();
+                                int orderCount = (Integer) c.getExtra().getOrDefault("orderCount", 0);
                     %>
                         <tr>
                             <!-- Avatar + name -->
@@ -501,3 +505,4 @@
 
 </body>
 </html>
+

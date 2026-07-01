@@ -658,11 +658,9 @@
         <i class="fa-solid fa-apple-whole"></i> Sena Shop
     </a>
     <div class="nav-links">
-        <a href="#">Trái Cây</a>
-        <a href="#">Rau Củ</a>
-        <a href="#">Nhập Khẩu</a>
-        <a href="#">Huu Co</a>
-        <a href="#">Khuyến Mãi</a>
+        <a href="home.jsp">Trang Chủ</a>
+        <a href="danh-muc">Danh Mục</a>
+        <a href="products">Sản Phẩm</a>
     </div>
     <div class="nav-right">
         <button class="nav-icon-btn" title="Gio hang"><i class="fa-solid fa-basket-shopping"></i></button>

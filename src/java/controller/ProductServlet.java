@@ -103,10 +103,6 @@ public class ProductServlet extends HttpServlet {
     // -----------------------------------------------------------------
     private void handleProductDetail(HttpServletRequest req, HttpServletResponse resp) throws Exception {
         HttpSession session = req.getSession(false);
-        if (session == null || session.getAttribute("Account") == null) {
-            resp.sendRedirect(req.getContextPath() + "/login");
-            return;
-        }
 
         String idParam = req.getParameter("id").trim();
         int productId;

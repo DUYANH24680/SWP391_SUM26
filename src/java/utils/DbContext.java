@@ -23,7 +23,7 @@ public class DbContext {
             + "socketTimeout=60;"
             + "sendStringParametersAsUnicode=true;";
     private static final String DB_USER = "sa";
-    private static final String DB_PASS = "1234567890";
+    private static final String DB_PASS = "123";
 
     public DbContext() {
         try {
