@@ -1,6 +1,6 @@
-<%@ page contentType="text/html;charset=UTF-8" %>
+﻿<%@ page contentType="text/html;charset=UTF-8" %>
 <%
-    if (session.getAttribute("user") != null) {
+    if (session.getAttribute("Account") != null) {
         response.sendRedirect("home.jsp");
         return;
     }
@@ -350,7 +350,7 @@
             <span>Nhập thông tin bên dưới để tham gia Sena Shop</span>
             
             <div class="input-group">
-                <i class="fa-regular fa-user"></i>
+                <i class="fa-regular fa-Account"></i>
                 <input type="text" name="fullname" placeholder="Họ và tên" required />
             </div>
             <div class="input-group">
@@ -358,7 +358,7 @@
                 <input type="email" name="email" placeholder="Email" required />
             </div>
             <div class="input-group">
-                <i class="fa-solid fa-user"></i>
+                <i class="fa-solid fa-Account"></i>
                 <input type="text" name="username" placeholder="Tên đăng nhập" required />
             </div>
             <div class="input-group">
@@ -385,7 +385,7 @@
             <% } %>
 
             <div class="input-group">
-                <i class="fa-solid fa-user"></i>
+                <i class="fa-solid fa-Account"></i>
                 <input type="text" name="username" placeholder="Tên đăng nhập" required />
             </div>
             <div class="input-group">
@@ -431,3 +431,4 @@
 
 </body>
 </html>
+

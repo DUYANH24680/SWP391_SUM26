@@ -53,3 +53,4 @@ public class Wishlist {
         return items == null ? 0 : items.size();
     }
 }
+

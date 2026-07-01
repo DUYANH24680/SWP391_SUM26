@@ -245,6 +245,10 @@ public class OrderService {
                 throw new RuntimeException("Đặt hàng thất bại. Vui lòng thử lại.");
             }
 
+            if (voucherId != null) {
+                voucherDAO.incrementUsedCount(voucherId);
+            }
+
             if (!isBuyNow) {
                 // Clear the cart
                 CartService cartService = new CartService();
@@ -253,6 +257,110 @@ public class OrderService {
 
             return order;
 
+        } finally {
+            productDAO.close();
+            voucherDAO.close();
+            orderDAO.close();
+        }
+    }
+    public model.CustomerOrdersData getCustomerOrdersWithDetails(int customerId, Integer status) {
+        OrderDAO dao = new OrderDAO();
+        try {
+            List<Order> orders = dao.getOrdersByCustomerId(customerId);
+            if (status != null) {
+                orders.removeIf(o -> o.getStatus() != status);
+            }
+            Map<Integer, List<OrderDetail>> map = getOrderDetailsMap(orders);
+            return new model.CustomerOrdersData(orders, map);
+        } finally {
+            dao.close();
+        }
+    }
+
+    public model.PlaceOrderResult placeCartOrder(int customerId, List<CartItem> selectedItems, String recipientName, String recipientPhone, String address, String paymentMethod, String note, String voucherCode) {
+        if (selectedItems == null || selectedItems.isEmpty()) {
+            return new model.PlaceOrderResult(false, "Không có sản phẩm nào được chọn.");
+        }
+        if (recipientName == null || recipientName.trim().isEmpty() ||
+            recipientPhone == null || recipientPhone.trim().isEmpty() ||
+            address == null || address.trim().isEmpty()) {
+            return new model.PlaceOrderResult(false, "Vui lòng nhập đầy đủ thông tin giao hàng.");
+        }
+
+        ProductDAO productDAO = new ProductDAO();
+        VoucherDAO voucherDAO = new VoucherDAO();
+        OrderDAO orderDAO = new OrderDAO();
+        
+        try {
+            double totalCost = 0.0;
+            List<OrderDetail> details = new ArrayList<>();
+
+            for (CartItem item : selectedItems) {
+                Product p = productDAO.getProductById(item.getProductId());
+                if (p == null || p.isIsDelete() || p.getStatus() != 1) {
+                    return new model.PlaceOrderResult(false, "Sản phẩm " + item.getTitle() + " không còn khả dụng.");
+                }
+                if (p.getStockQuantity() < item.getQuantity()) {
+                    return new model.PlaceOrderResult(false, "Sản phẩm " + item.getTitle() + " không đủ hàng trong kho.");
+                }
+
+                double unitPrice = p.getSalePrice() > 0 && p.getSalePrice() < p.getOriginalPrice()
+                        ? p.getSalePrice() : p.getOriginalPrice();
+                double itemTotal = unitPrice * item.getQuantity();
+                totalCost += itemTotal;
+
+                OrderDetail detail = new OrderDetail();
+                detail.setProductId(item.getProductId());
+                detail.setQuantity(item.getQuantity());
+                detail.setUnitPrice(unitPrice);
+                detail.setTotalPrice(itemTotal);
+                details.add(detail);
+            }
+
+            double shippingFee = totalCost >= 200000 ? 0.0 : 20000.0;
+            double discountAmount = 0.0;
+            Integer voucherId = null;
+
+            if (voucherCode != null && !voucherCode.trim().isEmpty()) {
+                Voucher voucher = voucherDAO.findByCode(voucherCode);
+                if (voucher != null && voucher.isValid(totalCost)) {
+                    voucherId = voucher.getId();
+                    discountAmount = voucher.calculateDiscount(totalCost);
+                }
+            }
+
+            double finalCost = totalCost - discountAmount + shippingFee;
+
+            Order order = new Order();
+            order.setCustomerId(customerId);
+            order.setVoucherId(voucherId);
+            order.setRecipientName(recipientName.trim());
+            order.setRecipientPhone(recipientPhone.trim());
+            order.setAddress(address.trim());
+            order.setPaymentMethod(paymentMethod != null ? paymentMethod.trim() : "COD");
+            order.setStatus(1); // Pending
+            order.setPaymentStatus(0); // Unpaid
+            order.setTotalCost(totalCost);
+            order.setDiscountAmount(discountAmount);
+            order.setShippingFee(shippingFee);
+            order.setFinalCost(finalCost);
+            order.setNote(note != null ? note.trim() : "");
+
+            boolean success = orderDAO.createOrder(order, details);
+            if (!success) {
+                return new model.PlaceOrderResult(false, "Đặt hàng thất bại. Vui lòng thử lại.");
+            }
+
+            CartService cartService = new CartService();
+            for (CartItem item : selectedItems) {
+                cartService.removeItem(customerId, item.getProductId());
+            }
+
+            return new model.PlaceOrderResult(true, order.getId());
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new model.PlaceOrderResult(false, "Lỗi hệ thống: " + e.getMessage());
         } finally {
             productDAO.close();
             voucherDAO.close();

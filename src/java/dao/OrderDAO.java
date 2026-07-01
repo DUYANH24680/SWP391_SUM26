@@ -2,6 +2,7 @@ package dao;
 
 import model.Order;
 import model.OrderDetail;
+import model.Shop;
 import Utils.DbContext;
 import java.sql.*;
 import java.util.ArrayList;
@@ -194,6 +195,77 @@ public class OrderDAO extends DbContext {
         }
         return null;
     }
+    /**
+     * Get all orders for Admin with optional filters: status, shop, date range, value range.
+     * Returns orders from ALL shops across the entire system.
+     */
+    public List<Order> getAllOrdersForAdmin(Integer status, Integer shopId,
+            java.sql.Date fromDate, java.sql.Date toDate,
+            Double minValue, Double maxValue) {
+        List<Order> list = new ArrayList<>();
+        StringBuilder sql = new StringBuilder(
+            "SELECT o.id, o.customer_id, o.voucher_id, o.recipient_name, o.recipient_phone, o.address, o.payment_method, "
+          + "o.status, o.payment_status, o.total_cost, o.discount_amount, o.shipping_fee, o.final_cost, o.note, o.order_date, o.cancelled_at, "
+          + "a.fullname AS customer_name, v.code AS voucher_code, s.shop_name "
+          + "FROM Orders o "
+          + "JOIN OrderDetails od ON o.id = od.order_id "
+          + "JOIN Products p ON od.product_id = p.id "
+          + "JOIN Shops s ON p.shop_id = s.id "
+          + "JOIN Accounts a ON o.customer_id = a.id "
+          + "LEFT JOIN Vouchers v ON o.voucher_id = v.id "
+          + "WHERE 1=1 ");
+
+        List<Object> params = new ArrayList<>();
+
+        if (shopId != null && shopId > 0) {
+            sql.append("AND p.shop_id = ? ");
+            params.add(shopId);
+        }
+        if (status != null && status > 0) {
+            sql.append("AND o.status = ? ");
+            params.add(status);
+        }
+        if (fromDate != null) {
+            sql.append("AND CAST(o.order_date AS DATE) >= ? ");
+            params.add(fromDate);
+        }
+        if (toDate != null) {
+            sql.append("AND CAST(o.order_date AS DATE) <= ? ");
+            params.add(toDate);
+        }
+        if (minValue != null) {
+            sql.append("AND o.final_cost >= ? ");
+            params.add(minValue);
+        }
+        if (maxValue != null) {
+            sql.append("AND o.final_cost <= ? ");
+            params.add(maxValue);
+        }
+
+        sql.append("GROUP BY o.id, o.customer_id, o.voucher_id, o.recipient_name, o.recipient_phone, o.address, o.payment_method, "
+                 + "o.status, o.payment_status, o.total_cost, o.discount_amount, o.shipping_fee, o.final_cost, o.note, o.order_date, o.cancelled_at, "
+                 + "a.fullname, v.code, s.shop_name "
+                 + "ORDER BY o.order_date DESC");
+
+        try (PreparedStatement ps = getConnection().prepareStatement(sql.toString())) {
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Order o = mapRow(rs);
+                    o.setCustomerName(rs.getString("customer_name"));
+                    o.setVoucherCode(rs.getString("voucher_code"));
+                    o.setShopName(rs.getString("shop_name"));
+                    list.add(o);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[OrderDAO] getAllOrdersForAdmin error: " + e.getMessage());
+            throw new RuntimeException("OrderDAO.getAllOrdersForAdmin error: " + e.getMessage(), e);
+        }
+        return list;
+    }
 
     /**
      * Get items (OrderDetails) belonging to a specific order.
@@ -244,6 +316,70 @@ public class OrderDAO extends DbContext {
             throw new RuntimeException("OrderDAO.updateOrderStatus error: " + e.getMessage(), e);
         }
     }
+        /**
+     * Get filtered orders for a specific shop (Seller view).
+     * Supports filtering by status, date range, and total value range.
+     */
+    public List<Order> getOrdersByShopIdFiltered(int shopId, Integer status,
+            java.sql.Date fromDate, java.sql.Date toDate,
+            Double minValue, Double maxValue) {
+        List<Order> list = new ArrayList<>();
+        StringBuilder sql = new StringBuilder(
+            "SELECT DISTINCT o.id, o.customer_id, o.voucher_id, o.recipient_name, o.recipient_phone, o.address, o.payment_method, "
+          + "o.status, o.payment_status, o.total_cost, o.discount_amount, o.shipping_fee, o.final_cost, o.note, o.order_date, o.cancelled_at, "
+          + "a.fullname AS customer_name, v.code AS voucher_code "
+          + "FROM Orders o "
+          + "JOIN OrderDetails od ON o.id = od.order_id "
+          + "JOIN Products p ON od.product_id = p.id "
+          + "JOIN Accounts a ON o.customer_id = a.id "
+          + "LEFT JOIN Vouchers v ON o.voucher_id = v.id "
+          + "WHERE p.shop_id = ? ");
+
+        List<Object> params = new ArrayList<>();
+        params.add(shopId);
+
+        if (status != null && status > 0) {
+            sql.append("AND o.status = ? ");
+            params.add(status);
+        }
+        if (fromDate != null) {
+            sql.append("AND CAST(o.order_date AS DATE) >= ? ");
+            params.add(fromDate);
+        }
+        if (toDate != null) {
+            sql.append("AND CAST(o.order_date AS DATE) <= ? ");
+            params.add(toDate);
+        }
+        if (minValue != null) {
+            sql.append("AND o.final_cost >= ? ");
+            params.add(minValue);
+        }
+        if (maxValue != null) {
+            sql.append("AND o.final_cost <= ? ");
+            params.add(maxValue);
+        }
+
+        sql.append("ORDER BY o.order_date DESC");
+
+        try (PreparedStatement ps = getConnection().prepareStatement(sql.toString())) {
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Order o = mapRow(rs);
+                    o.setCustomerName(rs.getString("customer_name"));
+                    o.setVoucherCode(rs.getString("voucher_code"));
+                    list.add(o);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[OrderDAO] getOrdersByShopIdFiltered error: " + e.getMessage());
+            throw new RuntimeException("OrderDAO.getOrdersByShopIdFiltered error: " + e.getMessage(), e);
+        }
+        return list;
+    }
+
 
     private Order mapRow(ResultSet rs) throws SQLException {
         Order o = new Order();

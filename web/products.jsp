@@ -1,29 +1,17 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="model.Account" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
-<%!
-    public static String imgUrl(String path, String contextPath) {
-        if (path == null || path.trim().isEmpty()) return null;
-        String trimmed = path.trim();
-        if (trimmed.startsWith("uploads/")) {
-            try {
-                return contextPath + "/image?path=" + java.net.URLEncoder.encode(trimmed, "UTF-8");
-            } catch (java.io.UnsupportedEncodingException e) { return trimmed; }
-        }
-        return trimmed;
-    }
-%>
 <%
-    Account user = (Account) session.getAttribute("user");
-    if (user == null) {
+    Account Account = (Account) session.getAttribute("user");
+    if (Account == null) {
         response.sendRedirect(request.getContextPath() + "/profile");
         return;
     }
 
-    String avatarUrl = user.getAvatar();
+    String avatarUrl = Account.getAvatar();
     if (avatarUrl == null || avatarUrl.trim().isEmpty()) {
-        String fullname = user.getFullname() != null ? user.getFullname() : user.getUsername();
+        String fullname = Account.getFullname() != null ? Account.getFullname() : Account.getUsername();
         avatarUrl = "https://ui-avatars.com/api/?name="
                   + java.net.URLEncoder.encode(fullname, "UTF-8")
                   + "&background=4caf50&color=fff&size=80&bold=true&rounded=true";
@@ -592,7 +580,7 @@
     <!-- SIDEBAR -->
     <aside class="sidebar">
         <div class="sidebar-nav">
-            <a href="profile"><i class="fa-regular fa-user"></i> Ho So</a>
+            <a href="profile"><i class="fa-regular fa-Account"></i> Ho So</a>
             <a href="products" class="active"><i class="fa-brands fa-opencart"></i> San Pham</a>
             <a href="#"><i class="fa-solid fa-basket-shopping"></i> Don Hang</a>
             <a href="#"><i class="fa-regular fa-heart"></i> Yeu Thich</a>
@@ -630,7 +618,7 @@
 
         <%-- Debug info (chi hien thi khi co error hoac trong moi truong dev) --%>
         <% String debugRole = (String) request.getAttribute("debugRole");
-           String debugEnv = System.getProperty("user.name") != null ? "debug" : "";
+           String debugEnv = System.getProperty("Account.name") != null ? "debug" : "";
            if (debugRole != null && (error != null || "debug".equals(System.getProperty("debug.mode")))) { %>
         <div class="alert" style="background:#f0f9ff;border:1px solid #bae6fd;color:#0c4a6e;font-size:0.78rem;">
             <i class="fa-solid fa-bug"></i>
@@ -707,16 +695,9 @@
                                     <!-- Hinh anh -->
                                     <td>
                                         <c:choose>
-                                            <c:when test="${p.image != null && p.image != '' && p.image != 'null'}">
+                                            <c:when test="${not empty p.image}">
                                                 <div class="product-img">
-                                                    <c:choose>
-                                                        <c:when test="${p.image.startsWith('uploads/')}">
-                                                            <img src="<%= request.getContextPath() %>/image?path=<c:out value='${p.image}' />" alt="${p.title}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
-                                                        </c:when>
-                                                        <c:otherwise>
-                                                            <img src="${p.image}" alt="${p.title}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
-                                                        </c:otherwise>
-                                                    </c:choose>
+                                                    <img src="${p.image}" alt="${p.title}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
                                                     <div class="product-img-placeholder" style="display:none;">🍎</div>
                                                 </div>
                                             </c:when>
@@ -870,3 +851,4 @@
 
 </body>
 </html>
+

@@ -1,6 +1,5 @@
-//Duy Anh
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ page import="model.Customer" %>
+﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page import="model.Account" %>
 <%@ page import="model.Product" %>
 <%@ page import="model.Shop" %>
 <%@ page import="dao.CategoryDAO" %>
@@ -8,8 +7,8 @@
 <%@ page import="java.util.List" %>
 <%
     // ---- Auth guard ----
-    Customer user = (Customer) session.getAttribute("user");
-    if (user == null) {
+    Account Account = (Account) session.getAttribute("Account");
+    if (Account == null) {
         response.sendRedirect(request.getContextPath() + "/login");
         return;
     }
@@ -39,7 +38,7 @@
     Shop shopInfo = (Shop) request.getAttribute("shopInfo");
     if (shopInfo == null) {
         shopInfo = new Shop();
-        shopInfo.setName(product.getShopName() != null ? product.getShopName() : "-");
+        shopInfo.setShopName(product.getShopName() != null ? product.getShopName() : "-");
     }
 
     double originalPrice = product.getOriginalPrice();
@@ -47,16 +46,6 @@
     boolean hasDiscount = salePrice > 0 && salePrice < originalPrice;
     int discountPercent = (int) Math.round(product.getDiscountPercent());
     java.text.NumberFormat nf = java.text.NumberFormat.getNumberInstance(java.util.Locale.forLanguageTag("vi"));
-
-    // ---- Image URL helper ----
-    java.util.function.Function<String, String> imgUrl = (String path) -> {
-        if (path == null || path.trim().isEmpty()) return null;
-        String trimmed = path.trim();
-        if (trimmed.startsWith("uploads/")) {
-            return request.getContextPath() + "/image?path=" + java.net.URLEncoder.encode(trimmed);
-        }
-        return trimmed;
-    };
 %>
 <!DOCTYPE html>
 <html lang="vi">
@@ -84,7 +73,7 @@
         }
         body {
             font-family: 'Inter', sans-serif;
-            background: rgba(31, 41, 55, 0.95); /* Dark overlay */
+            background: rgba(31, 41, 55, 0.95);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -119,14 +108,13 @@
             background: #fff;
             border-radius: var(--radius);
             width: 100%;
-            max-width: 1000px;
+            max-width: 1100px;
             max-height: 90vh;
             overflow-y: auto;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
             padding: 2rem;
             position: relative;
         }
-        /* Tùy chỉnh thanh cuộn cho modal-container */
         .modal-container::-webkit-scrollbar { width: 8px; }
         .modal-container::-webkit-scrollbar-track { background: #f1f1f1; border-radius: var(--radius); }
         .modal-container::-webkit-scrollbar-thumb { background: #ccc; border-radius: var(--radius); }
@@ -157,7 +145,7 @@
         
         .detail-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr 1.2fr;
             gap: 2rem;
         }
         @media (max-width: 768px) {
@@ -211,7 +199,7 @@
         .badge-red { background: #fee2e2; color: #991b1b; }
         .badge-gray { background: var(--gray-100); color: var(--gray-600); }
         
-        .section-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--gray-400); margin-bottom: 0.5rem; }
+        .section-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--gray-400); margin-bottom: 0.7rem; }
         
         .shop-card {
             background: var(--gray-50); border: 1px solid var(--gray-200);
@@ -222,8 +210,184 @@
         .shop-avatar-placeholder { width: 44px; height: 44px; border-radius: 50%; background: var(--green-light); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
         .shop-name { font-size: 0.95rem; font-weight: 700; color: var(--gray-800); }
         .shop-meta { font-size: 0.8rem; color: var(--gray-400); }
+
+        /* ===== PRODUCT CODE ===== */
+        .product-code-box {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            padding: 0.75rem 1rem;
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--gray-800);
+        }
+        .code-text { flex: 1; }
+        .btn-copy {
+            background: none;
+            border: none;
+            color: var(--green);
+            cursor: pointer;
+            padding: 0.4rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            font-size: 1rem;
+        }
+        .btn-copy:hover { color: var(--green-dark); transform: scale(1.1); }
+
+        /* ===== QUANTITY CONTROL ===== */
+        .quantity-control {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            width: fit-content;
+        }
+        .qty-btn {
+            background: none;
+            border: none;
+            color: var(--gray-600);
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+        .qty-btn:hover { color: var(--green); background: rgba(76, 175, 80, 0.1); }
+        .qty-input {
+            width: 60px;
+            border: none;
+            background: transparent;
+            text-align: center;
+            font-weight: 600;
+            font-size: 1rem;
+            color: var(--gray-800);
+            outline: none;
+        }
+        .qty-input::-webkit-outer-spin-button,
+        .qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .qty-input[type=number] { -moz-appearance: textfield; }
+
+        /* ===== DISCOUNT CODE ===== */
+        .discount-input-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .discount-input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.2s;
+            background: var(--gray-50);
+        }
+        .discount-input:focus {
+            border-color: var(--green);
+            background: #fff;
+        }
+        .btn-apply-code {
+            padding: 0.75rem 1.25rem;
+            background: var(--gray-100);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            color: var(--gray-600);
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .btn-apply-code:hover {
+            background: var(--gray-50);
+            color: var(--green);
+            border-color: var(--green);
+        }
+        #discountMessage {
+            font-weight: 600;
+            border-radius: 6px;
+        }
+        #discountMessage.success {
+            background: #dcfce7;
+            color: #166534;
+            border-left: 3px solid var(--green);
+            padding-left: 0.75rem;
+        }
+        #discountMessage.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border-left: 3px solid #dc2626;
+            padding-left: 0.75rem;
+        }
+
+        /* ===== NOTES TEXTAREA ===== */
+        .notes-textarea {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            font-family: inherit;
+            font-size: 0.9rem;
+            resize: vertical;
+            min-height: 80px;
+            outline: none;
+            transition: border-color 0.2s;
+            background: var(--gray-50);
+            color: var(--gray-800);
+        }
+        .notes-textarea:focus {
+            border-color: var(--green);
+            background: #fff;
+        }
+        .notes-textarea::placeholder {
+            color: var(--gray-400);
+        }
+
+        /* ===== ORDER SUMMARY ===== */
+        .order-summary {
+            background: var(--green-light);
+            border: 1px solid var(--green-mid);
+            border-radius: var(--radius-sm);
+            padding: 1rem 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+        .summary-price {
+            font-size: 1.3rem;
+            color: #dc2626;
+            font-weight: 800;
+        }
+        .discount-row {
+            color: var(--green-dark);
+            font-size: 0.85rem;
+        }
+        .summary-saving {
+            color: var(--green-dark);
+        }
         
-        .action-buttons { display: flex; gap: 0.75rem; margin-top: 0.5rem; flex-wrap: wrap;}
+        .action-buttons { display: flex; gap: 0.75rem; margin-top: 0; flex-wrap: wrap;}
         .btn {
             display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
             padding: 0.75rem 1.5rem; border-radius: var(--radius-sm); font-size: 0.9rem; font-weight: 600;
@@ -268,7 +432,7 @@
         .summary-score h2 {
             font-size: 3rem;
             font-weight: 800;
-            color: #f59e0b; /* yellow star color */
+            color: #f59e0b;
             line-height: 1;
         }
         .summary-score p {
@@ -334,7 +498,7 @@
         .comment-content {
             flex: 1;
         }
-        .comment-user {
+        .comment-Account {
             font-weight: 700;
             font-size: 1rem;
             color: var(--gray-800);
@@ -423,7 +587,7 @@
             <div>
                 <% if (product.getImage() != null && !product.getImage().trim().isEmpty()) { %>
                 <div class="product-image-wrap">
-                    <img src="<%= imgUrl.apply(product.getImage()) %>" alt="<%= product.getTitle() %>" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                    <img src="<%= product.getImage() %>" alt="<%= product.getTitle() %>" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
                     <div class="product-image-placeholder" style="display:none;">🍎</div>
                 </div>
                 <% } else { %>
@@ -508,25 +672,98 @@
                     <div class="section-label"><i class="fa-solid fa-shop" style="color:var(--green);"></i> Cua Hang Ban</div>
                     <div class="shop-card">
                         <% if (shopInfo.getLogo() != null && !shopInfo.getLogo().trim().isEmpty()) { %>
-                        <img class="shop-avatar" src="<%= imgUrl.apply(shopInfo.getLogo()) %>" alt="<%= shopInfo.getName() %>" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                        <img class="shop-avatar" src="<%= shopInfo.getLogo() %>" alt="<%= shopInfo.getShopName() %>" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
                         <div class="shop-avatar-placeholder" style="display:none;">&#127974;</div>
                         <% } else { %><div class="shop-avatar-placeholder">&#127974;</div><% } %>
                         <div class="shop-info">
-                            <div class="shop-name"><%= shopInfo.getName() != null ? shopInfo.getName() : "-" %></div>
+                            <div class="shop-name"><%= shopInfo.getShopName() != null ? shopInfo.getShopName() : "-" %></div>
                             <div class="shop-meta">Dia chi: <%= shopInfo.getAddress() != null && !shopInfo.getAddress().isEmpty() ? shopInfo.getAddress() : "Chua cap nhat" %></div>
                         </div>
                     </div>
                 </div>
 
+                <!-- Product Code -->
+                <div>
+                    <div class="section-label">Mã Sản Phẩm</div>
+                    <div class="product-code-box">
+                        <span class="code-text"><%= product.getId() %></span>
+                        <button class="btn-copy" onclick="copyToClipboard('<%= product.getId() %>')" title="Sao chép">
+                            <i class="fa-solid fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Quantity Input -->
+                <div>
+                    <div class="section-label">Số Lượng</div>
+                    <div class="quantity-control">
+                        <button class="qty-btn" id="decreaseQty" onclick="decreaseQuantity()">
+                            <i class="fa-solid fa-minus"></i>
+                        </button>
+                        <input type="number" id="quantityInput" class="qty-input" value="1" min="1" max="999">
+                        <button class="qty-btn" id="increaseQty" onclick="increaseQuantity()">
+                            <i class="fa-solid fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Discount Code -->
+                <div>
+                    <div class="section-label">Mã Giảm Giá (Tùy Chọn)</div>
+                    <div class="discount-input-group">
+                        <input type="text" id="discountCode" class="discount-input" placeholder="Nhập mã giảm giá...">
+                        <button class="btn-apply-code" onclick="applyDiscountCode()">
+                            <i class="fa-solid fa-tag"></i> Áp Dụng
+                        </button>
+                    </div>
+                    <div id="discountMessage" style="display:none; margin-top:0.5rem; font-size:0.85rem; padding:0.5rem 0.75rem; border-radius:6px;"></div>
+                </div>
+
+                <!-- Notes -->
+                <div>
+                    <div class="section-label">Ghi Chú Đơn Hàng (Tùy Chọn)</div>
+                    <textarea id="orderNotes" class="notes-textarea" placeholder="Ví dụ: Không cắt mở gói, Giao vào buổi sáng..."></textarea>
+                </div>
+
+                <!-- Order Summary -->
+                <div class="order-summary" id="orderSummary" data-original-price="<%= originalPrice %>" data-sale-price="<%= salePrice %>">
+                    <div class="summary-row">
+                        <span>Thành tiền:</span>
+                        <span class="summary-price" id="totalPrice"><%= nf.format((long) salePrice) %> đ</span>
+                    </div>
+                    <div class="summary-row discount-row" id="savingRow" style="display:none;">
+                        <span>Tiết kiệm:</span>
+                        <span class="summary-saving" id="savingValue">0 đ</span>
+                    </div>
+                </div>
+
                 <!-- Action buttons -->
                 <div class="action-buttons">
-                    <button class="btn btn-green" onclick="alert('Chuc nang them vao gio hang chua duoc trien khai.')">
-                        <i class="fa-solid fa-basket-shopping"></i> Them Vao Gio Hang
+                    <button class="btn btn-green" onclick="addToCart()">
+                        <i class="fa-solid fa-basket-shopping"></i> Thêm Vào Giỏ Hàng
+                    </button>
+                    <% if (product.isActive()) { %>
+                    <form action="add-to-wishlist" method="POST" style="display:inline;">
+                        <input type="hidden" name="productId" value="<%= product.getId() %>">
+                        <button type="submit" class="btn btn-outline">
+                            <i class="fa-regular fa-heart"></i> Thêm vào Wishlist
+                        </button>
+                    </form>
+                    <% } %>
+                    <button class="btn btn-outline" onclick="buyNow()">
+                        <i class="fa-solid fa-bolt"></i> Mua Ngay
                     </button>
                     <a href="home.jsp" class="btn btn-outline">
-                        <i class="fa-solid fa-arrow-left"></i> Quay Lai
+                        <i class="fa-solid fa-arrow-left"></i> Quay Lại
                     </a>
                 </div>
+                <form id="cartForm" action="<%= request.getContextPath() %>/add-to-cart" method="post" style="display:none;">
+                    <input type="hidden" id="cartAction" name="action" value="add">
+                    <input type="hidden" name="productId" value="<%= product.getId() %>">
+                    <input type="hidden" id="cartQty" name="quantity" value="1">
+                    <input type="hidden" id="cartDiscountCode" name="discountCode" value="">
+                    <input type="hidden" id="cartNote" name="note" value="">
+                </form>
             </div>
         </div>
 
@@ -558,7 +795,7 @@
                 <div class="comment-item">
                     <div class="comment-avatar">H</div>
                     <div class="comment-content">
-                        <div class="comment-user">Hoàng Văn A <span class="comment-date">2 ngày trước</span></div>
+                        <div class="comment-Account">Hoàng Văn A <span class="comment-date">2 ngày trước</span></div>
                         <div class="comment-stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
                         <div class="comment-text">Sản phẩm tuyệt vời, chất lượng rất tốt! Shop đóng gói cẩn thận, giao hàng nhanh chóng. Sẽ ủng hộ shop dài dài.</div>
                     </div>
@@ -567,7 +804,7 @@
                 <div class="comment-item">
                     <div class="comment-avatar">M</div>
                     <div class="comment-content">
-                        <div class="comment-user">Mai Thị B <span class="comment-date">1 tuần trước</span></div>
+                        <div class="comment-Account">Mai Thị B <span class="comment-date">1 tuần trước</span></div>
                         <div class="comment-stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-regular fa-star"></i></div>
                         <div class="comment-text">Chất lượng khá ổn trong tầm giá. Hàng giao đúng như mô tả. Lần sau có dịp sẽ mua tiếp nha.</div>
                     </div>
@@ -586,14 +823,183 @@
                     <i class="fa-solid fa-star active" data-val="5"></i>
                 </div>
                 <textarea class="comment-textarea" placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm này..."></textarea>
-                <button class="btn btn-green" onclick="alert('Cảm ơn bạn đã gửi đánh giá! (Chức năng đang phát triển)')">Gửi Đánh Giá</button>
+                <button class="btn btn-green" onclick="submitReview()">Gửi Đánh Giá</button>
             </div>
         </div>
         <!-- END REVIEWS SECTION -->
     </div>
 
     <script>
-        // JS Xử lý rating input UI
+        // ===== QUANTITY CONTROL =====
+        let currentDiscount = 0;
+
+        function decreaseQuantity() {
+            const input = document.getElementById('quantityInput');
+            const val = parseInt(input.value);
+            if (val > 1) {
+                input.value = val - 1;
+                resetSummary();
+            }
+        }
+        function increaseQuantity() {
+            const input = document.getElementById('quantityInput');
+            const val = parseInt(input.value);
+            if (val < 999) {
+                input.value = val + 1;
+                resetSummary();
+            }
+        }
+
+        // ===== DISCOUNT CODE =====
+        function formatNumber(num) {
+            return Math.round(num).toLocaleString('vi-VN');
+        }
+
+        function resetSummary() {
+            const summary = document.getElementById('orderSummary');
+            const salePrice = parseFloat(summary.getAttribute('data-sale-price')) || 0;
+            const qty = parseInt(document.getElementById('quantityInput').value) || 1;
+            const totalPriceEl = document.getElementById('totalPrice');
+            const savingRow = document.getElementById('savingRow');
+            const savingValue = document.getElementById('savingValue');
+
+            if (currentDiscount > 0) {
+                const finalTotal = Math.max(0, salePrice * qty - currentDiscount);
+                totalPriceEl.textContent = formatNumber(finalTotal) + ' đ';
+                savingRow.style.display = 'flex';
+                savingValue.textContent = formatNumber(currentDiscount) + ' đ';
+            } else {
+                totalPriceEl.textContent = formatNumber(salePrice * qty) + ' đ';
+                savingRow.style.display = 'none';
+            }
+        }
+
+        function applyDiscountCode() {
+            const code = document.getElementById('discountCode').value.trim();
+            const msg = document.getElementById('discountMessage');
+            const totalPriceEl = document.getElementById('totalPrice');
+            const savingRow = document.getElementById('savingRow');
+            const savingValue = document.getElementById('savingValue');
+            const summary = document.getElementById('orderSummary');
+            const originalPrice = parseFloat(summary.getAttribute('data-original-price')) || 0;
+            const salePrice = parseFloat(summary.getAttribute('data-sale-price')) || 0;
+            const qty = parseInt(document.getElementById('quantityInput').value) || 1;
+
+            if (!code) {
+                msg.textContent = 'Vui lòng nhập mã giảm giá';
+                msg.className = 'error';
+                msg.style.display = 'block';
+                currentDiscount = 0;
+                resetSummary();
+                return;
+            }
+
+            let discountAmount = 0;
+            const upperCode = code.toUpperCase();
+            if (upperCode === 'WELCOME10') {
+                const orderTotal = salePrice * qty;
+                if (orderTotal < 100000) {
+                    msg.textContent = '✗ Đơn hàng tối thiểu 100.000đ để dùng WELCOME10';
+                    msg.className = 'error';
+                    msg.style.display = 'block';
+                    currentDiscount = 0;
+                    resetSummary();
+                    return;
+                }
+                discountAmount = Math.min(orderTotal * 0.1, 50000);
+                msg.textContent = '✓ Mã "WELCOME10" hợp lệ: giảm 10%, tối đa 50.000đ';
+                msg.className = 'success';
+                msg.style.display = 'block';
+            } else if (upperCode === 'SALE20') {
+                const orderTotal = salePrice * qty;
+                if (orderTotal < 200000) {
+                    msg.textContent = '✗ Đơn hàng tối thiểu 200.000đ để dùng SALE20';
+                    msg.className = 'error';
+                    msg.style.display = 'block';
+                    currentDiscount = 0;
+                    resetSummary();
+                    return;
+                }
+                discountAmount = Math.min(orderTotal * 0.2, 80000);
+                msg.textContent = '✓ Mã "SALE20" hợp lệ: giảm 20%, tối đa 80.000đ';
+                msg.className = 'success';
+                msg.style.display = 'block';
+            } else if (upperCode === 'FREESHIP') {
+                const orderTotal = salePrice * qty;
+                if (orderTotal < 50000) {
+                    msg.textContent = '✗ Đơn hàng tối thiểu 50.000đ để dùng FREESHIP';
+                    msg.className = 'error';
+                    msg.style.display = 'block';
+                    currentDiscount = 0;
+                    resetSummary();
+                    return;
+                }
+                discountAmount = 0;
+                msg.textContent = '✓ Mã "FREESHIP" hợp lệ';
+                msg.className = 'success';
+                msg.style.display = 'block';
+            } else {
+                msg.textContent = '✗ Mã giảm giá không hợp lệ hoặc đã hết hạn';
+                msg.className = 'error';
+                msg.style.display = 'block';
+                currentDiscount = 0;
+                resetSummary();
+                return;
+            }
+
+            currentDiscount = discountAmount;
+            const finalTotal = Math.max(0, salePrice * qty - discountAmount);
+            totalPriceEl.textContent = formatNumber(finalTotal) + ' đ';
+
+            if (discountAmount > 0) {
+                savingRow.style.display = 'flex';
+                savingValue.textContent = formatNumber(discountAmount) + ' đ';
+            } else {
+                savingRow.style.display = 'none';
+            }
+        }
+
+        // ===== COPY PRODUCT CODE =====
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Đã sao chép mã sản phẩm: ' + text);
+            }).catch(() => {
+                alert('Không thể sao chép');
+            });
+        }
+
+        // ===== ADD TO CART =====
+        function addToCart() {
+            const qty = parseInt(document.getElementById('quantityInput').value) || 1;
+            const notes = document.getElementById('orderNotes').value;
+            const code = document.getElementById('discountCode').value;
+
+            document.getElementById('cartQty').value = qty;
+            document.getElementById('cartNote').value = notes;
+            document.getElementById('cartDiscountCode').value = code;
+            document.getElementById('cartAction').value = 'add';
+            document.getElementById('cartForm').submit();
+        }
+
+        // ===== BUY NOW =====
+        function buyNow() {
+            const qty = parseInt(document.getElementById('quantityInput').value) || 1;
+            const notes = document.getElementById('orderNotes').value;
+            const code = document.getElementById('discountCode').value;
+
+            document.getElementById('cartQty').value = qty;
+            document.getElementById('cartNote').value = notes;
+            document.getElementById('cartDiscountCode').value = code;
+            document.getElementById('cartAction').value = 'buyNow';
+            document.getElementById('cartForm').submit();
+        }
+
+        // ===== SUBMIT REVIEW =====
+        function submitReview() {
+            alert('Cảm ơn bạn đã gửi đánh giá! (Chức năng đang phát triển)');
+        }
+
+        // ===== RATING STARS =====
         const stars = document.querySelectorAll('#ratingInput i');
         stars.forEach(star => {
             star.addEventListener('click', function() {
@@ -610,3 +1016,5 @@
     </script>
 </body>
 </html>
+
+

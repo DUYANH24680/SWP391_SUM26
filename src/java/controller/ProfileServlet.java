@@ -23,12 +23,12 @@ public class ProfileServlet extends HttpServlet {
         HttpSession session = req.getSession(true);
         
         // Auto-login if no user session exists (bypassing login page)
-        if (session.getAttribute("user") == null) {
+        if (session.getAttribute("Account") == null) {
             AccountDAO userDAO = new AccountDAO();
             try {
                 Account defaultCust = userDAO.findById(1);
                 if (defaultCust != null) {
-                    session.setAttribute("user", defaultCust);
+                    session.setAttribute("Account", defaultCust);
                     session.setAttribute("userId", defaultCust.getId());
                     session.setAttribute("role", defaultCust.getRoleName());
                 }
@@ -37,7 +37,7 @@ public class ProfileServlet extends HttpServlet {
             }
         }
 
-        Account user = (Account) session.getAttribute("user");
+        Account user = (Account) session.getAttribute("Account");
         if (user == null) {
             resp.getWriter().println("No user found in the database. Please add sample data to Accounts table first.");
             return;
@@ -50,7 +50,7 @@ public class ProfileServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         HttpSession session = req.getSession(true);
-        Account user = (Account) session.getAttribute("user");
+        Account user = (Account) session.getAttribute("Account");
 
         if (user == null) {
             resp.sendRedirect(req.getContextPath() + "/profile");
@@ -93,7 +93,7 @@ public class ProfileServlet extends HttpServlet {
             session.setAttribute("error", error);
         } else {
             Account updatedUser = userService.getUserById(user.getId());
-            session.setAttribute("user", updatedUser);
+            session.setAttribute("Account", updatedUser);
             session.setAttribute("message", "Cập nhật hồ sơ thành công!");
         }
     }

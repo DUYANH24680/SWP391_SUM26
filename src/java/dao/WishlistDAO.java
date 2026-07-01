@@ -10,126 +10,187 @@ import java.util.List;
 
 public class WishlistDAO extends DbContext {
 
+    /**
+     * Check if a product exists in user's wishlist.
+     */
     public boolean exists(int customerId, int productId) {
-        String sql = "SELECT 1 FROM Wishlists w JOIN WishlistItems wi ON wi.wishlist_id = w.id WHERE w.customer_id = ? AND wi.product_id = ?";
-        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+        String sql = "SELECT 1 FROM Wishlists w WITH(NOLOCK) "
+                   + "JOIN WishlistItems wi WITH(NOLOCK) ON wi.wishlist_id = w.id "
+                   + "WHERE w.customer_id = ? AND wi.product_id = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, customerId);
             ps.setInt(2, productId);
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next();
             }
         } catch (SQLException e) {
-            System.err.println("[WishlistDAO] exists error: " + e.getMessage());
-            throw new RuntimeException(e);
+            throw new RuntimeException("WishlistDAO.exists error: " + e.getMessage(), e);
         }
     }
 
+    /**
+     * Count items in user's wishlist.
+     */
+    public int getWishlistCount(int customerId) {
+        String sql = "SELECT COUNT(wi.id) FROM Wishlists w WITH(NOLOCK) "
+                   + "JOIN WishlistItems wi WITH(NOLOCK) ON wi.wishlist_id = w.id "
+                   + "WHERE w.customer_id = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, customerId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("WishlistDAO.getWishlistCount error: " + e.getMessage(), e);
+        }
+        return 0;
+    }
+
+    /**
+     * Add product to wishlist.
+     * Creates wishlist header if not exists, then adds the item.
+     */
     public boolean addWishlist(int customerId, int productId) {
         Connection conn = null;
-        PreparedStatement psInsertWishlist = null;
-        PreparedStatement psInsertItem = null;
-        ResultSet rsKeys = null;
         try {
             conn = getConnection();
             conn.setAutoCommit(false);
 
-            // ensure wishlist header exists
-            Integer wishlistId = null;
-            String sqlSelect = "SELECT id FROM Wishlists WHERE customer_id = ?";
-            try (PreparedStatement ps = conn.prepareStatement(sqlSelect)) {
-                ps.setInt(1, customerId);
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()) wishlistId = rs.getInt("id");
-                }
-            }
-
+            Integer wishlistId = findOrCreateWishlistId(conn, customerId);
             if (wishlistId == null) {
-                String sqlCreate = "INSERT INTO Wishlists (customer_id, created_at) VALUES (?, GETDATE())";
-                psInsertWishlist = conn.prepareStatement(sqlCreate, Statement.RETURN_GENERATED_KEYS);
-                psInsertWishlist.setInt(1, customerId);
-                int affected = psInsertWishlist.executeUpdate();
-                if (affected == 0) {
-                    conn.rollback();
-                    return false;
-                }
-                rsKeys = psInsertWishlist.getGeneratedKeys();
-                if (rsKeys.next()) wishlistId = rsKeys.getInt(1);
+                conn.rollback();
+                return false;
             }
 
-            // check duplicate item
-            String sqlCheck = "SELECT 1 FROM WishlistItems WHERE wishlist_id = ? AND product_id = ?";
-            try (PreparedStatement ps = conn.prepareStatement(sqlCheck)) {
-                ps.setInt(1, wishlistId);
-                ps.setInt(2, productId);
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()) {
-                        conn.commit();
-                        return true; // already exists
-                    }
-                }
+            if (itemExists(conn, wishlistId, productId)) {
+                conn.commit();
+                return true;
             }
 
             String sqlInsert = "INSERT INTO WishlistItems (wishlist_id, product_id, created_at) VALUES (?, ?, GETDATE())";
-            psInsertItem = conn.prepareStatement(sqlInsert);
-            psInsertItem.setInt(1, wishlistId);
-            psInsertItem.setInt(2, productId);
-            psInsertItem.executeUpdate();
+            try (PreparedStatement psInsert = conn.prepareStatement(sqlInsert)) {
+                psInsert.setInt(1, wishlistId);
+                psInsert.setInt(2, productId);
+                int rows = psInsert.executeUpdate();
+                if (rows > 0) {
+                    conn.commit();
+                    return true;
+                }
+            }
 
-            conn.commit();
-            return true;
+            conn.rollback();
+            return false;
+
         } catch (SQLException e) {
-            System.err.println("[WishlistDAO] addWishlist error: " + e.getMessage());
-            try { if (conn != null) conn.rollback(); } catch (SQLException ex) {}
-            throw new RuntimeException(e);
+            if (conn != null) try { conn.rollback(); } catch (SQLException ex) {}
+            throw new RuntimeException("WishlistDAO.addWishlist error: " + e.getMessage(), e);
         } finally {
-            try { if (rsKeys != null) rsKeys.close(); } catch (SQLException ignored) {}
-            try { if (psInsertWishlist != null) psInsertWishlist.close(); } catch (SQLException ignored) {}
-            try { if (psInsertItem != null) psInsertItem.close(); } catch (SQLException ignored) {}
-            try { if (conn != null) conn.setAutoCommit(true); } catch (SQLException ignored) {}
+            if (conn != null) {
+                try { conn.setAutoCommit(true); } catch (SQLException ignored) {}
+                try { conn.close(); } catch (SQLException ignored) {}
+            }
         }
     }
 
+    private Integer findOrCreateWishlistId(Connection conn, int customerId) throws SQLException {
+        String sqlFind = "SELECT id FROM Wishlists WHERE customer_id = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sqlFind)) {
+            ps.setInt(1, customerId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("id");
+                }
+            }
+        }
+
+        String sqlCreate = "INSERT INTO Wishlists (customer_id, created_at) VALUES (?, GETDATE())";
+        try (PreparedStatement psCreate = conn.prepareStatement(sqlCreate, Statement.RETURN_GENERATED_KEYS)) {
+            psCreate.setInt(1, customerId);
+            int affected = psCreate.executeUpdate();
+            if (affected == 0) {
+                return null;
+            }
+            try (ResultSet rs = psCreate.getGeneratedKeys()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        }
+        return null;
+    }
+
+    private boolean itemExists(Connection conn, int wishlistId, int productId) throws SQLException {
+        String sql = "SELECT 1 FROM WishlistItems WHERE wishlist_id = ? AND product_id = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, wishlistId);
+            ps.setInt(2, productId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        }
+    }
+
+    /**
+     * Remove product from wishlist.
+     */
     public boolean removeWishlist(int customerId, int productId) {
-        String sql = "DELETE wi FROM WishlistItems wi JOIN Wishlists w ON wi.wishlist_id = w.id WHERE w.customer_id = ? AND wi.product_id = ?";
-        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+        String sql = "DELETE FROM WishlistItems "
+                   + "WHERE wishlist_id IN (SELECT id FROM Wishlists WHERE customer_id = ?) "
+                   + "AND product_id = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, customerId);
             ps.setInt(2, productId);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("[WishlistDAO] removeWishlist error: " + e.getMessage());
-            throw new RuntimeException(e);
+            throw new RuntimeException("WishlistDAO.removeWishlist error: " + e.getMessage(), e);
         }
     }
 
+    /**
+     * Get wishlist with all items for a customer.
+     */
     public Wishlist getWishlistByUser(int customerId) {
-        String sqlHeader = "SELECT id, customer_id, created_at FROM Wishlists WHERE customer_id = ?";
-        try (PreparedStatement ps = getConnection().prepareStatement(sqlHeader)) {
-            ps.setInt(1, customerId);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    Wishlist w = new Wishlist();
-                    int wishlistId = rs.getInt("id");
-                    w.setId(wishlistId);
-                    w.setCustomerId(rs.getInt("customer_id"));
-                    w.setCreatedAt(rs.getTimestamp("created_at"));
-                    w.setItems(getItemsByWishlistId(wishlistId));
-                    return w;
+        String sqlHeader = "SELECT id, customer_id, created_at FROM Wishlists WITH(NOLOCK) WHERE customer_id = ?";
+        Connection conn = null;
+        try {
+            conn = getConnection();
+            try (PreparedStatement ps = conn.prepareStatement(sqlHeader)) {
+                ps.setInt(1, customerId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        Wishlist w = new Wishlist();
+                        int wishlistId = rs.getInt("id");
+                        w.setId(wishlistId);
+                        w.setCustomerId(rs.getInt("customer_id"));
+                        w.setCreatedAt(rs.getTimestamp("created_at"));
+                        w.setItems(getItemsByWishlistId(conn, wishlistId));
+                        return w;
+                    }
                 }
             }
+            return new Wishlist();
         } catch (SQLException e) {
-            System.err.println("[WishlistDAO] getWishlistByUser error: " + e.getMessage());
-            throw new RuntimeException(e);
+            throw new RuntimeException("WishlistDAO.getWishlistByUser error: " + e.getMessage(), e);
+        } finally {
+            if (conn != null) try { conn.close(); } catch (SQLException ignored) {}
         }
-        return new Wishlist();
     }
 
-    public List<WishlistItem> getItemsByWishlistId(int wishlistId) {
+    /**
+     * Get items in a wishlist with product details.
+     * Uses existing connection from parent transaction.
+     */
+    public List<WishlistItem> getItemsByWishlistId(Connection parentConn, int wishlistId) {
         String sql = "SELECT wi.id, wi.wishlist_id, wi.product_id, wi.created_at, "
-                   + "p.shop_id AS product_shop_id, p.title AS product_title, p.image AS product_image, p.unit AS product_unit, p.stock_quantity, p.sale_price, p.original_price "
-                   + "FROM WishlistItems wi "
-                   + "LEFT JOIN Products p ON wi.product_id = p.id "
+                   + "p.shop_id AS product_shop_id, p.title AS product_title, p.image AS product_image, "
+                   + "p.unit AS product_unit, p.stock_quantity, p.sale_price, p.original_price, p.status AS product_status, p.isDelete AS product_deleted "
+                   + "FROM WishlistItems wi WITH(NOLOCK) "
+                   + "LEFT JOIN Products p WITH(NOLOCK) ON wi.product_id = p.id "
                    + "WHERE wi.wishlist_id = ? ORDER BY wi.created_at DESC";
-        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+        try (PreparedStatement ps = parentConn.prepareStatement(sql)) {
             ps.setInt(1, wishlistId);
             try (ResultSet rs = ps.executeQuery()) {
                 List<WishlistItem> list = new ArrayList<>();
@@ -140,8 +201,33 @@ public class WishlistDAO extends DbContext {
                 return list;
             }
         } catch (SQLException e) {
-            System.err.println("[WishlistDAO] getItemsByWishlistId error: " + e.getMessage());
-            throw new RuntimeException(e);
+            throw new RuntimeException("WishlistDAO.getItemsByWishlistId error: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Get items in a wishlist with product details (standalone, own connection).
+     */
+    public List<WishlistItem> getItemsByWishlistId(int wishlistId) {
+        String sql = "SELECT wi.id, wi.wishlist_id, wi.product_id, wi.created_at, "
+                   + "p.shop_id AS product_shop_id, p.title AS product_title, p.image AS product_image, "
+                   + "p.unit AS product_unit, p.stock_quantity, p.sale_price, p.original_price, p.status AS product_status, p.isDelete AS product_deleted "
+                   + "FROM WishlistItems wi WITH(NOLOCK) "
+                   + "LEFT JOIN Products p WITH(NOLOCK) ON wi.product_id = p.id "
+                   + "WHERE wi.wishlist_id = ? ORDER BY wi.created_at DESC";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, wishlistId);
+            try (ResultSet rs = ps.executeQuery()) {
+                List<WishlistItem> list = new ArrayList<>();
+                while (rs.next()) {
+                    WishlistItem it = mapRow(rs);
+                    list.add(it);
+                }
+                return list;
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("WishlistDAO.getItemsByWishlistId error: " + e.getMessage(), e);
         }
     }
 
@@ -163,7 +249,6 @@ public class WishlistDAO extends DbContext {
 
     /**
      * Move wishlist item to cart inside a single transaction.
-     * Returns true when moved successfully.
      */
     public boolean moveToCart(int customerId, int productId) {
         Connection conn = null;
@@ -171,7 +256,6 @@ public class WishlistDAO extends DbContext {
             conn = getConnection();
             conn.setAutoCommit(false);
 
-            // find wishlist id
             Integer wishlistId = null;
             String sqlW = "SELECT id FROM Wishlists WHERE customer_id = ?";
             try (PreparedStatement ps = conn.prepareStatement(sqlW)) {
@@ -182,11 +266,25 @@ public class WishlistDAO extends DbContext {
             }
             if (wishlistId == null) {
                 conn.commit();
-                return false; // nothing to move
+                return false;
             }
 
-            // validate product
-            String sqlProduct = "SELECT id, stock_quantity, sale_price, original_price, status, isDelete FROM Products WHERE id = ?";
+            // Security: verify ownership
+            String sqlCheckOwnership = "SELECT 1 FROM WishlistItems WHERE wishlist_id = ? AND product_id = ?";
+            boolean ownsItem = false;
+            try (PreparedStatement psCheck = conn.prepareStatement(sqlCheckOwnership)) {
+                psCheck.setInt(1, wishlistId);
+                psCheck.setInt(2, productId);
+                try (ResultSet rsCheck = psCheck.executeQuery()) {
+                    ownsItem = rsCheck.next();
+                }
+            }
+            if (!ownsItem) {
+                conn.commit();
+                return false;
+            }
+
+            String sqlProduct = "SELECT stock_quantity, sale_price, original_price, status, isDelete FROM Products WITH(NOLOCK) WHERE id = ?";
             int stock = 0; double unitPrice = 0; boolean active = false; boolean deleted = false;
             try (PreparedStatement ps = conn.prepareStatement(sqlProduct)) {
                 ps.setInt(1, productId);
@@ -199,8 +297,7 @@ public class WishlistDAO extends DbContext {
                     double sale = rs.getDouble("sale_price");
                     double orig = rs.getDouble("original_price");
                     unitPrice = sale > 0 ? sale : orig;
-                    int status = rs.getInt("status");
-                    active = status == 1; // assuming 1 means active
+                    active = rs.getInt("status") == 1;
                     deleted = rs.getBoolean("isDelete");
                 }
             }
@@ -213,7 +310,6 @@ public class WishlistDAO extends DbContext {
                 throw new IllegalArgumentException("Sản phẩm đã hết hàng.");
             }
 
-            // get or create cart id
             Integer cartId = null;
             String sqlSelectCart = "SELECT id FROM Carts WHERE customer_id = ?";
             try (PreparedStatement ps = conn.prepareStatement(sqlSelectCart)) {
@@ -232,10 +328,9 @@ public class WishlistDAO extends DbContext {
                 }
             }
 
-            // check existing cart item (size NULL/empty)
             Integer existingItemId = null;
             int existingQuantity = 0;
-            String sqlCheckItem = "SELECT id, quantity FROM CartItems WHERE cart_id = ? AND product_id = ? AND (size IS NULL OR size = '')";
+            String sqlCheckItem = "SELECT id, quantity FROM CartItems WITH(NOLOCK) WHERE cart_id = ? AND product_id = ? AND (size IS NULL OR size = '')";
             try (PreparedStatement ps = conn.prepareStatement(sqlCheckItem)) {
                 ps.setInt(1, cartId);
                 ps.setInt(2, productId);
@@ -259,7 +354,6 @@ public class WishlistDAO extends DbContext {
                     ps.executeUpdate();
                 }
             } else {
-                // insert new cart item with quantity 1
                 String sqlInsertItem = "INSERT INTO CartItems (cart_id, product_id, size, quantity, unit_price, discount_amount, total_price, created_at, updated_at) VALUES (?, ?, ?, ?, ?, 0, ?, GETDATE(), GETDATE())";
                 try (PreparedStatement ps = conn.prepareStatement(sqlInsertItem)) {
                     ps.setInt(1, cartId);
@@ -272,16 +366,16 @@ public class WishlistDAO extends DbContext {
                 }
             }
 
-            // delete wishlist item(s) for this product
-            String sqlDeleteWishlistItem = "DELETE wi FROM WishlistItems wi JOIN Wishlists w ON wi.wishlist_id = w.id WHERE w.customer_id = ? AND wi.product_id = ?";
+            String sqlDeleteWishlistItem = "DELETE FROM WishlistItems WHERE wishlist_id = ? AND product_id = ?";
             try (PreparedStatement ps = conn.prepareStatement(sqlDeleteWishlistItem)) {
-                ps.setInt(1, customerId);
+                ps.setInt(1, wishlistId);
                 ps.setInt(2, productId);
                 ps.executeUpdate();
             }
 
-            // recalculate cart totals
-            String sqlRecalc = "UPDATE Carts SET total_items = ISNULL((SELECT SUM(quantity) FROM CartItems WHERE cart_id = ?), 0), total_amount = ISNULL((SELECT SUM(total_price) FROM CartItems WHERE cart_id = ?), 0), updated_at = GETDATE() WHERE id = ?";
+            String sqlRecalc = "UPDATE Carts SET total_items = ISNULL((SELECT SUM(quantity) FROM CartItems WHERE cart_id = ?), 0), "
+                             + "total_amount = ISNULL((SELECT SUM(total_price) FROM CartItems WHERE cart_id = ?), 0), "
+                             + "updated_at = GETDATE() WHERE id = ?";
             try (PreparedStatement ps = conn.prepareStatement(sqlRecalc)) {
                 ps.setInt(1, cartId);
                 ps.setInt(2, cartId);
@@ -291,12 +385,15 @@ public class WishlistDAO extends DbContext {
 
             conn.commit();
             return true;
+
         } catch (SQLException e) {
-            System.err.println("[WishlistDAO] moveToCart SQL error: " + e.getMessage());
             try { if (conn != null) conn.rollback(); } catch (SQLException ex) {}
-            throw new RuntimeException(e);
+            throw new RuntimeException("WishlistDAO.moveToCart error: " + e.getMessage(), e);
         } finally {
-            try { if (conn != null) conn.setAutoCommit(true); } catch (SQLException ignored) {}
+            if (conn != null) {
+                try { conn.setAutoCommit(true); } catch (SQLException ignored) {}
+                try { conn.close(); } catch (SQLException ignored) {}
+            }
         }
     }
 }

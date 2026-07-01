@@ -16,7 +16,8 @@ public class ProductDAO extends DbContext {
                    + "FROM Products p "
                    + "LEFT JOIN Shops s ON p.shop_id = s.id "
                    + "WHERE p.isDelete = 0 ORDER BY p.created_at DESC";
-        try (PreparedStatement ps = getConnection().prepareStatement(sql);
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             List<Product> list = new ArrayList<>();
             while (rs.next()) {
@@ -33,7 +34,8 @@ public class ProductDAO extends DbContext {
 
     public int countAllProducts() {
         String sql = "SELECT COUNT(*) FROM Products WHERE isDelete = 0";
-        try (PreparedStatement ps = getConnection().prepareStatement(sql);
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             if (rs.next()) {
                 int count = rs.getInt(1);
@@ -47,6 +49,53 @@ public class ProductDAO extends DbContext {
             return 0;
         }
     }
+    
+        public List<Product> getPendingProducts() {
+        String sql = "SELECT p.id, p.category_id, p.seller_id, p.shop_id, p.title, p.image, p.description, p.unit, "
+                   + "p.stock_quantity, p.sold_quantity, p.original_price, p.sale_price, p.expired_date, "
+                   + "p.average_rating, p.is_featured, p.status, p.isDelete, p.created_at, "
+                   + "s.shop_name "
+                   + "FROM Products p "
+                   + "LEFT JOIN Shops s ON p.shop_id = s.id "
+                   + "WHERE p.status = 0 AND p.isDelete = 0 "
+                   + "ORDER BY p.created_at ASC";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            List<Product> list = new ArrayList<>();
+            while (rs.next()) {
+                list.add(mapRow(rs));
+            }
+            System.out.println("[ProductDAO] getPendingProducts() returned " + list.size() + " products");
+            return list;
+        } catch (SQLException e) {
+            System.err.println("[ProductDAO] getPendingProducts() error: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("ProductDAO.getPendingProducts error: " + e.getMessage(), e);
+        }
+    }
+        
+            /**
+     * Duyệt sản phẩm: đổi status từ 0 → 1.
+     * Chỉ admin mới gọi được, không cần kiểm tra ownership.
+     */
+    public boolean approveProduct(int productId) {
+        String sql = "UPDATE Products SET status = 1 WHERE id = ? AND status = 0 AND isDelete = 0";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            ps.setInt(1, productId);
+            int rowsUpdated = ps.executeUpdate();
+            if (rowsUpdated > 0) {
+                System.out.println("[ProductDAO] approveProduct(id=" + productId + ") success");
+            } else {
+                System.out.println("[ProductDAO] approveProduct(id=" + productId + ") — product not found or already approved");
+            }
+            return rowsUpdated > 0;
+        } catch (SQLException e) {
+            System.err.println("[ProductDAO] approveProduct(" + productId + ") error: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("ProductDAO.approveProduct error: " + e.getMessage(), e);
+        }
+    }
 
     public List<Product> searchProducts(String keyword) {
         String sql = "SELECT p.id, p.category_id, p.seller_id, p.shop_id, p.title, p.image, p.description, p.unit, "
@@ -58,7 +107,8 @@ public class ProductDAO extends DbContext {
                    + "WHERE p.isDelete = 0 "
                    + "  AND (p.title LIKE ? OR p.description LIKE ?) "
                    + "ORDER BY p.created_at DESC";
-        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             String pattern = "%" + keyword + "%";
             ps.setString(1, pattern);
             ps.setString(2, pattern);
@@ -85,7 +135,8 @@ public class ProductDAO extends DbContext {
                    + "FROM Products p "
                    + "LEFT JOIN Shops s ON p.shop_id = s.id "
                    + "WHERE p.id = ?";
-        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -113,7 +164,8 @@ public class ProductDAO extends DbContext {
                    + "LEFT JOIN Shops s ON p.shop_id = s.id "
                    + "WHERE p.shop_id = ? AND p.isDelete = 0 "
                    + "ORDER BY p.created_at DESC";
-        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, shopId);
             try (ResultSet rs = ps.executeQuery()) {
                 List<Product> list = new ArrayList<>();
@@ -130,9 +182,41 @@ public class ProductDAO extends DbContext {
         }
     }
 
+    /**
+     * Lay danh sach san pham theo category_id (active, da duyet, con hang).
+     */
+    public List<Product> getProductsByCategoryId(int categoryId) {
+        String sql = "SELECT p.id, p.category_id, p.seller_id, p.shop_id, p.title, p.image, p.description, p.unit, "
+                   + "p.stock_quantity, p.sold_quantity, p.original_price, p.sale_price, p.expired_date, "
+                   + "p.average_rating, p.is_featured, p.status, p.isDelete, p.created_at, "
+                   + "s.shop_name "
+                   + "FROM Products p "
+                   + "LEFT JOIN Shops s ON p.shop_id = s.id "
+                   + "WHERE p.category_id = ? AND p.isDelete = 0 AND p.status = 1 "
+                   + "ORDER BY p.created_at DESC";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, categoryId);
+            try (ResultSet rs = ps.executeQuery()) {
+                List<Product> list = new ArrayList<>();
+                while (rs.next()) {
+                    list.add(mapRow(rs));
+                }
+                System.out.println("[ProductDAO] getProductsByCategoryId(" + categoryId + ") returned " + list.size() + " products");
+                return list;
+            }
+        } catch (SQLException e) {
+            System.err.println("[ProductDAO] getProductsByCategoryId(" + categoryId + ") error: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("ProductDAO.getProductsByCategoryId error: " + e.getMessage(), e);
+        }
+    }
+
+
     public int countProductsByShopId(int shopId) {
         String sql = "SELECT COUNT(*) FROM Products WHERE shop_id = ? AND isDelete = 0";
-        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, shopId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -261,9 +345,76 @@ public class ProductDAO extends DbContext {
         p.setStatus(rs.getInt("status"));
         p.setIsDelete(rs.getBoolean("isDelete"));
         p.setCreatedAt(rs.getTimestamp("created_at"));
+                try {
+            p.setRemovedReason(rs.getString("removed_reason"));
+        } catch (SQLException ignored) {
+            p.setRemovedReason(null);
+        }
         return p;
     }
+    /**
+     * Xóa sản phẩm vi phạm (inappropriate product) bởi Admin.
+     * Soft delete: đánh dấu isDelete = 1, đồng thời lưu lý do + thời gian gỡ.
+     * Tự động tạo cột removed_reason / removed_at nếu chưa tồn tại (backward compatible).
+     */
+    public boolean removeInappropriateProduct(int productId, String reason) {
+        ensureRemovedColumnsExist();
 
+        String sql = "UPDATE Products SET isDelete = 1, removed_reason = ?, removed_at = GETDATE() WHERE id = ? AND isDelete = 0";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            ps.setString(1, reason);
+            ps.setInt(2, productId);
+            int rowsUpdated = ps.executeUpdate();
+            if (rowsUpdated > 0) {
+                System.out.println("[ProductDAO] removeInappropriateProduct(id=" + productId + ", reason='" + reason + "') success");
+            } else {
+                System.out.println("[ProductDAO] removeInappropriateProduct(id=" + productId + ") — product not found or already removed");
+            }
+            return rowsUpdated > 0;
+        } catch (SQLException e) {
+            System.err.println("[ProductDAO] removeInappropriateProduct(" + productId + ") error: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("ProductDAO.removeInappropriateProduct error: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Đảm bảo các cột removed_reason và removed_at tồn tại trong bảng Products.
+     * Nếu chưa có, tự động ALTER TABLE để thêm.
+     */
+    private void ensureRemovedColumnsExist() {
+        try {
+            DatabaseMetaData meta = getConnection().getMetaData();
+            boolean reasonExists = false, atExists = false;
+            try (ResultSet cols = meta.getColumns(null, null, "Products", "removed_reason")) {
+                reasonExists = cols.next();
+            }
+            try (ResultSet cols = meta.getColumns(null, null, "Products", "removed_at")) {
+                atExists = cols.next();
+            }
+            if (!reasonExists || !atExists) {
+                String alter = "ALTER TABLE Products ADD "
+                    + (reasonExists ? "" : "removed_reason NVARCHAR(500) NULL")
+                    + (reasonExists || atExists ? "" : ", ")
+                    + (atExists ? "" : "removed_at DATETIME NULL");
+                if (!reasonExists && !atExists) {
+                    // run separately to avoid comma issues
+                    try (Statement st = getConnection().createStatement()) {
+                        st.execute("ALTER TABLE Products ADD removed_reason NVARCHAR(500) NULL");
+                        System.out.println("[ProductDAO] Added removed_reason column to Products");
+                    }
+                }
+                if (!atExists) {
+                    try (Statement st = getConnection().createStatement()) {
+                        st.execute("ALTER TABLE Products ADD removed_at DATETIME NULL");
+                        System.out.println("[ProductDAO] Added removed_at column to Products");
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[ProductDAO] ensureRemovedColumnsExist() warning: " + e.getMessage());
+        }
+    }
     /**
      * Soft delete: danh dau san pham la da xoa (isDelete = 1).
      * Chi seller cua shop so huu moi duoc phep xoa san pham cua minh.
@@ -300,7 +451,8 @@ public class ProductDAO extends DbContext {
                    + "FROM Products p "
                    + "LEFT JOIN Shops s ON p.shop_id = s.id "
                    + "WHERE p.id = ? AND p.shop_id = ? AND p.isDelete = 0";
-        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, productId);
             ps.setInt(2, shopId);
             try (ResultSet rs = ps.executeQuery()) {
@@ -326,7 +478,8 @@ public class ProductDAO extends DbContext {
      */
     public List<String> getProductImageUrls(int productId) {
         String sql = "SELECT image_url FROM ProductImages WHERE product_id = ? ORDER BY sort_order ASC";
-        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, productId);
             try (ResultSet rs = ps.executeQuery()) {
                 List<String> urls = new ArrayList<>();
@@ -490,10 +643,10 @@ public class ProductDAO extends DbContext {
             sql.append(" AND p.category_id IN (");
             for (int i = 0; i < categoryIds.size(); i++) {
                 sql.append("?");
-                params.add(categoryIds.get(i));
                 if (i < categoryIds.size() - 1) {
                     sql.append(",");
                 }
+                params.add(categoryIds.get(i));
             }
             sql.append(") ");
         }
@@ -508,7 +661,8 @@ public class ProductDAO extends DbContext {
 
         sql.append(" ORDER BY p.created_at DESC");
 
-        try (PreparedStatement ps = getConnection().prepareStatement(sql.toString())) {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
             for (int i = 0; i < params.size(); i++) {
                 ps.setObject(i + 1, params.get(i));
             }
@@ -527,3 +681,4 @@ public class ProductDAO extends DbContext {
         }
     }
 }
+

@@ -9,33 +9,32 @@ import java.util.List;
 
 public class CartItemDAO extends DbContext {
 
-    public CartItem getItem(int cartId, int productId, String size) {
-        String sql = "SELECT ci.id, ci.cart_id, ci.product_id, ci.size, ci.quantity, ci.unit_price, "
+    public CartItem getItemByProductId(int cartId, int productId) {
+        String sql = "SELECT ci.id, ci.cart_id, ci.product_id, ci.quantity, ci.unit_price, "
                    + "ci.discount_amount, ci.total_price, ci.voucher_id, v.code AS voucher_code, ci.note, ci.is_selected, "
                    + "p.shop_id AS product_shop_id, p.title AS product_title, p.image AS product_image, p.unit AS product_unit, "
                    + "ci.created_at, ci.updated_at "
                    + "FROM CartItems ci "
                    + "LEFT JOIN Vouchers v ON ci.voucher_id = v.id "
                    + "LEFT JOIN Products p ON ci.product_id = p.id "
-                   + "WHERE ci.cart_id = ? AND ci.product_id = ? AND ci.size = ?";
+                   + "WHERE ci.cart_id = ? AND ci.product_id = ?";
         try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
             ps.setInt(1, cartId);
             ps.setInt(2, productId);
-            ps.setString(3, size);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     return mapRow(rs);
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[CartItemDAO] getItem error: " + e.getMessage());
-            throw new RuntimeException("CartItemDAO.getItem error: " + e.getMessage(), e);
+            System.err.println("[CartItemDAO] getItemByProductId error: " + e.getMessage());
+            throw new RuntimeException("CartItemDAO.getItemByProductId error: " + e.getMessage(), e);
         }
         return null;
     }
 
     public List<CartItem> getItemsByCartId(int cartId) {
-        String sql = "SELECT ci.id, ci.cart_id, ci.product_id, ci.size, ci.quantity, ci.unit_price, "
+        String sql = "SELECT ci.id, ci.cart_id, ci.product_id, ci.quantity, ci.unit_price, "
                    + "ci.discount_amount, ci.total_price, ci.voucher_id, v.code AS voucher_code, ci.note, ci.is_selected, "
                    + "p.shop_id AS product_shop_id, p.title AS product_title, p.image AS product_image, p.unit AS product_unit, "
                    + "ci.created_at, ci.updated_at "
@@ -43,7 +42,8 @@ public class CartItemDAO extends DbContext {
                    + "LEFT JOIN Vouchers v ON ci.voucher_id = v.id "
                    + "LEFT JOIN Products p ON ci.product_id = p.id "
                    + "WHERE ci.cart_id = ? ORDER BY ci.created_at DESC";
-        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, cartId);
             try (ResultSet rs = ps.executeQuery()) {
                 List<CartItem> items = new ArrayList<>();
@@ -59,23 +59,23 @@ public class CartItemDAO extends DbContext {
     }
 
     public boolean insertItem(CartItem item) {
-        String sql = "INSERT INTO CartItems (cart_id, product_id, size, quantity, unit_price, discount_amount, total_price, voucher_id, note, is_selected, created_at, updated_at) "
-                   + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, GETDATE(), GETDATE())";
-        try (PreparedStatement ps = getConnection().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        String sql = "INSERT INTO CartItems (cart_id, product_id, quantity, unit_price, discount_amount, total_price, voucher_id, note, is_selected, created_at, updated_at) "
+                   + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, GETDATE(), GETDATE())";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, item.getCartId());
             ps.setInt(2, item.getProductId());
-            ps.setString(3, item.getSize());
-            ps.setInt(4, item.getQuantity());
-            ps.setDouble(5, item.getUnitPrice());
-            ps.setDouble(6, item.getDiscountAmount());
-            ps.setDouble(7, item.getTotalPrice());
+            ps.setInt(3, item.getQuantity());
+            ps.setDouble(4, item.getUnitPrice());
+            ps.setDouble(5, item.getDiscountAmount());
+            ps.setDouble(6, item.getTotalPrice());
             if (item.getVoucherId() > 0) {
-                ps.setInt(8, item.getVoucherId());
+                ps.setInt(7, item.getVoucherId());
             } else {
-                ps.setNull(8, Types.INTEGER);
+                ps.setNull(7, Types.INTEGER);
             }
-            ps.setString(9, item.getNote());
-            ps.setBoolean(10, item.isSelected());
+            ps.setString(8, item.getNote());
+            ps.setBoolean(9, item.isSelected());
             int affected = ps.executeUpdate();
             if (affected == 0) {
                 return false;
@@ -95,7 +95,8 @@ public class CartItemDAO extends DbContext {
     public boolean updateItem(CartItem item) {
         String sql = "UPDATE CartItems SET quantity = ?, discount_amount = ?, total_price = ?, voucher_id = ?, note = ?, updated_at = GETDATE() "
                    + "WHERE id = ?";
-        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, item.getQuantity());
             ps.setDouble(2, item.getDiscountAmount());
             ps.setDouble(3, item.getTotalPrice());
@@ -113,22 +114,23 @@ public class CartItemDAO extends DbContext {
         }
     }
 
-    public boolean deleteItem(int cartId, int productId, String size) {
-        String sql = "DELETE FROM CartItems WHERE cart_id = ? AND product_id = ? AND size = ?";
-        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+    public boolean deleteItemByProductId(int cartId, int productId) {
+        String sql = "DELETE FROM CartItems WHERE cart_id = ? AND product_id = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, cartId);
             ps.setInt(2, productId);
-            ps.setString(3, size);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("[CartItemDAO] deleteItem error: " + e.getMessage());
-            throw new RuntimeException("CartItemDAO.deleteItem error: " + e.getMessage(), e);
+            System.err.println("[CartItemDAO] deleteItemByProductId error: " + e.getMessage());
+            throw new RuntimeException("CartItemDAO.deleteItemByProductId error: " + e.getMessage(), e);
         }
     }
 
     public boolean deleteItemsByCartId(int cartId) {
         String sql = "DELETE FROM CartItems WHERE cart_id = ?";
-        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, cartId);
             ps.executeUpdate();
             return true;
@@ -138,12 +140,46 @@ public class CartItemDAO extends DbContext {
         }
     }
 
+    public boolean updateItemSelectionByProductId(int cartId, int productId, boolean selected) {
+        String sql = "UPDATE CartItems SET is_selected = ? WHERE cart_id = ? AND product_id = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setBoolean(1, selected);
+            ps.setInt(2, cartId);
+            ps.setInt(3, productId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("[CartItemDAO] updateItemSelectionByProductId error: " + e.getMessage());
+            throw new RuntimeException("CartItemDAO.updateItemSelectionByProductId error: " + e.getMessage(), e);
+        }
+    }
+
+    public boolean deleteItemsByProductIds(int cartId, List<Integer> productIds) {
+        if (productIds == null || productIds.isEmpty()) return true;
+        StringBuilder sql = new StringBuilder("DELETE FROM CartItems WHERE cart_id = ? AND product_id IN (");
+        for (int i = 0; i < productIds.size(); i++) {
+            sql.append(i > 0 ? ",?" : "?");
+        }
+        sql.append(")");
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            ps.setInt(1, cartId);
+            for (int i = 0; i < productIds.size(); i++) {
+                ps.setInt(i + 2, productIds.get(i));
+            }
+            ps.executeUpdate();
+            return true;
+        } catch (SQLException e) {
+            System.err.println("[CartItemDAO] deleteItemsByProductIds error: " + e.getMessage());
+            throw new RuntimeException("CartItemDAO.deleteItemsByProductIds error: " + e.getMessage(), e);
+        }
+    }
+
     private CartItem mapRow(ResultSet rs) throws SQLException {
         CartItem item = new CartItem();
         item.setId(rs.getInt("id"));
         item.setCartId(rs.getInt("cart_id"));
         item.setProductId(rs.getInt("product_id"));
-        item.setSize(rs.getString("size"));
         item.setQuantity(rs.getInt("quantity"));
         item.setUnitPrice(rs.getDouble("unit_price"));
         item.setDiscountAmount(rs.getDouble("discount_amount"));
