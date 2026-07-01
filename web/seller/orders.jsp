@@ -1,4 +1,4 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="model.Account" %>
 <%@ page import="model.Order" %>
 <%@ page import="model.OrderDetail" %>
@@ -8,15 +8,15 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%
-    Account user = (Account) session.getAttribute("user");
-    if (user == null) {
+    Account Account = (Account) session.getAttribute("user");
+    if (Account == null) {
         response.sendRedirect(request.getContextPath() + "/login");
         return;
     }
 
-    String avatarUrl = user.getAvatar();
+    String avatarUrl = Account.getAvatar();
     if (avatarUrl == null || avatarUrl.trim().isEmpty()) {
-        String fullname = user.getFullname() != null ? user.getFullname() : user.getUsername();
+        String fullname = Account.getFullname() != null ? Account.getFullname() : Account.getUsername();
         avatarUrl = "https://ui-avatars.com/api/?name="
                   + java.net.URLEncoder.encode(fullname, "UTF-8")
                   + "&background=4caf50&color=fff&size=80&bold=true&rounded=true";
@@ -421,7 +421,7 @@
         <aside class="sidebar">
             <div class="sidebar-nav">
                 <a href="dashboard"><i class="fa-solid fa-gauge"></i> Dashboard</a>
-                <a href="../profile"><i class="fa-regular fa-user"></i> Hồ Sơ</a>
+                <a href="../profile"><i class="fa-regular fa-Account"></i> Hồ Sơ</a>
                 <a href="../products"><i class="fa-brands fa-opencart"></i> Sản Phẩm</a>
                 <a href="orders" class="active"><i class="fa-solid fa-basket-shopping"></i> Đơn Hàng</a>
                 <a href="../logout" class="logout"><i class="fa-solid fa-right-from-bracket"></i> Đăng Xuất</a>
@@ -475,7 +475,7 @@
                                     Khách hàng: <strong><%= o.getCustomerName() != null ? o.getCustomerName() : "Khách vãng lai" %></strong>
                                     <span style="color:var(--gray-400); margin:0 0.5rem;">|</span>
                                     Đặt ngày: <strong><%= new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(o.getOrderDate()) %></strong>
-                                    <span class="order-id">Mã đơn: #<%= o.getId() %></span>
+                                    <span class="order-id"></span>
                                 </div>
                                 <span class="badge <%= o.getStatusClass() %>"><%= o.getStatusLabel() %></span>
                             </div>
@@ -512,7 +512,7 @@
 
                             <!-- Shipping info -->
                             <div class="order-shipping-info">
-                                <div><i class="fa-solid fa-user-tag" style="width:14px;color:var(--green);"></i> <strong>Người nhận:</strong> <%= o.getRecipientName() %> - <%= o.getRecipientPhone() %></div>
+                                <div><i class="fa-solid fa-Account-tag" style="width:14px;color:var(--green);"></i> <strong>Người nhận:</strong> <%= o.getRecipientName() %> - <%= o.getRecipientPhone() %></div>
                                 <div style="margin-top:0.2rem;"><i class="fa-solid fa-map-pin" style="width:14px;color:var(--green);"></i> <strong>Địa chỉ nhận:</strong> <%= o.getAddress() %></div>
                                 <% if (o.getNote() != null && !o.getNote().isEmpty()) { %>
                                     <div style="margin-top:0.2rem;"><i class="fa-solid fa-comment-dots" style="width:14px;color:var(--green);"></i> <strong>Ghi chú từ khách:</strong> <%= o.getNote() %></div>
@@ -544,13 +544,17 @@
                                                 </button>
                                             </form>
 
-                                            <form method="post" action="orders" style="display:inline-block;" onsubmit="return confirm('Bạn có chắc chắn muốn HỦY đơn hàng này không?');">
+                                            <form method="post" action="orders" style="display:inline-block;" onsubmit="return confirm('Bạn có chắc chắn muốn TỪ CHỐI đơn hàng này không?');">
                                                 <input type="hidden" name="action" value="cancel">
                                                 <input type="hidden" name="orderId" value="<%= o.getId() %>">
                                                 <button type="submit" class="btn btn-danger-outline">
                                                     <i class="fa-solid fa-rectangle-xmark"></i> Từ Chối
                                                 </button>
                                             </form>
+                                        <% } else if (o.getStatus() == 2) { %>
+                                            <span class="text-muted" style="font-size:0.875rem;color:#64748b;">
+                                                <i class="fa-solid fa-lock"></i> Đã xác nhận — không thể từ chối
+                                            </span>
                                         <% } %>
                                     </div>
                                 </div>
@@ -612,3 +616,5 @@
     </script>
 </body>
 </html>
+
+

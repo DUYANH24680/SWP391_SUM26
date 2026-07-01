@@ -31,11 +31,11 @@ public class CheckoutServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         HttpSession session = req.getSession(false);
-        if (session == null || session.getAttribute("user") == null) {
+        if (session == null || session.getAttribute("Account") == null) {
             resp.sendRedirect(req.getContextPath() + "/login");
             return;
         }
-        Account user = (Account) session.getAttribute("user");
+        Account user = (Account) session.getAttribute("Account");
 
         String action = req.getParameter("action");
         if ("checkVoucher".equals(action)) {
@@ -119,11 +119,11 @@ public class CheckoutServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         HttpSession session = req.getSession(false);
-        if (session == null || session.getAttribute("user") == null) {
+        if (session == null || session.getAttribute("Account") == null) {
             resp.sendRedirect(req.getContextPath() + "/login");
             return;
         }
-        Account user = (Account) session.getAttribute("user");
+        Account user = (Account) session.getAttribute("Account");
 
         String recipientName = req.getParameter("recipientName");
         String recipientPhone = req.getParameter("recipientPhone");

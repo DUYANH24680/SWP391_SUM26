@@ -13,6 +13,8 @@ import jakarta.servlet.http.HttpSession;
 import model.Category;
 import model.Product;
 import model.Shop;
+import model.ProductReview;
+import java.util.Map;
 
 import java.io.IOException;
 import java.util.List;
@@ -24,14 +26,10 @@ public class ProductInfoServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         HttpSession session = req.getSession(false);
-        if (session == null || session.getAttribute("user") == null) {
-            resp.sendRedirect(req.getContextPath() + "/login");
-            return;
-        }
 
         String idParam = req.getParameter("id");
         if (idParam == null || idParam.trim().isEmpty()) {
-            resp.sendRedirect(req.getContextPath() + "/home");
+            resp.sendRedirect(req.getContextPath() + "/home.jsp");
             return;
         }
 
@@ -40,7 +38,7 @@ public class ProductInfoServlet extends HttpServlet {
             productId = Integer.parseInt(idParam.trim());
         } catch (NumberFormatException e) {
             session.setAttribute("error", "ID sản phẩm không hợp lệ.");
-            resp.sendRedirect(req.getContextPath() + "/home");
+            resp.sendRedirect(req.getContextPath() + "/home.jsp");
             return;
         }
 
@@ -94,6 +92,21 @@ public class ProductInfoServlet extends HttpServlet {
                 req.setAttribute("shopInfo", shopInfo);
             }
 
+            // Load reviews & rating summary
+            try {
+                dao.ProductReviewDAO reviewDAO = new dao.ProductReviewDAO();
+                try {
+                    java.util.List<ProductReview> reviews = reviewDAO.getReviewsByProductId(productId);
+                    Map<String, Object> ratingStats = reviewDAO.getRatingSummary(productId);
+                    req.setAttribute("reviews", reviews);
+                    req.setAttribute("ratingStats", ratingStats);
+                } finally {
+                    reviewDAO.close();
+                }
+            } catch (Exception e) {
+                System.err.println("[ProductInfoServlet] load reviews failed: " + e.getMessage());
+            }
+
             req.getRequestDispatcher("/product-info.jsp").forward(req, resp);
 
         } catch (Exception e) {
@@ -102,9 +115,10 @@ public class ProductInfoServlet extends HttpServlet {
             if (session != null) {
                 session.setAttribute("error", "Không thể tải chi tiết sản phẩm: " + e.getMessage());
             }
-            resp.sendRedirect(req.getContextPath() + "/home");
+            resp.sendRedirect(req.getContextPath() + "/home.jsp");
         } finally {
             productDAO.close();
         }
     }
 }
+

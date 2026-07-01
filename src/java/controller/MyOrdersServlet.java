@@ -22,11 +22,11 @@ public class MyOrdersServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         HttpSession session = req.getSession(false);
-        if (session == null || session.getAttribute("user") == null) {
+        if (session == null || session.getAttribute("Account") == null) {
             resp.sendRedirect(req.getContextPath() + "/login");
             return;
         }
-        Account user = (Account) session.getAttribute("user");
+        Account user = (Account) session.getAttribute("Account");
 
         OrderService orderService = new OrderService();
         List<Order> orders = orderService.getOrdersByCustomerId(user.getId());
@@ -42,11 +42,11 @@ public class MyOrdersServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         HttpSession session = req.getSession(false);
-        if (session == null || session.getAttribute("user") == null) {
+        if (session == null || session.getAttribute("Account") == null) {
             resp.sendRedirect(req.getContextPath() + "/login");
             return;
         }
-        Account user = (Account) session.getAttribute("user");
+        Account user = (Account) session.getAttribute("Account");
 
         String action = req.getParameter("action");
         String orderIdParam = req.getParameter("orderId");
@@ -59,7 +59,7 @@ public class MyOrdersServlet extends HttpServlet {
                 session.setAttribute("message", "Đã hủy đơn hàng thành công!");
             } catch (NumberFormatException e) {
                 session.setAttribute("error", "ID đơn hàng không hợp lệ.");
-            } catch (IllegalArgumentException | RuntimeException e) {
+            } catch (RuntimeException e) {
                 session.setAttribute("error", e.getMessage());
             }
         }

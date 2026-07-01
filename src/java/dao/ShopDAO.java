@@ -3,6 +3,8 @@ package dao;
 import model.Shop;
 import Utils.DbContext;
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * ShopDAO - Handles all DB operations for Shops table.
@@ -85,6 +87,23 @@ public class ShopDAO extends Utils.DbContext {
         }
         return false;
     }
+    /**
+     * Get all shops (for admin dropdown filter).
+     */
+    public List<Shop> getAllShops() {
+        List<Shop> list = new ArrayList<>();
+        String sql = "SELECT id, owner_id, shop_name, logo, description, address, status, created_at FROM Shops ORDER BY shop_name ASC";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                list.add(mapRow(rs));
+            }
+        } catch (SQLException e) {
+            System.err.println("[ShopDAO] getAllShops error: " + e.getMessage());
+            throw new RuntimeException("ShopDAO.getAllShops error: " + e.getMessage(), e);
+        }
+        return list;
+    }
 
     // ---- helper ----
     private Shop mapRow(ResultSet rs) throws SQLException {
@@ -100,3 +119,4 @@ public class ShopDAO extends Utils.DbContext {
         return shop;
     }
 }
+

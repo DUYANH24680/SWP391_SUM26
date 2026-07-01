@@ -1,14 +1,33 @@
-<%@ page contentType="text/html;charset=UTF-8" %>
+﻿<%@ page contentType="text/html;charset=UTF-8" %>
 <%@ page import="model.Account" %>
 <%@ page import="model.Product" %>
 <%@ page import="model.Cart" %>
 <%@ page import="java.util.List" %>
 <%@ page import="dao.ProductDAO" %>
 <%@ page import="Utils.ProductSorter" %>
-<% 
-    Account user = (Account) session.getAttribute("user"); 
+<%@ page import="service.WishlistService" %>
+<%
+    response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    response.setHeader("Pragma", "no-cache");
+    response.setDateHeader("Expires", 0);
+%>
+<%
+    Account Account = (Account) session.getAttribute("Account");
     Cart cart = (Cart) session.getAttribute("cart");
-    int cartCount = cart != null ? cart.getTotalQuantity() : 0;
+    Integer sessionCartCount = (Integer) session.getAttribute("cartCount");
+    int cartCount = sessionCartCount != null ? sessionCartCount : (cart != null ? cart.getTotalQuantity() : 0);
+    int wishlistCount = 0;
+    if (Account != null) {
+        WishlistService ws = new WishlistService();
+        try {
+            wishlistCount = ws.getWishlistCount(Account.getId());
+            if (session.getAttribute("wishlistCount") != null) {
+                wishlistCount = (Integer) session.getAttribute("wishlistCount");
+            }
+        } finally {
+            ws.close();
+        }
+    }
     ProductDAO dao = new ProductDAO();
     List<Product> productsList = dao.getAllProducts();
     String sort = request.getParameter("sort");
@@ -205,6 +224,22 @@
                         width: 18px;
                         height: 18px;
                         background: var(--orange);
+                        color: #fff;
+                        border-radius: 50%;
+                        font-size: 0.62rem;
+                        font-weight: 700;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    }
+
+                    .wishlist-badge {
+                        position: absolute;
+                        top: -3px;
+                        right: -3px;
+                        width: 18px;
+                        height: 18px;
+                        background: #ef4444;
                         color: #fff;
                         border-radius: 50%;
                         font-size: 0.62rem;
@@ -891,22 +926,15 @@
                     .product-image-wrap {
                         position: relative;
                         background: linear-gradient(135deg, #f1f8e9, #e8f5e9);
-                        height: 160px;
+                        height: 180px;
                         display: flex;
                         align-items: center;
                         justify-content: center;
                         overflow: hidden;
                     }
 
-                    .product-image-wrap img {
-                        width: 100%;
-                        height: 100%;
-                        object-fit: cover;
-                        object-position: center;
-                    }
-
                     .product-emoji {
-                        font-size: 4rem;
+                        font-size: 5rem;
                         filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.12));
                         transition: transform 0.3s ease;
                     }
@@ -1086,6 +1114,83 @@
                     .btn-cart:hover {
                         background: var(--green-dark);
                         transform: scale(1.04);
+                    }
+
+                    /* Buy now + Add to cart side by side */
+                    .product-footer {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 0.4rem;
+                        padding: 0.75rem 0.75rem 0.85rem;
+                        border-top: 1px solid var(--gray-100);
+                    }
+
+                    .product-footer .footer-row {
+                        display: flex;
+                        align-items: center;
+                        gap: 0.4rem;
+                    }
+
+                    .product-footer .product-unit {
+                        font-size: 0.72rem;
+                        color: var(--gray-400);
+                        display: flex;
+                        align-items: center;
+                        gap: 0.3rem;
+                        margin-bottom: 0.15rem;
+                    }
+
+                    .product-footer .btn-actions {
+                        display: flex;
+                        gap: 0.4rem;
+                    }
+
+                    .product-footer .btn-add-cart {
+                        flex: 1;
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 0.35rem;
+                        padding: 0.42rem 0.5rem;
+                        background: transparent;
+                        color: var(--green-dark);
+                        border: 1.5px solid var(--green);
+                        border-radius: 100px;
+                        font-size: 0.78rem;
+                        font-weight: 600;
+                        cursor: pointer;
+                        font-family: 'Inter', sans-serif;
+                        transition: all 0.18s;
+                        white-space: nowrap;
+                    }
+
+                    .product-footer .btn-add-cart:hover {
+                        background: var(--green-light);
+                        transform: scale(1.02);
+                    }
+
+                    .product-footer .btn-buy-now {
+                        flex: 1;
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 0.35rem;
+                        padding: 0.42rem 0.5rem;
+                        background: var(--orange);
+                        color: #fff;
+                        border: none;
+                        border-radius: 100px;
+                        font-size: 0.78rem;
+                        font-weight: 600;
+                        cursor: pointer;
+                        font-family: 'Inter', sans-serif;
+                        transition: all 0.18s;
+                        white-space: nowrap;
+                    }
+
+                    .product-footer .btn-buy-now:hover {
+                        background: var(--orange-dark);
+                        transform: scale(1.02);
                     }
 
                     /* Out of stock overlay */
@@ -1827,6 +1932,10 @@
                     </div>
 
                     <div class="nav-right">
+                        <a href="wishlist" class="nav-icon-btn" title="Wishlist">
+                            <i class="fa-solid fa-heart"></i>
+                            <span class="wishlist-badge"><%= wishlistCount %></span>
+                        </a>
                         <a href="cart" class="nav-icon-btn" title="Giỏ hàng">
                             <i class="fa-solid fa-basket-shopping"></i>
                             <span class="cart-badge"><%= cartCount %></span>
@@ -1835,26 +1944,26 @@
                             <i class="fa-regular fa-bell"></i>
                         </button>
 
-                        <% if (user !=null) { %>
+                        <% if (Account !=null) { %>
                             <!-- Avatar with dropdown -->
                             <div class="avatar-wrap">
                                 <img class="nav-avatar"
-                                    src="https://ui-avatars.com/api/?name=<%= user.getFullname() != null ? user.getFullname().replace(" ", "+") : "User" %>&background=4caf50&color=fff&size=80&bold=true"
+                                    src="https://ui-avatars.com/api/?name=<%= Account.getFullname() != null ? Account.getFullname().replace(" ", "+") : "Account" %>&background=4caf50&color=fff&size=80&bold=true"
                                 alt="avatar">
                                 <div class="avatar-dropdown">
                                     <div class="avatar-dropdown-inner">
                                         <div class="dropdown-header">
                                             <strong>
-                                                <%= user.getFullname() !=null ? user.getFullname() : user.getUsername()
+                                                <%= Account.getFullname() !=null ? Account.getFullname() : Account.getUsername()
                                                     %>
                                             </strong>
                                             <span>
-                                                <%= user.getEmail() !=null ? user.getEmail() : user.getUsername() %>
+                                                <%= Account.getEmail() !=null ? Account.getEmail() : Account.getUsername() %>
                                             </span>
                                         </div>
                                         <div class="dropdown-menu">
                                             <a class="dropdown-item" href="profile?tab=profile">
-                                                <i class="fa-regular fa-user"></i> Hồ Sơ Của Tôi
+                                                <i class="fa-regular fa-Account"></i> Hồ Sơ Của Tôi
                                             </a>
                                             <a class="dropdown-item" href="profile?tab=security">
                                                 <i class="fa-solid fa-shield-halved"></i> Bảo Mật
@@ -2142,32 +2251,11 @@
                                 <div class="product-card <%= p.getStockQuantity() <= 0 ? "out-of-stock" : "" %>" data-id="<%= p.getId() %>" style="cursor:pointer;">
                                     <div class="product-image-wrap">
                                         <%
-                                            String imgStr = p.getImage();
-                                            if (imgStr == null || imgStr.trim().isEmpty()) {
-                                                // Khong co anh → hien thi emoji
+                                            String imgStr = p.getImage() != null && !p.getImage().isEmpty() ? p.getImage() : "🍎";
+                                            if (imgStr.toLowerCase().endsWith(".png") || imgStr.toLowerCase().endsWith(".jpg") || imgStr.toLowerCase().endsWith(".jpeg") || imgStr.toLowerCase().endsWith(".gif") || imgStr.contains("/")) {
                                         %>
-                                            <div class="product-emoji">🍎</div>
-                                        <%
-                                            } else if (imgStr.trim().startsWith("uploads/")) {
-                                                // Anh upload → goi ImageServlet
-                                                String encoded = java.net.URLEncoder.encode(imgStr.trim(), "UTF-8");
-                                                String imgSrc = request.getContextPath() + "/image?path=" + encoded;
-                                        %>
-                                            <img src="<%= imgSrc %>" alt="<%= p.getTitle() %>" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
-                                            <div class="product-emoji" style="display:none;">🍎</div>
-                                        <%
-                                            } else if (imgStr.trim().toLowerCase().endsWith(".png")
-                                                    || imgStr.trim().toLowerCase().endsWith(".jpg")
-                                                    || imgStr.trim().toLowerCase().endsWith(".jpeg")
-                                                    || imgStr.trim().toLowerCase().endsWith(".gif")
-                                                    || imgStr.trim().toLowerCase().startsWith("http")) {
-                                                // Duong dan anh hoac URL tuyệt đối → dung truc tiep
-                                        %>
-                                            <img src="<%= imgStr.trim() %>" alt="<%= p.getTitle() %>">
-                                        <%
-                                            } else {
-                                                // Con lai → emoji
-                                        %>
+                                            <img src="<%= imgStr %>" alt="<%= p.getTitle() %>" style="width:100%; height:100%; object-fit:cover; border-radius:var(--radius-md);">
+                                        <%  } else { %>
                                             <div class="product-emoji"><%= imgStr %></div>
                                         <%  } %>
                                         <% if (p.getSalePrice() < p.getOriginalPrice()) { 
@@ -2177,7 +2265,10 @@
                                         <% } else if (p.isIsFeatured()) { %>
                                             <div class="product-badge badge-hot">Hot</div>
                                         <% } %>
-                                        <button class="product-wishlist" data-wishlist-action="add" data-product-id="<%= p.getId() %>"><i class="fa-regular fa-heart"></i></button>
+                                        <form action="add-to-wishlist" method="POST" style="position:absolute;top:8px;right:8px;z-index:2;" onclick="event.stopPropagation();">
+                                            <input type="hidden" name="productId" value="<%= p.getId() %>">
+                                            <button type="submit" class="product-wishlist"><i class="fa-regular fa-heart"></i></button>
+                                        </form>
                                     </div>
                                     <div class="product-info">
                                         <div class="product-category"><%= p.getShopName() != null ? p.getShopName() : "Chung" %></div>
@@ -2199,11 +2290,41 @@
                                     </div>
                                     <div class="product-footer">
                                         <% if (p.getStockQuantity() > 0) { %>
-                                            <div class="product-unit"><i class="fa-solid fa-scale-balanced"></i> Con <%= p.getStockQuantity() %> <%= p.getUnit() %></div>
-                                            <button class="btn-cart" onclick="window.location.href='cart?action=add&productId=<%= p.getId() %>'"><i class="fa-solid fa-plus"></i> Thêm</button>
+                                            <div class="footer-row">
+                                                <div class="product-unit">
+                                                    <i class="fa-solid fa-scale-balanced"></i> Con <%= p.getStockQuantity() %> <%= p.getUnit() %>
+                                                </div>
+                                            </div>
+                                            <div class="btn-actions">
+                                                <form action="add-to-cart" method="POST" style="flex:1;">
+                                                    <input type="hidden" name="productId" value="<%= p.getId() %>">
+                                                    <input type="hidden" name="quantity" value="1">
+                                                    <button type="submit" class="btn-add-cart">
+                                                        <i class="fa-solid fa-cart-plus"></i> Gio Hang
+                                                    </button>
+                                                </form>
+                                                <form action="buy-now" method="POST" style="flex:1;">
+                                                    <input type="hidden" name="productId" value="<%= p.getId() %>">
+                                                    <input type="hidden" name="quantity" value="1">
+                                                    <button type="submit" class="btn-buy-now">
+                                                        <i class="fa-solid fa-bolt"></i> Mua Ngay
+                                                    </button>
+                                                </form>
+                                            </div>
                                         <% } else { %>
-                                            <div class="product-unit" style="color:var(--orange);"><i class="fa-solid fa-circle-xmark"></i> Hết hàng</div>
-                                            <button class="btn-cart" disabled><i class="fa-solid fa-ban"></i> Het</button>
+                                            <div class="footer-row">
+                                                <div class="product-unit" style="color:var(--orange);">
+                                                    <i class="fa-solid fa-circle-xmark"></i> Het Hang
+                                                </div>
+                                            </div>
+                                            <div class="btn-actions">
+                                                <button class="btn-add-cart" disabled style="opacity:0.5;cursor:not-allowed;">
+                                                    <i class="fa-solid fa-cart-plus"></i> Gio Hang
+                                                </button>
+                                                <button class="btn-buy-now" disabled style="opacity:0.5;cursor:not-allowed;">
+                                                    <i class="fa-solid fa-bolt"></i> Mua Ngay
+                                                </button>
+                                            </div>
                                         <% } %>
                                     </div>
                                 </div>
@@ -2409,7 +2530,7 @@
                             if (!sortType) return;
                             
                             // Đổi màu tab
-                            document.querySelectorAll('.sort-tab').forEach(t => t.classList.remove('active'));
+                            document.querySelectorAll('.sort-tab').forEach(function (t) { t.classList.remove('active'); });
                             this.classList.add('active');
                             
                             // Gọi backend lấy danh sách mới
@@ -2426,6 +2547,35 @@
                                 .catch(err => console.error("Lỗi AJAX Sắp xếp:", err));
                         });
                     });
+
+                    // ── Cập nhật số giỏ hàng khi trang hiển thị lại từ cache/lịch sử ──
+                    function refreshCartBadge() {
+                        const badge = document.querySelector('.nav-icon-btn[title=\"Giỏ hàng\"] .cart-badge');
+                        if (!badge) return;
+                        const raw = '<%= cartCount %>';
+                        const count = isNaN(raw) ? 0 : parseInt(raw, 10);
+                        if (count > 0) {
+                            badge.textContent = count;
+                            badge.style.display = '';
+                        } else {
+                            badge.style.display = 'none';
+                        }
+                    }
+
+                    window.addEventListener('pageshow', function(event) {
+                        if (event.persisted) {
+                            refreshCartBadge();
+                        }
+                    });
+
+                    document.addEventListener('visibilitychange', function() {
+                        if (document.visibilityState === 'visible') {
+                            refreshCartBadge();
+                        }
+                    });
+
+                    refreshCartBadge();
                 </script>
             </body>
             </html>
+

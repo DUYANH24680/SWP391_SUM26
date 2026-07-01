@@ -99,3 +99,4 @@ public class WishlistItem {
         this.unitPrice = unitPrice;
     }
 }
+

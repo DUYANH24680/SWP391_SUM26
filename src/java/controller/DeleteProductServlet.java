@@ -102,3 +102,4 @@ public class DeleteProductServlet extends HttpServlet {
         resp.sendRedirect(req.getContextPath() + REDIRECT_PRODUCTS);
     }
 }
+
