@@ -7,7 +7,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import model.Customer;
+import model.Account;
 import model.DeliveryAddress;
 
 import java.io.IOException;
@@ -20,7 +20,7 @@ public class AddressServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         HttpSession session = req.getSession(true);
-        Customer user = (Customer) session.getAttribute("user");
+        Account user = (Account) session.getAttribute("user");
 
         if (user == null) {
             resp.sendRedirect(req.getContextPath() + "/login");
@@ -38,7 +38,7 @@ public class AddressServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         HttpSession session = req.getSession(true);
-        Customer user = (Customer) session.getAttribute("user");
+        Account user = (Account) session.getAttribute("user");
 
         if (user == null) {
             resp.sendRedirect(req.getContextPath() + "/login");
@@ -69,7 +69,7 @@ public class AddressServlet extends HttpServlet {
         resp.sendRedirect(req.getContextPath() + "/address");
     }
 
-    private void handleAddAddress(HttpServletRequest req, HttpSession session, Customer user) {
+    private void handleAddAddress(HttpServletRequest req, HttpSession session, Account user) {
         String name = req.getParameter("recipientName");
         String phone = req.getParameter("recipientPhone");
         String address = req.getParameter("address");
@@ -92,7 +92,7 @@ public class AddressServlet extends HttpServlet {
         }
     }
 
-    private void handleUpdateAddress(HttpServletRequest req, HttpSession session, Customer user) {
+    private void handleUpdateAddress(HttpServletRequest req, HttpSession session, Account user) {
         try {
             int id = Integer.parseInt(req.getParameter("id"));
             String name = req.getParameter("recipientName");
@@ -124,7 +124,7 @@ public class AddressServlet extends HttpServlet {
         }
     }
 
-    private void handleDeleteAddress(HttpServletRequest req, HttpSession session, Customer user) {
+    private void handleDeleteAddress(HttpServletRequest req, HttpSession session, Account user) {
         try {
             int id = Integer.parseInt(req.getParameter("id"));
             DeliveryAddressDAO dao = new DeliveryAddressDAO();
@@ -138,7 +138,7 @@ public class AddressServlet extends HttpServlet {
         }
     }
 
-    private void handleSetDefaultAddress(HttpServletRequest req, HttpSession session, Customer user) {
+    private void handleSetDefaultAddress(HttpServletRequest req, HttpSession session, Account user) {
         try {
             int id = Integer.parseInt(req.getParameter("id"));
             DeliveryAddressDAO dao = new DeliveryAddressDAO();

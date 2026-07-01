@@ -1,5 +1,5 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ page import="model.Customer" %>
+<%@ page import="model.Account" %>
 <%@ page import="model.Product" %>
 <%@ page import="model.Shop" %>
 <%@ page import="dao.CategoryDAO" %>
@@ -7,7 +7,7 @@
 <%@ page import="java.util.List" %>
 <%
     // ---- Auth guard ----
-    Customer user = (Customer) session.getAttribute("user");
+    Account user = (Account) session.getAttribute("user");
     if (user == null) {
         response.sendRedirect(request.getContextPath() + "/login");
         return;
@@ -42,7 +42,7 @@
     Shop shopInfo = (Shop) request.getAttribute("shopInfo");
     if (shopInfo == null) {
         shopInfo = new Shop();
-        shopInfo.setName(product.getShopName() != null ? product.getShopName() : "-");
+        shopInfo.setShopName(product.getShopName() != null ? product.getShopName() : "-");
     }
 
     // ---- Avatar ----
@@ -580,7 +580,7 @@
             <a href="profile"><i class="fa-regular fa-user"></i> Ho So</a>
             <a href="products"><i class="fa-brands fa-opencart"></i> San Pham</a>
             <a href="add-product"><i class="fa-solid fa-plus"></i> Them San Pham</a>
-            <a href="#"><i class="fa-solid fa-basket-shopping"></i> Don Hang</a>
+            <a href="<%= "seller".equals(role) ? "seller/orders" : "my-orders" %>"><i class="fa-solid fa-basket-shopping"></i> Don Hang</a>
             <a href="#"><i class="fa-regular fa-heart"></i> Yeu Thich</a>
             <a href="logout" class="logout" style="margin-top:0.5rem;">
                 <i class="fa-solid fa-right-from-bracket"></i> Dang Xuat

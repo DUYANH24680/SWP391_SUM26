@@ -182,7 +182,7 @@ public class ProductServlet extends HttpServlet {
         if (ROLE_SELLER.equals(role)) {
             return loadSellerProducts(session, keyword);
         }
-        return loadCustomerProducts(keyword);
+        return loadUserProducts(keyword);
     }
 
     // -----------------------------------------------------------------
@@ -211,7 +211,7 @@ public class ProductServlet extends HttpServlet {
 
             // Buoc 2: lay shop info
             Shop shop = shopDAO.getShopByOwnerId(userId);
-            System.out.println("[ProductServlet.loadSellerProducts] shop=" + (shop != null ? shop.getId() + "/" + shop.getName() : "null"));
+            System.out.println("[ProductServlet.loadSellerProducts] shop=" + (shop != null ? shop.getId() + "/" + shop.getShopName() : "null"));
 
             if (shop == null) {
                 throw new IllegalStateException("Khong tim thay thong tin cua hang. Lien he admin.");
@@ -240,14 +240,14 @@ public class ProductServlet extends HttpServlet {
     }
 
     // -----------------------------------------------------------------
-    // Customer / khach: thay tat ca san pham
+    // User / khach: thay tat ca san pham
     // -----------------------------------------------------------------
-    private List<Product> loadCustomerProducts(String keyword) throws Exception {
-        System.out.println("[ProductServlet.loadCustomerProducts] loading all products");
+    private List<Product> loadUserProducts(String keyword) throws Exception {
+        System.out.println("[ProductServlet.loadUserProducts] loading all products");
         ProductDAO dao = new ProductDAO();
         try {
             if (keyword != null && !keyword.trim().isEmpty()) {
-                System.out.println("[ProductServlet.loadCustomerProducts] searching '" + keyword.trim() + "'");
+                System.out.println("[ProductServlet.loadUserProducts] searching '" + keyword.trim() + "'");
                 return dao.searchProducts(keyword.trim());
             }
             return dao.getAllProducts();

@@ -1,5 +1,5 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ page import="model.Customer" %>
+<%@ page import="model.Account" %>
 <%@ page import="model.Category" %>
 <%@ page import="java.util.List" %>
 <%
@@ -8,7 +8,7 @@
     System.out.println("[add-product.jsp] rawUser=" + rawUser + " type=" + (rawUser != null ? rawUser.getClass().getName() : "null"));
     System.out.println("[add-product.jsp] rawUserId=" + rawUserId + " type=" + (rawUserId != null ? rawUserId.getClass().getName() : "null"));
 
-    Customer user = (Customer) rawUser;
+    Account user = (Account) rawUser;
     if (user == null) {
         response.sendRedirect(request.getContextPath() + "/login");
         return;

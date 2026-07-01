@@ -5,6 +5,7 @@ import java.sql.Timestamp;
 public class Product {
     private int id;
     private int categoryId;
+    private int sellerId;
     private int shopId;
     private String shopName;
     private String title;
@@ -25,12 +26,13 @@ public class Product {
     public Product() {
     }
 
-    public Product(int id, int categoryId, int shopId, String title, String image, String description,
+    public Product(int id, int categoryId, int sellerId, int shopId, String title, String image, String description,
             String unit, int stockQuantity, int soldQuantity, double originalPrice, double salePrice,
             Timestamp expiredDate, double averageRating, boolean isFeatured, int status,
             boolean isDelete, Timestamp createdAt) {
         this.id = id;
         this.categoryId = categoryId;
+        this.sellerId = sellerId;
         this.shopId = shopId;
         this.title = title;
         this.image = image;
@@ -62,6 +64,14 @@ public class Product {
 
     public void setCategoryId(int categoryId) {
         this.categoryId = categoryId;
+    }
+
+    public int getSellerId() {
+        return sellerId;
+    }
+
+    public void setSellerId(int sellerId) {
+        this.sellerId = sellerId;
     }
 
     public int getShopId() {

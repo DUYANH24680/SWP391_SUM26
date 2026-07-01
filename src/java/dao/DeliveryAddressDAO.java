@@ -12,7 +12,7 @@ import java.util.List;
 public class DeliveryAddressDAO extends DbContext {
 
     /**
-     * Get all addresses for a customer.
+     * Get all addresses for a user.
      * @param customerId
      * @return 
      */
@@ -34,12 +34,12 @@ public class DeliveryAddressDAO extends DbContext {
     }
 
     /**
-     * Find a single address by id and customer id (ownership check).
+     * Find a single address by id and user id (ownership check).
      * @param id
      * @param customerId
      * @return 
      */
-    public DeliveryAddress findByIdAndCustomer(int id, int customerId) {
+    public DeliveryAddress findByIdAndUser(int id, int customerId) {
         String sql = "SELECT id, customer_id, recipient_name, recipient_phone, address, note, isDefault, created_at "
                    + "FROM DeliveryAddresses WHERE id = ? AND customer_id = ?";
         try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
@@ -49,7 +49,7 @@ public class DeliveryAddressDAO extends DbContext {
                 if (rs.next()) return mapRow(rs);
             }
         } catch (SQLException e) {
-            throw new RuntimeException("DeliveryAddressDAO.findByIdAndCustomer error: " + e.getMessage(), e);
+            throw new RuntimeException("DeliveryAddressDAO.findByIdAndUser error: " + e.getMessage(), e);
         }
         return null;
     }
@@ -103,6 +103,7 @@ public class DeliveryAddressDAO extends DbContext {
      * @param customerId
      * @return 
      */
+    
     public boolean delete(int id, int customerId) {
         String sql = "DELETE FROM DeliveryAddresses WHERE id = ? AND customer_id = ?";
         try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
@@ -115,7 +116,7 @@ public class DeliveryAddressDAO extends DbContext {
     }
 
     /**
-     * Unset all default addresses for a customer, then set the given one as default.
+     * Unset all default addresses for a user, then set the given one as default.
      * @param id
      * @param customerId
      * @return 

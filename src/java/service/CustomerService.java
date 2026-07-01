@@ -27,12 +27,12 @@ public class CustomerService {
 
         // Lấy dữ liệu từ DB (DAO)
         Customer customer = dao.findByUsernameOrEmail(username);
-        
-        // Kiểm tra (Logic)
-        if (customer != null && customer.getPasswordHash().equals(password)) {
+
+        // Kiểm tra (Logic) - so sánh SHA-256 hash của mật khẩu nhập vào với hash trong DB
+        if (customer != null && customer.getPasswordHash().equals(UserService.hashPassword(password))) {
             return customer;
         }
-        
+
         return null;
     }
 }

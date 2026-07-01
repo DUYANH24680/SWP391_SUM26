@@ -1,5 +1,4 @@
 package dao;
-
 import Utils.DbContext;
 import java.sql.*;
 
@@ -15,8 +14,8 @@ public class PasswordResetTokenDAO extends DbContext {
             throw new RuntimeException("PasswordResetTokenDAO.createToken clear error: " + e.getMessage(), e);
         }
 
-        String sql = "INSERT INTO PasswordResetTokens (email, token, expiry_time, is_used) VALUES (?, ?, ?, 0)";
-        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+        String sql = "INSERT INTO PasswordResetTokens (email, token, expiry_time, is_used, created_at) VALUES (?, ?, ?, 0, GETDATE())";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, email);
             ps.setString(2, token);
             ps.setTimestamp(3, expiryTime);
@@ -28,7 +27,7 @@ public class PasswordResetTokenDAO extends DbContext {
 
     public boolean validateToken(String email, String token) {
         String sql = "SELECT COUNT(1) FROM PasswordResetTokens WHERE email = ? AND token = ? AND expiry_time > GETDATE() AND is_used = 0";
-        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, email);
             ps.setString(2, token);
             try (ResultSet rs = ps.executeQuery()) {
@@ -44,7 +43,7 @@ public class PasswordResetTokenDAO extends DbContext {
 
     public boolean markTokenAsUsed(String token) {
         String sql = "UPDATE PasswordResetTokens SET is_used = 1 WHERE token = ?";
-        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, token);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {

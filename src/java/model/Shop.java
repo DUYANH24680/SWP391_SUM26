@@ -5,30 +5,24 @@ import java.sql.Timestamp;
 public class Shop {
     private int id;
     private int ownerId;
-    private String name;
+    private String shopName;
     private String logo;
-    private String banner;
     private String description;
     private String address;
-    private String phone;
-    private double rating;
     private int status;
     private Timestamp createdAt;
 
     public Shop() {
     }
 
-    public Shop(int id, int ownerId, String name, String logo, String banner, String description,
-            String address, String phone, double rating, int status, Timestamp createdAt) {
+    public Shop(int id, int ownerId, String shopName, String logo, String description,
+            String address, int status, Timestamp createdAt) {
         this.id = id;
         this.ownerId = ownerId;
-        this.name = name;
+        this.shopName = shopName;
         this.logo = logo;
-        this.banner = banner;
         this.description = description;
         this.address = address;
-        this.phone = phone;
-        this.rating = rating;
         this.status = status;
         this.createdAt = createdAt;
     }
@@ -49,12 +43,12 @@ public class Shop {
         this.ownerId = ownerId;
     }
 
-    public String getName() {
-        return name;
+    public String getShopName() {
+        return shopName;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setShopName(String shopName) {
+        this.shopName = shopName;
     }
 
     public String getLogo() {
@@ -63,14 +57,6 @@ public class Shop {
 
     public void setLogo(String logo) {
         this.logo = logo;
-    }
-
-    public String getBanner() {
-        return banner;
-    }
-
-    public void setBanner(String banner) {
-        this.banner = banner;
     }
 
     public String getDescription() {
@@ -87,22 +73,6 @@ public class Shop {
 
     public void setAddress(String address) {
         this.address = address;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
-
-    public double getRating() {
-        return rating;
-    }
-
-    public void setRating(double rating) {
-        this.rating = rating;
     }
 
     public int getStatus() {

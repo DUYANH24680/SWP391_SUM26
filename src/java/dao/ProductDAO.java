@@ -9,7 +9,7 @@ import java.util.List;
 public class ProductDAO extends DbContext {
 
     public List<Product> getAllProducts() {
-        String sql = "SELECT p.id, p.category_id, p.shop_id, p.title, p.image, p.description, p.unit, "
+        String sql = "SELECT p.id, p.category_id, p.seller_id, p.shop_id, p.title, p.image, p.description, p.unit, "
                    + "p.stock_quantity, p.sold_quantity, p.original_price, p.sale_price, p.expired_date, "
                    + "p.average_rating, p.is_featured, p.status, p.isDelete, p.created_at, "
                    + "s.shop_name "
@@ -49,7 +49,7 @@ public class ProductDAO extends DbContext {
     }
 
     public List<Product> searchProducts(String keyword) {
-        String sql = "SELECT p.id, p.category_id, p.shop_id, p.title, p.image, p.description, p.unit, "
+        String sql = "SELECT p.id, p.category_id, p.seller_id, p.shop_id, p.title, p.image, p.description, p.unit, "
                    + "p.stock_quantity, p.sold_quantity, p.original_price, p.sale_price, p.expired_date, "
                    + "p.average_rating, p.is_featured, p.status, p.isDelete, p.created_at, "
                    + "s.shop_name "
@@ -78,7 +78,7 @@ public class ProductDAO extends DbContext {
     }
 
     public Product getProductById(int id) {
-        String sql = "SELECT p.id, p.category_id, p.shop_id, p.title, p.image, p.description, p.unit, "
+        String sql = "SELECT p.id, p.category_id, p.seller_id, p.shop_id, p.title, p.image, p.description, p.unit, "
                    + "p.stock_quantity, p.sold_quantity, p.original_price, p.sale_price, p.expired_date, "
                    + "p.average_rating, p.is_featured, p.status, p.isDelete, p.created_at, "
                    + "s.shop_name "
@@ -105,7 +105,7 @@ public class ProductDAO extends DbContext {
      * Su dung de hien thi danh sach san pham cua nguoi ban.
      */
     public List<Product> getProductsByShopId(int shopId) {
-        String sql = "SELECT p.id, p.category_id, p.shop_id, p.title, p.image, p.description, p.unit, "
+        String sql = "SELECT p.id, p.category_id, p.seller_id, p.shop_id, p.title, p.image, p.description, p.unit, "
                    + "p.stock_quantity, p.sold_quantity, p.original_price, p.sale_price, p.expired_date, "
                    + "p.average_rating, p.is_featured, p.status, p.isDelete, p.created_at, "
                    + "s.shop_name "
@@ -155,8 +155,8 @@ public class ProductDAO extends DbContext {
     public boolean addProduct(Product product, List<String> imageUrls) {
         String sqlProduct = "INSERT INTO Products "
                 + "(title, description, image, unit, stock_quantity, original_price, sale_price, "
-                + "expired_date, category_id, shop_id, status, isDelete, is_featured, average_rating, sold_quantity) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 0, 0, 0)";
+                + "expired_date, category_id, shop_id, seller_id, status, isDelete, is_featured, average_rating, sold_quantity) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 0, 0, 0)";
 
         String sqlImage = "INSERT INTO ProductImages (product_id, image_url, sort_order) VALUES (?, ?, ?)";
 
@@ -192,6 +192,7 @@ public class ProductDAO extends DbContext {
 
             psProduct.setInt(9, product.getCategoryId());
             psProduct.setInt(10, product.getShopId());
+            psProduct.setInt(11, product.getSellerId());
 
             int rowsInserted = psProduct.executeUpdate();
             if (rowsInserted == 0) {
@@ -243,6 +244,7 @@ public class ProductDAO extends DbContext {
         Product p = new Product();
         p.setId(rs.getInt("id"));
         p.setCategoryId(rs.getInt("category_id"));
+        p.setSellerId(rs.getInt("seller_id"));
         p.setShopId(rs.getInt("shop_id"));
         p.setShopName(rs.getString("shop_name"));
         p.setTitle(rs.getString("title"));
@@ -493,7 +495,7 @@ public class ProductDAO extends DbContext {
      * Tra ve null neu san pham khong ton tai hoac khong thuoc shop.
      */
     public Product getProductByIdForEdit(int productId, int shopId) {
-        String sql = "SELECT p.id, p.category_id, p.shop_id, p.title, p.image, p.description, p.unit, "
+        String sql = "SELECT p.id, p.category_id, p.seller_id, p.shop_id, p.title, p.image, p.description, p.unit, "
                    + "p.stock_quantity, p.sold_quantity, p.original_price, p.sale_price, p.expired_date, "
                    + "p.average_rating, p.is_featured, p.status, p.isDelete, p.created_at, "
                    + "s.shop_name "
@@ -668,7 +670,7 @@ public class ProductDAO extends DbContext {
 
     public List<Product> filterProducts(String keyword, List<Integer> categoryIds, String status) {
         StringBuilder sql = new StringBuilder(
-                "SELECT p.id, p.category_id, p.shop_id, p.title, p.image, p.description, p.unit, "
+                "SELECT p.id, p.category_id, p.seller_id, p.shop_id, p.title, p.image, p.description, p.unit, "
               + "p.stock_quantity, p.sold_quantity, p.original_price, p.sale_price, p.expired_date, "
               + "p.average_rating, p.is_featured, p.status, p.isDelete, p.created_at, "
               + "s.shop_name "
