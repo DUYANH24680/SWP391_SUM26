@@ -1,9 +1,14 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="model.Cart" %>
 <%@ page import="model.CartItem" %>
 <%@ page import="model.Account" %>
 <%@ page import="java.text.NumberFormat" %>
 <%@ page import="java.util.Locale" %>
+<%
+    response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    response.setHeader("Pragma", "no-cache");
+    response.setDateHeader("Expires", 0);
+%>
 <%
     Account Account = (Account) session.getAttribute("Account");
     if (Account == null) {
@@ -964,7 +969,7 @@
     // ---- Xoa toan bo gio hang ----
     function confirmClearCart() {
         if (confirm('Ban co chan chan muon xoa toan bo gio hang?')) {
-            window.location.href = 'clear-cart';
+            window.location.href = '<%= request.getContextPath() %>/cart?action=clear';
         }
     }
 
@@ -1239,5 +1244,4 @@
 
 </body>
 </html>
-
 

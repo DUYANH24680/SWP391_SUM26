@@ -1,4 +1,4 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="model.Account" %>
 <%@ page import="model.Product" %>
 <%@ page import="model.Shop" %>
@@ -103,16 +103,6 @@
     boolean hasDiscount = salePrice > 0 && salePrice < originalPrice;
     int discountPercent = (int) Math.round(product.getDiscountPercent());
     java.text.NumberFormat nf = java.text.NumberFormat.getNumberInstance(java.util.Locale.forLanguageTag("vi"));
-
-    // ---- Image URL helper: uploaded images go through ImageServlet ----
-    java.util.function.Function<String, String> imgUrl = (String path) -> {
-        if (path == null || path.trim().isEmpty()) return null;
-        String trimmed = path.trim();
-        if (trimmed.startsWith("uploads/")) {
-            return request.getContextPath() + "/image?path=" + java.net.URLEncoder.encode(trimmed);
-        }
-        return trimmed; // external URL or existing absolute path
-    };
 %>
 <!DOCTYPE html>
 <html lang="vi">
@@ -626,6 +616,32 @@
             color: #ef4444;
         }
 
+        /* Size selector */
+        .size-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            border: 2px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--gray-600);
+            transition: all 0.15s;
+        }
+
+        .size-option input:checked + .size-btn {
+            border-color: var(--green);
+            background: var(--green-light);
+            color: var(--green-dark);
+        }
+
+        .size-option:hover .size-btn {
+            border-color: var(--green);
+            color: var(--green-dark);
+        }
+
         /* Toast notification */
         .toast {
             position: fixed;
@@ -696,7 +712,6 @@
     </a>
     <div class="nav-links">
         <a href="home.jsp">Trang Chu</a>
-        <a href="danh-muc">Danh Mục</a>
         <a href="products">San Pham</a>
     </div>
     <div class="nav-right">
@@ -767,7 +782,7 @@
                     <div>
                         <% if (product.getImage() != null && !product.getImage().trim().isEmpty()) { %>
                         <div class="product-image-wrap">
-                            <img src="<%= imgUrl.apply(product.getImage()) %>"
+                            <img src="<%= product.getImage() %>"
                                  alt="<%= product.getTitle() %>"
                                  onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
                             <div class="product-image-placeholder" style="display:none;">🍎</div>
@@ -911,8 +926,8 @@
                             </div>
                             <div class="shop-card">
                                 <% if (shopInfo.getLogo() != null && !shopInfo.getLogo().trim().isEmpty()) { %>
-                                <img class="shop-avatar" src="<%= imgUrl.apply(shopInfo.getLogo()) %>"
-                                     alt="<%= shopInfo.getName() %>"
+                                <img class="shop-avatar" src="<%= shopInfo.getLogo() %>"
+                                     alt="<%= shopInfo.getShopName() %>"
                                      onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
                                 <div class="shop-avatar-placeholder" style="display:none;">&#127974;</div>
                                 <% } else { %>
@@ -920,14 +935,9 @@
                                 <% } %>
                                 <div class="shop-info">
                                     <div class="shop-name">
-                                        <%= shopInfo.getName() != null ? shopInfo.getName() : "-" %>
+                                        <%= shopInfo.getShopName() != null ? shopInfo.getShopName() : "-" %>
                                     </div>
                                     <div class="shop-meta">
-                                        <% if (shopInfo.getRating() > 0) { %>
-                                            <i class="fa-solid fa-star" style="color:#f59e0b;"></i>
-                                            <%= String.format(java.util.Locale.US, "%.1f", shopInfo.getRating()) %>
-                                            &bull;
-                                        <% } %>
                                         <% if (shopInfo.getAddress() != null && !shopInfo.getAddress().isEmpty()) { %>
                                             <%= shopInfo.getAddress() %>
                                         <% } else { %>
@@ -1032,6 +1042,22 @@
         }, 3000);
     }
 
+    // ---- Set size truoc khi submit ----
+    var addToCartForm = document.getElementById('addToCartForm');
+    if (addToCartForm) {
+        addToCartForm.addEventListener('submit', function(e) {
+            var sizeInputs = document.getElementsByName('selectedSize');
+            if (sizeInputs.length > 0) {
+                for (var i = 0; i < sizeInputs.length; i++) {
+                    if (sizeInputs[i].checked) {
+                        document.getElementById('selectedSizeInput').value = sizeInputs[i].value;
+                        break;
+                    }
+                }
+            }
+        });
+    }
+
     // ---- AJAX Toggle Wishlist ----
     function toggleWishlist(productId, btn) {
         fetch('add-to-wishlist', {
@@ -1074,4 +1100,5 @@
 
 </body>
 </html>
+
 

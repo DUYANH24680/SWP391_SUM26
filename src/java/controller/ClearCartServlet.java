@@ -21,16 +21,16 @@ public class ClearCartServlet extends HttpServlet {
             throws ServletException, IOException {
         try {
             HttpSession session = request.getSession();
-            Account Account = (Account) session.getAttribute("Account");
+            Account user = (Account) session.getAttribute("Account");
 
-            if (Account == null) {
+            if (user == null) {
                 response.sendRedirect(request.getContextPath() + "/login");
                 return;
             }
 
-            System.out.println("ClearCartServlet: Xoa toan bo gio hang cho khach hang ID=" + Account.getId());
+            System.out.println("ClearCartServlet: Xoa toan bo gio hang cho khach hang ID=" + user.getId());
 
-            cartService.clearCart(Account.getId());
+            cartService.clearCart(user.getId());
 
             session.setAttribute("cart", new model.Cart());
             session.setAttribute("cartCount", 0);
@@ -52,3 +52,4 @@ public class ClearCartServlet extends HttpServlet {
         doPost(request, response);
     }
 }
+
