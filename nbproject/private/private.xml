@@ -9,6 +9,7 @@
             <file>file:/C:/SWP3912/SWP391_SUM26/web/WEB-INF/web.xml</file>
             <file>file:/C:/SWP3912/SWP391_SUM26/src/java/controller/CategoryServlet.java</file>
             <file>file:/C:/SWP3912/SWP391_SUM26/web/META-INF/context.xml</file>
+            <file>file:/C:/SWP3912/SWP391_SUM26/src/java/service/EmailService.java</file>
             <file>file:/C:/SWP3912/SWP391_SUM26/src/java/Utils/DbContext.java</file>
             <file>file:/C:/SWP3912/SWP391_SUM26/src/java/controller/ImageServlet.java</file>
         </group>
