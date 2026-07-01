@@ -355,6 +355,11 @@
                 <a href="orders"><i class="fa-solid fa-basket-shopping"></i> Đơn Hàng</a>
                 <a href="../logout" class="logout"><i class="fa-solid fa-right-from-bracket"></i> Đăng Xuất</a>
             </div>
+            <div style="padding: 0.75rem; margin-top: 0.5rem; border-top: 1px solid var(--gray-100);">
+                <a href="${pageContext.request.contextPath}/customer-dashboard" class="btn" style="width:100%; justify-content:center; background:var(--green); color:#fff; border-radius:var(--radius-sm); padding:0.6rem 0.9rem; font-size:0.875rem; font-weight:600; text-decoration:none; box-shadow: 0 2px 8px rgba(76,175,80,0.3);">
+                    <i class="fa-solid fa-user"></i> Chuyển sang Customer Dashboard
+                </a>
+            </div>
         </aside>
 
         <!-- Main Content -->

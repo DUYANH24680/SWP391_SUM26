@@ -340,6 +340,18 @@
         </div>
 
         <div class="sidebar-nav">
+            <% if ("customer".equalsIgnoreCase(role)) { %>
+            <a href="customer-dashboard"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+            <% } else if ("seller".equalsIgnoreCase(role)) { %>
+            <a href="seller/dashboard"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+            <% } %>
+            <% if ("customer".equalsIgnoreCase(role)) { %>
+            <a href="my-orders"><i class="fa-solid fa-basket-shopping"></i> Đơn Hàng</a>
+            <% } else if ("seller".equalsIgnoreCase(role)) { %>
+            <a href="seller/orders"><i class="fa-solid fa-basket-shopping"></i> Đơn Hàng</a>
+            <% } else if ("admin".equalsIgnoreCase(role)) { %>
+            <a href="admin/orders"><i class="fa-solid fa-basket-shopping"></i> Đơn Hàng</a>
+            <% } %>
             <a href="profile?tab=profile">
                 <i class="fa-regular fa-user"></i> Ho So
             </a>

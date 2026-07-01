@@ -1,4 +1,4 @@
-﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="model.Account" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
@@ -579,10 +579,30 @@
 
     <!-- SIDEBAR -->
     <aside class="sidebar">
-        <div class="sidebar-nav">
-            <a href="profile"><i class="fa-regular fa-Account"></i> Ho So</a>
+    <%
+        String role = (String) session.getAttribute("role");
+        if (role == null) {
+            Object r = session.getAttribute("user");
+            if (r instanceof Account) {
+                role = ((Account) r).getRoleName();
+            }
+        }
+    %>
+    <div class="sidebar-nav">
+        <% if ("customer".equalsIgnoreCase(role)) { %>
+        <a href="customer-dashboard"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+        <% } else if ("seller".equalsIgnoreCase(role)) { %>
+        <a href="seller/dashboard"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+        <% } %>
+        <a href="profile"><i class="fa-regular fa-Account"></i> Ho So</a>
             <a href="products" class="active"><i class="fa-brands fa-opencart"></i> San Pham</a>
-            <a href="#"><i class="fa-solid fa-basket-shopping"></i> Don Hang</a>
+            <% if ("customer".equalsIgnoreCase(role)) { %>
+            <a href="my-orders"><i class="fa-solid fa-basket-shopping"></i> Don Hang</a>
+            <% } else if ("seller".equalsIgnoreCase(role)) { %>
+            <a href="seller/orders"><i class="fa-solid fa-basket-shopping"></i> Don Hang</a>
+            <% } else if ("admin".equalsIgnoreCase(role)) { %>
+            <a href="admin/orders"><i class="fa-solid fa-basket-shopping"></i> Don Hang</a>
+            <% } %>
             <a href="#"><i class="fa-regular fa-heart"></i> Yeu Thich</a>
             <a href="#"><i class="fa-regular fa-credit-card"></i> Thanh Toan</a>
             <a href="logout" class="logout" style="margin-top:0.5rem;"><i class="fa-solid fa-right-from-bracket"></i> Dang Xuat</a>
