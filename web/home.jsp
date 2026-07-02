@@ -2785,10 +2785,238 @@
                         if (document.visibilityState === 'visible') {
                             refreshCartBadge();
                         }
+                                
+                                // Scroll products grid into view
+                                const shopLayout = document.querySelector('.shop-layout');
+                                if (shopLayout) {
+                                    shopLayout.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                                }
+                            })
+                            .catch(err => console.error("Lỗi AJAX lọc:", err));
+                    }
+
+                    // ── Search input events ──
+                    const searchInput = document.getElementById('searchQuery');
+                    if (searchInput) {
+                        searchInput.addEventListener('keyup', function (e) {
+                            if (e.key === 'Enter') {
+                                filterState.search = this.value;
+                                filterState.page = 1;
+                                applyFilters();
+                            }
+                        });
+                        searchInput.addEventListener('blur', function () {
+                            if (filterState.search !== this.value) {
+                                filterState.search = this.value;
+                                filterState.page = 1;
+                                applyFilters();
+                            }
+                        });
+                    }
+
+                    // ── Category cards (if any rendered in main banner) ──
+                    document.querySelectorAll('.category-card').forEach(function (card) {
+                        card.addEventListener('click', function (e) {
+                            e.preventDefault();
+                            document.querySelectorAll('.category-card').forEach(function (c) { c.classList.remove('active'); });
+                            card.classList.add('active');
+                            
+                            // Get category ID from some attribute or link if needed
+                        });
+                    });
+
+                    // ── Sidebar filter clicks delegation ──
+                    const filterSidebar = document.querySelector('.filter-sidebar');
+                    if (filterSidebar) {
+                        filterSidebar.addEventListener('click', function(e) {
+                            // Category Filter
+                            const catItem = e.target.closest('.category-filter-item');
+                            if (catItem) {
+                                e.preventDefault();
+                                document.querySelectorAll('.category-filter-item').forEach(el => el.classList.remove('active'));
+                                document.querySelectorAll('.category-filter-item .check-box').forEach(el => el.classList.remove('checked'));
+                                
+                                catItem.classList.add('active');
+                                const check = catItem.querySelector('.check-box');
+                                if (check) check.classList.add('checked');
+                                
+                                filterState.category = catItem.getAttribute('data-category');
+                                filterState.page = 1;
+                                applyFilters();
+                                return;
+                            }
+                            
+                            // Rating Filter
+                            const ratingItem = e.target.closest('.rating-filter-item');
+                            if (ratingItem) {
+                                e.preventDefault();
+                                const checkBox = ratingItem.querySelector('.check-box');
+                                if (checkBox.classList.contains('checked')) {
+                                    checkBox.classList.remove('checked');
+                                    filterState.rating = '';
+                                } else {
+                                    document.querySelectorAll('.rating-filter-item .check-box').forEach(el => el.classList.remove('checked'));
+                                    checkBox.classList.add('checked');
+                                    filterState.rating = ratingItem.getAttribute('data-rating');
+                                }
+                                filterState.page = 1;
+                                applyFilters();
+                                return;
+                            }
+                            
+                            // Status Filter (Availability)
+                            const statusItem = e.target.closest('.status-filter-item');
+                            if (statusItem) {
+                                e.preventDefault();
+                                const checkBox = statusItem.querySelector('.check-box');
+                                if (checkBox.classList.contains('checked')) {
+                                    checkBox.classList.remove('checked');
+                                    filterState.status = '';
+                                } else {
+                                    document.querySelectorAll('.status-filter-item .check-box').forEach(el => el.classList.remove('checked'));
+                                    checkBox.classList.add('checked');
+                                    filterState.status = statusItem.getAttribute('data-status');
+                                }
+                                filterState.page = 1;
+                                applyFilters();
+                                return;
+                            }
+                        });
+                    }
+
+                    // ── Price range Apply ──
+                    const btnApplyPrice = document.getElementById('btnApplyPrice');
+                    if (btnApplyPrice) {
+                        btnApplyPrice.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            const minVal = document.getElementById('minPriceInput').value.trim();
+                            const maxVal = document.getElementById('maxPriceInput').value.trim();
+                            
+                            filterState.minPrice = minVal;
+                            filterState.maxPrice = maxVal;
+                            filterState.page = 1;
+                            applyFilters();
+                        });
+                    }
+
+                    // ── Sort tabs delegation ──
+                    const sortTabsContainer = document.querySelector('.sort-tabs');
+                    if (sortTabsContainer) {
+                        sortTabsContainer.addEventListener('click', function(e) {
+                            const tab = e.target.closest('.sort-tab');
+                            if (!tab || tab.classList.contains('active')) return;
+                            
+                            document.querySelectorAll('.sort-tab').forEach(t => t.classList.remove('active'));
+                            tab.classList.add('active');
+                            
+                            filterState.sort = tab.getAttribute('data-sort');
+                            filterState.page = 1;
+                            applyFilters();
+                        });
+                    }
+
+                    // ── Event delegation for pagination clicks ──
+                    const paginationContainer = document.querySelector('.pagination');
+                    if (paginationContainer) {
+                        paginationContainer.addEventListener('click', function (e) {
+                            const btn = e.target.closest('.page-btn');
+                            if (!btn || btn.disabled || btn.classList.contains('active')) return;
+                            
+                            const pageNum = btn.getAttribute('data-page');
+                            if (pageNum) {
+                                filterState.page = parseInt(pageNum, 10);
+                                applyFilters();
+                            }
+                        });
+                    }
+
+                    // ── Go to Profile tab ──
+                    function goToProfile() {
+                        localStorage.setItem('senaPanel', 'profile');
+                        window.location.href = 'profile';
+                    }
+
+                    // ── Go to Security tab ──
+                    function goToSecurity() {
+                        localStorage.setItem('senaPanel', 'security');
+                        window.location.href = 'profile';
+                    }
+
+                    // ── Mở Modal Chi Tiết Sản Phẩm khi bấm vào thẻ sản phẩm (Hỗ trợ AJAX) ──
+                    const productsGrid = document.querySelector('.products-grid');
+                    if (productsGrid) {
+                        productsGrid.addEventListener('click', function (e) {
+                            const card = e.target.closest('.product-card');
+                            if (!card) return;
+                            // Không chuyển trang nếu người dùng bấm vào nút Wishlist hoặc Thêm Giỏ Hàng
+                            if (e.target.closest('.product-wishlist') || e.target.closest('.btn-cart') || e.target.closest('.btn-add-cart') || e.target.closest('.btn-buy-now')) return;
+                            
+                            const productId = card.getAttribute('data-id');
+                            if (productId) window.location.href = 'info?id=' + productId;
+                        });
+                    }
+
+                    // ── Cập nhật số giỏ hàng khi trang hiển thị lại từ cache/lịch sử ──
+                    function refreshCartBadge() {
+                        const badge = document.querySelector('.nav-icon-btn[title=\"Giỏ hàng\"] .cart-badge');
+                        if (!badge) return;
+                        const raw = '<%= cartCount %>';
+                        const count = isNaN(raw) ? 0 : parseInt(raw, 10);
+                        if (count > 0) {
+                            badge.textContent = count;
+                            badge.style.display = '';
+                        } else {
+                            badge.style.display = 'none';
+                        }
+                    }
+
+                    window.addEventListener('pageshow', function(event) {
+                        if (event.persisted) {
+                            refreshCartBadge();
+                        }
+                    });
+
+                    document.addEventListener('visibilitychange', function() {
+                        if (document.visibilityState === 'visible') {
+                            refreshCartBadge();
+                        }
                     });
 
                     refreshCartBadge();
                 </script>
-            </body>
+            <jsp:include page="report-modal.jsp" />
+    <% if (Account != null && "admin".equals(Account.getRoleName())) { %>
+    <!-- Floating Report Button -->
+    <a href="<%= request.getContextPath() %>/admin/reports" class="floating-report-btn" title="Kiểm tra báo cáo">
+        <i class="fa-solid fa-flag"></i>
+    </a>
+    <style>
+        .floating-report-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background-color: #ef4444;
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            cursor: pointer;
+            z-index: 1000;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        .floating-report-btn:hover {
+            transform: translateY(-5px);
+            background-color: #dc2626;
+            color: white;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+        }
+    </style>
+    <% } %>
+</body>
             </html>
-

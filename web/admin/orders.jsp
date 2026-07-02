@@ -633,5 +633,36 @@
             if (form) form.submit();
         }
     </script>
+    <!-- Floating Report Button -->
+    <a href="<%= request.getContextPath() %>/admin/reports" class="floating-report-btn" title="Kiểm tra báo cáo">
+        <i class="fa-solid fa-flag"></i>
+    </a>
+    <style>
+        .floating-report-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background-color: #ef4444;
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            cursor: pointer;
+            z-index: 1000;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        .floating-report-btn:hover {
+            transform: translateY(-5px);
+            background-color: #dc2626;
+            color: white;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+        }
+    </style>
 </body>
 </html>

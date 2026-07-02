@@ -613,7 +613,7 @@
     <!-- SIDEBAR -->
     <aside class="sidebar">
     <%
-        String role = (String) session.getAttribute("role");
+        role = (String) session.getAttribute("role");
         if (role == null) {
             Object r = session.getAttribute("user");
             if (r instanceof Account) {

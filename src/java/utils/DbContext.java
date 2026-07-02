@@ -10,7 +10,6 @@ import java.sql.SQLException;
 public class DbContext {
 
     protected Connection connection;
-
     private static DataSource dataSource;
     private static String JDBC_URL = "jdbc:sqlserver://localhost:1433;databaseName=SENAFRUIT;encrypt=false;trustServerCertificate=true;loginTimeout=30";
     private static String JDBC_USER = "sa";
