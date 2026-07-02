@@ -80,7 +80,8 @@ public class CheckoutCartServlet extends HttpServlet {
         try {
             System.out.println("[CheckoutCartServlet] doGet: selectedProductIds=" + selectedProductIds);
             System.out.println("[CheckoutCartServlet] doGet: customerId=" + account.getId());
-double totalCost = 0;
+
+            double totalCost = 0;
             for (CartItem item : selectedItems) {
                 Product product = productDAO.getProductById(item.getProductId());
                 if (product != null && product.getSalePrice() > 0 && product.getSalePrice() < product.getOriginalPrice()) {

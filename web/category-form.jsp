@@ -505,7 +505,13 @@
             <a href="products"><i class="fa-brands fa-opencart"></i> Sản Phẩm</a>
             <a href="add-product"><i class="fa-solid fa-plus"></i> Thêm Sản Phẩm</a>
             <a href="category" class="active"><i class="fa-solid fa-layer-group"></i> Danh Mục</a>
-            <a href="#"><i class="fa-solid fa-basket-shopping"></i> Đơn Hàng</a>
+            <% if ("customer".equalsIgnoreCase(role)) { %>
+            <a href="my-orders"><i class="fa-solid fa-basket-shopping"></i> Đơn Hàng</a>
+            <% } else if ("seller".equalsIgnoreCase(role)) { %>
+            <a href="seller/orders"><i class="fa-solid fa-basket-shopping"></i> Đơn Hàng</a>
+            <% } else if ("admin".equalsIgnoreCase(role)) { %>
+            <a href="admin/orders"><i class="fa-solid fa-basket-shopping"></i> Đơn Hàng</a>
+            <% } %>
             <a href="#"><i class="fa-regular fa-heart"></i> Yêu Thích</a>
             <a href="logout" class="logout" style="margin-top:0.5rem;"><i class="fa-solid fa-right-from-bracket"></i> Đăng Xuất</a>
         </div>

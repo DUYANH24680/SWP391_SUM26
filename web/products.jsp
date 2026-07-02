@@ -1,4 +1,4 @@
-﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="model.Account" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
@@ -17,8 +17,7 @@
                   + "&background=4caf50&color=fff&size=80&bold=true&rounded=true";
     }
 
-    String role = (String) session.getAttribute("role");
-    if (role == null) role = "member";
+   
 
     String error = (String) request.getAttribute("error");
 %>
@@ -613,20 +612,30 @@
 
     <!-- SIDEBAR -->
     <aside class="sidebar">
-        <div class="sidebar-nav">
-            <a href="profile"><i class="fa-regular fa-Account"></i> Ho So</a>
+    <%
+        String role = (String) session.getAttribute("role");
+        if (role == null) {
+            Object r = session.getAttribute("user");
+            if (r instanceof Account) {
+                role = ((Account) r).getRoleName();
+            }
+        }
+    %>
+    <div class="sidebar-nav">
+        <% if ("customer".equalsIgnoreCase(role)) { %>
+        <a href="customer-dashboard"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+        <% } else if ("seller".equalsIgnoreCase(role)) { %>
+        <a href="seller/dashboard"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+        <% } %>
+        <a href="profile"><i class="fa-regular fa-Account"></i> Ho So</a>
             <a href="products" class="active"><i class="fa-brands fa-opencart"></i> San Pham</a>
-            <% if ("admin".equalsIgnoreCase(role) || "seller".equalsIgnoreCase(role)) { %>
-            <button id="nav-inventory" onclick="toggleInventoryMenu()" class="has-submenu" style="width:100%; display:flex; align-items:center; gap:0.65rem; padding:0.65rem 0.9rem; border-radius:var(--radius-sm); font-size:0.875rem; font-weight:500; color:var(--gray-600); border:none; background:transparent; cursor:pointer; font-family:'Inter',sans-serif; text-align:left; transition:all 0.15s;">
-                <i class="fa-solid fa-warehouse"></i> Kho
-                <i class="fa-solid fa-chevron-down" id="inventory-chevron" style="margin-left:auto; font-size:0.7rem; transition:transform 0.2s;"></i>
-            </button>
-            <div id="inventory-submenu">
-                <a href="inventory-import" class="submenu-item"><i class="fa-solid fa-arrow-down"></i> Nhap Kho</a>
-                <a href="inventory-export" class="submenu-item"><i class="fa-solid fa-arrow-up"></i> Xuat Kho</a>
-            </div>
+            <% if ("customer".equalsIgnoreCase(role)) { %>
+            <a href="my-orders"><i class="fa-solid fa-basket-shopping"></i> Don Hang</a>
+            <% } else if ("seller".equalsIgnoreCase(role)) { %>
+            <a href="seller/orders"><i class="fa-solid fa-basket-shopping"></i> Don Hang</a>
+            <% } else if ("admin".equalsIgnoreCase(role)) { %>
+            <a href="admin/orders"><i class="fa-solid fa-basket-shopping"></i> Don Hang</a>
             <% } %>
-            <a href="#"><i class="fa-solid fa-basket-shopping"></i> Don Hang</a>
             <a href="#"><i class="fa-regular fa-heart"></i> Yeu Thich</a>
             <a href="#"><i class="fa-regular fa-credit-card"></i> Thanh Toan</a>
             <a href="logout" class="logout" style="margin-top:0.5rem;"><i class="fa-solid fa-right-from-bracket"></i> Dang Xuat</a>

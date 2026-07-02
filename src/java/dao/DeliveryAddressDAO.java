@@ -13,10 +13,12 @@ public class DeliveryAddressDAO extends DbContext {
 
     /**
      * Get all addresses for a user.
+     * Auto-creates the table if it doesn't exist (backward compatible).
      * @param customerId
      * @return 
      */
     public List<DeliveryAddress> findByCustomerId(int customerId) {
+        ensureTableExists();
         List<DeliveryAddress> list = new ArrayList<>();
         String sql = "SELECT id, customer_id, recipient_name, recipient_phone, address, note, isDefault, created_at "
                    + "FROM DeliveryAddresses WHERE customer_id = ? ORDER BY isDefault DESC, created_at DESC";
@@ -34,12 +36,42 @@ public class DeliveryAddressDAO extends DbContext {
     }
 
     /**
+     * Ensure the DeliveryAddresses table exists in the database.
+     * Creates the table if it doesn't exist (backward compatible).
+     */
+    private void ensureTableExists() {
+        try {
+            DatabaseMetaData meta = getConnection().getMetaData();
+            try (ResultSet tables = meta.getTables(null, null, "DeliveryAddresses", null)) {
+                if (!tables.next()) {
+                    String createSql = "CREATE TABLE DeliveryAddresses ("
+                        + "id INT IDENTITY(1,1) PRIMARY KEY, "
+                        + "customer_id INT NOT NULL, "
+                        + "recipient_name NVARCHAR(100) NOT NULL, "
+                        + "recipient_phone NVARCHAR(20) NOT NULL, "
+                        + "address NVARCHAR(500) NOT NULL, "
+                        + "note NVARCHAR(500) NULL, "
+                        + "isDefault BIT DEFAULT 0, "
+                        + "created_at DATETIME DEFAULT GETDATE())";
+                    try (Statement st = getConnection().createStatement()) {
+                        st.execute(createSql);
+                        System.out.println("[DeliveryAddressDAO] Created DeliveryAddresses table");
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[DeliveryAddressDAO] ensureTableExists warning: " + e.getMessage());
+        }
+    }
+
+    /**
      * Find a single address by id and user id (ownership check).
      * @param id
      * @param customerId
      * @return 
      */
     public DeliveryAddress findByIdAndUser(int id, int customerId) {
+        ensureTableExists();
         String sql = "SELECT id, customer_id, recipient_name, recipient_phone, address, note, isDefault, created_at "
                    + "FROM DeliveryAddresses WHERE id = ? AND customer_id = ?";
         try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
@@ -60,6 +92,7 @@ public class DeliveryAddressDAO extends DbContext {
      * @return 
      */
     public boolean insert(DeliveryAddress da) {
+        ensureTableExists();
         String sql = "INSERT INTO DeliveryAddresses (customer_id, recipient_name, recipient_phone, address, note, isDefault) "
                    + "VALUES (?, ?, ?, ?, ?, ?)";
         try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
@@ -81,6 +114,7 @@ public class DeliveryAddressDAO extends DbContext {
      * @return 
      */
     public boolean update(DeliveryAddress da) {
+        ensureTableExists();
         String sql = "UPDATE DeliveryAddresses SET recipient_name = ?, recipient_phone = ?, address = ?, note = ?, isDefault = ? "
                    + "WHERE id = ? AND customer_id = ?";
         try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
@@ -105,6 +139,7 @@ public class DeliveryAddressDAO extends DbContext {
      */
     
     public boolean delete(int id, int customerId) {
+        ensureTableExists();
         String sql = "DELETE FROM DeliveryAddresses WHERE id = ? AND customer_id = ?";
         try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
             ps.setInt(1, id);
@@ -122,6 +157,7 @@ public class DeliveryAddressDAO extends DbContext {
      * @return 
      */
     public boolean setDefault(int id, int customerId) {
+        ensureTableExists();
         Connection conn = null;
         try {
             conn = getConnection();

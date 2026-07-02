@@ -882,5 +882,208 @@ public class ProductDAO extends DbContext {
             throw new RuntimeException("ProductDAO.filterProducts error: " + e.getMessage(), e);
         }
     }
+
+    public List<Product> getFilteredProducts(
+            String keyword, 
+            List<Integer> categoryIds, 
+            Double minPrice, 
+            Double maxPrice, 
+            Double minRating, 
+            String status, 
+            String sort, 
+            int page, 
+            int pageSize) {
+        
+        StringBuilder sql = new StringBuilder(
+            "SELECT p.id, p.category_id, p.seller_id, p.shop_id, p.title, p.image, p.description, p.unit, "
+          + "p.stock_quantity, p.sold_quantity, p.original_price, p.sale_price, p.expired_date, "
+          + "p.average_rating, p.is_featured, p.status, p.isDelete, p.created_at, "
+          + "s.shop_name "
+          + "FROM Products p "
+          + "LEFT JOIN Shops s ON p.shop_id = s.id "
+          + "WHERE p.isDelete = 0 AND p.status = 1 "
+        );
+        
+        List<Object> params = new ArrayList<>();
+        
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            sql.append(" AND (p.title LIKE ? OR p.description LIKE ?) ");
+            String pattern = "%" + keyword.trim() + "%";
+            params.add(pattern);
+            params.add(pattern);
+        }
+        
+        if (categoryIds != null && !categoryIds.isEmpty()) {
+            sql.append(" AND p.category_id IN (");
+            for (int i = 0; i < categoryIds.size(); i++) {
+                sql.append("?");
+                if (i < categoryIds.size() - 1) {
+                    sql.append(",");
+                }
+                params.add(categoryIds.get(i));
+            }
+            sql.append(") ");
+        }
+        
+        if (minPrice != null) {
+            sql.append(" AND COALESCE(p.sale_price, p.original_price) >= ? ");
+            params.add(minPrice);
+        }
+        
+        if (maxPrice != null) {
+            sql.append(" AND COALESCE(p.sale_price, p.original_price) <= ? ");
+            params.add(maxPrice);
+        }
+        
+        if (minRating != null) {
+            sql.append(" AND p.average_rating >= ? ");
+            params.add(minRating);
+        }
+        
+        if (status != null && !status.isEmpty()) {
+            if ("in_stock".equals(status)) {
+                sql.append(" AND p.stock_quantity > 0 ");
+            } else if ("out_of_stock".equals(status)) {
+                sql.append(" AND p.stock_quantity <= 0 ");
+            }
+        }
+        
+        // Sorting
+        String orderByClause = " ORDER BY p.created_at DESC "; // default newest
+        if (sort != null) {
+            switch (sort) {
+                case "newest":
+                    orderByClause = " ORDER BY p.created_at DESC ";
+                    break;
+                case "popular":
+                    orderByClause = " ORDER BY p.sold_quantity DESC, p.created_at DESC ";
+                    break;
+                case "price_asc":
+                    orderByClause = " ORDER BY COALESCE(p.sale_price, p.original_price) ASC ";
+                    break;
+                case "price_desc":
+                    orderByClause = " ORDER BY COALESCE(p.sale_price, p.original_price) DESC ";
+                    break;
+                case "rating":
+                    orderByClause = " ORDER BY p.average_rating DESC, p.created_at DESC ";
+                    break;
+            }
+        }
+        sql.append(orderByClause);
+        
+        // Pagination (SQL Server OFFSET FETCH)
+        sql.append(" OFFSET ? ROWS FETCH NEXT ? ROWS ONLY ");
+        params.add((page - 1) * pageSize);
+        params.add(pageSize);
+        
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                List<Product> list = new ArrayList<>();
+                while (rs.next()) {
+                    list.add(mapRow(rs));
+                }
+                return list;
+            }
+        } catch (SQLException e) {
+            System.err.println("[ProductDAO] getFilteredProducts SQL error: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("ProductDAO.getFilteredProducts error: " + e.getMessage(), e);
+        }
+    }
+
+    public int countFilteredProducts(
+            String keyword, 
+            List<Integer> categoryIds, 
+            Double minPrice, 
+            Double maxPrice, 
+            Double minRating, 
+            String status) {
+        
+        StringBuilder sql = new StringBuilder(
+            "SELECT COUNT(*) "
+          + "FROM Products p "
+          + "WHERE p.isDelete = 0 AND p.status = 1 "
+        );
+        
+        List<Object> params = new ArrayList<>();
+        
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            sql.append(" AND (p.title LIKE ? OR p.description LIKE ?) ");
+            String pattern = "%" + keyword.trim() + "%";
+            params.add(pattern);
+            params.add(pattern);
+        }
+        
+        if (categoryIds != null && !categoryIds.isEmpty()) {
+            sql.append(" AND p.category_id IN (");
+            for (int i = 0; i < categoryIds.size(); i++) {
+                sql.append("?");
+                if (i < categoryIds.size() - 1) {
+                    sql.append(",");
+                }
+                params.add(categoryIds.get(i));
+            }
+            sql.append(") ");
+        }
+        
+        if (minPrice != null) {
+            sql.append(" AND COALESCE(p.sale_price, p.original_price) >= ? ");
+            params.add(minPrice);
+        }
+        
+        if (maxPrice != null) {
+            sql.append(" AND COALESCE(p.sale_price, p.original_price) <= ? ");
+            params.add(maxPrice);
+        }
+        
+        if (minRating != null) {
+            sql.append(" AND p.average_rating >= ? ");
+            params.add(minRating);
+        }
+        
+        if (status != null && !status.isEmpty()) {
+            if ("in_stock".equals(status)) {
+                sql.append(" AND p.stock_quantity > 0 ");
+            } else if ("out_of_stock".equals(status)) {
+                sql.append(" AND p.stock_quantity <= 0 ");
+            }
+        }
+        
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[ProductDAO] countFilteredProducts SQL error: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("ProductDAO.countFilteredProducts error: " + e.getMessage(), e);
+        }
+        return 0;
+    }
+
+    public java.util.Map<Integer, Integer> getCategoryProductCounts() {
+        String sql = "SELECT category_id, COUNT(*) FROM Products WHERE isDelete = 0 AND status = 1 GROUP BY category_id";
+        java.util.Map<Integer, Integer> map = new java.util.HashMap<>();
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                map.put(rs.getInt(1), rs.getInt(2));
+            }
+        } catch (SQLException e) {
+            System.err.println("[ProductDAO] getCategoryProductCounts SQL error: " + e.getMessage());
+        }
+        return map;
+    }
 }
 

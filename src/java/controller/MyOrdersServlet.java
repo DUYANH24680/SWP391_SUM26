@@ -15,6 +15,9 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+
+
+
 @WebServlet("/my-orders")
 public class MyOrdersServlet extends HttpServlet {
 
@@ -30,10 +33,49 @@ public class MyOrdersServlet extends HttpServlet {
 
         OrderService orderService = new OrderService();
         List<Order> orders = orderService.getOrdersByCustomerId(user.getId());
-        Map<Integer, List<OrderDetail>> orderDetailsMap = orderService.getOrderDetailsMap(orders);
 
-        req.setAttribute("orders", orders);
+        // 1. Filter by status if parameter is present
+        String statusParam = req.getParameter("status");
+        Integer activeStatus = null;
+        if (statusParam != null && !statusParam.trim().isEmpty()) {
+            try {
+                activeStatus = Integer.parseInt(statusParam.trim());
+                final int statusToKeep = activeStatus;
+                orders.removeIf(o -> o.getStatus() != statusToKeep);
+            } catch (NumberFormatException e) {
+                // Ignore invalid status format
+            }
+        }
+
+        // 2. Pagination
+        int page = 1;
+        String pageParam = req.getParameter("page");
+        if (pageParam != null && !pageParam.trim().isEmpty()) {
+            try {
+                page = Integer.parseInt(pageParam.trim());
+                if (page < 1) page = 1;
+            } catch (NumberFormatException e) {
+                // Ignore invalid page format
+            }
+        }
+
+        int pageSize = 5; // 5 orders per page
+        int totalOrders = orders.size();
+        int totalPages = (int) Math.ceil((double) totalOrders / pageSize);
+        if (totalPages == 0) totalPages = 1;
+        if (page > totalPages) page = totalPages;
+
+        int start = (page - 1) * pageSize;
+        int end = Math.min(start + pageSize, totalOrders);
+
+        List<Order> paginatedOrders = orders.subList(start, end);
+        Map<Integer, List<OrderDetail>> orderDetailsMap = orderService.getOrderDetailsMap(paginatedOrders);
+
+        req.setAttribute("orders", paginatedOrders);
         req.setAttribute("detailsMap", orderDetailsMap);
+        req.setAttribute("currentPage", page);
+        req.setAttribute("totalPages", totalPages);
+        req.setAttribute("activeStatus", activeStatus);
 
         req.getRequestDispatcher("/my-orders.jsp").forward(req, resp);
     }
@@ -59,6 +101,8 @@ public class MyOrdersServlet extends HttpServlet {
                 session.setAttribute("message", "Đã hủy đơn hàng thành công!");
             } catch (NumberFormatException e) {
                 session.setAttribute("error", "ID đơn hàng không hợp lệ.");
+            } catch (IllegalArgumentException e) {
+                session.setAttribute("error", e.getMessage());
             } catch (RuntimeException e) {
                 session.setAttribute("error", e.getMessage());
             }

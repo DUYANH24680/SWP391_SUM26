@@ -1,4 +1,4 @@
-﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="model.Account" %>
 <%@ page import="model.Order" %>
 <%@ page import="model.OrderDetail" %>
@@ -20,6 +20,11 @@
     if (statusParam != null && !statusParam.trim().isEmpty()) {
         try { activeStatus = Integer.parseInt(statusParam.trim()); } catch (NumberFormatException e) { activeStatus = null; }
     }
+
+    Integer currentPage = (Integer) request.getAttribute("currentPage");
+    Integer totalPages = (Integer) request.getAttribute("totalPages");
+    if (currentPage == null) currentPage = 1;
+    if (totalPages == null) totalPages = 1;
 %>
 <%
     String avatarUrl = Account.getAvatar();
@@ -385,6 +390,52 @@
             .sidebar-nav { display: flex; flex-wrap: wrap; gap: 0.25rem; }
             .sidebar-nav a { width: auto; }
         }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+        }
+        .page-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 36px;
+            height: 36px;
+            padding: 0 0.5rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--gray-600);
+            text-decoration: none;
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            transition: all 0.15s ease;
+            cursor: pointer;
+        }
+        .page-link:hover {
+            border-color: var(--green);
+            color: var(--green-dark);
+            background: var(--green-light);
+        }
+        .page-link.active {
+            background: var(--green);
+            border-color: var(--green);
+            color: #fff;
+        }
+        .page-link.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+        .page-link.prev-next {
+            padding: 0 1rem;
+            gap: 0.35rem;
+        }
     </style>
 </head>
 <body>
@@ -561,6 +612,31 @@
                     </div>
                 <% } %>
             </div>
+
+            <!-- Pagination -->
+            <% if (totalPages > 1) { %>
+                <div class="pagination">
+                    <% if (currentPage > 1) { %>
+                        <a href="my-orders?page=<%= currentPage - 1 %><%= activeStatus != null ? "&status=" + activeStatus : "" %>" class="page-link prev-next"><i class="fa-solid fa-chevron-left"></i> Trước</a>
+                    <% } else { %>
+                        <span class="page-link prev-next disabled"><i class="fa-solid fa-chevron-left"></i> Trước</span>
+                    <% } %>
+
+                    <% for (int i = 1; i <= totalPages; i++) { %>
+                        <% if (i == currentPage) { %>
+                            <span class="page-link active"><%= i %></span>
+                        <% } else { %>
+                            <a href="my-orders?page=<%= i %><%= activeStatus != null ? "&status=" + activeStatus : "" %>" class="page-link"><%= i %></a>
+                        <% } %>
+                    <% } %>
+
+                    <% if (currentPage < totalPages) { %>
+                        <a href="my-orders?page=<%= currentPage + 1 %><%= activeStatus != null ? "&status=" + activeStatus : "" %>" class="page-link prev-next">Sau <i class="fa-solid fa-chevron-right"></i></a>
+                    <% } else { %>
+                        <span class="page-link prev-next disabled">Sau <i class="fa-solid fa-chevron-right"></i></span>
+                    <% } %>
+                </div>
+            <% } %>
 
         </main>
     </div>

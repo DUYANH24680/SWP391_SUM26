@@ -574,7 +574,7 @@
                 return;
             }
 
-            var url = "${pageContext.request.contextPath}/checkout?action=checkVoucher&code=" + encodeURIComponent(code) + "&total=" + originalTotal;
+            var url = "<%= request.getContextPath() %>/checkout?action=checkVoucher&code=" + encodeURIComponent(code) + "&total=" + originalTotal;
 
             fetch(url)
                 .then(response => response.json())
