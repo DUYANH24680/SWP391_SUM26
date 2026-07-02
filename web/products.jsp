@@ -3,7 +3,7 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%
-    Account Account = (Account) session.getAttribute("user");
+    Account Account = (Account) session.getAttribute("Account");
     if (Account == null) {
         response.sendRedirect(request.getContextPath() + "/profile");
         return;
@@ -741,7 +741,7 @@
                                         <c:choose>
                                             <c:when test="${not empty p.image}">
                                                 <div class="product-img">
-                                                    <img src="${p.image}" alt="${p.title}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                                                    <img data-img-src="${p.image}" alt="${p.title}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
                                                     <div class="product-img-placeholder" style="display:none;">🍎</div>
                                                 </div>
                                             </c:when>
@@ -899,6 +899,17 @@
     var subItems = document.querySelectorAll('#inventory-submenu .submenu-item');
     subItems.forEach(function(item) {
         if (item.getAttribute('href') === path) item.classList.add('active');
+    });
+
+    // Rewrite local image src to ImageServlet (run immediately on page load)
+    var ctxt2 = window.location.pathname.split('/')[1] || '';
+    document.querySelectorAll('img[data-img-src]').forEach(function(img) {
+        var raw = img.getAttribute('data-img-src');
+        if (raw && !raw.startsWith('http')) {
+            img.src = '/' + ctxt2 + '/image?path=' + encodeURIComponent(raw);
+        } else if (raw) {
+            img.src = raw;
+        }
     });
 })();
 

@@ -3,7 +3,7 @@
 <%@ page import="model.Category" %>
 <%@ page import="java.util.List" %>
 <%
-    Account user = (Account) session.getAttribute("user");
+    Account user = (Account) session.getAttribute("Account");
     if (user == null) {
         response.sendRedirect(request.getContextPath() + "/login");
         return;

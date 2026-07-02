@@ -5,10 +5,11 @@
 <%@ page import="java.util.List" %>
 <%@ page import="java.util.Map" %>
 <%@ page import="java.text.SimpleDateFormat" %>
+<%@ page import="Utils.ImageUrlUtil" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%
-    Account Account = (Account) session.getAttribute("user");
+    Account Account = (Account) session.getAttribute("Account");
     if (Account == null) {
         response.sendRedirect(request.getContextPath() + "/login");
         return;
@@ -468,7 +469,7 @@
                             %>
                                 <div class="item-row">
                                     <% if (od.getProductImage() != null && !od.getProductImage().trim().isEmpty()) { %>
-                                        <img src="<%= od.getProductImage() %>" alt="<%= od.getProductTitle() %>" class="item-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                                        <img src="<%= ImageUrlUtil.resolve(od.getProductImage(), request.getContextPath()) %>" alt="<%= od.getProductTitle() %>" class="item-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
                                         <div class="item-img-placeholder" style="display:none;">🍎</div>
                                     <% } else { %>
                                         <div class="item-img-placeholder">🍎</div>

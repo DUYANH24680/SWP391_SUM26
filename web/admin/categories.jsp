@@ -17,7 +17,7 @@
     }
 %>
 <%
-    Object rawUser = session.getAttribute("user");
+    Object rawUser = session.getAttribute("Account");
     Account user = (Account) rawUser;
     if (user == null) {
         response.sendRedirect(request.getContextPath() + "/login");

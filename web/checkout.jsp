@@ -5,11 +5,12 @@
 <%@ page import="model.Voucher" %>
 <%@ page import="model.Cart" %>
 <%@ page import="model.CartItem" %>
+<%@ page import="Utils.ImageUrlUtil" %>
 <%@ page import="java.util.List" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%
-    Account Account = (Account) session.getAttribute("user");
+    Account Account = (Account) session.getAttribute("Account");
     if (Account == null) {
         response.sendRedirect(request.getContextPath() + "/login");
         return;
@@ -491,7 +492,7 @@
                         <% if (isBuyNow) { %>
                         <div class="product-summary" style="margin-bottom:1.25rem;">
                             <% if (product.getImage() != null && !product.getImage().trim().isEmpty()) { %>
-                                <img src="<%= product.getImage() %>" alt="<%= product.getTitle() %>" class="product-img" onerror="this.src='https://ui-avatars.com/api/?name=F&background=4caf50&color=fff&size=80&bold=true';">
+                                <img src="<%= ImageUrlUtil.resolve(product.getImage(), request.getContextPath()) %>" alt="<%= product.getTitle() %>" class="product-img" onerror="this.src='https://ui-avatars.com/api/?name=F&background=4caf50&color=fff&size=80&bold=true';">
                             <% } else { %>
                                 <div class="product-img" style="background:var(--green-light); display:flex; align-items:center; justify-content:center; font-size:1.8rem;">🍎</div>
                             <% } %>
@@ -507,7 +508,7 @@
                         %>
                         <div class="product-summary" style="margin-bottom:1.25rem; border-bottom: 1px dashed var(--gray-100); padding-bottom: 0.75rem;">
                             <% if (item.getImage() != null && !item.getImage().trim().isEmpty()) { %>
-                                <img src="<%= item.getImage() %>" alt="<%= item.getTitle() %>" class="product-img" onerror="this.src='https://ui-avatars.com/api/?name=F&background=4caf50&color=fff&size=80&bold=true';">
+                                <img src="<%= ImageUrlUtil.resolve(item.getImage(), request.getContextPath()) %>" alt="<%= item.getTitle() %>" class="product-img" onerror="this.src='https://ui-avatars.com/api/?name=F&background=4caf50&color=fff&size=80&bold=true';">
                             <% } else { %>
                                 <div class="product-img" style="background:var(--green-light); display:flex; align-items:center; justify-content:center; font-size:1.8rem;">🍎</div>
                             <% } %>

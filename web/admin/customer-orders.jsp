@@ -6,7 +6,7 @@
 <%@ page import="java.text.SimpleDateFormat" %>
 <%@ page import="java.text.NumberFormat" %>
 <%
-    Account user = (Account) session.getAttribute("user");
+    Account user = (Account) session.getAttribute("Account");
     if (user == null || !"admin".equals(user.getRoleName())) {
         response.sendRedirect(request.getContextPath() + "/login");
         return;
