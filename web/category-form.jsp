@@ -1,9 +1,9 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ page import="model.Customer" %>
+<%@ page import="model.Account" %>
 <%@ page import="model.Category" %>
 <%
-    Object rawUser = session.getAttribute("user");
-    Customer user = (Customer) rawUser;
+    Object rawUser = session.getAttribute("Account");
+    Account user = (Account) rawUser;
     if (user == null) {
         response.sendRedirect(request.getContextPath() + "/login");
         return;

@@ -4,6 +4,9 @@
     public static String imgUrl(String path, String contextPath) {
         if (path == null || path.trim().isEmpty()) return null;
         String trimmed = path.trim();
+        if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+            return trimmed;
+        }
         if (trimmed.startsWith("uploads/")) {
             try {
                 return contextPath + "/image?path=" + java.net.URLEncoder.encode(trimmed, "UTF-8");
@@ -16,7 +19,7 @@
     }
 %>
 <%
-    Account user = (Account) session.getAttribute("user");
+    Account user = (Account) session.getAttribute("Account");
     String avatarUrl = null;
     if (user != null) {
         avatarUrl = user.getAvatar();

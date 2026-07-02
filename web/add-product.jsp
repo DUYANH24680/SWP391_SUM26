@@ -3,7 +3,7 @@
 <%@ page import="model.Category" %>
 <%@ page import="java.util.List" %>
 <%
-    Object rawUser = session.getAttribute("user");
+    Object rawUser = session.getAttribute("Account");
     Object rawUserId = session.getAttribute("userId");
     System.out.println("[add-product.jsp] rawUser=" + rawUser + " type=" + (rawUser != null ? rawUser.getClass().getName() : "null"));
     System.out.println("[add-product.jsp] rawUserId=" + rawUserId + " type=" + (rawUserId != null ? rawUserId.getClass().getName() : "null"));

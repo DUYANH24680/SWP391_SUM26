@@ -3,10 +3,11 @@
 <%@ page import="model.Product" %>
 <%@ page import="java.util.List" %>
 <%@ page import="java.text.SimpleDateFormat" %>
+<%@ page import="Utils.ImageUrlUtil" %>
 <%@ page import="java.text.NumberFormat" %>
 <%@ page import="java.util.Locale" %>
 <%
-    Account user = (Account) session.getAttribute("user");
+    Account user = (Account) session.getAttribute("Account");
     if (user == null || !"admin".equals(user.getRoleName())) {
         response.sendRedirect(request.getContextPath() + "/login");
         return;
@@ -423,7 +424,7 @@
                             <!-- Ảnh -->
                             <td>
                                 <% if (p.getImage() != null && !p.getImage().trim().isEmpty()) { %>
-                                    <img src="../<%= p.getImage() %>" alt="<%= p.getTitle() %>" class="product-img"
+                                    <img src="<%= ImageUrlUtil.resolve(p.getImage(), request.getContextPath()) %>" alt="<%= p.getTitle() %>" class="product-img"
                                          onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
                                     <div class="product-img-placeholder" style="display:none;">🍎</div>
                                 <% } else { %>

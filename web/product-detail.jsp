@@ -3,6 +3,7 @@
 <%@ page import="model.Product" %>
 <%@ page import="model.Shop" %>
 <%@ page import="model.Wishlist" %>
+<%@ page import="Utils.ImageUrlUtil" %>
 <%@ page import="model.Cart" %>
 <%@ page import="dao.CategoryDAO" %>
 <%@ page import="dao.ShopDAO" %>
@@ -782,7 +783,7 @@
                     <div>
                         <% if (product.getImage() != null && !product.getImage().trim().isEmpty()) { %>
                         <div class="product-image-wrap">
-                            <img src="<%= product.getImage() %>"
+                            <img src="<%= ImageUrlUtil.resolve(product.getImage(), request.getContextPath()) %>"
                                  alt="<%= product.getTitle() %>"
                                  onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
                             <div class="product-image-placeholder" style="display:none;">🍎</div>
@@ -926,7 +927,7 @@
                             </div>
                             <div class="shop-card">
                                 <% if (shopInfo.getLogo() != null && !shopInfo.getLogo().trim().isEmpty()) { %>
-                                <img class="shop-avatar" src="<%= shopInfo.getLogo() %>"
+                                <img class="shop-avatar" src="<%= ImageUrlUtil.resolve(shopInfo.getLogo(), request.getContextPath()) %>"
                                      alt="<%= shopInfo.getShopName() %>"
                                      onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
                                 <div class="shop-avatar-placeholder" style="display:none;">&#127974;</div>

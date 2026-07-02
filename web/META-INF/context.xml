@@ -13,7 +13,7 @@
         driverClassName="com.microsoft.sqlserver.jdbc.SQLServerDriver"
         url="jdbc:sqlserver://localhost:1433;databaseName=SENAFRUIT;encrypt=false;trustServerCertificate=true;loginTimeout=30"
         username="sa"
-        password="1234567890"
+        password="123"
 
         initialSize="3"
         maxTotal="20"

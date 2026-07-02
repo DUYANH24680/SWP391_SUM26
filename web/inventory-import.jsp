@@ -1,12 +1,13 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ page import="model.Customer" %>
+<%@ page import="model.Account" %>
 <%@ page import="model.Product" %>
+<%@ page import="Utils.ImageUrlUtil" %>
 <%@ page import="java.util.List" %>
 <%
-    Object rawUser = session.getAttribute("user");
+    Object rawUser = session.getAttribute("Account");
     Object rawUserId = session.getAttribute("userId");
 
-    Customer user = (Customer) rawUser;
+    Account user = (Account) rawUser;
     if (user == null) {
         response.sendRedirect(request.getContextPath() + "/login");
         return;
@@ -602,7 +603,7 @@
                                     data-stock="<%= p.getStockQuantity() %>"
                                     data-unit="<%= p.getUnit() != null ? p.getUnit() : "" %>"
                                     data-title="<%= p.getTitle() != null ? p.getTitle() : "" %>"
-                                    data-image="<%= p.getImage() != null ? p.getImage() : "" %>">
+                                    data-image="<%= p.getImage() != null ? ImageUrlUtil.resolve(p.getImage(), request.getContextPath()) : "" %>">
                                 <%= p.getTitle() %> (Tồn kho: <%= p.getStockQuantity() %><%= p.getUnit() != null ? " " + p.getUnit() : "" %>)
                             </option>
                             <% } %>

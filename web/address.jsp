@@ -3,7 +3,7 @@
 <%@ page import="model.DeliveryAddress" %>
 <%@ page import="java.util.List" %>
 <%
-    Account user = (Account) session.getAttribute("user");
+    Account user = (Account) session.getAttribute("Account");
     String role   = (String) session.getAttribute("role");
 
     if (user == null) {

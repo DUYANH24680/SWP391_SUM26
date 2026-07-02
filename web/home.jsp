@@ -8,6 +8,7 @@
 <%@ page import="dao.ProductDAO" %>
 <%@ page import="dao.CategoryDAO" %>
 <%@ page import="Utils.ProductSorter" %>
+<%@ page import="Utils.ImageUrlUtil" %>
 <%@ page import="service.WishlistService" %>
 <%
     response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
@@ -2281,12 +2282,21 @@
                                 <div class="product-card <%= p.getStockQuantity() <= 0 ? "out-of-stock" : "" %>" data-id="<%= p.getId() %>" style="cursor:pointer;">
                                     <div class="product-image-wrap">
                                         <%
-                                            String imgStr = p.getImage() != null && !p.getImage().isEmpty() ? p.getImage() : "🍎";
-                                            if (imgStr.toLowerCase().endsWith(".png") || imgStr.toLowerCase().endsWith(".jpg") || imgStr.toLowerCase().endsWith(".jpeg") || imgStr.toLowerCase().endsWith(".gif") || imgStr.contains("/")) {
+                                            String imgStr = p.getImage() != null && !p.getImage().isEmpty() ? p.getImage() : null;
+                                            boolean isUrl = imgStr != null && (imgStr.startsWith("http://") || imgStr.startsWith("https://"));
+                                            boolean isFileImage = imgStr != null && (
+                                                imgStr.toLowerCase().endsWith(".png") ||
+                                                imgStr.toLowerCase().endsWith(".jpg") ||
+                                                imgStr.toLowerCase().endsWith(".jpeg") ||
+                                                imgStr.toLowerCase().endsWith(".gif") ||
+                                                imgStr.toLowerCase().endsWith(".webp"));
+                                            if (isUrl) {
                                         %>
                                             <img src="<%= imgStr %>" alt="<%= p.getTitle() %>" style="width:100%; height:100%; object-fit:cover; border-radius:var(--radius-md);">
+                                        <%  } else if (isFileImage) { %>
+                                            <img src="<%= ImageUrlUtil.resolve(imgStr, request.getContextPath()) %>" alt="<%= p.getTitle() %>" style="width:100%; height:100%; object-fit:cover; border-radius:var(--radius-md);">
                                         <%  } else { %>
-                                            <div class="product-emoji"><%= imgStr %></div>
+                                            <div class="product-emoji"><%= imgStr != null ? imgStr : "🍎" %></div>
                                         <%  } %>
                                         <% if (p.getSalePrice() < p.getOriginalPrice()) { 
                                             int pct = (int) Math.round((1 - p.getSalePrice()/p.getOriginalPrice()) * 100);

@@ -2,6 +2,7 @@
 <%@ page import="model.Account" %>
 <%@ page import="model.CartItem" %>
 <%@ page import="model.DeliveryAddress" %>
+<%@ page import="Utils.ImageUrlUtil" %>
 <%@ page import="model.Voucher" %>
 <%@ page import="java.util.List" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
@@ -462,7 +463,7 @@
                             %>
                                 <div class="product-summary">
                                     <% if (item.getImage() != null && !item.getImage().trim().isEmpty()) { %>
-                                        <img src="<%= item.getImage() %>" alt="<%= item.getTitle() %>" class="product-img" onerror="this.src='https://ui-avatars.com/api/?name=F&background=4caf50&color=fff&size=80&bold=true';">
+                                        <img src="<%= ImageUrlUtil.resolve(item.getImage(), request.getContextPath()) %>" alt="<%= item.getTitle() %>" class="product-img" onerror="this.src='https://ui-avatars.com/api/?name=F&background=4caf50&color=fff&size=80&bold=true';">
                                     <% } else { %>
                                         <div class="product-img" style="background:var(--green-light); display:flex; align-items:center; justify-content:center; font-size:1.8rem;">🍎</div>
                                     <% } %>

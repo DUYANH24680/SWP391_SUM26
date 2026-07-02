@@ -1,6 +1,7 @@
 ﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="model.Wishlist" %>
 <%@ page import="model.WishlistItem" %>
+<%@ page import="Utils.ImageUrlUtil" %>
 <%@ page import="model.Account" %>
 <%@ page import="java.text.NumberFormat" %>
 <%@ page import="java.util.Locale" %>
@@ -539,7 +540,7 @@
                 <!-- Image -->
                 <div class="item-image">
                     <% if (item.getImage() != null && !item.getImage().trim().isEmpty()) { %>
-                        <img src="<%= item.getImage() %>" alt="<%= item.getTitle() %>">
+                        <img src="<%= ImageUrlUtil.resolve(item.getImage(), request.getContextPath()) %>" alt="<%= item.getTitle() %>">
                     <% } else { %>
                         <span style="font-size: 2rem;">&#127822;</span>
                     <% } %>

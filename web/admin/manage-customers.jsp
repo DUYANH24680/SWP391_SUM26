@@ -3,7 +3,7 @@
 <%@ page import="java.util.List" %>
 <%@ page import="java.text.SimpleDateFormat" %>
 <%
-    Account user = (Account) session.getAttribute("user");
+    Account user = (Account) session.getAttribute("Account");
     if (user == null || !"admin".equals(user.getRoleName())) {
         response.sendRedirect(request.getContextPath() + "/login");
         return;

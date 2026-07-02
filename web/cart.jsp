@@ -3,6 +3,7 @@
 <%@ page import="model.CartItem" %>
 <%@ page import="model.Account" %>
 <%@ page import="java.text.NumberFormat" %>
+<%@ page import="Utils.ImageUrlUtil" %>
 <%@ page import="java.util.Locale" %>
 <%
     response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
@@ -791,7 +792,7 @@
                                 <div class="cart-item">
                                     <div class="cart-item-image">
                                         <% if (item.getImage() != null && !item.getImage().trim().isEmpty()) { %>
-                                            <img src="<%= item.getImage() %>" alt="<%= item.getTitle() %>">
+                                            <img src="<%= ImageUrlUtil.resolve(item.getImage(), request.getContextPath()) %>" alt="<%= item.getTitle() %>">
                                         <% } else { %>
                                             <span style="font-size: 1.5rem;">🍎</span>
                                         <% } %>
@@ -816,7 +817,7 @@
                             <td>
                                 <div class="cart-item-image" style="width: 60px; height: 60px;">
                                     <% if (item.getImage() != null && !item.getImage().trim().isEmpty()) { %>
-                                        <img src="<%= item.getImage() %>" alt="<%= item.getTitle() %>">
+                                        <img src="<%= ImageUrlUtil.resolve(item.getImage(), request.getContextPath()) %>" alt="<%= item.getTitle() %>">
                                     <% } else { %>
                                         <span style="font-size: 1.2rem;">🍎</span>
                                     <% } %>
@@ -852,7 +853,7 @@
 
                             <td>
                                 <button type="button" class="btn btn-edit btn-sm"
-                                        onclick="openEditModal('<%= item.getProductId() %>', '<%= item.getQuantity() %>', '<%= item.getNote() != null ? item.getNote().replace("'", "\\'") : "" %>', '<%= item.getDiscountCode() != null ? item.getDiscountCode() : "" %>', '<%= item.getTitle() != null ? item.getTitle().replace("'", "\\'") : "" %>', '<%= nf.format((long) item.getUnitPrice()) %>', '<%= item.getImage() != null ? item.getImage() : "" %>')">
+                                        onclick="openEditModal('<%= item.getProductId() %>', '<%= item.getQuantity() %>', '<%= item.getNote() != null ? item.getNote().replace("'", "\\'") : "" %>', '<%= item.getDiscountCode() != null ? item.getDiscountCode() : "" %>', '<%= item.getTitle() != null ? item.getTitle().replace("'", "\\'") : "" %>', '<%= nf.format((long) item.getUnitPrice()) %>', '<%= item.getImage() != null ? ImageUrlUtil.resolve(item.getImage(), request.getContextPath()) : "" %>')">
                                     <i class="fa-solid fa-pen"></i> Sua
                                 </button>
                                 <button type="button" class="btn btn-danger btn-sm"

@@ -72,9 +72,14 @@ public class CategoryServlet extends HttpServlet {
         }
 
         switch (pathInfo) {
-            case "/create" -> handleCreate(req, resp);
-            case "/update" -> handleUpdate(req, resp);
-            default -> resp.sendRedirect(req.getContextPath() + "/category");
+            case "/create":
+                handleCreate(req, resp);
+                break;
+            case "/update":
+                handleUpdate(req, resp);
+                break;
+            default:
+                resp.sendRedirect(req.getContextPath() + "/category");
         }
     }
 

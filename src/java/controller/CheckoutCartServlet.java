@@ -137,7 +137,7 @@ public class CheckoutCartServlet extends HttpServlet {
         String address = req.getParameter("address");
         String paymentMethod = req.getParameter("paymentMethod");
         String note = req.getParameter("note");
-        String voucherCode = req.getParameter("voucherCode");
+String voucherCode = req.getParameter("voucherCode");
 
         if (selectedProductsParam == null || selectedProductsParam.trim().isEmpty()
                 || recipientName == null || recipientPhone == null || address == null) {
@@ -194,4 +194,3 @@ public class CheckoutCartServlet extends HttpServlet {
         }
     }
 }
-

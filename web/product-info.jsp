@@ -3,6 +3,7 @@
 <%@ page import="model.Product" %>
 <%@ page import="model.Shop" %>
 <%@ page import="dao.CategoryDAO" %>
+<%@ page import="Utils.ImageUrlUtil" %>
 <%@ page import="dao.ShopDAO" %>
 <%@ page import="java.util.List" %>
 <%
@@ -562,7 +563,7 @@
             <div>
                 <% if (product.getImage() != null && !product.getImage().trim().isEmpty()) { %>
                 <div class="product-image-wrap">
-                    <img src="<%= product.getImage() %>" alt="<%= product.getTitle() %>" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                    <img src="<%= ImageUrlUtil.resolve(product.getImage(), request.getContextPath()) %>" alt="<%= product.getTitle() %>" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
                     <div class="product-image-placeholder" style="display:none;">🍎</div>
                 </div>
                 <% } else { %>
@@ -647,7 +648,7 @@
                     <div class="section-label"><i class="fa-solid fa-shop" style="color:var(--green);"></i> Cua Hang Ban</div>
                     <div class="shop-card">
                         <% if (shopInfo.getLogo() != null && !shopInfo.getLogo().trim().isEmpty()) { %>
-                        <img class="shop-avatar" src="<%= shopInfo.getLogo() %>" alt="<%= shopInfo.getShopName() %>" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                        <img class="shop-avatar" src="<%= ImageUrlUtil.resolve(shopInfo.getLogo(), request.getContextPath()) %>" alt="<%= shopInfo.getShopName() %>" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
                         <div class="shop-avatar-placeholder" style="display:none;">&#127974;</div>
                         <% } else { %><div class="shop-avatar-placeholder">&#127974;</div><% } %>
                         <div class="shop-info">
