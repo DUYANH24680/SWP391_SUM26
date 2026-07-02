@@ -1977,10 +1977,7 @@
                         <i class="fa-solid fa-apple-whole"></i> Sena Shop
                     </a>
 
-                    <form class="nav-search" action="home.jsp" method="GET" onsubmit="return false;">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                        <input type="text" id="searchQuery" name="search" placeholder="Tìm kiếm trái cây, rau củ..." value="<%= search != null ? search : "" %>">
-                    </form>
+                    <jsp:include page="search-product.jsp" />
 
                     <div class="nav-links">
                         <a href="inventory-export">Xuất Kho</a>

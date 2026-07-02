@@ -370,6 +370,7 @@
     <a href="home.jsp" class="nav-logo">
         <i class="fa-solid fa-apple-whole"></i> Sena Shop
     </a>
+    <jsp:include page="search-product.jsp" />
     <div class="nav-links">
         <a href="home.jsp">Trang Chủ</a>
         <a href="<%= request.getContextPath() %>/danh-muc" class="active">Danh Mục</a>

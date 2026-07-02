@@ -1,7 +1,8 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <div class="nav-search search-product-container" style="position: relative; flex: 1; max-width: 440px;">
     <i id="searchIcon" class="fa-solid fa-magnifying-glass" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--gray-400); font-size: 0.85rem; cursor: pointer;"></i>
-    <input type="text" id="searchInput" placeholder="Tìm kiếm trái cây, rau củ..." autocomplete="off" style="width: 100%; height: 40px; border: 1.5px solid var(--gray-200); border-radius: 100px; padding: 0 1rem 0 2.8rem; font-size: 0.875rem; font-family: 'Inter', sans-serif; background: var(--gray-50); color: var(--gray-800); outline: none; transition: all 0.2s;">
+    <% String currentSearch = request.getParameter("search"); %>
+    <input type="text" id="searchInput" placeholder="Tìm kiếm trái cây, rau củ..." autocomplete="off" value="<%= currentSearch != null ? currentSearch.replace("\"", "&quot;") : "" %>" style="width: 100%; height: 40px; border: 1.5px solid var(--gray-200); border-radius: 100px; padding: 0 1rem 0 2.8rem; font-size: 0.875rem; font-family: 'Inter', sans-serif; background: var(--gray-50); color: var(--gray-800); outline: none; transition: all 0.2s;">
     <div id="searchDropdown" class="search-dropdown"></div>
 </div>
 
@@ -131,7 +132,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function triggerSearch() {
         const query = searchInput.value.trim();
         if (query.length > 0) {
-            window.location.href = '<%= request.getContextPath() %>/products?search=' + encodeURIComponent(query);
+            window.location.href = '<%= request.getContextPath() %>/home.jsp?search=' + encodeURIComponent(query);
         }
     }
 
