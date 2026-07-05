@@ -20,5 +20,5 @@ Thumbs.db
 .idea/
 *.iml
 .vscode/
-
-
+.understand-anything/
+.cursor/

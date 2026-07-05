@@ -1,4 +1,4 @@
-﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="model.Account" %>
 <%@ page import="model.CartItem" %>
 <%@ page import="model.DeliveryAddress" %>
@@ -23,8 +23,36 @@
     List<DeliveryAddress> addresses = (List<DeliveryAddress>) request.getAttribute("addresses");
     List<Voucher> vouchers = (List<Voucher>) request.getAttribute("vouchers");
     List<Integer> selectedProductIds = (List<Integer>) request.getAttribute("selectedProductIds");
-    double totalCost = request.getAttribute("totalCost") != null ? ((Number) request.getAttribute("totalCost")).doubleValue() : 0;
-    double shippingFee = totalCost >= 200000 ? 0.0 : 20000.0;
+    java.util.Map<Integer, model.Shop> shopMap = (java.util.Map<Integer, model.Shop>) request.getAttribute("shopMap");
+
+    // Group items by shop id
+    java.util.Map<Integer, List<CartItem>> itemsByShop = new java.util.HashMap<>();
+    for (CartItem item : selectedItems) {
+        int shopId = item.getShopId();
+        itemsByShop.computeIfAbsent(shopId, k -> new java.util.ArrayList<>()).add(item);
+    }
+
+    double totalCost = 0;
+    double shippingFee = 0;
+    
+    // Calculate totalCost and shippingFee per shop
+    java.util.Map<Integer, Double> shopSubtotalMap = new java.util.HashMap<>();
+    java.util.Map<Integer, Double> shopShippingMap = new java.util.HashMap<>();
+    
+    for (java.util.Map.Entry<Integer, List<CartItem>> entry : itemsByShop.entrySet()) {
+        int shopId = entry.getKey();
+        double subtotal = 0;
+        for (CartItem item : entry.getValue()) {
+            subtotal += item.getUnitPrice() * item.getQuantity();
+        }
+        shopSubtotalMap.put(shopId, subtotal);
+        totalCost += subtotal;
+        
+        double ship = subtotal >= 200000 ? 0.0 : 20000.0;
+        shopShippingMap.put(shopId, ship);
+        shippingFee += ship;
+    }
+
     double finalCost = totalCost + shippingFee;
 
     java.text.NumberFormat nf = java.text.NumberFormat.getNumberInstance(java.util.Locale.forLanguageTag("vi"));
@@ -458,19 +486,40 @@
 
                         <div class="product-list" style="margin-bottom:1.25rem;">
                             <%
-                                for (CartItem item : selectedItems) {
-                                    double itemTotal = item.getUnitPrice() * item.getQuantity();
+                                for (java.util.Map.Entry<Integer, List<CartItem>> entry : itemsByShop.entrySet()) {
+                                    int shopId = entry.getKey();
+                                    List<CartItem> shopItems = entry.getValue();
+                                    model.Shop shop = shopMap != null ? shopMap.get(shopId) : null;
+                                    String shopName = shop != null ? shop.getShopName() : "Cửa hàng #" + shopId;
+                                    double shopSubtotal = shopSubtotalMap.get(shopId);
+                                    double shopShip = shopShippingMap.get(shopId);
                             %>
-                                <div class="product-summary">
-                                    <% if (item.getImage() != null && !item.getImage().trim().isEmpty()) { %>
-                                        <img src="<%= ImageUrlUtil.resolve(item.getImage(), request.getContextPath()) %>" alt="<%= item.getTitle() %>" class="product-img" onerror="this.src='https://ui-avatars.com/api/?name=F&background=4caf50&color=fff&size=80&bold=true';">
-                                    <% } else { %>
-                                        <div class="product-img" style="background:var(--green-light); display:flex; align-items:center; justify-content:center; font-size:1.8rem;">🍎</div>
-                                    <% } %>
-                                    <div class="product-details">
-                                        <div class="product-name"><%= item.getTitle() %></div>
-                                        <div class="product-qty-price">Số lượng: <strong><%= item.getQuantity() %></strong> &times; <%= nf.format((long) item.getUnitPrice()) %> đ</div>
-                                        <div class="product-qty-price">Tạm tính: <strong><%= nf.format((long) itemTotal) %> đ</strong></div>
+                                <div style="margin-bottom: 1.5rem; border: 1px solid var(--gray-200); border-radius: var(--radius-sm); padding: 1rem; background: var(--gray-50);">
+                                    <div style="font-weight: 700; color: var(--green-dark); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid var(--gray-200); padding-bottom: 0.5rem;">
+                                        <i class="fa-solid fa-store"></i> <%= shopName %>
+                                    </div>
+                                    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                                        <%
+                                            for (CartItem item : shopItems) {
+                                                double itemTotal = item.getUnitPrice() * item.getQuantity();
+                                        %>
+                                            <div class="product-summary" style="border: none; padding: 0; background: transparent;">
+                                                <% if (item.getImage() != null && !item.getImage().trim().isEmpty()) { %>
+                                                    <img src="<%= ImageUrlUtil.resolve(item.getImage(), request.getContextPath()) %>" alt="<%= item.getTitle() %>" class="product-img" onerror="this.src='https://ui-avatars.com/api/?name=F&background=4caf50&color=fff&size=80&bold=true';">
+                                                <% } else { %>
+                                                    <div class="product-img" style="background:var(--green-light); display:flex; align-items:center; justify-content:center; font-size:1.8rem;">🍎</div>
+                                                <% } %>
+                                                <div class="product-details">
+                                                    <div class="product-name"><%= item.getTitle() %></div>
+                                                    <div class="product-qty-price">Số lượng: <strong><%= item.getQuantity() %></strong> &times; <%= nf.format((long) item.getUnitPrice()) %> đ</div>
+                                                    <div class="product-qty-price">Tạm tính: <strong><%= nf.format((long) itemTotal) %> đ</strong></div>
+                                                </div>
+                                            </div>
+                                        <% } %>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--gray-600); margin-top: 0.75rem; border-top: 1px dashed var(--gray-200); padding-top: 0.5rem;">
+                                        <span>Phí vận chuyển shop:</span>
+                                        <strong><%= shopShip == 0 ? "Miễn phí" : nf.format((long) shopShip) + " đ" %></strong>
                                     </div>
                                 </div>
                             <% } %>
