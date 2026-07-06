@@ -99,6 +99,24 @@ public class CheckoutCartServlet extends HttpServlet {
             List<Voucher> vouchers = voucherDAO.getAllActiveVouchers();
             System.out.println("[CheckoutCartServlet] doGet: vouchers count=" + (vouchers != null ? vouchers.size() : "NULL"));
 
+            // Fetch shops for all selected cart items
+            dao.ShopDAO shopDAO = new dao.ShopDAO();
+            try {
+                java.util.Map<Integer, model.Shop> shopMap = new java.util.HashMap<>();
+                for (CartItem item : selectedItems) {
+                    Product p = productDAO.getProductById(item.getProductId());
+                    if (p != null && !shopMap.containsKey(p.getShopId())) {
+                        model.Shop shop = shopDAO.getShopById(p.getShopId());
+                        if (shop != null) {
+                            shopMap.put(p.getShopId(), shop);
+                        }
+                    }
+                }
+                req.setAttribute("shopMap", shopMap);
+            } finally {
+                shopDAO.close();
+            }
+
             req.setAttribute("selectedItems", selectedItems);
             req.setAttribute("totalCost", totalCost);
             req.setAttribute("addresses", addresses);
@@ -186,7 +204,15 @@ String voucherCode = req.getParameter("voucherCode");
             } finally {
                 cartService.close();
             }
-            session.setAttribute("message", "Đặt hàng thành công!");
+            
+            String message;
+            if (result.getOrderCount() > 1) {
+                message = String.format("Đặt hàng thành công! Bạn đã tạo %d đơn hàng từ %d shop khác nhau. Vui lòng kiểm tra email để xem chi tiết từng đơn.", 
+                        result.getOrderCount(), result.getShopCount());
+            } else {
+                message = "Đặt hàng thành công! Cảm ơn bạn đã đặt hàng.";
+            }
+            session.setAttribute("message", message);
             resp.sendRedirect(req.getContextPath() + "/my-orders");
         } else {
             session.setAttribute("error", result.getError());

@@ -1,4 +1,4 @@
-﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="model.Account" %>
 <%@ page import="model.Product" %>
 <%@ page import="model.DeliveryAddress" %>
@@ -24,6 +24,14 @@
     double totalCost = 0.0;
     double unitPrice = 0.0;
 
+    java.util.Map<Integer, List<CartItem>> itemsByShop = new java.util.HashMap<>();
+    java.util.Map<Integer, Double> shopSubtotalMap = new java.util.HashMap<>();
+    java.util.Map<Integer, Double> shopShippingMap = new java.util.HashMap<>();
+    double shippingFee = 0.0;
+
+    java.util.Map<Integer, model.Shop> shopMap = (java.util.Map<Integer, model.Shop>) request.getAttribute("shopMap");
+    model.Shop buyNowShop = (model.Shop) request.getAttribute("shop");
+
     if (isBuyNow) {
         if (product == null) {
             response.sendRedirect(request.getContextPath() + "/home.jsp");
@@ -33,19 +41,55 @@
         unitPrice = product.getSalePrice() > 0 && product.getSalePrice() < product.getOriginalPrice()
                 ? product.getSalePrice() : product.getOriginalPrice();
         totalCost = unitPrice * quantity;
+        
+        // Mock CartItem for grouping logic consistency
+        CartItem mockItem = new CartItem();
+        mockItem.setProductId(product.getId());
+        mockItem.setQuantity(quantity);
+        mockItem.setUnitPrice(unitPrice);
+        mockItem.setTitle(product.getTitle());
+        mockItem.setImage(product.getImage());
+        mockItem.setShopId(product.getShopId());
+        
+        List<CartItem> list = new java.util.ArrayList<>();
+        list.add(mockItem);
+        itemsByShop.put(product.getShopId(), list);
+        
+        shopSubtotalMap.put(product.getShopId(), totalCost);
+        double ship = totalCost >= 200000 ? 0.0 : 20000.0;
+        shopShippingMap.put(product.getShopId(), ship);
+        shippingFee = ship;
     } else {
         Cart cart = (Cart) request.getAttribute("cart");
         if (cart == null || cart.isEmpty()) {
             response.sendRedirect(request.getContextPath() + "/cart");
             return;
         }
-        totalCost = cart.getTotalPrice();
+        
+        // Group cart items by shop
+        for (CartItem item : cart.getItems()) {
+            int shopId = item.getShopId();
+            itemsByShop.computeIfAbsent(shopId, k -> new java.util.ArrayList<>()).add(item);
+        }
+        
+        for (java.util.Map.Entry<Integer, List<CartItem>> entry : itemsByShop.entrySet()) {
+            int shopId = entry.getKey();
+            double subtotal = 0;
+            for (CartItem item : entry.getValue()) {
+                subtotal += item.getUnitPrice() * item.getQuantity();
+            }
+            shopSubtotalMap.put(shopId, subtotal);
+            totalCost += subtotal;
+            
+            double ship = subtotal >= 200000 ? 0.0 : 20000.0;
+            shopShippingMap.put(shopId, ship);
+            shippingFee += ship;
+        }
     }
 
     List<DeliveryAddress> addresses = (List<DeliveryAddress>) request.getAttribute("addresses");
     List<Voucher> vouchers = (List<Voucher>) request.getAttribute("vouchers");
 
-    double shippingFee = totalCost >= 200000 ? 0.0 : 20000.0;
     double finalCost = totalCost + shippingFee;
 
     java.text.NumberFormat nf = java.text.NumberFormat.getNumberInstance(java.util.Locale.forLanguageTag("vi"));
@@ -489,39 +533,46 @@
                             <i class="fa-solid fa-basket-shopping"></i> Tóm Tắt Đơn Hàng
                         </div>
 
-                        <% if (isBuyNow) { %>
-                        <div class="product-summary" style="margin-bottom:1.25rem;">
-                            <% if (product.getImage() != null && !product.getImage().trim().isEmpty()) { %>
-                                <img src="<%= ImageUrlUtil.resolve(product.getImage(), request.getContextPath()) %>" alt="<%= product.getTitle() %>" class="product-img" onerror="this.src='https://ui-avatars.com/api/?name=F&background=4caf50&color=fff&size=80&bold=true';">
-                            <% } else { %>
-                                <div class="product-img" style="background:var(--green-light); display:flex; align-items:center; justify-content:center; font-size:1.8rem;">🍎</div>
+                        <div class="product-list" style="margin-bottom:1.25rem;">
+                            <%
+                                for (java.util.Map.Entry<Integer, List<CartItem>> entry : itemsByShop.entrySet()) {
+                                    int shopId = entry.getKey();
+                                    List<CartItem> shopItems = entry.getValue();
+                                    model.Shop shop = isBuyNow ? buyNowShop : (shopMap != null ? shopMap.get(shopId) : null);
+                                    String shopName = shop != null ? shop.getShopName() : "Cửa hàng #" + shopId;
+                                    double shopSubtotal = shopSubtotalMap.get(shopId);
+                                    double shopShip = shopShippingMap.get(shopId);
+                            %>
+                                <div style="margin-bottom: 1.5rem; border: 1px solid var(--gray-200); border-radius: var(--radius-sm); padding: 1rem; background: var(--gray-50);">
+                                    <div style="font-weight: 700; color: var(--green-dark); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid var(--gray-200); padding-bottom: 0.5rem;">
+                                        <i class="fa-solid fa-store"></i> <%= shopName %>
+                                    </div>
+                                    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                                        <%
+                                            for (CartItem item : shopItems) {
+                                                double itemTotal = item.getUnitPrice() * item.getQuantity();
+                                        %>
+                                            <div class="product-summary" style="border: none; padding: 0; background: transparent;">
+                                                <% if (item.getImage() != null && !item.getImage().trim().isEmpty()) { %>
+                                                    <img src="<%= ImageUrlUtil.resolve(item.getImage(), request.getContextPath()) %>" alt="<%= item.getTitle() %>" class="product-img" onerror="this.src='https://ui-avatars.com/api/?name=F&background=4caf50&color=fff&size=80&bold=true';">
+                                                <% } else { %>
+                                                    <div class="product-img" style="background:var(--green-light); display:flex; align-items:center; justify-content:center; font-size:1.8rem;">🍎</div>
+                                                <% } %>
+                                                <div class="product-details">
+                                                    <div class="product-name"><%= item.getTitle() %></div>
+                                                    <div class="product-qty-price">Số lượng: <strong><%= item.getQuantity() %></strong> &times; <%= nf.format((long) item.getUnitPrice()) %> đ</div>
+                                                    <div class="product-qty-price">Tạm tính: <strong><%= nf.format((long) itemTotal) %> đ</strong></div>
+                                                </div>
+                                            </div>
+                                        <% } %>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--gray-600); margin-top: 0.75rem; border-top: 1px dashed var(--gray-200); padding-top: 0.5rem;">
+                                        <span>Phí vận chuyển shop:</span>
+                                        <strong><%= shopShip == 0 ? "Miễn phí" : nf.format((long) shopShip) + " đ" %></strong>
+                                    </div>
+                                </div>
                             <% } %>
-                            <div class="product-details">
-                                <div class="product-name"><%= product.getTitle() %></div>
-                                <div class="product-qty-price">Số lượng: <strong><%= quantity %></strong> &times; <%= nf.format((long) unitPrice) %> đ</div>
-                            </div>
                         </div>
-                        <% } else { 
-                            Cart cart = (Cart) request.getAttribute("cart");
-                            if (cart != null && cart.getItems() != null) {
-                                for (CartItem item : cart.getItems()) {
-                        %>
-                        <div class="product-summary" style="margin-bottom:1.25rem; border-bottom: 1px dashed var(--gray-100); padding-bottom: 0.75rem;">
-                            <% if (item.getImage() != null && !item.getImage().trim().isEmpty()) { %>
-                                <img src="<%= ImageUrlUtil.resolve(item.getImage(), request.getContextPath()) %>" alt="<%= item.getTitle() %>" class="product-img" onerror="this.src='https://ui-avatars.com/api/?name=F&background=4caf50&color=fff&size=80&bold=true';">
-                            <% } else { %>
-                                <div class="product-img" style="background:var(--green-light); display:flex; align-items:center; justify-content:center; font-size:1.8rem;">🍎</div>
-                            <% } %>
-                            <div class="product-details">
-                                <div class="product-name"><%= item.getTitle() %></div>
-                                <div class="product-qty-price">Số lượng: <strong><%= item.getQuantity() %></strong> &times; <%= nf.format((long) item.getUnitPrice()) %> đ</div>
-                            </div>
-                        </div>
-                        <% 
-                                }
-                            }
-                        } 
-                        %>
 
                         <!-- Voucher Code input -->
                         <div class="form-group" style="margin-bottom: 1.25rem;">

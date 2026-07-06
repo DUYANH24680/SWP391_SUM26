@@ -16,6 +16,7 @@ import model.Product;
 import model.Voucher;
 import model.Order;
 import model.OrderDetail;
+import model.PlaceOrderResult;
 import model.Cart;
 import model.CartItem;
 import service.CartService;
@@ -74,6 +75,15 @@ public class CheckoutServlet extends HttpServlet {
                 req.setAttribute("product", product);
                 req.setAttribute("quantity", quantity);
                 req.setAttribute("isBuyNow", true);
+
+                // Add Shop Details for Buy Now
+                dao.ShopDAO shopDAO = new dao.ShopDAO();
+                try {
+                    model.Shop shop = shopDAO.getShopById(product.getShopId());
+                    req.setAttribute("shop", shop);
+                } finally {
+                    shopDAO.close();
+                }
             } else {
                 // 2. Cart Checkout Flow
                 CartService cartService = new CartService();
@@ -101,6 +111,24 @@ public class CheckoutServlet extends HttpServlet {
                 
                 req.setAttribute("cart", cart);
                 req.setAttribute("isBuyNow", false);
+
+                // Fetch shops for all cart items
+                dao.ShopDAO shopDAO = new dao.ShopDAO();
+                try {
+                    java.util.Map<Integer, model.Shop> shopMap = new java.util.HashMap<>();
+                    for (CartItem item : cart.getItems()) {
+                        Product p = productDAO.getProductById(item.getProductId());
+                        if (p != null && !shopMap.containsKey(p.getShopId())) {
+                            model.Shop shop = shopDAO.getShopById(p.getShopId());
+                            if (shop != null) {
+                                shopMap.put(p.getShopId(), shop);
+                            }
+                        }
+                    }
+                    req.setAttribute("shopMap", shopMap);
+                } finally {
+                    shopDAO.close();
+                }
             }
 
             req.getRequestDispatcher("/checkout.jsp").forward(req, resp);
@@ -143,7 +171,7 @@ public class CheckoutServlet extends HttpServlet {
             }
 
             service.OrderService orderService = new service.OrderService();
-            orderService.placeOrder(
+            PlaceOrderResult result = orderService.placeOrderWithDetails(
                 user.getId(),
                 recipientName,
                 recipientPhone,
@@ -155,7 +183,18 @@ public class CheckoutServlet extends HttpServlet {
                 buyNowQuantity
             );
 
-            session.setAttribute("message", "Đặt hàng thành công!");
+            if (result.isSuccess()) {
+                String message;
+                if (result.getOrderCount() > 1) {
+                    message = String.format("Đặt hàng thành công! Bạn đã tạo %d đơn hàng từ %d shop khác nhau. Vui lòng kiểm tra email để xem chi tiết từng đơn.", 
+                            result.getOrderCount(), result.getShopCount());
+                } else {
+                    message = "Đặt hàng thành công! Cảm ơn bạn đã đặt hàng.";
+                }
+                session.setAttribute("message", message);
+            } else {
+                session.setAttribute("error", result.getError());
+            }
             resp.sendRedirect(req.getContextPath() + "/my-orders");
 
         } catch (IllegalArgumentException e) {
