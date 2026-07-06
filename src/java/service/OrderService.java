@@ -12,6 +12,7 @@ import model.Shop;
 import service.CartService;
 import model.Cart;
 import model.CartItem;
+import model.PlaceOrderResult;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -102,17 +103,21 @@ public class OrderService {
             }
 
             List<OrderDetail> details = orderDAO.getOrderDetails(orderId);
-            boolean ownsOrder = false;
+            if (details == null || details.isEmpty()) {
+                throw new IllegalArgumentException("Đơn hàng không có sản phẩm nào hoặc không tồn tại.");
+            }
+
+            boolean ownsAllItems = true;
             for (OrderDetail od : details) {
                 Product p = productDAO.getProductById(od.getProductId());
-                if (p != null && p.getShopId() == shop.getId()) {
-                    ownsOrder = true;
+                if (p == null || p.getShopId() != shop.getId()) {
+                    ownsAllItems = false;
                     break;
                 }
             }
 
-            if (!ownsOrder) {
-                throw new IllegalArgumentException("Đơn hàng không thuộc về shop của bạn.");
+            if (!ownsAllItems) {
+                throw new IllegalArgumentException("Đơn hàng chứa sản phẩm không thuộc quyền quản lý của shop bạn.");
             }
 
             int newStatus;
