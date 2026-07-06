@@ -1,5 +1,9 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="model.Account" %>
+<%@ page import="model.DeliveryAddress" %>
+<%@ page import="dao.DeliveryAddressDAO" %>
+<%@ page import="java.util.List" %>
+<%@ page import="Utils.ImageUrlUtil" %>
 <%
     Account user = (Account) session.getAttribute("Account");
     String role   = (String) session.getAttribute("role");
@@ -22,17 +26,20 @@
     String genderStr   = "Chưa cập nhật";
     if (user.getGender() != null) genderStr = user.getGender() ? "Nam" : "Nu";
 
-    String avatarUrl = user.getAvatar();
     String createdAtStr = "";
-    if (user.getCreatedAt() != null)
+    if (user.getCreatedAt() != null) {
         createdAtStr = new java.text.SimpleDateFormat("dd/MM/yyyy").format(user.getCreatedAt());
+    }
 
-    if (phone   == null || phone.trim().isEmpty())   phone   = "Chưa cập nhật";
-    if (address == null || address.trim().isEmpty()) address = "Chưa cập nhật";
-    if (avatarUrl == null || avatarUrl.trim().isEmpty())
+    List<DeliveryAddress> userAddresses = new dao.DeliveryAddressDAO().findByCustomerId(user.getId());
+
+    String rawAvatar = user.getAvatar();
+    String avatarUrl = Utils.ImageUrlUtil.resolve(rawAvatar, request.getContextPath());
+    if (avatarUrl == null || avatarUrl.trim().isEmpty()) {
         avatarUrl = "https://ui-avatars.com/api/?name="
                   + java.net.URLEncoder.encode(fullname, "UTF-8")
                   + "&background=4caf50&color=fff&size=160&bold=true&rounded=true";
+    }
 
     String message = (String) session.getAttribute("message");
     String error   = (String) session.getAttribute("error");
@@ -934,7 +941,8 @@
             <div class="modal-title"><i class="fa-regular fa-pen-to-square"></i> Chinh Sua Ho So</div>
             <button class="modal-close" onclick="closeEdit()"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <form action="profile" method="POST">
+        <form id="profileForm" action="profile" method="POST" enctype="multipart/form-data" onsubmit="return validateProfileForm(event)">
+            <div id="editError" class="alert alert-danger" style="display: none; margin-bottom: 1rem; padding: 0.5rem 1rem; font-size: 0.8rem;"></div>
             <input type="hidden" name="action" value="updateProfile">
             <div class="form-grid">
                 <div class="form-group">
@@ -960,15 +968,45 @@
                     </select>
                 </div>
                 <div class="form-group full">
-                    <label class="form-label">Dia chi</label>
-                    <textarea name="address" class="form-control"
-                              placeholder="Nhap dia chi"><%= "Chưa cập nhật".equals(address) ? "" : address %></textarea>
+                    <label class="form-label">Địa chỉ mặc định</label>
+                    <select id="addressSelect" class="form-control" onchange="handleAddressSelectChange()" style="margin-bottom: 0.75rem;">
+                        <% 
+                            boolean matchedAny = false;
+                            if (userAddresses != null && !userAddresses.isEmpty()) {
+                                for (DeliveryAddress da : userAddresses) {
+                                    boolean isSelected = da.getAddress() != null && da.getAddress().trim().equals(address != null ? address.trim() : "");
+                                    if (isSelected) {
+                                        matchedAny = true;
+                                    }
+                        %>
+                        <option value="<%= da.getAddress() %>" <%= isSelected ? "selected" : "" %>>
+                            <%= da.getAddress() %> <%= da.isIsDefault() ? "(Mặc định)" : "" %>
+                        </option>
+                        <% 
+                                }
+                            } 
+                        %>
+                        <option value="__NEW_ADDRESS__" <%= !matchedAny ? "selected" : "" %>>Nhập địa chỉ mới...</option>
+                    </select>
+                    
+                    <div id="newAddressContainer" style="<%= matchedAny ? "display: none;" : "" %>">
+                        <textarea id="newAddressTextarea" name="address" class="form-control"
+                                  placeholder="Nhập địa chỉ mới" 
+                                  maxlength="200"><%= address != null && !"Chưa cập nhật".equals(address) ? address : "" %></textarea>
+                    </div>
                 </div>
                 <div class="form-group full">
-                    <label class="form-label">Avatar URL</label>
-                    <input type="text" name="avatar" class="form-control"
-                           value="<%= user.getAvatar() != null ? user.getAvatar() : "" %>"
-                           placeholder="https://...">
+                    <label class="form-label">Ảnh đại diện (Avatar)</label>
+                    <div style="display: flex; align-items: center; gap: 1.5rem; margin-bottom: 0.5rem;">
+                        <img id="avatarPreview" src="<%= avatarUrl %>" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid var(--green);" />
+                        <div>
+                            <input type="file" id="avatarFile" name="avatarFile" class="form-control" accept="image/*" style="display: none;" onchange="previewImage(this)">
+                            <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('avatarFile').click()">
+                                <i class="fa-solid fa-upload"></i> Tải ảnh lên
+                            </button>
+                            <div class="pw-hint">Hỗ trợ JPG, JPEG, PNG, WEBP. Tối đa 5MB.</div>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="form-actions">
@@ -1045,22 +1083,153 @@
     function openEdit() {
         document.getElementById('editModal').classList.add('open');
         document.body.style.overflow = 'hidden';
+        handleAddressSelectChange();
     }
 
     function closeEdit() {
         document.getElementById('editModal').classList.remove('open');
         document.body.style.overflow = '';
+        document.getElementById('profileForm').reset();
+        handleAddressSelectChange();
+        formHasChanges = false;
     }
 
-    // Close on overlay click
-    document.getElementById('editModal').addEventListener('click', function(e) {
-        if (e.target === this) closeEdit();
+    // Handle address selection change
+    function handleAddressSelectChange() {
+        var select = document.getElementById('addressSelect');
+        var container = document.getElementById('newAddressContainer');
+        var textarea = document.getElementById('newAddressTextarea');
+        
+        if (!select || !container || !textarea) return;
+        
+        if (select.value === '__NEW_ADDRESS__') {
+            container.style.display = 'block';
+            var isOption = false;
+            for (var i = 0; i < select.options.length; i++) {
+                if (select.options[i].value !== '__NEW_ADDRESS__' && select.options[i].value === textarea.value) {
+                    isOption = true;
+                    break;
+                }
+            }
+            if (isOption) {
+                textarea.value = '';
+            }
+        } else {
+            container.style.display = 'none';
+            textarea.value = select.value;
+        }
+    }
+
+    let formHasChanges = false;
+
+    // Track form changes
+    document.getElementById('profileForm').addEventListener('change', function() {
+        formHasChanges = true;
     });
 
-    // Escape key
+    // Escape key - also check for unsaved changes
     document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') closeEdit();
+        if (e.key === 'Escape' && document.getElementById('editModal').classList.contains('open')) {
+            if (formHasChanges) {
+                if (confirm('Bạn có thay đổi chưa lưu. Bạn có chắc muốn đóng?')) {
+                    closeEdit();
+                    formHasChanges = false;
+                }
+            } else {
+                closeEdit();
+            }
+        }
     });
+
+    function previewImage(input) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('avatarPreview').src = e.target.result;
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function validateProfileForm(event) {
+        var fullname = document.getElementsByName('fullname')[0].value.trim();
+        var email = document.getElementsByName('email')[0].value.trim();
+        var phone = document.getElementsByName('phone')[0].value.trim();
+        var address = document.getElementsByName('address')[0].value.trim();
+        var errorDiv = document.getElementById('editError');
+        
+        errorDiv.style.display = 'none';
+        errorDiv.innerText = '';
+        
+        if (!fullname) {
+            errorDiv.innerText = 'Họ và tên không được để trống.';
+            errorDiv.style.display = 'block';
+            event.preventDefault();
+            return false;
+        }
+        
+        // Fullname length validation
+        if (fullname.length < 2 || fullname.length > 50) {
+            errorDiv.innerText = 'Họ và tên phải từ 2-50 ký tự.';
+            errorDiv.style.display = 'block';
+            event.preventDefault();
+            return false;
+        }
+        
+        if (!email) {
+            errorDiv.innerText = 'Email không được để trống.';
+            errorDiv.style.display = 'block';
+            event.preventDefault();
+            return false;
+        }
+        
+        var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            errorDiv.innerText = 'Email không đúng định dạng.';
+            errorDiv.style.display = 'block';
+            event.preventDefault();
+            return false;
+        }
+        
+        if (phone) {
+            var phoneRegex = /^[0-9]{9,11}$/;
+            if (!phoneRegex.test(phone)) {
+                errorDiv.innerText = 'Số điện thoại không hợp lệ (phải gồm 9-11 chữ số).';
+                errorDiv.style.display = 'block';
+                event.preventDefault();
+                return false;
+            }
+        }
+        
+        // Address length validation
+        if (address.length > 200) {
+            errorDiv.innerText = 'Địa chỉ không được vượt quá 200 ký tự.';
+            errorDiv.style.display = 'block';
+            event.preventDefault();
+            return false;
+        }
+        
+        // Avatar file validation
+        var avatarInput = document.querySelector('input[name="avatarFile"]');
+        if (avatarInput && avatarInput.files && avatarInput.files[0]) {
+            var file = avatarInput.files[0];
+            var validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+            if (!validTypes.includes(file.type)) {
+                errorDiv.innerText = 'Chỉ chấp nhận file ảnh (JPG, PNG, WEBP).';
+                errorDiv.style.display = 'block';
+                event.preventDefault();
+                return false;
+            }
+            if (file.size > 5 * 1024 * 1024) { // 5MB
+                errorDiv.innerText = 'Kích thước ảnh không được vượt quá 5MB.';
+                errorDiv.style.display = 'block';
+                event.preventDefault();
+                return false;
+            }
+        }
+        
+        return true;
+    }
 </script>
 </body>
 </html>
