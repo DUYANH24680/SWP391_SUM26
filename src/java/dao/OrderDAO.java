@@ -371,6 +371,140 @@ public class OrderDAO extends DbContext {
     }
 
     /**
+     * Count total orders for Admin with optional filters (for pagination).
+     */
+    public int getAllOrdersForAdminCount(Integer status, Integer shopId,
+            java.sql.Date fromDate, java.sql.Date toDate,
+            Double minValue, Double maxValue) {
+        StringBuilder sql = new StringBuilder(
+            "SELECT COUNT(DISTINCT o.id) "
+          + "FROM Orders o "
+          + "JOIN OrderDetails od ON o.id = od.order_id "
+          + "JOIN Products p ON od.product_id = p.id "
+          + "JOIN Shops s ON p.shop_id = s.id "
+          + "WHERE 1=1 ");
+
+        List<Object> params = new ArrayList<>();
+
+        if (shopId != null && shopId > 0) {
+            sql.append("AND p.shop_id = ? ");
+            params.add(shopId);
+        }
+        if (status != null && status > 0) {
+            sql.append("AND o.status = ? ");
+            params.add(status);
+        }
+        if (fromDate != null) {
+            sql.append("AND CAST(o.order_date AS DATE) >= ? ");
+            params.add(fromDate);
+        }
+        if (toDate != null) {
+            sql.append("AND CAST(o.order_date AS DATE) <= ? ");
+            params.add(toDate);
+        }
+        if (minValue != null) {
+            sql.append("AND o.final_cost >= ? ");
+            params.add(minValue);
+        }
+        if (maxValue != null) {
+            sql.append("AND o.final_cost <= ? ");
+            params.add(maxValue);
+        }
+
+        try (PreparedStatement ps = getConnection().prepareStatement(sql.toString())) {
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[OrderDAO] getAllOrdersForAdminCount error: " + e.getMessage());
+            throw new RuntimeException("OrderDAO.getAllOrdersForAdminCount error: " + e.getMessage(), e);
+        }
+        return 0;
+    }
+
+    /**
+     * Get all orders for Admin with pagination and optional filters.
+     * Returns orders from ALL shops across the entire system.
+     */
+    public List<Order> getAllOrdersForAdmin(Integer status, Integer shopId,
+            java.sql.Date fromDate, java.sql.Date toDate,
+            Double minValue, Double maxValue, int page, int pageSize) {
+        List<Order> list = new ArrayList<>();
+        StringBuilder sql = new StringBuilder(
+            "SELECT o.id, o.customer_id, o.voucher_id, o.recipient_name, o.recipient_phone, o.address, o.payment_method, "
+          + "o.status, o.payment_status, o.total_cost, o.discount_amount, o.shipping_fee, o.final_cost, o.note, o.order_date, o.cancelled_at, "
+          + "a.fullname AS customer_name, v.code AS voucher_code, s.shop_name "
+          + "FROM Orders o "
+          + "JOIN OrderDetails od ON o.id = od.order_id "
+          + "JOIN Products p ON od.product_id = p.id "
+          + "JOIN Shops s ON p.shop_id = s.id "
+          + "JOIN Accounts a ON o.customer_id = a.id "
+          + "LEFT JOIN Vouchers v ON o.voucher_id = v.id "
+          + "WHERE 1=1 ");
+
+        List<Object> params = new ArrayList<>();
+
+        if (shopId != null && shopId > 0) {
+            sql.append("AND p.shop_id = ? ");
+            params.add(shopId);
+        }
+        if (status != null && status > 0) {
+            sql.append("AND o.status = ? ");
+            params.add(status);
+        }
+        if (fromDate != null) {
+            sql.append("AND CAST(o.order_date AS DATE) >= ? ");
+            params.add(fromDate);
+        }
+        if (toDate != null) {
+            sql.append("AND CAST(o.order_date AS DATE) <= ? ");
+            params.add(toDate);
+        }
+        if (minValue != null) {
+            sql.append("AND o.final_cost >= ? ");
+            params.add(minValue);
+        }
+        if (maxValue != null) {
+            sql.append("AND o.final_cost <= ? ");
+            params.add(maxValue);
+        }
+
+        sql.append("GROUP BY o.id, o.customer_id, o.voucher_id, o.recipient_name, o.recipient_phone, o.address, o.payment_method, "
+                 + "o.status, o.payment_status, o.total_cost, o.discount_amount, o.shipping_fee, o.final_cost, o.note, o.order_date, o.cancelled_at, "
+                 + "a.fullname, v.code, s.shop_name "
+                 + "ORDER BY o.order_date DESC "
+                 + "OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
+
+        int offset = (page - 1) * pageSize;
+        params.add(offset);
+        params.add(pageSize);
+
+        try (PreparedStatement ps = getConnection().prepareStatement(sql.toString())) {
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Order o = mapRow(rs);
+                    o.setCustomerName(rs.getString("customer_name"));
+                    o.setVoucherCode(rs.getString("voucher_code"));
+                    o.setShopName(rs.getString("shop_name"));
+                    list.add(o);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[OrderDAO] getAllOrdersForAdmin (paginated) error: " + e.getMessage());
+            throw new RuntimeException("OrderDAO.getAllOrdersForAdmin error: " + e.getMessage(), e);
+        }
+        return list;
+    }
+
+    /**
      * Get items (OrderDetails) belonging to a specific order.
      */
     public List<OrderDetail> getOrderDetails(int orderId) {
