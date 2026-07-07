@@ -9,7 +9,7 @@
 <%@ page import="java.text.NumberFormat" %>
 <%@ page import="java.util.Locale" %>
 <%
-    Account user = (Account) session.getAttribute("Account");
+    Account user = (Account) session.getAttribute("user");
     if (user == null || !"admin".equals(user.getRoleName())) {
         response.sendRedirect(request.getContextPath() + "/login");
         return;
@@ -371,6 +371,66 @@
             .filter-row { flex-direction: column; }
             .filter-select, .filter-input[type="number"], .filter-input[type="date"] { width: 100%; }
         }
+
+        /* ======= PAGINATION ======= */
+        .pagination-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--white);
+            border-radius: var(--radius);
+            border: 1px solid var(--gray-200);
+            box-shadow: var(--shadow-sm);
+            padding: 1rem 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .pagination-info {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+            font-weight: 500;
+        }
+        .pagination {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+        .page-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 36px;
+            height: 36px;
+            padding: 0 0.5rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--gray-600);
+            text-decoration: none;
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            transition: all 0.15s;
+        }
+        .page-btn:hover:not(.disabled):not(.active) {
+            background: var(--green-light);
+            color: var(--green-dark);
+            border-color: var(--green-mid);
+        }
+        .page-btn.active {
+            background: var(--green);
+            color: white;
+            border-color: var(--green);
+        }
+        .page-btn.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+        .page-ellipsis {
+            color: var(--gray-400);
+            padding: 0 0.25rem;
+            font-size: 0.85rem;
+        }
     </style>
 </head>
 <body>
@@ -427,7 +487,7 @@
                             <% if (shops != null) {
                                 for (Shop s : shops) { %>
                                 <option value="<%= s.getId() %>" <%= ("" + s.getId()).equals(filterShopId) ? "selected" : "" %>>
-                                    <%= s.getName() != null ? s.getName() : "Shop #" + s.getId() %>
+                                    <%= s.getShopName() != null ? s.getShopName() : "Shop #" + s.getId() %>
                                 </option>
                             <% } } %>
                         </select>
@@ -612,6 +672,78 @@
 
     </div>
 
+    <!-- Pagination -->
+    <%
+        Integer currentPage = (Integer) request.getAttribute("currentPage");
+        Integer totalPages = (Integer) request.getAttribute("totalPages");
+        Integer totalOrders = (Integer) request.getAttribute("totalOrders");
+        if (currentPage == null) currentPage = 1;
+        if (totalPages == null) totalPages = 1;
+        if (totalOrders == null) totalOrders = 0;
+
+        StringBuilder paginationParams = new StringBuilder();
+        if (filterStatus != null && !filterStatus.isEmpty()) paginationParams.append("&status=").append(filterStatus);
+        if (filterShopId != null && !filterShopId.isEmpty()) paginationParams.append("&shopId=").append(filterShopId);
+        if (filterFromDate != null && !filterFromDate.isEmpty()) paginationParams.append("&fromDate=").append(filterFromDate);
+        if (filterToDate != null && !filterToDate.isEmpty()) paginationParams.append("&toDate=").append(filterToDate);
+        if (filterMinValue != null && !filterMinValue.isEmpty()) paginationParams.append("&minValue=").append(filterMinValue);
+        if (filterMaxValue != null && !filterMaxValue.isEmpty()) paginationParams.append("&maxValue=").append(filterMaxValue);
+        String extraParams = paginationParams.toString();
+    %>
+    <% if (totalPages > 1 || totalOrders > 0) { %>
+    <div class="pagination-container">
+        <div class="pagination-info">
+            Hiển thị <%= (currentPage - 1) * 15 + 1 %> - <%= Math.min(currentPage * 15, totalOrders) %> trong tổng số <%= totalOrders %> đơn hàng
+        </div>
+        <div class="pagination">
+            <% if (currentPage > 1) { %>
+                <a href="?page=<%= currentPage - 1 %><%= extraParams %>" class="page-btn">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </a>
+            <% } else { %>
+                <span class="page-btn disabled"><i class="fa-solid fa-chevron-left"></i></span>
+            <% } %>
+
+            <%
+                int startPage = Math.max(1, currentPage - 2);
+                int endPage = Math.min(totalPages, currentPage + 2);
+
+                if (startPage > 1) {
+            %>
+                <a href="?page=1<%= extraParams %>" class="page-btn">1</a>
+                <% if (startPage > 2) { %>
+                    <span class="page-ellipsis">...</span>
+                <% } %>
+            <% } %>
+
+            <% for (int i = startPage; i <= endPage; i++) { %>
+                <% if (i == currentPage) { %>
+                    <span class="page-btn active"><%= i %></span>
+                <% } else { %>
+                    <a href="?page=<%= i %><%= extraParams %>" class="page-btn"><%= i %></a>
+                <% } %>
+            <% } %>
+
+            <%
+                if (endPage < totalPages) {
+                    if (endPage < totalPages - 1) {
+            %>
+                <span class="page-ellipsis">...</span>
+            <% } %>
+                <a href="?page=<%= totalPages %><%= extraParams %>" class="page-btn"><%= totalPages %></a>
+            <% } %>
+
+            <% if (currentPage < totalPages) { %>
+                <a href="?page=<%= currentPage + 1 %><%= extraParams %>" class="page-btn">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </a>
+            <% } else { %>
+                <span class="page-btn disabled"><i class="fa-solid fa-chevron-right"></i></span>
+            <% } %>
+        </div>
+    </div>
+    <% } %>
+
     <script>
         // Sync tab active state with current filter
         (function() {
@@ -630,8 +762,23 @@
             var form = document.getElementById('filterForm');
             var select = document.getElementById('statusSelect');
             if (select) select.value = status;
+            // Reset page to 1 when filter changes
+            var pageInput = document.getElementById('pageInput');
+            if (pageInput) pageInput.value = '1';
             if (form) form.submit();
         }
+
+        // Preserve page param in form
+        (function() {
+            var form = document.getElementById('filterForm');
+            if (!form) return;
+            var pageInput = document.createElement('input');
+            pageInput.type = 'hidden';
+            pageInput.name = 'page';
+            pageInput.id = 'pageInput';
+            pageInput.value = '<%= currentPage %>';
+            form.appendChild(pageInput);
+        })();
     </script>
     <!-- Floating Report Button -->
     <a href="<%= request.getContextPath() %>/admin/reports" class="floating-report-btn" title="Kiểm tra báo cáo">

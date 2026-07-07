@@ -509,4 +509,31 @@ public class OrderService {
             orderDAO.close();
         }
     }
+
+    public model.AdminOrdersData getAdminOrdersData(Integer status, Integer shopId,
+            java.sql.Date fromDate, java.sql.Date toDate,
+            Double minValue, Double maxValue, int page, int pageSize) {
+        OrderDAO orderDAO = new OrderDAO();
+        ShopDAO shopDAO = new ShopDAO();
+        try {
+            int totalOrders = orderDAO.getAllOrdersForAdminCount(status, shopId, fromDate, toDate, minValue, maxValue);
+            int totalPages = (int) Math.ceil((double) totalOrders / pageSize);
+            if (totalPages < 1) totalPages = 1;
+            if (page > totalPages) page = totalPages;
+
+            List<Order> orders = orderDAO.getAllOrdersForAdmin(status, shopId, fromDate, toDate, minValue, maxValue, page, pageSize);
+            Map<Integer, List<OrderDetail>> detailsMap = new HashMap<>();
+            for (Order o : orders) {
+                detailsMap.put(o.getId(), orderDAO.getOrderDetails(o.getId()));
+            }
+
+            List<Shop> shops = shopDAO.getAllShops();
+
+            return new model.AdminOrdersData(orders, detailsMap, shops, totalOrders, totalPages, page);
+        } finally {
+            orderDAO.close();
+            shopDAO.close();
+        }
+    }
 }
+
