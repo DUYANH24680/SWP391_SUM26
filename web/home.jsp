@@ -1983,7 +1983,7 @@
                         <a href="inventory-export">Xuất Kho</a>
                         <a href="inventory-import">Nhập Kho</a>
                         <a href="products">Sản Phẩm</a>
-                        <a href="category">Danh Mục</a>
+                        <a href="danh-muc">Danh Mục</a>
                     </div>
 
                     <div class="nav-right">
@@ -2166,34 +2166,6 @@
                         <!-- FILTER SIDEBAR -->
                         <aside class="filter-sidebar">
 
-                            <!-- Category filter -->
-                            <div class="filter-card">
-                                <div class="filter-header">
-                                    <div class="filter-title"><i class="fa-solid fa-list"></i> Danh Mục</div>
-                                </div>
-                                <div class="filter-body" style="display:flex;flex-direction:column;gap:0.1rem;">
-                                    <div class="filter-check category-filter-item <%= (categoryParam == null || "all".equals(categoryParam)) ? "active" : "" %>" data-category="all" style="cursor:pointer;">
-                                        <div class="filter-check-left">
-                                            <div class="check-box <%= (categoryParam == null || "all".equals(categoryParam)) ? "checked" : "" %>"></div>
-                                            <span class="check-label">Tất cả</span>
-                                        </div>
-                                        <span class="check-num"><%= totalProducts %></span>
-                                    </div>
-                                    <% for (Category c : categoriesList) { 
-                                        int count = categoryCounts.getOrDefault(c.getId(), 0);
-                                        boolean isSelected = categoryParam != null && categoryParam.equals(String.valueOf(c.getId()));
-                                    %>
-                                    <div class="filter-check category-filter-item <%= isSelected ? "active" : "" %>" data-category="<%= c.getId() %>" style="cursor:pointer;">
-                                        <div class="filter-check-left">
-                                            <div class="check-box <%= isSelected ? "checked" : "" %>"></div>
-                                            <span class="check-label"><%= c.getName() %></span>
-                                        </div>
-                                        <span class="check-num"><%= count %></span>
-                                    </div>
-                                    <% } %>
-                                </div>
-                            </div>
-
                             <!-- Price filter -->
                             <div class="filter-card">
                                 <div class="filter-header">
@@ -2312,9 +2284,21 @@
                                         <div class="product-name"><%= p.getTitle() %></div>
                                         <div class="product-rating">
                                             <div class="stars">
-                                                <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
-                                                <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
-                                                <i class="fa-solid fa-star"></i>
+                                                <%
+                                                    double avg = p.getAverageRating();
+                                                    int fullStars = (int) avg;
+                                                    boolean hasHalfStar = (avg - fullStars) >= 0.5;
+                                                    for (int i = 1; i <= 5; i++) {
+                                                        if (i <= fullStars) {
+                                                %>
+                                                    <i class="fa-solid fa-star"></i>
+                                                <%      } else if (i == fullStars + 1 && hasHalfStar) { %>
+                                                    <i class="fa-solid fa-star-half-stroke half"></i>
+                                                <%      } else { %>
+                                                    <i class="fa-regular fa-star empty"></i>
+                                                <%      }
+                                                    }
+                                                %>
                                             </div>
                                             <span class="rating-count"><%= String.format("%.1f", p.getAverageRating()) %> (<%= p.getSoldQuantity() %>)</span>
                                         </div>
@@ -2569,7 +2553,7 @@
                                 
                                 // Update Products Grid
                                 const newGrid = doc.querySelector('.products-grid');
-                                const productsGrid = document.querySelector('.products-grid');
+                                var productsGrid = document.querySelector('.products-grid');
                                 if (newGrid && productsGrid) {
                                     productsGrid.innerHTML = newGrid.innerHTML;
                                 }
@@ -2632,22 +2616,6 @@
                     if (filterSidebar) {
                         filterSidebar.addEventListener('click', function(e) {
                             // Category Filter
-                            const catItem = e.target.closest('.category-filter-item');
-                            if (catItem) {
-                                e.preventDefault();
-                                document.querySelectorAll('.category-filter-item').forEach(el => el.classList.remove('active'));
-                                document.querySelectorAll('.category-filter-item .check-box').forEach(el => el.classList.remove('checked'));
-                                
-                                catItem.classList.add('active');
-                                const check = catItem.querySelector('.check-box');
-                                if (check) check.classList.add('checked');
-                                
-                                filterState.category = catItem.getAttribute('data-category');
-                                filterState.page = 1;
-                                applyFilters();
-                                return;
-                            }
-                            
                             // Rating Filter
                             const ratingItem = e.target.closest('.rating-filter-item');
                             if (ratingItem) {
@@ -2745,7 +2713,7 @@
                     }
 
                     // ── Mở Modal Chi Tiết Sản Phẩm khi bấm vào thẻ sản phẩm (Hỗ trợ AJAX) ──
-                    const productsGrid = document.querySelector('.products-grid');
+                    var productsGrid = document.querySelector('.products-grid');
                     if (productsGrid) {
                         productsGrid.addEventListener('click', function (e) {
                             const card = e.target.closest('.product-card');
@@ -2782,6 +2750,8 @@
                         if (document.visibilityState === 'visible') {
                             refreshCartBadge();
                         }
+                    });
+
                     window.addEventListener('pageshow', function(event) {
                         if (event.persisted) {
                             refreshCartBadge();
@@ -2825,6 +2795,40 @@
         .floating-report-btn:hover {
             transform: translateY(-5px);
             background-color: #dc2626;
+            color: white;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+        }
+    </style>
+    <% } %>
+
+    <% if (Account != null) { %>
+    <!-- Floating Chat Button -->
+    <a href="<%= request.getContextPath() %>/chat" class="floating-chat-btn" title="Phòng Chat">
+        <i class="fa-solid fa-comments"></i>
+    </a>
+    <style>
+        .floating-chat-btn {
+            position: fixed;
+            bottom: <% if ("admin".equals(Account.getRoleName()) || "customer".equalsIgnoreCase(Account.getRoleName())) { out.print("100px"); } else { out.print("30px"); } %>;
+            right: 30px;
+            background-color: #3b82f6;
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            cursor: pointer;
+            z-index: 1000;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        .floating-chat-btn:hover {
+            transform: translateY(-5px);
+            background-color: #2563eb;
             color: white;
             box-shadow: 0 6px 16px rgba(0,0,0,0.2);
         }
