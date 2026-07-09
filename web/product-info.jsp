@@ -1,9 +1,9 @@
-//Duy Anh
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="model.Account" %>
 <%@ page import="model.Product" %>
 <%@ page import="model.Shop" %>
 <%@ page import="dao.CategoryDAO" %>
+<%@ page import="Utils.ImageUrlUtil" %>
 <%@ page import="dao.ShopDAO" %>
 <%@ page import="java.util.List" %>
 <%@ page import="java.util.Map" %>
@@ -675,7 +675,7 @@
             <div>
                 <% if (product.getImage() != null && !product.getImage().trim().isEmpty()) { %>
                 <div class="product-image-wrap">
-                    <img src="<%= imgUrl.apply(product.getImage()) %>" alt="<%= product.getTitle() %>" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                    <img src="<%= ImageUrlUtil.resolve(product.getImage(), request.getContextPath()) %>" alt="<%= product.getTitle() %>" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
                     <div class="product-image-placeholder" style="display:none;">🍎</div>
                 </div>
                 <% } else { %>
@@ -760,7 +760,7 @@
                     <div class="section-label"><i class="fa-solid fa-shop" style="color:var(--green);"></i> Cua Hang Ban</div>
                     <div class="shop-card">
                         <% if (shopInfo.getLogo() != null && !shopInfo.getLogo().trim().isEmpty()) { %>
-                        <img class="shop-avatar" src="<%= imgUrl.apply(shopInfo.getLogo()) %>" alt="<%= shopInfo.getShopName() %>" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                        <img class="shop-avatar" src="<%= ImageUrlUtil.resolve(shopInfo.getLogo(), request.getContextPath()) %>" alt="<%= shopInfo.getShopName() %>" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
                         <div class="shop-avatar-placeholder" style="display:none;">&#127974;</div>
                         <% } else { %><div class="shop-avatar-placeholder">&#127974;</div><% } %>
                         <div class="shop-info">
@@ -828,7 +828,15 @@
                 </div>
 
                 <!-- Action buttons -->
-                <div class="action-buttons">
+                <!-- Mô tả sản phẩm -->
+                <% if (product.getDescription() != null && !product.getDescription().trim().isEmpty()) { %>
+                <div class="product-description" style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--gray-200);">
+                    <h3 style="font-size: 1rem; color: var(--gray-800); margin-bottom: 0.5rem;"><i class="fa-solid fa-align-left" style="color: var(--green); margin-right: 0.3rem;"></i> Mô Tả Sản Phẩm</h3>
+                    <p style="font-size: 0.95rem; color: var(--gray-600); line-height: 1.5; white-space: pre-wrap;"><%= product.getDescription() %></p>
+                </div>
+                <% } %>
+
+                <div class="action-buttons" style="margin-top: 1.5rem;">
                     <button class="btn btn-green" onclick="alert('Chuc nang them vao gio hang chua duoc trien khai.')">
                         <i class="fa-solid fa-basket-shopping"></i> Them Vao Gio Hang
                     </button>

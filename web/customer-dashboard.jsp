@@ -1,4 +1,4 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="model.Account" %>
 <%@ page import="model.Order" %>
 <%@ page import="model.OrderDetail" %>
@@ -32,6 +32,10 @@
     int shippingCount = request.getAttribute("shippingCount") != null ? ((Number) request.getAttribute("shippingCount")).intValue() : 0;
     int deliveredCount = request.getAttribute("deliveredCount") != null ? ((Number) request.getAttribute("deliveredCount")).intValue() : 0;
     int canceledCount = request.getAttribute("canceledCount") != null ? ((Number) request.getAttribute("canceledCount")).intValue() : 0;
+    int recentOrderCount = request.getAttribute("recentOrderCount") != null ? ((Number) request.getAttribute("recentOrderCount")).intValue() : 0;
+    double avgOrderValue = request.getAttribute("avgOrderValue") != null ? ((Number) request.getAttribute("avgOrderValue")).doubleValue() : 0;
+    double monthlySpend = request.getAttribute("monthlySpend") != null ? ((Number) request.getAttribute("monthlySpend")).doubleValue() : 0;
+    List<Order> recentOrders = (List<Order>) request.getAttribute("recentOrders");
 
     String message = (String) session.getAttribute("message");
     String error = (String) session.getAttribute("error");
@@ -555,6 +559,24 @@
                 <a href="address"><i class="fa-solid fa-map-location-dot"></i> Sổ Địa Chỉ</a>
                 <a href="logout" class="logout"><i class="fa-solid fa-right-from-bracket"></i> Đăng Xuất</a>
             </div>
+            <%
+                String customerRole = (String) session.getAttribute("role");
+                if (customerRole == null) {
+                    Object r = session.getAttribute("Account");
+                    if (r instanceof Account) {
+                        customerRole = ((Account) r).getRoleName();
+                    }
+                }
+                if (customerRole != null && customerRole.equalsIgnoreCase("seller")) {
+            %>
+            <div style="padding: 0.75rem; margin-top: 0.5rem; border-top: 1px solid var(--gray-100);">
+                <a href="${pageContext.request.contextPath}/seller/dashboard" class="btn" style="width:100%; justify-content:center; background:var(--green); color:#fff; border-radius:var(--radius-sm); padding:0.6rem 0.9rem; font-size:0.875rem; font-weight:600; text-decoration:none; box-shadow: 0 2px 8px rgba(76,175,80,0.3);">
+                    <i class="fa-solid fa-shop"></i> Chuyển sang Seller Dashboard
+                </a>
+            </div>
+            <%
+                }
+            %>
         </aside>
 
         <main class="main">
@@ -588,6 +610,24 @@
                     <div class="stat-info">
                         <div class="stat-label">Tổng đã chi tiêu</div>
                         <div class="stat-value"><%= nf.format((long) totalSpent) %> đ</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fa-solid fa-cart-shopping"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-label">Đơn trung bình</div>
+                        <div class="stat-value"><%= nf.format((long) avgOrderValue) %> đ</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fa-solid fa-calendar-day"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-label">Chi tiêu tháng này</div>
+                        <div class="stat-value"><%= nf.format((long) monthlySpend) %> đ</div>
                     </div>
                 </div>
             </div>
@@ -647,13 +687,15 @@
                 <div class="tracker-header">
                     <div class="tracker-title">
                         <i class="fa-solid fa-clock-rotate-left"></i>
-                        Lịch sử đơn hàng
+                        Đơn hàng gần đây
                     </div>
+                    <a href="my-orders" class="btn btn-outline btn-sm">Xem tất cả đơn hàng</a>
                 </div>
                 <div class="order-list">
                     <%
-                        if (orders != null && !orders.isEmpty()) {
-                            for (Order o : orders) {
+                        List<Order> displayOrders = recentOrders != null ? recentOrders : orders;
+                        if (displayOrders != null && !displayOrders.isEmpty()) {
+                            for (Order o : displayOrders) {
                                 List<OrderDetail> details = detailsMap.get(o.getId());
                     %>
                         <div class="order-card">
@@ -713,3 +755,4 @@
     </div>
 </body>
 </html>
+

@@ -7,17 +7,20 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import model.Account;
-import model.CustomerOrdersData;
-import model.Order;
-import model.OrderDetail;
-import service.OrderService;
+import model.CustomerDashboardData;
+import service.CustomerDashboardService;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
 
 @WebServlet(name = "CustomerDashboardServlet", urlPatterns = {"/customer-dashboard"})
 public class CustomerDashboardServlet extends HttpServlet {
+
+    private CustomerDashboardService dashboardService;
+
+    @Override
+    public void init() throws ServletException {
+        this.dashboardService = new CustomerDashboardService();
+    }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -29,42 +32,22 @@ public class CustomerDashboardServlet extends HttpServlet {
         }
 
         Account account = (Account) session.getAttribute("Account");
-        OrderService orderService = new OrderService();
-        CustomerOrdersData data = orderService.getCustomerOrdersWithDetails(account.getId(), null);
+        CustomerDashboardData data = dashboardService.getDashboardData(account.getId());
 
-        List<Order> orders = data.getOrders();
-        Map<Integer, List<OrderDetail>> detailsMap = data.getDetailsMap();
+        req.setAttribute("orders", data.getOrders());
+        req.setAttribute("detailsMap", data.getDetailsMap());
+        req.setAttribute("totalOrders", data.getTotalOrders());
+        req.setAttribute("totalSpent", data.getTotalSpent());
+        req.setAttribute("pendingCount", data.getPendingCount());
+        req.setAttribute("confirmedCount", data.getConfirmedCount());
+        req.setAttribute("shippingCount", data.getShippingCount());
+        req.setAttribute("deliveredCount", data.getDeliveredCount());
+        req.setAttribute("canceledCount", data.getCanceledCount());
+        req.setAttribute("recentOrderCount", data.getRecentOrderCount());
+        req.setAttribute("avgOrderValue", data.getAvgOrderValue());
+        req.setAttribute("monthlySpend", data.getMonthlySpend());
+        req.setAttribute("recentOrders", data.getRecentOrders());
 
-        double totalSpent = 0;
-        int pendingCount = 0;
-        int confirmedCount = 0;
-        int shippingCount = 0;
-        int deliveredCount = 0;
-        int canceledCount = 0;
-
-        if (orders != null) {
-            for (Order order : orders) {
-                totalSpent += order.getFinalCost();
-                switch (order.getStatus()) {
-                    case 1 -> pendingCount++;
-                    case 2 -> confirmedCount++;
-                    case 3 -> shippingCount++;
-                    case 4 -> deliveredCount++;
-                    case 5 -> canceledCount++;
-                    default -> {}
-                }
-            }
-        }
-
-        req.setAttribute("orders", orders);
-        req.setAttribute("detailsMap", detailsMap);
-        req.setAttribute("totalOrders", orders != null ? orders.size() : 0);
-        req.setAttribute("totalSpent", totalSpent);
-        req.setAttribute("pendingCount", pendingCount);
-        req.setAttribute("confirmedCount", confirmedCount);
-        req.setAttribute("shippingCount", shippingCount);
-        req.setAttribute("deliveredCount", deliveredCount);
-        req.setAttribute("canceledCount", canceledCount);
         req.getRequestDispatcher("/customer-dashboard.jsp").forward(req, resp);
     }
 }

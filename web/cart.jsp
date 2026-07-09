@@ -3,7 +3,13 @@
 <%@ page import="model.CartItem" %>
 <%@ page import="model.Account" %>
 <%@ page import="java.text.NumberFormat" %>
+<%@ page import="Utils.ImageUrlUtil" %>
 <%@ page import="java.util.Locale" %>
+<%
+    response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    response.setHeader("Pragma", "no-cache");
+    response.setDateHeader("Expires", 0);
+%>
 <%
     Account Account = (Account) session.getAttribute("Account");
     if (Account == null) {
@@ -734,7 +740,6 @@
                 </a>
             </div>
         <% } else { %>
-
             <!-- ===== SELECT ALL BAR ===== -->
             <div class="select-all-bar">
                 <label class="custom-checkbox" id="selectAllLabel">
@@ -749,8 +754,8 @@
                 </span>
             </div>
 
-            <form id="checkoutForm" action="checkout" method="POST">
-                <input type="hidden" name="removeFromCart" id="removeFromCart" value="true">
+            <form id="checkoutForm" action="checkout-cart" method="GET">
+                <input type="hidden" name="selectedProducts" id="selectedProducts">
 
                 <table class="cart-table">
                     <thead>
@@ -787,13 +792,18 @@
                                 <div class="cart-item">
                                     <div class="cart-item-image">
                                         <% if (item.getImage() != null && !item.getImage().trim().isEmpty()) { %>
-                                            <img src="<%= item.getImage() %>" alt="<%= item.getTitle() %>">
+                                            <img src="<%= ImageUrlUtil.resolve(item.getImage(), request.getContextPath()) %>" alt="<%= item.getTitle() %>">
                                         <% } else { %>
-                                            <span style="font-size: 1.5rem;">&#127822;</span>
+                                            <span style="font-size: 1.5rem;">🍎</span>
                                         <% } %>
                                     </div>
                                     <div class="cart-item-details">
                                         <div class="cart-item-title"><%= item.getTitle() %></div>
+                                        <div class="cart-item-meta">
+                                            <% if (item.getSize() != null && !item.getSize().isEmpty()) { %>
+                                                <span>Kich co: <strong><%= item.getSize() %></strong></span>
+                                            <% } %>
+                                        </div>
                                         <% if (item.getNote() != null && !item.getNote().isEmpty()) { %>
                                             <div class="notes-text">Ghi chu: <%= item.getNote() %></div>
                                         <% } %>
@@ -807,9 +817,9 @@
                             <td>
                                 <div class="cart-item-image" style="width: 60px; height: 60px;">
                                     <% if (item.getImage() != null && !item.getImage().trim().isEmpty()) { %>
-                                        <img src="<%= item.getImage() %>" alt="<%= item.getTitle() %>">
+                                        <img src="<%= ImageUrlUtil.resolve(item.getImage(), request.getContextPath()) %>" alt="<%= item.getTitle() %>">
                                     <% } else { %>
-                                        <span style="font-size: 1.2rem;">&#127822;</span>
+                                        <span style="font-size: 1.2rem;">🍎</span>
                                     <% } %>
                                 </div>
                             </td>
@@ -843,7 +853,7 @@
 
                             <td>
                                 <button type="button" class="btn btn-edit btn-sm"
-                                        onclick="openEditModal('<%= item.getProductId() %>', '<%= item.getQuantity() %>', '<%= item.getNote() != null ? item.getNote().replace("'", "\\'") : "" %>', '<%= item.getDiscountCode() != null ? item.getDiscountCode() : "" %>', '<%= item.getTitle() != null ? item.getTitle().replace("'", "\\'") : "" %>', '<%= nf.format((long) item.getUnitPrice()) %>', '<%= item.getImage() != null ? item.getImage() : "" %>')">
+                                        onclick="openEditModal('<%= item.getProductId() %>', '<%= item.getQuantity() %>', '<%= item.getNote() != null ? item.getNote().replace("'", "\\'") : "" %>', '<%= item.getDiscountCode() != null ? item.getDiscountCode() : "" %>', '<%= item.getTitle() != null ? item.getTitle().replace("'", "\\'") : "" %>', '<%= nf.format((long) item.getUnitPrice()) %>', '<%= item.getImage() != null ? ImageUrlUtil.resolve(item.getImage(), request.getContextPath()) : "" %>')">
                                     <i class="fa-solid fa-pen"></i> Sua
                                 </button>
                                 <button type="button" class="btn btn-danger btn-sm"
@@ -882,7 +892,6 @@
                         <button type="button" class="btn btn-danger" onclick="confirmClearCart()">
                             <i class="fa-solid fa-trash"></i> Xoa Gio Hang
                         </button>
-                        <input type="hidden" name="selectedProducts" id="selectedProducts">
                         <button type="submit" class="btn btn-orange" id="checkoutBtn">
                             <i class="fa-solid fa-credit-card"></i> Mua Hang
                         </button>
@@ -964,7 +973,7 @@
     // ---- Xoa toan bo gio hang ----
     function confirmClearCart() {
         if (confirm('Ban co chan chan muon xoa toan bo gio hang?')) {
-            window.location.href = 'clear-cart';
+            window.location.href = '<%= request.getContextPath() %>/cart?action=clear';
         }
     }
 
@@ -1112,19 +1121,7 @@
 
         const selectedIds = Array.from(checkboxes).map(function(cb) { return cb.value; });
         document.getElementById('selectedProducts').value = selectedIds.join(',');
-        removeSelectedItemsFromCart(selectedIds);
     });
-
-    function removeSelectedItemsFromCart(selectedIds) {
-        fetch('remove-selected-items', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams({ 'selectedProducts': selectedIds.join(',') })
-        })
-        .catch(function(error) {
-            console.error('Loi xoa san pham da chon:', error);
-        });
-    }
 
     // ---- Khoi tao khi load trang ----
     document.addEventListener('DOMContentLoaded', function() {
@@ -1239,5 +1236,4 @@
 
 </body>
 </html>
-
 

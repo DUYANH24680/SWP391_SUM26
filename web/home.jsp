@@ -1,20 +1,97 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
 <%@ page import="model.Account" %>
 <%@ page import="model.Product" %>
+<%@ page import="model.Category" %>
 <%@ page import="model.Cart" %>
 <%@ page import="java.util.List" %>
+<%@ page import="java.util.ArrayList" %>
 <%@ page import="dao.ProductDAO" %>
+<%@ page import="dao.CategoryDAO" %>
 <%@ page import="Utils.ProductSorter" %>
-<% 
-    Account user = (Account) session.getAttribute("user"); 
+<%@ page import="Utils.ImageUrlUtil" %>
+<%@ page import="service.WishlistService" %>
+<%
+    response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    response.setHeader("Pragma", "no-cache");
+    response.setDateHeader("Expires", 0);
+%>
+<%
+    Account Account = (Account) session.getAttribute("Account");
     Cart cart = (Cart) session.getAttribute("cart");
-    int cartCount = cart != null ? cart.getTotalQuantity() : 0;
-    ProductDAO dao = new ProductDAO();
-    List<Product> productsList = dao.getAllProducts();
-    String sort = request.getParameter("sort");
-    if (sort != null) {
-        ProductSorter.sortProducts(productsList, sort);
+    Integer sessionCartCount = (Integer) session.getAttribute("cartCount");
+    int cartCount = sessionCartCount != null ? sessionCartCount : (cart != null ? cart.getTotalQuantity() : 0);
+    int wishlistCount = 0;
+    if (Account != null) {
+        WishlistService ws = new WishlistService();
+        try {
+            wishlistCount = ws.getWishlistCount(Account.getId());
+            if (session.getAttribute("wishlistCount") != null) {
+                wishlistCount = (Integer) session.getAttribute("wishlistCount");
+            }
+        } finally {
+            ws.close();
+        }
     }
+    ProductDAO dao = new ProductDAO();
+    
+    // Extract parameters
+    String search = request.getParameter("search");
+    if (search != null) search = search.trim();
+    
+    String categoryParam = request.getParameter("category");
+    List<Integer> categoryIds = null;
+    if (categoryParam != null && !categoryParam.isEmpty() && !"all".equals(categoryParam)) {
+        try {
+            categoryIds = new ArrayList<>();
+            categoryIds.add(Integer.parseInt(categoryParam));
+        } catch (NumberFormatException ignored) {}
+    }
+    
+    Double minPrice = null;
+    String minPriceParam = request.getParameter("minPrice");
+    if (minPriceParam != null && !minPriceParam.isEmpty()) {
+        try { minPrice = Double.parseDouble(minPriceParam); } catch (NumberFormatException ignored) {}
+    }
+    
+    Double maxPrice = null;
+    String maxPriceParam = request.getParameter("maxPrice");
+    if (maxPriceParam != null && !maxPriceParam.isEmpty()) {
+        try { maxPrice = Double.parseDouble(maxPriceParam); } catch (NumberFormatException ignored) {}
+    }
+    
+    Double minRating = null;
+    String ratingParam = request.getParameter("rating");
+    if (ratingParam != null && !ratingParam.isEmpty()) {
+        try { minRating = Double.parseDouble(ratingParam); } catch (NumberFormatException ignored) {}
+    }
+    
+    String status = request.getParameter("status"); // "in_stock" or "out_of_stock"
+    
+    String sort = request.getParameter("sort");
+    if (sort == null || sort.isEmpty()) {
+        sort = "popular"; // default sort
+    }
+    
+    int pageNum = 1;
+    String pageParam = request.getParameter("page");
+    if (pageParam != null && !pageParam.isEmpty()) {
+        try { pageNum = Integer.parseInt(pageParam); } catch (NumberFormatException ignored) {}
+    }
+    
+    int pageSize = 12;
+    
+    // Fetch products
+    List<Product> productsList = dao.getFilteredProducts(search, categoryIds, minPrice, maxPrice, minRating, status, sort, pageNum, pageSize);
+    int totalProducts = dao.countFilteredProducts(search, categoryIds, minPrice, maxPrice, minRating, status);
+    int totalPages = (int) Math.ceil((double) totalProducts / pageSize);
+    if (totalPages == 0) totalPages = 1;
+    
+    // Category Counts
+    java.util.Map<Integer, Integer> categoryCounts = dao.getCategoryProductCounts();
+    
+    // Fetch active categories
+    CategoryDAO categoryDAO = new CategoryDAO();
+    List<Category> categoriesList = categoryDAO.getAllActiveCategories();
 %>
 <!DOCTYPE html>
             <html lang="vi">
@@ -205,6 +282,22 @@
                         width: 18px;
                         height: 18px;
                         background: var(--orange);
+                        color: #fff;
+                        border-radius: 50%;
+                        font-size: 0.62rem;
+                        font-weight: 700;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    }
+
+                    .wishlist-badge {
+                        position: absolute;
+                        top: -3px;
+                        right: -3px;
+                        width: 18px;
+                        height: 18px;
+                        background: #ef4444;
                         color: #fff;
                         border-radius: 50%;
                         font-size: 0.62rem;
@@ -891,22 +984,15 @@
                     .product-image-wrap {
                         position: relative;
                         background: linear-gradient(135deg, #f1f8e9, #e8f5e9);
-                        height: 160px;
+                        height: 180px;
                         display: flex;
                         align-items: center;
                         justify-content: center;
                         overflow: hidden;
                     }
 
-                    .product-image-wrap img {
-                        width: 100%;
-                        height: 100%;
-                        object-fit: cover;
-                        object-position: center;
-                    }
-
                     .product-emoji {
-                        font-size: 4rem;
+                        font-size: 5rem;
                         filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.12));
                         transition: transform 0.3s ease;
                     }
@@ -1086,6 +1172,83 @@
                     .btn-cart:hover {
                         background: var(--green-dark);
                         transform: scale(1.04);
+                    }
+
+                    /* Buy now + Add to cart side by side */
+                    .product-footer {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 0.4rem;
+                        padding: 0.75rem 0.75rem 0.85rem;
+                        border-top: 1px solid var(--gray-100);
+                    }
+
+                    .product-footer .footer-row {
+                        display: flex;
+                        align-items: center;
+                        gap: 0.4rem;
+                    }
+
+                    .product-footer .product-unit {
+                        font-size: 0.72rem;
+                        color: var(--gray-400);
+                        display: flex;
+                        align-items: center;
+                        gap: 0.3rem;
+                        margin-bottom: 0.15rem;
+                    }
+
+                    .product-footer .btn-actions {
+                        display: flex;
+                        gap: 0.4rem;
+                    }
+
+                    .product-footer .btn-add-cart {
+                        flex: 1;
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 0.35rem;
+                        padding: 0.42rem 0.5rem;
+                        background: transparent;
+                        color: var(--green-dark);
+                        border: 1.5px solid var(--green);
+                        border-radius: 100px;
+                        font-size: 0.78rem;
+                        font-weight: 600;
+                        cursor: pointer;
+                        font-family: 'Inter', sans-serif;
+                        transition: all 0.18s;
+                        white-space: nowrap;
+                    }
+
+                    .product-footer .btn-add-cart:hover {
+                        background: var(--green-light);
+                        transform: scale(1.02);
+                    }
+
+                    .product-footer .btn-buy-now {
+                        flex: 1;
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 0.35rem;
+                        padding: 0.42rem 0.5rem;
+                        background: var(--orange);
+                        color: #fff;
+                        border: none;
+                        border-radius: 100px;
+                        font-size: 0.78rem;
+                        font-weight: 600;
+                        cursor: pointer;
+                        font-family: 'Inter', sans-serif;
+                        transition: all 0.18s;
+                        white-space: nowrap;
+                    }
+
+                    .product-footer .btn-buy-now:hover {
+                        background: var(--orange-dark);
+                        transform: scale(1.02);
                     }
 
                     /* Out of stock overlay */
@@ -1817,19 +1980,17 @@
                     <jsp:include page="search-product.jsp" />
 
                     <div class="nav-links">
-                        <a href="#" class="active">Trang Chủ</a>
+                        <a href="inventory-export">Xuất Kho</a>
+                        <a href="inventory-import">Nhập Kho</a>
+                        <a href="products">Sản Phẩm</a>
                         <a href="danh-muc">Danh Mục</a>
-                                                <% if ("admin".equals(user.getRoleName())) { %>
-                            <a href="<%= request.getContextPath() %>/admin/customers">
-                                <i class="fa-solid fa-users" style="margin-right:4px;"></i> Khách Hàng
-                            </a>
-                            <a href="<%= request.getContextPath() %>/admin/approve-products">
-                                <i class="fa-solid fa-clipboard-check" style="margin-right:4px;"></i> Duyệt Sản Phẩm
-                            </a>
-                        <% } %>
                     </div>
 
                     <div class="nav-right">
+                        <a href="wishlist" class="nav-icon-btn" title="Wishlist">
+                            <i class="fa-solid fa-heart"></i>
+                            <span class="wishlist-badge"><%= wishlistCount %></span>
+                        </a>
                         <a href="cart" class="nav-icon-btn" title="Giỏ hàng">
                             <i class="fa-solid fa-basket-shopping"></i>
                             <span class="cart-badge"><%= cartCount %></span>
@@ -1838,35 +1999,26 @@
                             <i class="fa-regular fa-bell"></i>
                         </button>
 
-                        <% if (user !=null) { %>
+                        <% if (Account !=null) { %>
                             <!-- Avatar with dropdown -->
                             <div class="avatar-wrap">
-                                <%
-                                    String _navName = (user.getFullname() != null && !user.getFullname().trim().isEmpty())
-                                        ? user.getFullname() : user.getUsername();
-                                    String _navAvatarUrl = (user.getAvatar() != null && !user.getAvatar().trim().isEmpty())
-                                        ? user.getAvatar()
-                                        : "https://ui-avatars.com/api/?name="
-                                          + java.net.URLEncoder.encode(_navName, "UTF-8")
-                                          + "&background=4caf50&color=fff&size=80&bold=true&rounded=true";
-                                %>
                                 <img class="nav-avatar"
-                                    src="<%= _navAvatarUrl %>"
+                                    src="https://ui-avatars.com/api/?name=<%= Account.getFullname() != null ? Account.getFullname().replace(" ", "+") : "Account" %>&background=4caf50&color=fff&size=80&bold=true"
                                 alt="avatar">
                                 <div class="avatar-dropdown">
                                     <div class="avatar-dropdown-inner">
                                         <div class="dropdown-header">
                                             <strong>
-                                                <%= user.getFullname() !=null ? user.getFullname() : user.getUsername()
+                                                <%= Account.getFullname() !=null ? Account.getFullname() : Account.getUsername()
                                                     %>
                                             </strong>
                                             <span>
-                                                <%= user.getEmail() !=null ? user.getEmail() : user.getUsername() %>
+                                                <%= Account.getEmail() !=null ? Account.getEmail() : Account.getUsername() %>
                                             </span>
                                         </div>
                                         <div class="dropdown-menu">
                                             <a class="dropdown-item" href="profile?tab=profile">
-                                                <i class="fa-regular fa-user"></i> Hồ Sơ Của Tôi
+                                                <i class="fa-regular fa-Account"></i> Hồ Sơ Của Tôi
                                             </a>
                                             <a class="dropdown-item" href="profile?tab=security">
                                                 <i class="fa-solid fa-shield-halved"></i> Bảo Mật
@@ -2014,7 +2166,6 @@
                         <!-- FILTER SIDEBAR -->
                         <aside class="filter-sidebar">
 
-
                             <!-- Price filter -->
                             <div class="filter-card">
                                 <div class="filter-header">
@@ -2022,12 +2173,12 @@
                                 </div>
                                 <div class="filter-body">
                                     <div class="price-inputs">
-                                        <input type="text" class="price-input" placeholder="Từ 0">
-                                        <input type="text" class="price-input" placeholder="Đến 500k">
+                                        <input type="text" class="price-input" id="minPriceInput" placeholder="Từ 0" value="<%= minPriceParam != null ? minPriceParam : "" %>">
+                                        <input type="text" class="price-input" id="maxPriceInput" placeholder="Đến" value="<%= maxPriceParam != null ? maxPriceParam : "" %>">
                                     </div>
-                                    <button
+                                    <button id="btnApplyPrice"
                                         style="width:100%;padding:0.5rem;background:var(--green);color:#fff;border:none;border-radius:var(--radius-xs);font-size:0.8rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;">
-                                        Ap Dung
+                                        Áp Dụng
                                     </button>
                                 </div>
                             </div>
@@ -2038,38 +2189,21 @@
                                     <div class="filter-title"><i class="fa-solid fa-star"></i> Đánh Giá</div>
                                 </div>
                                 <div class="filter-body" style="display:flex;flex-direction:column;gap:0.35rem;">
-                                    <div class="rating-row">
-                                        <div class="check-box checked"
-                                            style="width:15px;height:15px;border-radius:3px;"></div>
+                                    <% 
+                                        double[] ratings = {5.0, 4.0, 3.0}; 
+                                        for (double r : ratings) {
+                                            boolean isSel = (minRating != null && minRating == r);
+                                    %>
+                                    <div class="rating-row rating-filter-item" data-rating="<%= r %>" style="cursor:pointer;">
+                                        <div class="check-box <%= isSel ? "checked" : "" %>"></div>
                                         <div class="stars-static">
-                                            <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
-                                            <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
-                                            <i class="fa-solid fa-star"></i>
+                                            <% for (int i = 1; i <= 5; i++) { %>
+                                                <i class="<%= i <= r ? "fa-solid fa-star" : "fa-regular fa-star empty" %>"></i>
+                                            <% } %>
                                         </div>
-                                        <span class="rating-label" style="font-size:0.78rem;color:var(--gray-400);">(5
-                                            sao)</span>
+                                        <span class="rating-label" style="font-size:0.78rem;color:var(--gray-400);"><%= r == 5.0 ? "(5 sao)" : "trở lên" %></span>
                                     </div>
-                                    <div class="rating-row">
-                                        <div class="check-box"></div>
-                                        <div class="stars-static">
-                                            <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
-                                            <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
-                                            <i class="fa-regular fa-star empty"></i>
-                                        </div>
-                                        <span class="rating-label" style="font-size:0.78rem;color:var(--gray-400);">trở
-                                            lên</span>
-                                    </div>
-                                    <div class="rating-row">
-                                        <div class="check-box"></div>
-                                        <div class="stars-static">
-                                            <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
-                                            <i class="fa-solid fa-star"></i>
-                                            <i class="fa-regular fa-star empty"></i><i
-                                                class="fa-regular fa-star empty"></i>
-                                        </div>
-                                        <span class="rating-label" style="font-size:0.78rem;color:var(--gray-400);">trở
-                                            lên</span>
-                                    </div>
+                                    <% } %>
                                 </div>
                             </div>
 
@@ -2079,15 +2213,15 @@
                                     <div class="filter-title"><i class="fa-solid fa-box"></i> Tình Trạng</div>
                                 </div>
                                 <div class="filter-body">
-                                    <div class="filter-check">
+                                    <div class="filter-check status-filter-item" data-status="in_stock" style="cursor:pointer;">
                                         <div class="filter-check-left">
-                                            <div class="check-box checked"></div>
+                                            <div class="check-box <%= "in_stock".equals(status) ? "checked" : "" %>"></div>
                                             <span class="check-label">Còn Hàng</span>
                                         </div>
                                     </div>
-                                    <div class="filter-check">
+                                    <div class="filter-check status-filter-item" data-status="out_of_stock" style="cursor:pointer;">
                                         <div class="filter-check-left">
-                                            <div class="check-box"></div>
+                                            <div class="check-box <%= "out_of_stock".equals(status) ? "checked" : "" %>"></div>
                                             <span class="check-label">Hết Hàng</span>
                                         </div>
                                     </div>
@@ -2100,10 +2234,9 @@
 
                             <!-- Sort bar -->
                             <div class="sort-bar">
-                                <div class="sort-bar-left">Hiển thị <strong>12</strong> / 50 sản phẩm</div>
+                                <div class="sort-bar-left">Hiển thị <strong><%= productsList.size() %></strong> / <%= totalProducts %> sản phẩm</div>
                                 <div class="sort-tabs">
-                                    <span style="font-size:0.8rem;color:var(--gray-400);margin-right:0.3rem;">Sắp
-                                        xếp:</span>
+                                    <span style="font-size:0.8rem;color:var(--gray-400);margin-right:0.3rem;">Sắp xếp:</span>
                                     <button class="sort-tab <%= "popular".equals(sort) || sort == null ? "active" : "" %>" data-sort="popular">Phổ Biến</button>
                                     <button class="sort-tab <%= "newest".equals(sort) ? "active" : "" %>" data-sort="newest">Mới Nhất</button>
                                     <button class="sort-tab <%= "price_asc".equals(sort) ? "active" : "" %>" data-sort="price_asc">Giá Tăng</button>
@@ -2118,33 +2251,21 @@
                                 <div class="product-card <%= p.getStockQuantity() <= 0 ? "out-of-stock" : "" %>" data-id="<%= p.getId() %>" style="cursor:pointer;">
                                     <div class="product-image-wrap">
                                         <%
-                                            String imgStr = p.getImage();
-                                            if (imgStr == null || imgStr.trim().isEmpty()) {
-                                                // Khong co anh → hien thi emoji
+                                            String imgStr = p.getImage() != null && !p.getImage().isEmpty() ? p.getImage() : null;
+                                            boolean isUrl = imgStr != null && (imgStr.startsWith("http://") || imgStr.startsWith("https://"));
+                                            boolean isFileImage = imgStr != null && (
+                                                imgStr.toLowerCase().endsWith(".png") ||
+                                                imgStr.toLowerCase().endsWith(".jpg") ||
+                                                imgStr.toLowerCase().endsWith(".jpeg") ||
+                                                imgStr.toLowerCase().endsWith(".gif") ||
+                                                imgStr.toLowerCase().endsWith(".webp"));
+                                            if (isUrl) {
                                         %>
-                                            <div class="product-emoji">🍎</div>
-                                        <%
-                                            } else if (imgStr.trim().startsWith("uploads/")) {
-                                                // Anh upload → goi ImageServlet
-                                                String encoded = java.net.URLEncoder.encode(imgStr.trim(), "UTF-8");
-                                                String imgSrc = request.getContextPath() + "/image?path=" + encoded;
-                                        %>
-                                            <img src="<%= imgSrc %>" alt="<%= p.getTitle() %>" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
-                                            <div class="product-emoji" style="display:none;">🍎</div>
-                                        <%
-                                            } else if (imgStr.trim().toLowerCase().endsWith(".png")
-                                                    || imgStr.trim().toLowerCase().endsWith(".jpg")
-                                                    || imgStr.trim().toLowerCase().endsWith(".jpeg")
-                                                    || imgStr.trim().toLowerCase().endsWith(".gif")
-                                                    || imgStr.trim().toLowerCase().startsWith("http")) {
-                                                // Duong dan anh hoac URL tuyệt đối → dung truc tiep
-                                        %>
-                                            <img src="<%= imgStr.trim() %>" alt="<%= p.getTitle() %>">
-                                        <%
-                                            } else {
-                                                // Con lai → emoji
-                                        %>
-                                            <div class="product-emoji"><%= imgStr %></div>
+                                            <img src="<%= imgStr %>" alt="<%= p.getTitle() %>" style="width:100%; height:100%; object-fit:cover; border-radius:var(--radius-md);">
+                                        <%  } else if (isFileImage) { %>
+                                            <img src="<%= ImageUrlUtil.resolve(imgStr, request.getContextPath()) %>" alt="<%= p.getTitle() %>" style="width:100%; height:100%; object-fit:cover; border-radius:var(--radius-md);">
+                                        <%  } else { %>
+                                            <div class="product-emoji"><%= imgStr != null ? imgStr : "🍎" %></div>
                                         <%  } %>
                                         <% if (p.getSalePrice() < p.getOriginalPrice()) { 
                                             int pct = (int) Math.round((1 - p.getSalePrice()/p.getOriginalPrice()) * 100);
@@ -2153,16 +2274,31 @@
                                         <% } else if (p.isIsFeatured()) { %>
                                             <div class="product-badge badge-hot">Hot</div>
                                         <% } %>
-                                        <button class="product-wishlist" data-wishlist-action="add" data-product-id="<%= p.getId() %>"><i class="fa-regular fa-heart"></i></button>
+                                        <form action="add-to-wishlist" method="POST" style="position:absolute;top:8px;right:8px;z-index:2;" onclick="event.stopPropagation();">
+                                            <input type="hidden" name="productId" value="<%= p.getId() %>">
+                                            <button type="submit" class="product-wishlist"><i class="fa-regular fa-heart"></i></button>
+                                        </form>
                                     </div>
                                     <div class="product-info">
                                         <div class="product-category"><%= p.getShopName() != null ? p.getShopName() : "Chung" %></div>
                                         <div class="product-name"><%= p.getTitle() %></div>
                                         <div class="product-rating">
                                             <div class="stars">
-                                                <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
-                                                <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
-                                                <i class="fa-solid fa-star"></i>
+                                                <%
+                                                    double avg = p.getAverageRating();
+                                                    int fullStars = (int) avg;
+                                                    boolean hasHalfStar = (avg - fullStars) >= 0.5;
+                                                    for (int i = 1; i <= 5; i++) {
+                                                        if (i <= fullStars) {
+                                                %>
+                                                    <i class="fa-solid fa-star"></i>
+                                                <%      } else if (i == fullStars + 1 && hasHalfStar) { %>
+                                                    <i class="fa-solid fa-star-half-stroke half"></i>
+                                                <%      } else { %>
+                                                    <i class="fa-regular fa-star empty"></i>
+                                                <%      }
+                                                    }
+                                                %>
                                             </div>
                                             <span class="rating-count"><%= String.format("%.1f", p.getAverageRating()) %> (<%= p.getSoldQuantity() %>)</span>
                                         </div>
@@ -2175,11 +2311,41 @@
                                     </div>
                                     <div class="product-footer">
                                         <% if (p.getStockQuantity() > 0) { %>
-                                            <div class="product-unit"><i class="fa-solid fa-scale-balanced"></i> Con <%= p.getStockQuantity() %> <%= p.getUnit() %></div>
-                                            <button class="btn-cart" onclick="window.location.href='cart?action=add&productId=<%= p.getId() %>'"><i class="fa-solid fa-plus"></i> Thêm</button>
+                                            <div class="footer-row">
+                                                <div class="product-unit">
+                                                    <i class="fa-solid fa-scale-balanced"></i> Con <%= p.getStockQuantity() %> <%= p.getUnit() %>
+                                                </div>
+                                            </div>
+                                            <div class="btn-actions">
+                                                <form action="add-to-cart" method="POST" style="flex:1;">
+                                                    <input type="hidden" name="productId" value="<%= p.getId() %>">
+                                                    <input type="hidden" name="quantity" value="1">
+                                                    <button type="submit" class="btn-add-cart">
+                                                        <i class="fa-solid fa-cart-plus"></i> Gio Hang
+                                                    </button>
+                                                </form>
+                                                <form action="buy-now" method="POST" style="flex:1;">
+                                                    <input type="hidden" name="productId" value="<%= p.getId() %>">
+                                                    <input type="hidden" name="quantity" value="1">
+                                                    <button type="submit" class="btn-buy-now">
+                                                        <i class="fa-solid fa-bolt"></i> Mua Ngay
+                                                    </button>
+                                                </form>
+                                            </div>
                                         <% } else { %>
-                                            <div class="product-unit" style="color:var(--orange);"><i class="fa-solid fa-circle-xmark"></i> Hết hàng</div>
-                                            <button class="btn-cart" disabled><i class="fa-solid fa-ban"></i> Het</button>
+                                            <div class="footer-row">
+                                                <div class="product-unit" style="color:var(--orange);">
+                                                    <i class="fa-solid fa-circle-xmark"></i> Het Hang
+                                                </div>
+                                            </div>
+                                            <div class="btn-actions">
+                                                <button class="btn-add-cart" disabled style="opacity:0.5;cursor:not-allowed;">
+                                                    <i class="fa-solid fa-cart-plus"></i> Gio Hang
+                                                </button>
+                                                <button class="btn-buy-now" disabled style="opacity:0.5;cursor:not-allowed;">
+                                                    <i class="fa-solid fa-bolt"></i> Mua Ngay
+                                                </button>
+                                            </div>
                                         <% } %>
                                     </div>
                                 </div>
@@ -2188,13 +2354,32 @@
 
                             <!-- Pagination -->
                             <div class="pagination">
-                                <button class="page-btn" disabled><i class="fa-solid fa-chevron-left"></i></button>
-                                <button class="page-btn active">1</button>
-                                <button class="page-btn">2</button>
-                                <button class="page-btn">3</button>
-                                <span style="color:var(--gray-400);font-size:0.85rem;padding:0 0.3rem;">...</span>
-                                <button class="page-btn">8</button>
-                                <button class="page-btn"><i class="fa-solid fa-chevron-right"></i></button>
+                                <button class="page-btn" <%= pageNum <= 1 ? "disabled" : "" %> data-page="<%= pageNum - 1 %>">
+                                     <i class="fa-solid fa-chevron-left"></i>
+                                </button>
+                                <% 
+                                     int startPage = Math.max(1, pageNum - 2);
+                                     int endPage = Math.min(totalPages, pageNum + 2);
+                                     
+                                     if (startPage > 1) {
+                                 %>
+                                     <button class="page-btn" data-page="1">1</button>
+                                     <% if (startPage > 2) { %>
+                                         <span style="color:var(--gray-400);font-size:0.85rem;padding:0 0.3rem;">...</span>
+                                     <% } %>
+                                 <% } %>
+                                 <% for (int i = startPage; i <= endPage; i++) { %>
+                                     <button class="page-btn <%= i == pageNum ? "active" : "" %>" data-page="<%= i %>"><%= i %></button>
+                                 <% } %>
+                                 <% if (endPage < totalPages) { %>
+                                     <% if (endPage < totalPages - 1) { %>
+                                         <span style="color:var(--gray-400);font-size:0.85rem;padding:0 0.3rem;">...</span>
+                                     <% } %>
+                                     <button class="page-btn" data-page="<%= totalPages %>"><%= totalPages %></button>
+                                 <% } %>
+                                 <button class="page-btn" <%= pageNum >= totalPages ? "disabled" : "" %> data-page="<%= pageNum + 1 %>">
+                                     <i class="fa-solid fa-chevron-right"></i>
+                                 </button>
                             </div>
                         </div>
                     </div><!-- /shop-layout -->
@@ -2334,22 +2519,186 @@
 
                     autoSlide = setInterval(function () { changeSlide(1); }, 5000);
 
-                    // ── Sort tabs ──
-                    document.querySelectorAll('.sort-tab').forEach(function (btn) {
-                        btn.addEventListener('click', function () {
-                            document.querySelectorAll('.sort-tab').forEach(function (b) { b.classList.remove('active'); });
-                            btn.classList.add('active');
-                        });
-                    });
+                    // ── Central state for filters ──
+                    var filterState = {
+                        search: '<%= search != null ? search : "" %>',
+                        category: '<%= categoryParam != null ? categoryParam : "all" %>',
+                        minPrice: '<%= minPriceParam != null ? minPriceParam : "" %>',
+                        maxPrice: '<%= maxPriceParam != null ? maxPriceParam : "" %>',
+                        rating: '<%= ratingParam != null ? ratingParam : "" %>',
+                        status: '<%= status != null ? status : "" %>',
+                        sort: '<%= sort != null ? sort : "popular" %>',
+                        page: <%= pageNum %>
+                    };
 
-                    // ── Category cards ──
+                    function applyFilters() {
+                        var params = new URLSearchParams();
+                        if (filterState.search) params.set('search', filterState.search);
+                        if (filterState.category && filterState.category !== 'all') params.set('category', filterState.category);
+                        if (filterState.minPrice) params.set('minPrice', filterState.minPrice);
+                        if (filterState.maxPrice) params.set('maxPrice', filterState.maxPrice);
+                        if (filterState.rating) params.set('rating', filterState.rating);
+                        if (filterState.status) params.set('status', filterState.status);
+                        if (filterState.sort) params.set('sort', filterState.sort);
+                        if (filterState.page > 1) params.set('page', filterState.page);
+                        
+                        var url = 'home.jsp?' + params.toString();
+                        console.log("[AJAX Apply Filters]:", url);
+                        
+                        fetch(url)
+                            .then(res => res.text())
+                            .then(html => {
+                                const parser = new DOMParser();
+                                const doc = parser.parseFromString(html, 'text/html');
+                                
+                                // Update Products Grid
+                                const newGrid = doc.querySelector('.products-grid');
+                                var productsGrid = document.querySelector('.products-grid');
+                                if (newGrid && productsGrid) {
+                                    productsGrid.innerHTML = newGrid.innerHTML;
+                                }
+                                
+                                // Update Pagination
+                                const newPagination = doc.querySelector('.pagination');
+                                const pagination = document.querySelector('.pagination');
+                                if (newPagination && pagination) {
+                                    pagination.innerHTML = newPagination.innerHTML;
+                                }
+                                
+                                // Update Sort Bar Left (counts text)
+                                const newSortBarLeft = doc.querySelector('.sort-bar-left');
+                                const sortBarLeft = document.querySelector('.sort-bar-left');
+                                if (newSortBarLeft && sortBarLeft) {
+                                    sortBarLeft.innerHTML = newSortBarLeft.innerHTML;
+                                }
+                                
+                                // Scroll products grid into view
+                                const shopLayout = document.querySelector('.shop-layout');
+                                if (shopLayout) {
+                                    shopLayout.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                                }
+                            })
+                            .catch(err => console.error("Lỗi AJAX lọc:", err));
+                    }
+
+                    // ── Search input events ──
+                    const searchInput = document.getElementById('searchQuery');
+                    if (searchInput) {
+                        searchInput.addEventListener('keyup', function (e) {
+                            if (e.key === 'Enter') {
+                                filterState.search = this.value;
+                                filterState.page = 1;
+                                applyFilters();
+                            }
+                        });
+                        searchInput.addEventListener('blur', function () {
+                            if (filterState.search !== this.value) {
+                                filterState.search = this.value;
+                                filterState.page = 1;
+                                applyFilters();
+                            }
+                        });
+                    }
+
+                    // ── Category cards (if any rendered in main banner) ──
                     document.querySelectorAll('.category-card').forEach(function (card) {
                         card.addEventListener('click', function (e) {
                             e.preventDefault();
                             document.querySelectorAll('.category-card').forEach(function (c) { c.classList.remove('active'); });
                             card.classList.add('active');
+                            
+                            // Get category ID from some attribute or link if needed
                         });
                     });
+
+                    // ── Sidebar filter clicks delegation ──
+                    const filterSidebar = document.querySelector('.filter-sidebar');
+                    if (filterSidebar) {
+                        filterSidebar.addEventListener('click', function(e) {
+                            // Category Filter
+                            // Rating Filter
+                            const ratingItem = e.target.closest('.rating-filter-item');
+                            if (ratingItem) {
+                                e.preventDefault();
+                                const checkBox = ratingItem.querySelector('.check-box');
+                                if (checkBox.classList.contains('checked')) {
+                                    checkBox.classList.remove('checked');
+                                    filterState.rating = '';
+                                } else {
+                                    document.querySelectorAll('.rating-filter-item .check-box').forEach(el => el.classList.remove('checked'));
+                                    checkBox.classList.add('checked');
+                                    filterState.rating = ratingItem.getAttribute('data-rating');
+                                }
+                                filterState.page = 1;
+                                applyFilters();
+                                return;
+                            }
+                            
+                            // Status Filter (Availability)
+                            const statusItem = e.target.closest('.status-filter-item');
+                            if (statusItem) {
+                                e.preventDefault();
+                                const checkBox = statusItem.querySelector('.check-box');
+                                if (checkBox.classList.contains('checked')) {
+                                    checkBox.classList.remove('checked');
+                                    filterState.status = '';
+                                } else {
+                                    document.querySelectorAll('.status-filter-item .check-box').forEach(el => el.classList.remove('checked'));
+                                    checkBox.classList.add('checked');
+                                    filterState.status = statusItem.getAttribute('data-status');
+                                }
+                                filterState.page = 1;
+                                applyFilters();
+                                return;
+                            }
+                        });
+                    }
+
+                    // ── Price range Apply ──
+                    const btnApplyPrice = document.getElementById('btnApplyPrice');
+                    if (btnApplyPrice) {
+                        btnApplyPrice.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            const minVal = document.getElementById('minPriceInput').value.trim();
+                            const maxVal = document.getElementById('maxPriceInput').value.trim();
+                            
+                            filterState.minPrice = minVal;
+                            filterState.maxPrice = maxVal;
+                            filterState.page = 1;
+                            applyFilters();
+                        });
+                    }
+
+                    // ── Sort tabs delegation ──
+                    const sortTabsContainer = document.querySelector('.sort-tabs');
+                    if (sortTabsContainer) {
+                        sortTabsContainer.addEventListener('click', function(e) {
+                            const tab = e.target.closest('.sort-tab');
+                            if (!tab || tab.classList.contains('active')) return;
+                            
+                            document.querySelectorAll('.sort-tab').forEach(t => t.classList.remove('active'));
+                            tab.classList.add('active');
+                            
+                            filterState.sort = tab.getAttribute('data-sort');
+                            filterState.page = 1;
+                            applyFilters();
+                        });
+                    }
+
+                    // ── Event delegation for pagination clicks ──
+                    const paginationContainer = document.querySelector('.pagination');
+                    if (paginationContainer) {
+                        paginationContainer.addEventListener('click', function (e) {
+                            const btn = e.target.closest('.page-btn');
+                            if (!btn || btn.disabled || btn.classList.contains('active')) return;
+                            
+                            const pageNum = btn.getAttribute('data-page');
+                            if (pageNum) {
+                                filterState.page = parseInt(pageNum, 10);
+                                applyFilters();
+                            }
+                        });
+                    }
 
                     // ── Go to Profile tab ──
                     function goToProfile() {
@@ -2364,44 +2713,126 @@
                     }
 
                     // ── Mở Modal Chi Tiết Sản Phẩm khi bấm vào thẻ sản phẩm (Hỗ trợ AJAX) ──
-                    const productsGrid = document.querySelector('.products-grid');
+                    var productsGrid = document.querySelector('.products-grid');
                     if (productsGrid) {
                         productsGrid.addEventListener('click', function (e) {
                             const card = e.target.closest('.product-card');
                             if (!card) return;
                             // Không chuyển trang nếu người dùng bấm vào nút Wishlist hoặc Thêm Giỏ Hàng
-                            if (e.target.closest('.product-wishlist') || e.target.closest('.btn-cart')) return;
+                            if (e.target.closest('.product-wishlist') || e.target.closest('.btn-cart') || e.target.closest('.btn-add-cart') || e.target.closest('.btn-buy-now')) return;
                             
                             const productId = card.getAttribute('data-id');
                             if (productId) window.location.href = 'info?id=' + productId;
                         });
                     }
 
-                    // ── AJAX Lọc/Sắp Xếp Sản Phẩm Không Reload Trang ──
-                    document.querySelectorAll('.sort-tab').forEach(function(tab) {
-                        tab.addEventListener('click', function(e) {
-                            e.preventDefault();
-                            var sortType = this.getAttribute('data-sort');
-                            if (!sortType) return;
-                            
-                            // Đổi màu tab
-                            document.querySelectorAll('.sort-tab').forEach(t => t.classList.remove('active'));
-                            this.classList.add('active');
-                            
-                            // Gọi backend lấy danh sách mới
-                            fetch('home.jsp?sort=' + sortType)
-                                .then(res => res.text())
-                                .then(html => {
-                                    const parser = new DOMParser();
-                                    const doc = parser.parseFromString(html, 'text/html');
-                                    const newGrid = doc.querySelector('.products-grid');
-                                    if (newGrid && productsGrid) {
-                                        productsGrid.innerHTML = newGrid.innerHTML;
-                                    }
-                                })
-                                .catch(err => console.error("Lỗi AJAX Sắp xếp:", err));
-                        });
+                    // ── Cập nhật số giỏ hàng khi trang hiển thị lại từ cache/lịch sử ──
+                    function refreshCartBadge() {
+                        const badge = document.querySelector('.nav-icon-btn[title=\"Giỏ hàng\"] .cart-badge');
+                        if (!badge) return;
+                        const raw = '<%= cartCount %>';
+                        const count = isNaN(raw) ? 0 : parseInt(raw, 10);
+                        if (count > 0) {
+                            badge.textContent = count;
+                            badge.style.display = '';
+                        } else {
+                            badge.style.display = 'none';
+                        }
+                    }
+
+                    window.addEventListener('pageshow', function(event) {
+                        if (event.persisted) {
+                            refreshCartBadge();
+                        }
                     });
+
+                    document.addEventListener('visibilitychange', function() {
+                        if (document.visibilityState === 'visible') {
+                            refreshCartBadge();
+                        }
+                    });
+
+                    window.addEventListener('pageshow', function(event) {
+                        if (event.persisted) {
+                            refreshCartBadge();
+                        }
+                    });
+
+                    document.addEventListener('visibilitychange', function() {
+                        if (document.visibilityState === 'visible') {
+                            refreshCartBadge();
+                        }
+                    });
+
+                    refreshCartBadge();
                 </script>
-            </body>
+            <jsp:include page="report-modal.jsp" />
+    <% if (Account != null && "admin".equals(Account.getRoleName())) { %>
+    <!-- Floating Report Button -->
+    <a href="<%= request.getContextPath() %>/admin/reports" class="floating-report-btn" title="Kiểm tra báo cáo">
+        <i class="fa-solid fa-flag"></i>
+    </a>
+    <style>
+        .floating-report-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background-color: #ef4444;
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            cursor: pointer;
+            z-index: 1000;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        .floating-report-btn:hover {
+            transform: translateY(-5px);
+            background-color: #dc2626;
+            color: white;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+        }
+    </style>
+    <% } %>
+
+    <% if (Account != null) { %>
+    <!-- Floating Chat Button -->
+    <a href="<%= request.getContextPath() %>/chat" class="floating-chat-btn" title="Phòng Chat">
+        <i class="fa-solid fa-comments"></i>
+    </a>
+    <style>
+        .floating-chat-btn {
+            position: fixed;
+            bottom: <% if ("admin".equals(Account.getRoleName()) || "customer".equalsIgnoreCase(Account.getRoleName())) { out.print("100px"); } else { out.print("30px"); } %>;
+            right: 30px;
+            background-color: #3b82f6;
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            cursor: pointer;
+            z-index: 1000;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        .floating-chat-btn:hover {
+            transform: translateY(-5px);
+            background-color: #2563eb;
+            color: white;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+        }
+    </style>
+    <% } %>
+</body>
             </html>

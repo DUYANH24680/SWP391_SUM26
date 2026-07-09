@@ -9,10 +9,42 @@ import java.util.List;
 public class VoucherDAO extends DbContext {
 
     /**
+     * Ensure the Vouchers table exists in the database.
+     * Creates the table if it doesn't exist (backward compatible).
+     */
+    private void ensureTableExists() {
+        try {
+            DatabaseMetaData meta = getConnection().getMetaData();
+            try (ResultSet tables = meta.getTables(null, null, "Vouchers", null)) {
+                if (!tables.next()) {
+                    String createSql = "CREATE TABLE Vouchers ("
+                        + "id INT IDENTITY(1,1) PRIMARY KEY, "
+                        + "code NVARCHAR(50) NOT NULL UNIQUE, "
+                        + "discount_percent FLOAT DEFAULT 0, "
+                        + "max_discount FLOAT DEFAULT 0, "
+                        + "minimum_order FLOAT DEFAULT 0, "
+                        + "start_date DATETIME NULL, "
+                        + "end_date DATETIME NULL, "
+                        + "quantity INT DEFAULT 0, "
+                        + "used_count INT DEFAULT 0, "
+                        + "status BIT DEFAULT 1)";
+                    try (Statement st = getConnection().createStatement()) {
+                        st.execute(createSql);
+                        System.out.println("[VoucherDAO] Created Vouchers table");
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[VoucherDAO] ensureTableExists warning: " + e.getMessage());
+        }
+    }
+
+    /**
      * Find a voucher by its code.
      */
     public Voucher findByCode(String code) {
         if (code == null || code.trim().isEmpty()) return null;
+        ensureTableExists();
         
         String sql = "SELECT id, code, discount_percent, max_discount, minimum_order, start_date, end_date, quantity, used_count, status "
                    + "FROM Vouchers WHERE code = ?";
@@ -34,6 +66,7 @@ public class VoucherDAO extends DbContext {
      * Get all active vouchers that can be used.
      */
     public List<Voucher> getAllActiveVouchers() {
+        ensureTableExists();
         List<Voucher> list = new ArrayList<>();
         String sql = "SELECT id, code, discount_percent, max_discount, minimum_order, start_date, end_date, quantity, used_count, status "
                    + "FROM Vouchers "
@@ -64,6 +97,30 @@ public class VoucherDAO extends DbContext {
         v.setUsedCount(rs.getInt("used_count"));
         v.setStatus(rs.getBoolean("status"));
         return v;
+    }
+
+    public void incrementUsedCount(int voucherId) {
+        if (voucherId <= 0) return;
+        String sql = "UPDATE Vouchers SET used_count = used_count + 1 WHERE id = ?";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            ps.setInt(1, voucherId);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("[VoucherDAO] incrementUsedCount error: " + e.getMessage());
+            throw new RuntimeException("VoucherDAO.incrementUsedCount error: " + e.getMessage(), e);
+        }
+    }
+
+    public void decrementUsedCount(int voucherId) {
+        if (voucherId <= 0) return;
+        String sql = "UPDATE Vouchers SET used_count = CASE WHEN used_count > 0 THEN used_count - 1 ELSE 0 END WHERE id = ?";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            ps.setInt(1, voucherId);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("[VoucherDAO] decrementUsedCount error: " + e.getMessage());
+            throw new RuntimeException("VoucherDAO.decrementUsedCount error: " + e.getMessage(), e);
+        }
     }
 }
 

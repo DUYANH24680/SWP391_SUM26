@@ -71,3 +71,4 @@ public class RemoveSelectedItemsServlet extends HttpServlet {
         }
     }
 }
+

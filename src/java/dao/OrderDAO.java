@@ -109,6 +109,109 @@ public class OrderDAO extends DbContext {
     }
 
     /**
+     * Create multiple orders with their respective details in a single database transaction.
+     */
+    public boolean createMultipleOrders(List<Order> orders, List<List<OrderDetail>> detailsList) {
+        if (orders == null || detailsList == null || orders.size() != detailsList.size() || orders.isEmpty()) {
+            return false;
+        }
+
+        String sqlOrder = "INSERT INTO Orders (customer_id, voucher_id, recipient_name, recipient_phone, address, payment_method, status, payment_status, total_cost, discount_amount, shipping_fee, final_cost, note, order_date) "
+                        + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, GETDATE())";
+        
+        String sqlDetail = "INSERT INTO OrderDetails (order_id, product_id, quantity, unit_price, total_price) VALUES (?, ?, ?, ?, ?)";
+
+        Connection conn = null;
+        PreparedStatement psOrder = null;
+        PreparedStatement psDetail = null;
+        ResultSet rsKeys = null;
+
+        try {
+            conn = getConnection();
+            conn.setAutoCommit(false);
+
+            psOrder = conn.prepareStatement(sqlOrder, Statement.RETURN_GENERATED_KEYS);
+            psDetail = conn.prepareStatement(sqlDetail);
+
+            for (int i = 0; i < orders.size(); i++) {
+                Order order = orders.get(i);
+                List<OrderDetail> details = detailsList.get(i);
+
+                psOrder.setInt(1, order.getCustomerId());
+                if (order.getVoucherId() != null) {
+                    psOrder.setInt(2, order.getVoucherId());
+                } else {
+                    psOrder.setNull(2, Types.INTEGER);
+                }
+                psOrder.setString(3, order.getRecipientName());
+                psOrder.setString(4, order.getRecipientPhone());
+                psOrder.setString(5, order.getAddress());
+                psOrder.setString(6, order.getPaymentMethod());
+                psOrder.setInt(7, order.getStatus());
+                psOrder.setInt(8, order.getPaymentStatus());
+                psOrder.setDouble(9, order.getTotalCost());
+                psOrder.setDouble(10, order.getDiscountAmount());
+                psOrder.setDouble(11, order.getShippingFee());
+                psOrder.setDouble(12, order.getFinalCost());
+                psOrder.setString(13, order.getNote());
+
+                int affectedRows = psOrder.executeUpdate();
+                if (affectedRows == 0) {
+                    conn.rollback();
+                    return false;
+                }
+
+                rsKeys = psOrder.getGeneratedKeys();
+                if (!rsKeys.next()) {
+                    conn.rollback();
+                    return false;
+                }
+                int generatedOrderId = rsKeys.getInt(1);
+                order.setId(generatedOrderId);
+
+                // Insert details for this order
+                for (OrderDetail detail : details) {
+                    psDetail.setInt(1, generatedOrderId);
+                    psDetail.setInt(2, detail.getProductId());
+                    psDetail.setInt(3, detail.getQuantity());
+                    psDetail.setDouble(4, detail.getUnitPrice());
+                    psDetail.setDouble(5, detail.getTotalPrice());
+                    psDetail.addBatch();
+                    
+                    detail.setOrderId(generatedOrderId);
+                }
+                psDetail.executeBatch();
+                psDetail.clearBatch();
+                
+                rsKeys.close();
+                rsKeys = null;
+            }
+
+            conn.commit();
+            System.out.println("[OrderDAO] createMultipleOrders: " + orders.size() + " orders created successfully.");
+            return true;
+        } catch (SQLException e) {
+            System.err.println("[OrderDAO] createMultipleOrders error: " + e.getMessage());
+            if (conn != null) {
+                try {
+                    conn.rollback();
+                } catch (SQLException ex) {
+                    /* ignore */
+                }
+            }
+            throw new RuntimeException("OrderDAO.createMultipleOrders error: " + e.getMessage(), e);
+        } finally {
+            if (rsKeys != null) try { rsKeys.close(); } catch (SQLException ignored) {}
+            if (psOrder != null) try { psOrder.close(); } catch (SQLException ignored) {}
+            if (psDetail != null) try { psDetail.close(); } catch (SQLException ignored) {}
+            if (conn != null) {
+                try { conn.setAutoCommit(true); } catch (SQLException ignored) {}
+            }
+        }
+    }
+
+
+    /**
      * Get orders for a specific customer.
      */
     public List<Order> getOrdersByCustomerId(int customerId) {
@@ -262,6 +365,140 @@ public class OrderDAO extends DbContext {
             }
         } catch (SQLException e) {
             System.err.println("[OrderDAO] getAllOrdersForAdmin error: " + e.getMessage());
+            throw new RuntimeException("OrderDAO.getAllOrdersForAdmin error: " + e.getMessage(), e);
+        }
+        return list;
+    }
+
+    /**
+     * Count total orders for Admin with optional filters (for pagination).
+     */
+    public int getAllOrdersForAdminCount(Integer status, Integer shopId,
+            java.sql.Date fromDate, java.sql.Date toDate,
+            Double minValue, Double maxValue) {
+        StringBuilder sql = new StringBuilder(
+            "SELECT COUNT(DISTINCT o.id) "
+          + "FROM Orders o "
+          + "JOIN OrderDetails od ON o.id = od.order_id "
+          + "JOIN Products p ON od.product_id = p.id "
+          + "JOIN Shops s ON p.shop_id = s.id "
+          + "WHERE 1=1 ");
+
+        List<Object> params = new ArrayList<>();
+
+        if (shopId != null && shopId > 0) {
+            sql.append("AND p.shop_id = ? ");
+            params.add(shopId);
+        }
+        if (status != null && status > 0) {
+            sql.append("AND o.status = ? ");
+            params.add(status);
+        }
+        if (fromDate != null) {
+            sql.append("AND CAST(o.order_date AS DATE) >= ? ");
+            params.add(fromDate);
+        }
+        if (toDate != null) {
+            sql.append("AND CAST(o.order_date AS DATE) <= ? ");
+            params.add(toDate);
+        }
+        if (minValue != null) {
+            sql.append("AND o.final_cost >= ? ");
+            params.add(minValue);
+        }
+        if (maxValue != null) {
+            sql.append("AND o.final_cost <= ? ");
+            params.add(maxValue);
+        }
+
+        try (PreparedStatement ps = getConnection().prepareStatement(sql.toString())) {
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[OrderDAO] getAllOrdersForAdminCount error: " + e.getMessage());
+            throw new RuntimeException("OrderDAO.getAllOrdersForAdminCount error: " + e.getMessage(), e);
+        }
+        return 0;
+    }
+
+    /**
+     * Get all orders for Admin with pagination and optional filters.
+     * Returns orders from ALL shops across the entire system.
+     */
+    public List<Order> getAllOrdersForAdmin(Integer status, Integer shopId,
+            java.sql.Date fromDate, java.sql.Date toDate,
+            Double minValue, Double maxValue, int page, int pageSize) {
+        List<Order> list = new ArrayList<>();
+        StringBuilder sql = new StringBuilder(
+            "SELECT o.id, o.customer_id, o.voucher_id, o.recipient_name, o.recipient_phone, o.address, o.payment_method, "
+          + "o.status, o.payment_status, o.total_cost, o.discount_amount, o.shipping_fee, o.final_cost, o.note, o.order_date, o.cancelled_at, "
+          + "a.fullname AS customer_name, v.code AS voucher_code, s.shop_name "
+          + "FROM Orders o "
+          + "JOIN OrderDetails od ON o.id = od.order_id "
+          + "JOIN Products p ON od.product_id = p.id "
+          + "JOIN Shops s ON p.shop_id = s.id "
+          + "JOIN Accounts a ON o.customer_id = a.id "
+          + "LEFT JOIN Vouchers v ON o.voucher_id = v.id "
+          + "WHERE 1=1 ");
+
+        List<Object> params = new ArrayList<>();
+
+        if (shopId != null && shopId > 0) {
+            sql.append("AND p.shop_id = ? ");
+            params.add(shopId);
+        }
+        if (status != null && status > 0) {
+            sql.append("AND o.status = ? ");
+            params.add(status);
+        }
+        if (fromDate != null) {
+            sql.append("AND CAST(o.order_date AS DATE) >= ? ");
+            params.add(fromDate);
+        }
+        if (toDate != null) {
+            sql.append("AND CAST(o.order_date AS DATE) <= ? ");
+            params.add(toDate);
+        }
+        if (minValue != null) {
+            sql.append("AND o.final_cost >= ? ");
+            params.add(minValue);
+        }
+        if (maxValue != null) {
+            sql.append("AND o.final_cost <= ? ");
+            params.add(maxValue);
+        }
+
+        sql.append("GROUP BY o.id, o.customer_id, o.voucher_id, o.recipient_name, o.recipient_phone, o.address, o.payment_method, "
+                 + "o.status, o.payment_status, o.total_cost, o.discount_amount, o.shipping_fee, o.final_cost, o.note, o.order_date, o.cancelled_at, "
+                 + "a.fullname, v.code, s.shop_name "
+                 + "ORDER BY o.order_date DESC "
+                 + "OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
+
+        int offset = (page - 1) * pageSize;
+        params.add(offset);
+        params.add(pageSize);
+
+        try (PreparedStatement ps = getConnection().prepareStatement(sql.toString())) {
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Order o = mapRow(rs);
+                    o.setCustomerName(rs.getString("customer_name"));
+                    o.setVoucherCode(rs.getString("voucher_code"));
+                    o.setShopName(rs.getString("shop_name"));
+                    list.add(o);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[OrderDAO] getAllOrdersForAdmin (paginated) error: " + e.getMessage());
             throw new RuntimeException("OrderDAO.getAllOrdersForAdmin error: " + e.getMessage(), e);
         }
         return list;

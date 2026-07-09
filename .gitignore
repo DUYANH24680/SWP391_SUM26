@@ -3,7 +3,11 @@ nbproject/private/
 nbproject/ant-deploy.xml
 nbbuild/
 dist/
+
+nbproject/private/
+
 nbproject/project.properties
+
 # Build output
 build/
 *.html
@@ -16,5 +20,5 @@ Thumbs.db
 .idea/
 *.iml
 .vscode/
-
-
+.understand-anything/
+.cursor/

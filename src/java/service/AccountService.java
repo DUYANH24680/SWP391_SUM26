@@ -16,14 +16,20 @@ public class AccountService {
         if (fullname == null || fullname.trim().isEmpty()) {
             return "Họ và tên không được để trống.";
         }
+        if (fullname.trim().length() < 2 || fullname.trim().length() > 50) {
+            return "Họ và tên phải từ 2-50 ký tự.";
+        }
         if (email == null || email.trim().isEmpty()) {
             return "Email không được để trống.";
         }
-        if (!email.contains("@")) {
+        if (!email.matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")) {
             return "Email không đúng định dạng.";
         }
         if (phone != null && !phone.isEmpty() && !phone.matches("^[0-9]{9,11}$")) {
             return "Số điện thoại không hợp lệ (9-11 chữ số).";
+        }
+        if (address != null && address.length() > 200) {
+            return "Địa chỉ không được vượt quá 200 ký tự.";
         }
         AccountDAO dao = new AccountDAO();
         try {

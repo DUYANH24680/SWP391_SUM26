@@ -1,10 +1,11 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="model.Account" %>
 <%@ page import="model.Order" %>
 <%@ page import="model.OrderDetail" %>
 <%@ page import="model.Shop" %>
 <%@ page import="java.util.List" %>
 <%@ page import="java.util.Map" %>
+<%@ page import="Utils.ImageUrlUtil" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%
@@ -488,7 +489,7 @@
                                 %>
                                     <div class="item-row">
                                         <% if (od.getProductImage() != null && !od.getProductImage().trim().isEmpty()) { %>
-                                            <img src="../<%= od.getProductImage() %>" alt="<%= od.getProductTitle() %>" class="item-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                                            <img src="<%= ImageUrlUtil.resolve(od.getProductImage(), request.getContextPath()) %>" alt="<%= od.getProductTitle() %>" class="item-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
                                             <div class="item-img-placeholder" style="display:none;">🍎</div>
                                         <% } else { %>
                                             <div class="item-img-placeholder">🍎</div>
@@ -616,4 +617,5 @@
     </script>
 </body>
 </html>
+
 

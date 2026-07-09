@@ -16,7 +16,8 @@ public class ProductDAO extends DbContext {
                    + "FROM Products p "
                    + "LEFT JOIN Shops s ON p.shop_id = s.id "
                    + "WHERE p.isDelete = 0 ORDER BY p.created_at DESC";
-        try (PreparedStatement ps = getConnection().prepareStatement(sql);
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             List<Product> list = new ArrayList<>();
             while (rs.next()) {
@@ -33,7 +34,8 @@ public class ProductDAO extends DbContext {
 
     public int countAllProducts() {
         String sql = "SELECT COUNT(*) FROM Products WHERE isDelete = 0";
-        try (PreparedStatement ps = getConnection().prepareStatement(sql);
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             if (rs.next()) {
                 int count = rs.getInt(1);
@@ -57,7 +59,8 @@ public class ProductDAO extends DbContext {
                    + "LEFT JOIN Shops s ON p.shop_id = s.id "
                    + "WHERE p.status = 0 AND p.isDelete = 0 "
                    + "ORDER BY p.created_at ASC";
-        try (PreparedStatement ps = getConnection().prepareStatement(sql);
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             List<Product> list = new ArrayList<>();
             while (rs.next()) {
@@ -104,7 +107,8 @@ public class ProductDAO extends DbContext {
                    + "WHERE p.isDelete = 0 "
                    + "  AND (p.title LIKE ? OR p.description LIKE ?) "
                    + "ORDER BY p.created_at DESC";
-        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             String pattern = "%" + keyword + "%";
             ps.setString(1, pattern);
             ps.setString(2, pattern);
@@ -131,7 +135,8 @@ public class ProductDAO extends DbContext {
                    + "FROM Products p "
                    + "LEFT JOIN Shops s ON p.shop_id = s.id "
                    + "WHERE p.id = ?";
-        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -159,7 +164,8 @@ public class ProductDAO extends DbContext {
                    + "LEFT JOIN Shops s ON p.shop_id = s.id "
                    + "WHERE p.shop_id = ? AND p.isDelete = 0 "
                    + "ORDER BY p.created_at DESC";
-        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, shopId);
             try (ResultSet rs = ps.executeQuery()) {
                 List<Product> list = new ArrayList<>();
@@ -188,7 +194,8 @@ public class ProductDAO extends DbContext {
                    + "LEFT JOIN Shops s ON p.shop_id = s.id "
                    + "WHERE p.category_id = ? AND p.isDelete = 0 AND p.status = 1 "
                    + "ORDER BY p.created_at DESC";
-        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, categoryId);
             try (ResultSet rs = ps.executeQuery()) {
                 List<Product> list = new ArrayList<>();
@@ -208,7 +215,8 @@ public class ProductDAO extends DbContext {
 
     public int countProductsByShopId(int shopId) {
         String sql = "SELECT COUNT(*) FROM Products WHERE shop_id = ? AND isDelete = 0";
-        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, shopId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -432,6 +440,208 @@ public class ProductDAO extends DbContext {
     }
 
     /**
+     * Thuc hien nhap kho: lock san pham, kiem tra ownership, cap nhat stock,
+     * ghi log trong 1 transaction. Tat ca thao tac deu nam trong transaction.
+     *
+     * @param productId  id san pham
+     * @param shopId     id cua hang (dung de kiem tra ownership)
+     * @param accountId  id tai khoan thuc hien nhap
+     * @param quantity   so luong nhap (> 0)
+     * @param note       ghi chu (co the null)
+     * @return int[2] = {previousStock, newStock} neu thanh cong;
+     *         null neu san pham khong ton tai hoac khong thuoc shop
+     * @throws SQLException
+     */
+    public int[] importStock(int productId, int shopId, int accountId, int quantity, String note, Timestamp expiredDate) throws SQLException {
+        String txType = "IMPORT";
+        String sqlLock = "SELECT stock_quantity, shop_id FROM Products WHERE id = ? AND isDelete = 0";
+        String sqlUpdate = "UPDATE Products SET stock_quantity = ? WHERE id = ? AND isDelete = 0";
+        String sqlLog = "INSERT INTO InventoryTransactions "
+                      + "(product_id, account_id, quantity, previous_stock, new_stock, note, transaction_type, expired_date) "
+                      + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+
+        Connection conn = null;
+        PreparedStatement psLock = null;
+        PreparedStatement psUpdate = null;
+        PreparedStatement psLog = null;
+        ResultSet rs = null;
+
+        try {
+            conn = getConnection();
+            conn.setAutoCommit(false);
+
+            // Lay stock hien tai + lock row
+            psLock = conn.prepareStatement(sqlLock);
+            psLock.setInt(1, productId);
+            rs = psLock.executeQuery();
+            if (!rs.next()) {
+                conn.rollback();
+                return null;
+            }
+            int previousStock = rs.getInt("stock_quantity");
+            int actualShopId = rs.getInt("shop_id");
+            rs.close();
+            rs = null;
+
+            // Kiem tra ownership
+            if (actualShopId != shopId) {
+                conn.rollback();
+                return null;
+            }
+
+            int newStock = previousStock + quantity;
+
+            // Cap nhat stock
+            psUpdate = conn.prepareStatement(sqlUpdate);
+            psUpdate.setInt(1, newStock);
+            psUpdate.setInt(2, productId);
+            int rowsUpdated = psUpdate.executeUpdate();
+            if (rowsUpdated == 0) {
+                conn.rollback();
+                return null;
+            }
+
+            // Ghi log nhap kho
+            psLog = conn.prepareStatement(sqlLog);
+            psLog.setInt(1, productId);
+            psLog.setInt(2, accountId);
+            psLog.setInt(3, quantity);
+            psLog.setInt(4, previousStock);
+            psLog.setInt(5, newStock);
+            if (note != null && !note.trim().isEmpty()) {
+                psLog.setString(6, note.trim());
+            } else {
+                psLog.setNull(6, Types.NVARCHAR);
+            }
+            psLog.setString(7, txType);
+            if (expiredDate != null) {
+                psLog.setTimestamp(8, expiredDate);
+            } else {
+                psLog.setNull(8, Types.TIMESTAMP);
+            }
+            psLog.executeUpdate();
+
+            conn.commit();
+            System.out.println("[ProductDAO] importStock(productId=" + productId + ", shopId=" + shopId
+                + ", qty=" + quantity + ", prev=" + previousStock + ", new=" + newStock + ") success");
+            return new int[]{previousStock, newStock};
+
+        } catch (SQLException e) {
+            if (conn != null) {
+                try { conn.rollback(); } catch (SQLException ignored) {}
+            }
+            throw e;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException ignored) {}
+            if (psLock != null) try { psLock.close(); } catch (SQLException ignored) {}
+            if (psUpdate != null) try { psUpdate.close(); } catch (SQLException ignored) {}
+            if (psLog != null) try { psLog.close(); } catch (SQLException ignored) {}
+            if (conn != null) {
+                try { conn.setAutoCommit(true); } catch (SQLException ignored) {}
+            }
+        }
+    }
+
+    /**
+     * Thuc hien xuat kho: lock san pham, kiem tra du stock, cap nhat stock,
+     * ghi log trong 1 transaction.
+     *
+     * @param productId  id san pham
+     * @param shopId     id cua hang (dung de kiem tra ownership)
+     * @param accountId  id tai khoan thuc hien xuat
+     * @param quantity   so luong xuat (> 0)
+     * @param note       ghi chu (co the null)
+     * @return int[2] = {previousStock, newStock} neu thanh cong;
+     *         null neu san pham khong ton tai, khong thuoc shop, hoac khong du stock
+     * @throws SQLException
+     */
+    public int[] exportStock(int productId, int shopId, int accountId, int quantity, String note) throws SQLException {
+        String txType = "EXPORT";
+        String sqlLock = "SELECT stock_quantity, shop_id FROM Products WHERE id = ? AND isDelete = 0";
+        String sqlUpdate = "UPDATE Products SET stock_quantity = ? WHERE id = ? AND isDelete = 0";
+        String sqlLog = "INSERT INTO InventoryTransactions "
+                      + "(product_id, account_id, quantity, previous_stock, new_stock, note, transaction_type) "
+                      + "VALUES (?, ?, ?, ?, ?, ?, ?)";
+
+        Connection conn = null;
+        PreparedStatement psLock = null;
+        PreparedStatement psUpdate = null;
+        PreparedStatement psLog = null;
+        ResultSet rs = null;
+
+        try {
+            conn = getConnection();
+            conn.setAutoCommit(false);
+
+            psLock = conn.prepareStatement(sqlLock);
+            psLock.setInt(1, productId);
+            rs = psLock.executeQuery();
+            if (!rs.next()) {
+                conn.rollback();
+                return null;
+            }
+            int previousStock = rs.getInt("stock_quantity");
+            int actualShopId = rs.getInt("shop_id");
+            rs.close();
+            rs = null;
+
+            if (actualShopId != shopId) {
+                conn.rollback();
+                return null;
+            }
+
+            if (previousStock < quantity) {
+                conn.rollback();
+                return null;
+            }
+
+            int newStock = previousStock - quantity;
+
+            psUpdate = conn.prepareStatement(sqlUpdate);
+            psUpdate.setInt(1, newStock);
+            psUpdate.setInt(2, productId);
+            int rowsUpdated = psUpdate.executeUpdate();
+            if (rowsUpdated == 0) {
+                conn.rollback();
+                return null;
+            }
+
+            psLog = conn.prepareStatement(sqlLog);
+            psLog.setInt(1, productId);
+            psLog.setInt(2, accountId);
+            psLog.setInt(3, quantity);
+            psLog.setInt(4, previousStock);
+            psLog.setInt(5, newStock);
+            if (note != null && !note.trim().isEmpty()) {
+                psLog.setString(6, note.trim());
+            } else {
+                psLog.setNull(6, Types.NVARCHAR);
+            }
+            psLog.setString(7, txType);
+            psLog.executeUpdate();
+
+            conn.commit();
+            System.out.println("[ProductDAO] exportStock(productId=" + productId + ", shopId=" + shopId
+                + ", qty=" + quantity + ", prev=" + previousStock + ", new=" + newStock + ") success");
+            return new int[]{previousStock, newStock};
+
+        } catch (SQLException e) {
+            if (conn != null) {
+                try { conn.rollback(); } catch (SQLException ignored) {}
+            }
+            throw e;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException ignored) {}
+            if (psLock != null) try { psLock.close(); } catch (SQLException ignored) {}
+            if (psUpdate != null) try { psUpdate.close(); } catch (SQLException ignored) {}
+            if (psLog != null) try { psLog.close(); } catch (SQLException ignored) {}
+            if (conn != null) {
+                try { conn.setAutoCommit(true); } catch (SQLException ignored) {}
+            }
+        }
+    }
+
+    /**
      * Lay san pham theo id co kiem tra ownership.
      * Tra ve null neu san pham khong ton tai hoac khong thuoc shop.
      */
@@ -443,7 +653,8 @@ public class ProductDAO extends DbContext {
                    + "FROM Products p "
                    + "LEFT JOIN Shops s ON p.shop_id = s.id "
                    + "WHERE p.id = ? AND p.shop_id = ? AND p.isDelete = 0";
-        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, productId);
             ps.setInt(2, shopId);
             try (ResultSet rs = ps.executeQuery()) {
@@ -469,7 +680,8 @@ public class ProductDAO extends DbContext {
      */
     public List<String> getProductImageUrls(int productId) {
         String sql = "SELECT image_url FROM ProductImages WHERE product_id = ? ORDER BY sort_order ASC";
-        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, productId);
             try (ResultSet rs = ps.executeQuery()) {
                 List<String> urls = new ArrayList<>();
@@ -633,10 +845,10 @@ public class ProductDAO extends DbContext {
             sql.append(" AND p.category_id IN (");
             for (int i = 0; i < categoryIds.size(); i++) {
                 sql.append("?");
-                params.add(categoryIds.get(i));
                 if (i < categoryIds.size() - 1) {
                     sql.append(",");
                 }
+                params.add(categoryIds.get(i));
             }
             sql.append(") ");
         }
@@ -651,7 +863,8 @@ public class ProductDAO extends DbContext {
 
         sql.append(" ORDER BY p.created_at DESC");
 
-        try (PreparedStatement ps = getConnection().prepareStatement(sql.toString())) {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
             for (int i = 0; i < params.size(); i++) {
                 ps.setObject(i + 1, params.get(i));
             }
@@ -668,6 +881,209 @@ public class ProductDAO extends DbContext {
             e.printStackTrace();
             throw new RuntimeException("ProductDAO.filterProducts error: " + e.getMessage(), e);
         }
+    }
+
+    public List<Product> getFilteredProducts(
+            String keyword, 
+            List<Integer> categoryIds, 
+            Double minPrice, 
+            Double maxPrice, 
+            Double minRating, 
+            String status, 
+            String sort, 
+            int page, 
+            int pageSize) {
+        
+        StringBuilder sql = new StringBuilder(
+            "SELECT p.id, p.category_id, p.seller_id, p.shop_id, p.title, p.image, p.description, p.unit, "
+          + "p.stock_quantity, p.sold_quantity, p.original_price, p.sale_price, p.expired_date, "
+          + "p.average_rating, p.is_featured, p.status, p.isDelete, p.created_at, "
+          + "s.shop_name "
+          + "FROM Products p "
+          + "LEFT JOIN Shops s ON p.shop_id = s.id "
+          + "WHERE p.isDelete = 0 AND p.status = 1 "
+        );
+        
+        List<Object> params = new ArrayList<>();
+        
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            sql.append(" AND (p.title LIKE ? OR p.description LIKE ?) ");
+            String pattern = "%" + keyword.trim() + "%";
+            params.add(pattern);
+            params.add(pattern);
+        }
+        
+        if (categoryIds != null && !categoryIds.isEmpty()) {
+            sql.append(" AND p.category_id IN (");
+            for (int i = 0; i < categoryIds.size(); i++) {
+                sql.append("?");
+                if (i < categoryIds.size() - 1) {
+                    sql.append(",");
+                }
+                params.add(categoryIds.get(i));
+            }
+            sql.append(") ");
+        }
+        
+        if (minPrice != null) {
+            sql.append(" AND COALESCE(p.sale_price, p.original_price) >= ? ");
+            params.add(minPrice);
+        }
+        
+        if (maxPrice != null) {
+            sql.append(" AND COALESCE(p.sale_price, p.original_price) <= ? ");
+            params.add(maxPrice);
+        }
+        
+        if (minRating != null) {
+            sql.append(" AND p.average_rating >= ? ");
+            params.add(minRating);
+        }
+        
+        if (status != null && !status.isEmpty()) {
+            if ("in_stock".equals(status)) {
+                sql.append(" AND p.stock_quantity > 0 ");
+            } else if ("out_of_stock".equals(status)) {
+                sql.append(" AND p.stock_quantity <= 0 ");
+            }
+        }
+        
+        // Sorting
+        String orderByClause = " ORDER BY p.created_at DESC "; // default newest
+        if (sort != null) {
+            switch (sort) {
+                case "newest":
+                    orderByClause = " ORDER BY p.created_at DESC ";
+                    break;
+                case "popular":
+                    orderByClause = " ORDER BY p.sold_quantity DESC, p.created_at DESC ";
+                    break;
+                case "price_asc":
+                    orderByClause = " ORDER BY COALESCE(p.sale_price, p.original_price) ASC ";
+                    break;
+                case "price_desc":
+                    orderByClause = " ORDER BY COALESCE(p.sale_price, p.original_price) DESC ";
+                    break;
+                case "rating":
+                    orderByClause = " ORDER BY p.average_rating DESC, p.created_at DESC ";
+                    break;
+            }
+        }
+        sql.append(orderByClause);
+        
+        // Pagination (SQL Server OFFSET FETCH)
+        sql.append(" OFFSET ? ROWS FETCH NEXT ? ROWS ONLY ");
+        params.add((page - 1) * pageSize);
+        params.add(pageSize);
+        
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                List<Product> list = new ArrayList<>();
+                while (rs.next()) {
+                    list.add(mapRow(rs));
+                }
+                return list;
+            }
+        } catch (SQLException e) {
+            System.err.println("[ProductDAO] getFilteredProducts SQL error: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("ProductDAO.getFilteredProducts error: " + e.getMessage(), e);
+        }
+    }
+
+    public int countFilteredProducts(
+            String keyword, 
+            List<Integer> categoryIds, 
+            Double minPrice, 
+            Double maxPrice, 
+            Double minRating, 
+            String status) {
+        
+        StringBuilder sql = new StringBuilder(
+            "SELECT COUNT(*) "
+          + "FROM Products p "
+          + "WHERE p.isDelete = 0 AND p.status = 1 "
+        );
+        
+        List<Object> params = new ArrayList<>();
+        
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            sql.append(" AND (p.title LIKE ? OR p.description LIKE ?) ");
+            String pattern = "%" + keyword.trim() + "%";
+            params.add(pattern);
+            params.add(pattern);
+        }
+        
+        if (categoryIds != null && !categoryIds.isEmpty()) {
+            sql.append(" AND p.category_id IN (");
+            for (int i = 0; i < categoryIds.size(); i++) {
+                sql.append("?");
+                if (i < categoryIds.size() - 1) {
+                    sql.append(",");
+                }
+                params.add(categoryIds.get(i));
+            }
+            sql.append(") ");
+        }
+        
+        if (minPrice != null) {
+            sql.append(" AND COALESCE(p.sale_price, p.original_price) >= ? ");
+            params.add(minPrice);
+        }
+        
+        if (maxPrice != null) {
+            sql.append(" AND COALESCE(p.sale_price, p.original_price) <= ? ");
+            params.add(maxPrice);
+        }
+        
+        if (minRating != null) {
+            sql.append(" AND p.average_rating >= ? ");
+            params.add(minRating);
+        }
+        
+        if (status != null && !status.isEmpty()) {
+            if ("in_stock".equals(status)) {
+                sql.append(" AND p.stock_quantity > 0 ");
+            } else if ("out_of_stock".equals(status)) {
+                sql.append(" AND p.stock_quantity <= 0 ");
+            }
+        }
+        
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[ProductDAO] countFilteredProducts SQL error: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("ProductDAO.countFilteredProducts error: " + e.getMessage(), e);
+        }
+        return 0;
+    }
+
+    public java.util.Map<Integer, Integer> getCategoryProductCounts() {
+        String sql = "SELECT category_id, COUNT(*) FROM Products WHERE isDelete = 0 AND status = 1 GROUP BY category_id";
+        java.util.Map<Integer, Integer> map = new java.util.HashMap<>();
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                map.put(rs.getInt(1), rs.getInt(2));
+            }
+        } catch (SQLException e) {
+            System.err.println("[ProductDAO] getCategoryProductCounts SQL error: " + e.getMessage());
+        }
+        return map;
     }
 }
 

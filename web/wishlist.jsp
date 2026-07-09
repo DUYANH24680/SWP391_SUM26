@@ -1,6 +1,7 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="model.Wishlist" %>
 <%@ page import="model.WishlistItem" %>
+<%@ page import="Utils.ImageUrlUtil" %>
 <%@ page import="model.Account" %>
 <%@ page import="java.text.NumberFormat" %>
 <%@ page import="java.util.Locale" %>
@@ -22,6 +23,7 @@
     session.removeAttribute("error");
 
     NumberFormat nf = NumberFormat.getNumberInstance(Locale.forLanguageTag("vi"));
+    String ctx = request.getContextPath();
 %>
 <!DOCTYPE html>
 <html lang="vi">
@@ -538,7 +540,7 @@
                 <!-- Image -->
                 <div class="item-image">
                     <% if (item.getImage() != null && !item.getImage().trim().isEmpty()) { %>
-                        <img src="<%= item.getImage() %>" alt="<%= item.getTitle() %>">
+                        <img src="<%= ImageUrlUtil.resolve(item.getImage(), request.getContextPath()) %>" alt="<%= item.getTitle() %>">
                     <% } else { %>
                         <span style="font-size: 2rem;">&#127822;</span>
                     <% } %>
@@ -578,13 +580,6 @@
 
                 <!-- Actions -->
                 <div class="item-actions">
-                    <!-- Chuyen vao gio hang -->
-                    <% if (!isOutOfStock) { %>
-                    <button type="button" class="btn btn-green" title="Chuyen vao gio hang"
-                            onclick="moveSingleToCart(<%= item.getProductId() %>, this.closest('.wishlist-item'))">
-                        <i class="fa-solid fa-cart-shopping"></i>
-                    </button>
-                    <% } %>
                     <!-- Xoa khoi wishlist -->
                     <form action="remove-wishlist" method="POST" style="display:inline;" onsubmit="return confirm('Xoa san pham nay khoi wishlist?')">
                         <input type="hidden" name="productId" value="<%= item.getProductId() %>">
@@ -689,7 +684,7 @@
 
         // Neu chi 1 san pham -> chuyen thang den trang chi tiet san pham
         if (selectedIds.length === 1) {
-            window.location.href = 'info?id=' + selectedIds[0];
+            window.location.href = ctx + '/info?id=' + selectedIds[0];
             return;
         }
 
@@ -711,14 +706,14 @@
             .then(function(response) {
                 completed++;
                 if (completed === total) {
-                    window.location.href = 'view-cart';
+                    window.location.href = ctx + '/view-cart';
                 }
             })
             .catch(function(error) {
                 completed++;
                 console.error('Loi chuyen san pham ' + productId + ' vao gio hang:', error);
                 if (completed === total) {
-                    window.location.href = 'view-cart';
+                    window.location.href = ctx + '/view-cart';
                 }
             });
         });
@@ -729,15 +724,22 @@
         const checkedBoxes = document.querySelectorAll('.product-checkbox:checked');
         if (checkedBoxes.length === 0) return;
 
-        // Gui AJAX cho tung san pham da chon
+        const items = Array.from(checkedBoxes).map(function(cb) {
+            const row = cb.closest('.wishlist-item');
+            return {
+                productId: cb.value,
+                row: row,
+                checkbox: cb
+            };
+        });
+
         let completed = 0;
-        const total = checkedBoxes.length;
+        const total = items.length;
+        let lastError = null;
 
-        checkedBoxes.forEach(function(checkbox) {
-            const productId = checkbox.value;
-
+        items.forEach(function(item) {
             const data = new URLSearchParams();
-            data.append('productId', productId);
+            data.append('productId', item.productId);
 
             fetch('move-wishlist-to-cart', {
                 method: 'POST',
@@ -745,51 +747,86 @@
                 body: data
             })
             .then(function(response) {
-                completed++;
-                if (completed === total) {
-                    // Tat ca hoan thanh, reload trang
-                    window.location.reload();
+                const contentType = response.headers.get('content-type') || '';
+                if (!contentType.includes('application/json')) {
+                    return response.text().then(function(text) {
+                        throw new Error(text || 'Phan hoi khong hop le tu server.');
+                    });
                 }
+                return response.json().then(function(result) {
+                    if (!result.success) {
+                        lastError = result.message || 'Khong the chuyen san pham vao gio hang.';
+                    }
+                    return result;
+                });
             })
             .catch(function(error) {
+                lastError = lastError || (error && error.message ? error.message : 'Loi ket noi den server.');
+            })
+            .finally(function() {
+                if (lastError) {
+                    alert(lastError);
+                } else {
+                    const row = item.row;
+                    if (row && row.parentNode) {
+                        row.parentNode.removeChild(row);
+                    }
+                }
+
                 completed++;
-                console.error('Loi chuyen san pham ' + productId + ' vao gio hang:', error);
                 if (completed === total) {
-                    window.location.reload();
+                    updateWishlistCountersAfterMove();
+                    updateAllSelectAllState();
+                    recalcUI();
                 }
             });
         });
     }
 
-    function moveSingleToCart(productId, itemRow) {
-        const data = new URLSearchParams();
-        data.append('productId', productId);
+    function updateWishlistCountersAfterMove() {
+        const remainingItems = document.querySelectorAll('.wishlist-item');
+        const remainingCount = remainingItems.length;
+        const summaryEl = document.getElementById('summarySelectedCount');
+        if (summaryEl) summaryEl.textContent = '0';
 
-        fetch('move-wishlist-to-cart', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: data
-        })
-        .then(function(response) {
-            if (response.redirected) {
-                window.location.href = response.url;
-                return;
+        const emptyState = document.querySelector('.empty-state');
+        const selectAllBar = document.querySelector('.select-all-bar');
+        const bottomBar = document.querySelector('.bottom-bar');
+
+        if (remainingCount === 0) {
+            const card = document.querySelector('.wishlist-card');
+            if (!card) return;
+
+            if (emptyState) {
+                emptyState.style.display = '';
+            } else if (card) {
+                const html = '<div class="empty-state">'
+                    + '<div class="empty-state-icon"><i class="fa-solid fa-heart"></i></div>'
+                    + '<h2>Wishlist Dang Trong</h2>'
+                    + '<p>Hay them san pham yeu thich de luu lai va chuyen vao gio hang sau.</p>'
+                    + '<a href="home.jsp" class="btn btn-green" style="display:inline-flex; margin-top: 0.5rem;">'
+                    + '<i class="fa-solid fa-basket-shopping"></i> Kham Pha San Pham'
+                    + '</a>'
+                    + '</div>';
+
+                const wrapper = document.createElement('div');
+                wrapper.innerHTML = html;
+                const newEmptyState = wrapper.firstElementChild;
+                card.insertBefore(newEmptyState, card.firstChild);
+
+                if (selectAllBar) selectAllBar.style.display = 'none';
+                if (bottomBar) bottomBar.style.display = 'none';
             }
-            if (!response.ok) {
-                throw new Error('Network error');
-            }
-            if (itemRow) {
-                itemRow.style.transition = 'opacity 0.3s';
-                itemRow.style.opacity = '0';
-                setTimeout(function() { itemRow.remove(); }, 300);
-            }
-            recalcUI();
-        })
-        .catch(function(error) {
-            console.error('Loi chuyen san pham vao gio hang:', error);
-        });
+        }
     }
+
+    // ---- Khoi tao khi load trang ----
+    document.addEventListener('DOMContentLoaded', function() {
+        updateAllSelectAllState();
+        recalcUI();
+    });
 </script>
 
 </body>
 </html>
+

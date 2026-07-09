@@ -15,7 +15,7 @@ import java.io.IOException;
  * The filter runs BEFORE the servlet, so when AddProductServlet calls
  * request.getParameter("title") it gets the real value instead of null.
  */
-@WebFilter(urlPatterns = {"/add-product"})
+@WebFilter(urlPatterns = {"/add-product", "/profile"})
 public class MultipartFilter implements Filter {
 
     private FilterConfig filterConfig;

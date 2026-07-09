@@ -1,12 +1,13 @@
-﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="model.Account" %>
 <%@ page import="model.Product" %>
 <%@ page import="java.util.List" %>
 <%@ page import="java.text.SimpleDateFormat" %>
+<%@ page import="Utils.ImageUrlUtil" %>
 <%@ page import="java.text.NumberFormat" %>
 <%@ page import="java.util.Locale" %>
 <%
-    Account user = (Account) session.getAttribute("user");
+    Account user = (Account) session.getAttribute("Account");
     if (user == null || !"admin".equals(user.getRoleName())) {
         response.sendRedirect(request.getContextPath() + "/login");
         return;
@@ -423,7 +424,7 @@
                             <!-- Ảnh -->
                             <td>
                                 <% if (p.getImage() != null && !p.getImage().trim().isEmpty()) { %>
-                                    <img src="../<%= p.getImage() %>" alt="<%= p.getTitle() %>" class="product-img"
+                                    <img src="<%= ImageUrlUtil.resolve(p.getImage(), request.getContextPath()) %>" alt="<%= p.getTitle() %>" class="product-img"
                                          onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
                                     <div class="product-img-placeholder" style="display:none;">🍎</div>
                                 <% } else { %>
@@ -505,6 +506,37 @@
         </div>
 
     </div>
+    <!-- Floating Report Button -->
+    <a href="<%= request.getContextPath() %>/admin/reports" class="floating-report-btn" title="Kiểm tra báo cáo">
+        <i class="fa-solid fa-flag"></i>
+    </a>
+    <style>
+        .floating-report-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background-color: #ef4444;
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            cursor: pointer;
+            z-index: 1000;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        .floating-report-btn:hover {
+            transform: translateY(-5px);
+            background-color: #dc2626;
+            color: white;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+        }
+    </style>
 </body>
 </html>
 

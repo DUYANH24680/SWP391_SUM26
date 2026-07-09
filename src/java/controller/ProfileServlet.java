@@ -10,9 +10,18 @@ import jakarta.servlet.http.HttpSession;
 import model.Account;
 import service.AccountService;
 
+import jakarta.servlet.annotation.MultipartConfig;
+import jakarta.servlet.http.Part;
+import Utils.FileUploadUtil;
+
 import java.io.IOException;
 
 @WebServlet("/profile")
+@MultipartConfig(
+    fileSizeThreshold = 1024 * 1024,
+    maxFileSize = 5 * 1024 * 1024,
+    maxRequestSize = 20 * 1024 * 1024
+)
 public class ProfileServlet extends HttpServlet {
 
     private final AccountService userService = new AccountService();
@@ -23,11 +32,12 @@ public class ProfileServlet extends HttpServlet {
         HttpSession session = req.getSession(true);
         
         // Auto-login if no user session exists (bypassing login page)
-        if (session.getAttribute("user") == null) {
+        if (session.getAttribute("Account") == null) {
             AccountDAO userDAO = new AccountDAO();
             try {
                 Account defaultCust = userDAO.findById(1);
                 if (defaultCust != null) {
+                    
                     session.setAttribute("user", defaultCust);
                     session.setAttribute("userId", defaultCust.getId());
                     session.setAttribute("role", defaultCust.getRoleName());
@@ -37,7 +47,7 @@ public class ProfileServlet extends HttpServlet {
             }
         }
 
-        Account user = (Account) session.getAttribute("user");
+        Account user = (Account) session.getAttribute("Account");
         if (user == null) {
             resp.getWriter().println("No user found in the database. Please add sample data to Accounts table first.");
             return;
@@ -50,7 +60,7 @@ public class ProfileServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         HttpSession session = req.getSession(true);
-        Account user = (Account) session.getAttribute("user");
+        Account user = (Account) session.getAttribute("Account");
 
         if (user == null) {
             resp.sendRedirect(req.getContextPath() + "/profile");
@@ -81,7 +91,40 @@ public class ProfileServlet extends HttpServlet {
         String phone = req.getParameter("phone");
         String address = req.getParameter("address");
         String genderStr = req.getParameter("gender");
-        String avatar = req.getParameter("avatar");
+        String avatar = user.getAvatar(); // Giữ nguyên avatar cũ mặc định
+        
+        try {
+            Part filePart = req.getPart("avatarFile");
+            if (filePart != null && filePart.getSize() > 0) {
+                // Validate avatar file type
+                String contentType = filePart.getContentType();
+                if (contentType == null || !contentType.startsWith("image/")) {
+                    session.setAttribute("error", "File tải lên phải là hình ảnh.");
+                    return;
+                }
+                String[] allowedTypes = {"image/jpeg", "image/jpg", "image/png", "image/webp"};
+                boolean validType = false;
+                for (String type : allowedTypes) {
+                    if (type.equals(contentType)) {
+                        validType = true;
+                        break;
+                    }
+                }
+                if (!validType) {
+                    session.setAttribute("error", "Chỉ chấp nhận file ảnh (JPG, PNG, WEBP).");
+                    return;
+                }
+                // Validate avatar file size (max 5MB)
+                if (filePart.getSize() > 5 * 1024 * 1024) {
+                    session.setAttribute("error", "Kích thước ảnh không được vượt quá 5MB.");
+                    return;
+                }
+                avatar = FileUploadUtil.saveProductImage(filePart, "avatars", req.getServletContext());
+            }
+        } catch (Exception e) {
+            session.setAttribute("error", "Lỗi tải ảnh: " + e.getMessage());
+            return;
+        }
 
         Boolean gender = null;
         if (genderStr != null && !genderStr.isEmpty()) {
@@ -93,6 +136,7 @@ public class ProfileServlet extends HttpServlet {
             session.setAttribute("error", error);
         } else {
             Account updatedUser = userService.getUserById(user.getId());
+            session.setAttribute("Account", updatedUser);
             session.setAttribute("user", updatedUser);
             session.setAttribute("message", "Cập nhật hồ sơ thành công!");
         }
