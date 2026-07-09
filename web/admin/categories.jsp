@@ -2,7 +2,7 @@
 <%@ page import="model.Account" %>
 <%@ page import="model.Category" %>
 <%@ page import="java.util.List" %>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%!
     // Helper: chuyen duong dan image thanh URL hop le (di qua ImageServlet neu la uploads/)
     public static String imgUrl(String path, String contextPath) {
@@ -51,17 +51,7 @@
     List<Category> categories = (List<Category>) request.getAttribute("categories");
     if (categories == null) categories = java.util.Collections.emptyList();
 
-    // ---- Image URL helper ----
-    java.util.function.Function<String, String> imgUrl = (String path) -> {
-        if (path == null || path.trim().isEmpty()) return null;
-        String trimmed = path.trim();
-        if (trimmed.startsWith("uploads/")) {
-            try {
-                return request.getContextPath() + "/image?path=" + java.net.URLEncoder.encode(trimmed, "UTF-8");
-            } catch (java.io.UnsupportedEncodingException e) { return trimmed; }
-        }
-        return trimmed;
-    };
+
 %>
 <!DOCTYPE html>
 <html lang="vi">
@@ -686,7 +676,7 @@
                                     <!-- Trang thai -->
                                     <td>
                                         <c:choose>
-                                            <c:when test="${!c.isIsDelete()}">
+                                            <c:when test="${!c.isDelete}">
                                                 <span class="badge badge-green">
                                                     <i class="fa-solid fa-circle" style="font-size:0.45rem;"></i> Hoạt Động
                                                 </span>
