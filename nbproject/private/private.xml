@@ -11,6 +11,13 @@
             <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/Utils/ProductSorter.java</file>
             <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/web/META-INF/context.xml</file>
             <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/web/WEB-INF/web.xml</file>
+            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/controller/CategoryServlet.java</file>
+            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/controller/CategoryPageServlet.java</file>
+            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/controller/CheckoutCartServlet.java</file>
+            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/controller/CheckoutServlet.java</file>
+            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/service/CheckoutService.java</file>
+            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/service/OrderService.java</file>
+            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/service/CustomerDashboardService.java</file>
         </group>
     </open-files>
 </project-private>

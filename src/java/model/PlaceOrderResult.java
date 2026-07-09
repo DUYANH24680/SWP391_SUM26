@@ -24,6 +24,10 @@ public class PlaceOrderResult {
         this.shopCount = shopCount;
     }
 
+    public static PlaceOrderResult failure(String error) {
+        return new PlaceOrderResult(false, error);
+    }
+
     public boolean isSuccess() {
         return success;
     }

@@ -6,29 +6,31 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import model.Account;
-import model.Cart;
-import model.CartItem;
-import model.DeliveryAddress;
-import model.PlaceOrderResult;
-import model.Product;
-import model.Voucher;
-import service.CartService;
+import model.*;
 import service.CheckoutService;
-import service.OrderService;
-import dao.DeliveryAddressDAO;
-import dao.ProductDAO;
-import dao.VoucherDAO;
 
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import service.CartService;
 
 @WebServlet(name = "CheckoutCartServlet", urlPatterns = {"/checkout-cart"})
 public class CheckoutCartServlet extends HttpServlet {
+
+    private CheckoutService checkoutService;
+
+    @Override
+    public void init() throws ServletException {
+        this.checkoutService = new CheckoutService();
+    }
+
+    @Override
+    public void destroy() {
+        if (checkoutService != null) {
+            checkoutService.close();
+        }
+    }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -40,102 +42,35 @@ public class CheckoutCartServlet extends HttpServlet {
         }
 
         Account account = (Account) session.getAttribute("Account");
-
         String selectedProductsParam = req.getParameter("selectedProducts");
         if (selectedProductsParam == null || selectedProductsParam.trim().isEmpty()) {
             resp.sendRedirect(req.getContextPath() + "/view-cart");
             return;
         }
 
-        List<Integer> selectedProductIds = Arrays.stream(selectedProductsParam.split(","))
-                .map(String::trim)
-                .filter(s -> !s.isEmpty())
-                .map(Integer::parseInt)
-                .collect(Collectors.toList());
-
-        CartService cartService = new CartService();
-        Cart cart = cartService.getCartByCustomerId(account.getId());
-        if (cart == null || cart.isEmpty()) {
+        List<Integer> selectedProductIds = parseSelectedProductIds(selectedProductsParam);
+        if (selectedProductIds.isEmpty()) {
             resp.sendRedirect(req.getContextPath() + "/view-cart");
             return;
         }
 
-        List<CartItem> selectedItems = new ArrayList<>();
-        for (CartItem item : cart.getItems()) {
-            if (selectedProductIds.contains(item.getProductId())) {
-                selectedItems.add(item);
-            }
-        }
+        SelectedItemsCheckoutResult result = checkoutService.getSelectedItemsCheckoutData(
+                account.getId(), selectedProductIds);
 
-        if (selectedItems.isEmpty()) {
+        if (!result.isSuccess()) {
+            session.setAttribute("error", result.getError());
             resp.sendRedirect(req.getContextPath() + "/view-cart");
             return;
         }
 
-        CheckoutService checkoutService = new CheckoutService();
-        ProductDAO productDAO = new ProductDAO();
-        DeliveryAddressDAO addressDAO = new DeliveryAddressDAO();
-        VoucherDAO voucherDAO = new VoucherDAO();
+        req.setAttribute("selectedItems", result.getSelectedItems());
+        req.setAttribute("totalCost", result.getTotalCost());
+        req.setAttribute("addresses", result.getAddresses());
+        req.setAttribute("vouchers", result.getVouchers());
+        req.setAttribute("shopMap", result.getShopMap());
+        req.setAttribute("selectedProductIds", result.getSelectedProductIds());
 
-        try {
-            System.out.println("[CheckoutCartServlet] doGet: selectedProductIds=" + selectedProductIds);
-            System.out.println("[CheckoutCartServlet] doGet: customerId=" + account.getId());
-
-            double totalCost = 0;
-            for (CartItem item : selectedItems) {
-                Product product = productDAO.getProductById(item.getProductId());
-                if (product != null && product.getSalePrice() > 0 && product.getSalePrice() < product.getOriginalPrice()) {
-                    totalCost += product.getSalePrice() * item.getQuantity();
-                } else if (product != null) {
-                    totalCost += product.getOriginalPrice() * item.getQuantity();
-                }
-                System.out.println("[CheckoutCartServlet] doGet: productId=" + item.getProductId() + ", unitPrice=" + (product != null ? product.getOriginalPrice() : "NULL"));
-            }
-            System.out.println("[CheckoutCartServlet] doGet: totalCost=" + totalCost);
-
-            List<DeliveryAddress> addresses = addressDAO.findByCustomerId(account.getId());
-            System.out.println("[CheckoutCartServlet] doGet: addresses count=" + (addresses != null ? addresses.size() : "NULL"));
-
-            List<Voucher> vouchers = voucherDAO.getAllActiveVouchers();
-            System.out.println("[CheckoutCartServlet] doGet: vouchers count=" + (vouchers != null ? vouchers.size() : "NULL"));
-
-            // Fetch shops for all selected cart items
-            dao.ShopDAO shopDAO = new dao.ShopDAO();
-            try {
-                java.util.Map<Integer, model.Shop> shopMap = new java.util.HashMap<>();
-                for (CartItem item : selectedItems) {
-                    Product p = productDAO.getProductById(item.getProductId());
-                    if (p != null && !shopMap.containsKey(p.getShopId())) {
-                        model.Shop shop = shopDAO.getShopById(p.getShopId());
-                        if (shop != null) {
-                            shopMap.put(p.getShopId(), shop);
-                        }
-                    }
-                }
-                req.setAttribute("shopMap", shopMap);
-            } finally {
-                shopDAO.close();
-            }
-
-            req.setAttribute("selectedItems", selectedItems);
-            req.setAttribute("totalCost", totalCost);
-            req.setAttribute("addresses", addresses);
-            req.setAttribute("vouchers", vouchers);
-            req.setAttribute("selectedProductIds", selectedProductIds);
-
-            req.getRequestDispatcher("/checkout-cart.jsp").forward(req, resp);
-        } catch (Exception e) {
-            System.err.println("[CheckoutCartServlet] doGet ERROR: " + e.getClass().getName() + ": " + e.getMessage());
-            e.printStackTrace();
-            session.setAttribute("error", "Lỗi hệ thống khi tải trang thanh toán: " + e.getMessage());
-            resp.sendRedirect(req.getContextPath() + "/view-cart");
-        } finally {
-            checkoutService.close();
-            productDAO.close();
-            addressDAO.close();
-            voucherDAO.close();
-            cartService.close();
-        }
+        req.getRequestDispatcher("/checkout-cart.jsp").forward(req, resp);
     }
 
     @Override
@@ -155,7 +90,7 @@ public class CheckoutCartServlet extends HttpServlet {
         String address = req.getParameter("address");
         String paymentMethod = req.getParameter("paymentMethod");
         String note = req.getParameter("note");
-String voucherCode = req.getParameter("voucherCode");
+        String voucherCode = req.getParameter("voucherCode");
 
         if (selectedProductsParam == null || selectedProductsParam.trim().isEmpty()
                 || recipientName == null || recipientPhone == null || address == null) {
@@ -164,50 +99,27 @@ String voucherCode = req.getParameter("voucherCode");
             return;
         }
 
-        List<Integer> selectedProductIds = Arrays.stream(selectedProductsParam.split(","))
-                .map(String::trim)
-                .filter(s -> !s.isEmpty())
-                .map(Integer::parseInt)
-                .collect(Collectors.toList());
+        List<Integer> selectedProductIds = parseSelectedProductIds(selectedProductsParam);
 
-        CartService cartService = new CartService();
-        Cart cart = cartService.getCartByCustomerId(account.getId());
-        if (cart == null || cart.isEmpty()) {
-            resp.sendRedirect(req.getContextPath() + "/view-cart");
-            return;
-        }
-
-        List<CartItem> selectedItems = new ArrayList<>();
-        for (CartItem item : cart.getItems()) {
-            if (selectedProductIds.contains(item.getProductId())) {
-                selectedItems.add(item);
-            }
-        }
-
-        if (selectedItems.isEmpty()) {
-            resp.sendRedirect(req.getContextPath() + "/view-cart");
-            return;
-        }
-
-        OrderService orderService = new OrderService();
-        PlaceOrderResult result = orderService.placeCartOrder(
-                account.getId(), selectedItems, recipientName, recipientPhone,
-                address, paymentMethod, note, voucherCode);
+        PlaceOrderResult result = checkoutService.placeCartOrderFromSelected(
+                account.getId(), selectedProductIds,
+                recipientName, recipientPhone, address, paymentMethod, note, voucherCode);
 
         if (result.isSuccess()) {
             try {
+                CartService cartService = new CartService();
                 Cart updatedCart = cartService.getCartByCustomerId(account.getId());
                 session.setAttribute("cart", updatedCart);
                 session.setAttribute("cartCount", updatedCart != null ? updatedCart.getTotalQuantity() : 0);
+                cartService.close();
             } catch (Exception e) {
                 System.err.println("[CheckoutCartServlet] Error updating cart session: " + e.getMessage());
-            } finally {
-                cartService.close();
             }
-            
+
             String message;
             if (result.getOrderCount() > 1) {
-                message = String.format("Đặt hàng thành công! Bạn đã tạo %d đơn hàng từ %d shop khác nhau. Vui lòng kiểm tra email để xem chi tiết từng đơn.", 
+                message = String.format(
+                        "Đặt hàng thành công! Bạn đã tạo %d đơn hàng từ %d shop khác nhau. Vui lòng kiểm tra email để xem chi tiết từng đơn.",
                         result.getOrderCount(), result.getShopCount());
             } else {
                 message = "Đặt hàng thành công! Cảm ơn bạn đã đặt hàng.";
@@ -218,5 +130,16 @@ String voucherCode = req.getParameter("voucherCode");
             session.setAttribute("error", result.getError());
             resp.sendRedirect(req.getContextPath() + "/view-cart");
         }
+    }
+
+    private List<Integer> parseSelectedProductIds(String param) {
+        if (param == null || param.trim().isEmpty()) {
+            return List.of();
+        }
+        return Arrays.stream(param.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .map(Integer::parseInt)
+                .collect(Collectors.toList());
     }
 }

@@ -7,19 +7,21 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import model.Account;
-import model.Order;
-import model.OrderDetail;
+import model.CancelOrderResult;
+import model.MyOrdersPageData;
 import service.OrderService;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-
-
-
 
 @WebServlet("/my-orders")
 public class MyOrdersServlet extends HttpServlet {
+
+    private OrderService orderService;
+
+    @Override
+    public void init() throws ServletException {
+        this.orderService = new OrderService();
+    }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -31,51 +33,29 @@ public class MyOrdersServlet extends HttpServlet {
         }
         Account user = (Account) session.getAttribute("Account");
 
-        OrderService orderService = new OrderService();
-        List<Order> orders = orderService.getOrdersByCustomerId(user.getId());
-
-        // 1. Filter by status if parameter is present
-        String statusParam = req.getParameter("status");
         Integer activeStatus = null;
+        String statusParam = req.getParameter("status");
         if (statusParam != null && !statusParam.trim().isEmpty()) {
             try {
                 activeStatus = Integer.parseInt(statusParam.trim());
-                final int statusToKeep = activeStatus;
-                orders.removeIf(o -> o.getStatus() != statusToKeep);
-            } catch (NumberFormatException e) {
-                // Ignore invalid status format
-            }
+            } catch (NumberFormatException ignored) {}
         }
 
-        // 2. Pagination
         int page = 1;
         String pageParam = req.getParameter("page");
         if (pageParam != null && !pageParam.trim().isEmpty()) {
             try {
                 page = Integer.parseInt(pageParam.trim());
-                if (page < 1) page = 1;
-            } catch (NumberFormatException e) {
-                // Ignore invalid page format
-            }
+            } catch (NumberFormatException ignored) {}
         }
 
-        int pageSize = 5; // 5 orders per page
-        int totalOrders = orders.size();
-        int totalPages = (int) Math.ceil((double) totalOrders / pageSize);
-        if (totalPages == 0) totalPages = 1;
-        if (page > totalPages) page = totalPages;
+        MyOrdersPageData data = orderService.getMyOrdersPageData(user.getId(), activeStatus, page);
 
-        int start = (page - 1) * pageSize;
-        int end = Math.min(start + pageSize, totalOrders);
-
-        List<Order> paginatedOrders = orders.subList(start, end);
-        Map<Integer, List<OrderDetail>> orderDetailsMap = orderService.getOrderDetailsMap(paginatedOrders);
-
-        req.setAttribute("orders", paginatedOrders);
-        req.setAttribute("detailsMap", orderDetailsMap);
-        req.setAttribute("currentPage", page);
-        req.setAttribute("totalPages", totalPages);
-        req.setAttribute("activeStatus", activeStatus);
+        req.setAttribute("orders", data.getOrders());
+        req.setAttribute("detailsMap", data.getDetailsMap());
+        req.setAttribute("currentPage", data.getCurrentPage());
+        req.setAttribute("totalPages", data.getTotalPages());
+        req.setAttribute("activeStatus", data.getActiveStatus());
 
         req.getRequestDispatcher("/my-orders.jsp").forward(req, resp);
     }
@@ -93,18 +73,14 @@ public class MyOrdersServlet extends HttpServlet {
         String action = req.getParameter("action");
         String orderIdParam = req.getParameter("orderId");
 
-        if ("cancel".equals(action) && orderIdParam != null) {
+        if ("cancel".equals(action) && orderIdParam != null && !orderIdParam.trim().isEmpty()) {
             try {
                 int orderId = Integer.parseInt(orderIdParam.trim());
-                OrderService orderService = new OrderService();
-                orderService.cancelOrderByCustomer(orderId, user.getId());
-                session.setAttribute("message", "Đã hủy đơn hàng thành công!");
+                CancelOrderResult result = orderService.cancelOrderByCustomer(orderId, user.getId());
+                session.setAttribute(result.isSuccess() ? "message" : "error",
+                        result.isSuccess() ? "Đã hủy đơn hàng thành công!" : result.getError());
             } catch (NumberFormatException e) {
                 session.setAttribute("error", "ID đơn hàng không hợp lệ.");
-            } catch (IllegalArgumentException e) {
-                session.setAttribute("error", e.getMessage());
-            } catch (RuntimeException e) {
-                session.setAttribute("error", e.getMessage());
             }
         }
 

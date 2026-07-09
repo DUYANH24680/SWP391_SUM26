@@ -18,6 +18,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import model.CancelOrderResult;
+import model.MyOrdersPageData;
+import model.SellerOrderActionResult;
+import model.SellerOrderPageData;
 
 public class OrderService {
 
@@ -71,40 +75,38 @@ public class OrderService {
         return detailsMap;
     }
 
-    // Cancel order by customer
-    public void cancelOrderByCustomer(int orderId, int customerId) {
-        OrderDAO dao = new OrderDAO();
+    // ===================== Seller Order Page =====================
+
+    public SellerOrderPageData getSellerOrderPageData(int sellerId) {
+        ShopDAO shopDAO = new ShopDAO();
         try {
-            Order order = dao.getOrderById(orderId);
-            if (order == null || order.getCustomerId() != customerId) {
-                throw new IllegalArgumentException("Đơn hàng không tồn tại hoặc không thuộc quyền sở hữu của bạn.");
+            Shop shop = shopDAO.getShopByOwnerId(sellerId);
+            if (shop == null) {
+                return SellerOrderPageData.shopNotFound(
+                        "Cửa hàng của bạn chưa được tạo hoặc chưa được phê duyệt. Vui lòng đợi admin xác nhận.");
             }
-            if (order.getStatus() != 1) { // 1 is Pending
-                throw new IllegalArgumentException("Chỉ có thể hủy đơn hàng ở trạng thái Chờ xác nhận.");
-            }
-            boolean ok = dao.updateOrderStatus(orderId, 5); // 5 = Canceled
-            if (!ok) {
-                throw new RuntimeException("Hủy đơn hàng thất bại.");
-            }
+            OrderService orderService = new OrderService();
+            List<Order> orders = orderService.getOrdersByShopId(shop.getId());
+            Map<Integer, List<OrderDetail>> detailsMap = orderService.getOrderDetailsMap(orders);
+            return SellerOrderPageData.success(orders, detailsMap, shop);
         } finally {
-            dao.close();
+            shopDAO.close();
         }
     }
 
-    // Update order status by seller
-    public void updateOrderStatusBySeller(int orderId, int sellerId, String action) {
+    public SellerOrderActionResult processSellerOrderAction(int orderId, int sellerId, String action) {
         ShopDAO shopDAO = new ShopDAO();
         OrderDAO orderDAO = new OrderDAO();
         ProductDAO productDAO = new ProductDAO();
         try {
             Shop shop = shopDAO.getShopByOwnerId(sellerId);
             if (shop == null || shop.getStatus() != 1) {
-                throw new IllegalArgumentException("Shop của bạn chưa được tạo hoặc chưa được phê duyệt.");
+                return SellerOrderActionResult.failure("Shop của bạn chưa được tạo hoặc chưa được phê duyệt.");
             }
 
             List<OrderDetail> details = orderDAO.getOrderDetails(orderId);
             if (details == null || details.isEmpty()) {
-                throw new IllegalArgumentException("Đơn hàng không có sản phẩm nào hoặc không tồn tại.");
+                return SellerOrderActionResult.failure("Đơn hàng không có sản phẩm nào hoặc không tồn tại.");
             }
 
             boolean ownsAllItems = true;
@@ -117,25 +119,26 @@ public class OrderService {
             }
 
             if (!ownsAllItems) {
-                throw new IllegalArgumentException("Đơn hàng chứa sản phẩm không thuộc quyền quản lý của shop bạn.");
+                return SellerOrderActionResult.failure("Đơn hàng chứa sản phẩm không thuộc quyền quản lý của shop bạn.");
             }
 
             int newStatus;
-            String actionMsg;
+            String successMsg;
             if ("confirm".equals(action)) {
-                newStatus = 2; // Confirmed
-                actionMsg = "Xác nhận";
+                newStatus = 2;
+                successMsg = "Đã xác nhận đơn hàng thành công!";
             } else if ("cancel".equals(action)) {
-                newStatus = 5; // Canceled
-                actionMsg = "Hủy";
+                newStatus = 5;
+                successMsg = "Đã hủy đơn hàng thành công!";
             } else {
-                throw new IllegalArgumentException("Hành động không hợp lệ.");
+                return SellerOrderActionResult.failure("Hành động không hợp lệ.");
             }
 
             boolean ok = orderDAO.updateOrderStatus(orderId, newStatus);
             if (!ok) {
-                throw new RuntimeException(actionMsg + " đơn hàng thất bại.");
+                return SellerOrderActionResult.failure("Cập nhật trạng thái đơn hàng thất bại.");
             }
+            return SellerOrderActionResult.success(successMsg);
         } finally {
             shopDAO.close();
             orderDAO.close();
@@ -535,5 +538,56 @@ public class OrderService {
             shopDAO.close();
         }
     }
+
+    // ===================== My Orders Page =====================
+
+    public MyOrdersPageData getMyOrdersPageData(int customerId, Integer activeStatus, int page) {
+        OrderDAO orderDAO = new OrderDAO();
+        try {
+            List<Order> orders = orderDAO.getOrdersByCustomerId(customerId);
+
+            if (activeStatus != null) {
+                final int statusToKeep = activeStatus;
+                orders.removeIf(o -> o.getStatus() != statusToKeep);
+            }
+
+            int pageSize = 5;
+            int totalOrders = orders.size();
+            int totalPages = (int) Math.ceil((double) totalOrders / pageSize);
+            if (totalPages == 0) totalPages = 1;
+            if (page < 1) page = 1;
+            if (page > totalPages) page = totalPages;
+
+            int start = (page - 1) * pageSize;
+            int end = Math.min(start + pageSize, totalOrders);
+            List<Order> paginatedOrders = orders.subList(start, end);
+
+            Map<Integer, List<OrderDetail>> detailsMap = getOrderDetailsMap(paginatedOrders);
+            return new MyOrdersPageData(paginatedOrders, detailsMap, page, totalPages, activeStatus);
+        } finally {
+            orderDAO.close();
+        }
+    }
+
+    public CancelOrderResult cancelOrderByCustomer(int orderId, int customerId) {
+        OrderDAO dao = new OrderDAO();
+        try {
+            Order order = dao.getOrderById(orderId);
+            if (order == null || order.getCustomerId() != customerId) {
+                return CancelOrderResult.failure("Đơn hàng không tồn tại hoặc không thuộc quyền sở hữu của bạn.");
+            }
+            if (order.getStatus() != 1) {
+                return CancelOrderResult.failure("Chỉ có thể hủy đơn hàng ở trạng thái Chờ xác nhận.");
+            }
+            boolean ok = dao.updateOrderStatus(orderId, 5);
+            if (!ok) {
+                return CancelOrderResult.failure("Hủy đơn hàng thất bại.");
+            }
+            return CancelOrderResult.success();
+        } finally {
+            dao.close();
+        }
+    }
 }
+
 
