@@ -37,7 +37,7 @@ public class ChatDAO extends DbContext {
                      "c.fullname as cName, c.avatar as cAvatar, " +
                      "s.fullname as sName, s.avatar as sAvatar, " +
                      "a.fullname as aName, a.avatar as aAvatar, " +
-                     "p.name as pName, " +
+                     "p.title as pName, " +
                      "(SELECT TOP 1 message FROM ChatMessages cm WHERE cm.session_id = cs.id ORDER BY created_at DESC) as lastMessage, " +
                      "(SELECT TOP 1 created_at FROM ChatMessages cm WHERE cm.session_id = cs.id ORDER BY created_at DESC) as lastMessageTime " +
                      "FROM ChatSessions cs " +
@@ -47,7 +47,7 @@ public class ChatDAO extends DbContext {
                      "JOIN Reports r ON cs.report_id = r.id " +
                      "JOIN Products p ON r.product_id = p.id " +
                      "WHERE cs.customer_id = ? OR cs.seller_id = ? OR cs.admin_id = ? " +
-                     "ORDER BY ISNULL(lastMessageTime, cs.created_at) DESC";
+                     "ORDER BY ISNULL((SELECT TOP 1 created_at FROM ChatMessages cm WHERE cm.session_id = cs.id ORDER BY created_at DESC), cs.created_at) DESC";
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, userId);
