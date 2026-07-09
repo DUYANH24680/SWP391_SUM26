@@ -7,20 +7,20 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import model.Account;
-import model.CustomerOrdersData;
-import model.Order;
-import model.OrderDetail;
-import service.OrderService;
+import model.CustomerDashboardData;
+import service.CustomerDashboardService;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
 
 @WebServlet(name = "CustomerDashboardServlet", urlPatterns = {"/customer-dashboard"})
 public class CustomerDashboardServlet extends HttpServlet {
+
+    private CustomerDashboardService dashboardService;
+
+    @Override
+    public void init() throws ServletException {
+        this.dashboardService = new CustomerDashboardService();
+    }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -32,88 +32,22 @@ public class CustomerDashboardServlet extends HttpServlet {
         }
 
         Account account = (Account) session.getAttribute("Account");
-        OrderService orderService = new OrderService();
-        CustomerOrdersData data = orderService.getCustomerOrdersWithDetails(account.getId(), null);
+        CustomerDashboardData data = dashboardService.getDashboardData(account.getId());
 
-        List<Order> orders = data.getOrders();
-        Map<Integer, List<OrderDetail>> detailsMap = data.getDetailsMap();
+        req.setAttribute("orders", data.getOrders());
+        req.setAttribute("detailsMap", data.getDetailsMap());
+        req.setAttribute("totalOrders", data.getTotalOrders());
+        req.setAttribute("totalSpent", data.getTotalSpent());
+        req.setAttribute("pendingCount", data.getPendingCount());
+        req.setAttribute("confirmedCount", data.getConfirmedCount());
+        req.setAttribute("shippingCount", data.getShippingCount());
+        req.setAttribute("deliveredCount", data.getDeliveredCount());
+        req.setAttribute("canceledCount", data.getCanceledCount());
+        req.setAttribute("recentOrderCount", data.getRecentOrderCount());
+        req.setAttribute("avgOrderValue", data.getAvgOrderValue());
+        req.setAttribute("monthlySpend", data.getMonthlySpend());
+        req.setAttribute("recentOrders", data.getRecentOrders());
 
-        double totalSpent = 0;
-        int pendingCount = 0;
-        int confirmedCount = 0;
-        int shippingCount = 0;
-        int deliveredCount = 0;
-        int canceledCount = 0;
-        int recentOrderCount = 0;
-        double monthlySpend = 0;
-
-        Calendar thirtyDaysAgo = Calendar.getInstance();
-        thirtyDaysAgo.add(Calendar.DAY_OF_MONTH, -30);
-        Calendar monthStart = Calendar.getInstance();
-        monthStart.set(Calendar.DAY_OF_MONTH, 1);
-        monthStart.set(Calendar.HOUR_OF_DAY, 0);
-        monthStart.set(Calendar.MINUTE, 0);
-        monthStart.set(Calendar.SECOND, 0);
-        monthStart.set(Calendar.MILLISECOND, 0);
-
-        if (orders != null) {
-            for (Order order : orders) {
-                totalSpent += order.getFinalCost();
-                switch (order.getStatus()) {
-                    case 1 -> pendingCount++;
-                    case 2 -> confirmedCount++;
-                    case 3 -> shippingCount++;
-                    case 4 -> deliveredCount++;
-                    case 5 -> canceledCount++;
-                    default -> {}
-                }
-
-                if (order.getOrderDate() != null) {
-                    Calendar orderCal = Calendar.getInstance();
-                    orderCal.setTimeInMillis(order.getOrderDate().getTime());
-                    if (!orderCal.before(thirtyDaysAgo)) {
-                        recentOrderCount++;
-                    }
-                    if (!orderCal.before(monthStart)) {
-                        monthlySpend += order.getFinalCost();
-                    }
-                }
-            }
-        }
-
-        List<Order> recentOrders = new ArrayList<>();
-        if (orders != null) {
-            for (Order order : orders) {
-                if (order.getOrderDate() != null) {
-                    Calendar orderCal = Calendar.getInstance();
-                    orderCal.setTimeInMillis(order.getOrderDate().getTime());
-                    if (!orderCal.before(thirtyDaysAgo)) {
-                        recentOrders.add(order);
-                    }
-                }
-            }
-        }
-        recentOrders.sort(Comparator.comparing(Order::getOrderDate).reversed());
-        if (recentOrders.size() > 3) {
-            recentOrders = new ArrayList<>(recentOrders.subList(0, 3));
-        }
-
-        double avgOrderValue = orders != null && !orders.isEmpty() ? totalSpent / orders.size() : 0;
-
-        req.setAttribute("orders", orders);
-        req.setAttribute("detailsMap", detailsMap);
-        req.setAttribute("totalOrders", orders != null ? orders.size() : 0);
-        req.setAttribute("totalSpent", totalSpent);
-        req.setAttribute("pendingCount", pendingCount);
-        req.setAttribute("confirmedCount", confirmedCount);
-        req.setAttribute("shippingCount", shippingCount);
-        req.setAttribute("deliveredCount", deliveredCount);
-        req.setAttribute("canceledCount", canceledCount);
-        req.setAttribute("recentOrderCount", recentOrderCount);
-        req.setAttribute("avgOrderValue", avgOrderValue);
-        req.setAttribute("monthlySpend", monthlySpend);
-        req.setAttribute("recentOrders", recentOrders);
         req.getRequestDispatcher("/customer-dashboard.jsp").forward(req, resp);
     }
 }
-
