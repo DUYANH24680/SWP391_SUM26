@@ -9,8 +9,15 @@ public class Shop {
     private String logo;
     private String description;
     private String address;
-    private int status;
+    private int status;  // 0=Blocked | 1=Approved | 2=Rejected | 3=Blocked
     private Timestamp createdAt;
+    
+        // Joined owner info
+    private String ownerFullname;
+    private String ownerEmail;
+    private String ownerPhone;
+    private int ownerAccountStatus;
+
 
     public Shop() {
     }
@@ -94,5 +101,55 @@ public class Shop {
     public boolean isApproved() {
         return status == 1;
     }
-}
 
+    public boolean isBlocked() { return status == 3; }
+
+    public String getStatusLabel() {
+        switch (status) {
+            case 0: return "Chờ duyệt";
+            case 1: return "Hoạt động";
+            case 2: return "Từ chối";
+            case 3: return "Bị khóa";
+            default: return "Không xác định";
+        }
+    }
+
+    public boolean isActive() { return status == 1; }
+
+    // ---- Owner info ----
+    public String getOwnerFullname() {
+        return ownerFullname;
+    }
+
+    public void setOwnerFullname(String ownerFullname) {
+        this.ownerFullname = ownerFullname;
+    }
+
+    public String getOwnerEmail() {
+        return ownerEmail;
+    }
+
+    public void setOwnerEmail(String ownerEmail) {
+        this.ownerEmail = ownerEmail;
+    }
+
+    public String getOwnerPhone() {
+        return ownerPhone;
+    }
+
+    public void setOwnerPhone(String ownerPhone) {
+        this.ownerPhone = ownerPhone;
+    }
+
+    public int getOwnerAccountStatus() {
+        return ownerAccountStatus;
+    }
+
+    public void setOwnerAccountStatus(int ownerAccountStatus) {
+        this.ownerAccountStatus = ownerAccountStatus;
+    }
+
+    public void setExtra(String productCount, int countProductsByShopId) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+}

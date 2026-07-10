@@ -544,6 +544,14 @@
         .shop-info { display: flex; flex-direction: column; gap: 0.2rem; }
         .shop-name { font-size: 0.9rem; font-weight: 700; color: var(--gray-800); }
         .shop-meta { font-size: 0.78rem; color: var(--gray-400); }
+                .report-shop-btn {
+            display: inline-flex; align-items: center; gap: 4px;
+            margin-top: 6px; padding: 3px 10px;
+            background: #fee2e2; color: #991b1b;
+            border-radius: 100px; font-size: 0.75rem; font-weight: 600;
+            text-decoration: none; transition: all 0.15s;
+        }
+        .report-shop-btn:hover { background: #fecaca; color: #dc2626; }
 
         /* Action buttons */
         .action-buttons {
