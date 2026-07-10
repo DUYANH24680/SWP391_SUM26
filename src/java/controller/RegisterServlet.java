@@ -7,7 +7,7 @@ import java.io.IOException;
 
 import model.Account;
 import service.AccountService;
-import service.UserService;
+//import service.UserService;
 
 /**
  * Handle user registration.
@@ -17,7 +17,7 @@ import service.UserService;
 @WebServlet(name = "RegisterServlet", urlPatterns = {"/register"})
 public class RegisterServlet extends HttpServlet {
 
-    private final UserService service = new UserService();
+    private final AccountService service = new AccountService();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
