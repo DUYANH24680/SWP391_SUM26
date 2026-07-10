@@ -184,6 +184,75 @@ public class AccountDAO extends Utils.DbContext {
         }
         return false;
     }
+    
+        /**
+     * Check if email already exists in the system (including inactive accounts).
+     */
+    public boolean isEmailExists(String email) {
+        String sql = "SELECT COUNT(1) FROM Accounts WHERE email = ?";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            ps.setString(1, email);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt(1) > 0;
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("AccountDAO.isEmailExists error: " + e.getMessage(), e);
+        }
+        return false;
+    }
+
+    /**
+     * Check if username already exists in the system.
+     */
+    public boolean isUsernameTaken(String username) {
+        String sql = "SELECT COUNT(1) FROM Accounts WHERE username = ?";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            ps.setString(1, username);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt(1) > 0;
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("AccountDAO.isUsernameTaken error: " + e.getMessage(), e);
+        }
+        return false;
+    }
+
+    /**
+     * Insert a new customer account.
+     * roleId must be the id for 'Customer' role (typically 3).
+     * Returns the generated account id, or -1 on failure.
+     */
+    public int register(String fullname, String username, String passwordHash, String email, String phone, int roleId) {
+        String sql = "INSERT INTO Accounts (role_id, fullname, username, password_hash, email, phone, status) "
+                   + "VALUES (?, ?, ?, ?, ?, ?, 1)";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setInt(1, roleId);
+            ps.setString(2, fullname.trim());
+            ps.setString(3, username.trim());
+            ps.setString(4, passwordHash);
+            ps.setString(5, email.trim().toLowerCase());
+            if (phone != null && !phone.trim().isEmpty()) {
+                ps.setString(6, phone.trim());
+            } else {
+                ps.setNull(6, Types.VARCHAR);
+            }
+            int rows = ps.executeUpdate();
+            if (rows > 0) {
+                try (ResultSet rs = ps.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        int newId = rs.getInt(1);
+                        System.out.println("[AccountDAO] register() success, new account id=" + newId);
+                        return newId;
+                    }
+                }
+            }
+            return -1;
+        } catch (SQLException e) {
+            System.err.println("[AccountDAO] register() error: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("AccountDAO.register error: " + e.getMessage(), e);
+        }
+    }
 
     // ---- helper ----
     private Account mapRow(ResultSet rs) throws SQLException {
