@@ -3,11 +3,10 @@
 <%@ page import="model.Product" %>
 <%@ page import="java.util.List" %>
 <%@ page import="java.text.SimpleDateFormat" %>
-<%@ page import="Utils.ImageUrlUtil" %>
 <%@ page import="java.text.NumberFormat" %>
 <%@ page import="java.util.Locale" %>
 <%
-    Account user = (Account) session.getAttribute("Account");
+    Account user = (Account) session.getAttribute("user");
     if (user == null || !"admin".equals(user.getRoleName())) {
         response.sendRedirect(request.getContextPath() + "/login");
         return;
@@ -39,6 +38,9 @@
             --green-dark:  #388e3c;
             --green-light: #e8f5e9;
             --green-mid:   #c8e6c9;
+            --red:         #dc2626;
+            --red-light:   #fee2e2;
+            --red-dark:    #991b1b;
             --bg:          #f0f4f1;
             --white:       #ffffff;
             --gray-50:     #f8fafb;
@@ -317,6 +319,123 @@
             box-shadow: 0 4px 10px rgba(56,142,60,.35);
             transform: translateY(-1px);
         }
+        .btn-remove {
+            background: var(--red-light);
+            color: var(--red-dark);
+            border: 1.5px solid #fca5a5;
+        }
+        .btn-remove:hover {
+            background: #fecaca;
+            transform: translateY(-1px);
+        }
+        .btn-remove:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* ======= MODAL ======= */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal-box {
+            background: var(--white);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-md, 0 8px 24px rgba(0,0,0,.12));
+            padding: 1.75rem;
+            max-width: 480px;
+            width: 100%;
+        }
+        .modal-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        .modal-header i { font-size: 1.5rem; color: var(--red); }
+        .modal-header h3 { font-size: 1.1rem; font-weight: 700; color: var(--gray-800); }
+        .modal-product-name {
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            padding: 0.75rem 1rem;
+            font-size: 0.875rem;
+            color: var(--gray-800);
+            margin-bottom: 1rem;
+            word-break: break-word;
+        }
+        .modal-product-name strong { color: var(--red-dark); }
+        .modal-label {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--gray-600);
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+        .modal-textarea {
+            width: 100%;
+            padding: 0.65rem 0.9rem;
+            border: 1.5px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            font-size: 0.875rem;
+            font-family: inherit;
+            color: var(--gray-800);
+            resize: vertical;
+            min-height: 100px;
+            outline: none;
+            transition: border-color 0.15s;
+            margin-bottom: 0.5rem;
+        }
+        .modal-textarea:focus { border-color: var(--red); }
+        .modal-hint {
+            font-size: 0.75rem;
+            color: var(--gray-400);
+            margin-bottom: 1.25rem;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: flex-end;
+        }
+        .btn-cancel {
+            background: var(--gray-100);
+            color: var(--gray-600);
+            padding: 0.55rem 1.25rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .btn-cancel:hover { background: var(--gray-200); }
+        .btn-confirm-remove {
+            background: var(--red);
+            color: white;
+            padding: 0.55rem 1.25rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .btn-confirm-remove:hover { background: var(--red-dark); }
+        .modal-error {
+            color: var(--red);
+            font-size: 0.78rem;
+            margin-top: 0.25rem;
+            display: none;
+        }
+        .modal-error.show { display: block; }
 
         /* ======= EMPTY STATE ======= */
         .empty-state {
@@ -348,14 +467,17 @@
 
     <!-- Topnav -->
     <nav class="topnav">
-        <a href="../home.jsp" class="nav-logo">
+        <a href="<%= request.getContextPath() %>/home.jsp" class="nav-logo">
             <i class="fa-solid fa-apple-whole"></i> Sena Shop
         </a>
         <div class="nav-links">
-            <a href="../home.jsp">Trang Chủ</a>
-            <a href="../danh-muc">Danh Mục</a>
-            <a href="../products">Sản Phẩm</a>
-            <a href="../admin/customers">Khách Hàng</a>
+            <a href="<%= request.getContextPath() %>/home.jsp">Trang Chủ</a>
+            <a href="<%= request.getContextPath() %>/products">Sản Phẩm</a>
+            <a href="<%= request.getContextPath() %>/admin/customers">Khách Hàng</a>
+            <a href="<%= request.getContextPath() %>/admin/orders">Monitor Đơn Hàng</a>
+            <a href="<%= request.getContextPath() %>/admin/seller-requests">
+                <i class="fa-solid fa-store" style="margin-right:4px;"></i> Duyệt Seller
+            </a>
             <a href="#" class="active">Duyệt Sản Phẩm</a>
         </div>
         <div class="nav-right">
@@ -424,7 +546,7 @@
                             <!-- Ảnh -->
                             <td>
                                 <% if (p.getImage() != null && !p.getImage().trim().isEmpty()) { %>
-                                    <img src="<%= ImageUrlUtil.resolve(p.getImage(), request.getContextPath()) %>" alt="<%= p.getTitle() %>" class="product-img"
+                                    <img src="<%= request.getContextPath() %>/<%= p.getImage() %>" alt="<%= p.getTitle() %>" class="product-img"
                                          onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
                                     <div class="product-img-placeholder" style="display:none;">🍎</div>
                                 <% } else { %>
@@ -482,10 +604,16 @@
                                 <form method="post" style="display:inline-block;"
                                       onsubmit="return confirm('Duyệt sản phẩm &quot;<%= p.getTitle() %>&quot;?\nSản phẩm sẽ hiển thị công khai.');">
                                     <input type="hidden" name="productId" value="<%= p.getId() %>">
+                                    <input type="hidden" name="action" value="approve">
                                     <button type="submit" class="action-btn btn-approve">
                                         <i class="fa-solid fa-check"></i> Duyệt
                                     </button>
                                 </form>
+
+                                <button type="button" class="action-btn btn-remove"
+                                        onclick="openRemoveModal(<%= p.getId() %>, '<%= p.getTitle().replace("'", "\\'").replace("\n", " ").replace("\r", "") %>')">
+                                    <i class="fa-solid fa-trash-can"></i> Gỡ
+                                </button>
                             </td>
                         </tr>
                     <%
@@ -506,37 +634,97 @@
         </div>
 
     </div>
-    <!-- Floating Report Button -->
-    <a href="<%= request.getContextPath() %>/admin/reports" class="floating-report-btn" title="Kiểm tra báo cáo">
-        <i class="fa-solid fa-flag"></i>
-    </a>
-    <style>
-        .floating-report-btn {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            background-color: #ef4444;
-            color: white;
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            cursor: pointer;
-            z-index: 1000;
-            text-decoration: none;
-            transition: all 0.3s ease;
+
+    <!-- Remove Product Modal -->
+    <div class="modal-overlay" id="removeModal" onclick="closeModalOnOverlay(event)">
+        <div class="modal-box">
+            <div class="modal-header">
+                <i class="fa-solid fa-circle-exclamation"></i>
+                <h3>Xác nhận gỡ sản phẩm vi phạm</h3>
+            </div>
+
+            <div class="modal-product-name" id="modalProductName">
+                Đang tải...
+            </div>
+
+                <form id="removeForm" method="post" action="<%= request.getContextPath() %>/admin/approve-products">
+                <input type="hidden" name="productId" id="modalProductId" value="">
+                <input type="hidden" name="action" value="remove">
+
+                <label class="modal-label" for="modalRemoveReason">
+                    Lý do gỡ sản phẩm <span style="color:var(--red);">*</span>
+                </label>
+                <textarea
+                    id="modalRemoveReason"
+                    name="removeReason"
+                    class="modal-textarea"
+                    placeholder="Ví dụ: Sản phẩm hàng giả, vi phạm tiêu chuẩn hóa đơn, thông tin không chính xác..."
+                    maxlength="500"
+                    oninput="validateRemoveReason()"></textarea>
+                <div class="modal-hint" style="display:flex;justify-content:space-between;">
+                    <span>Tối thiểu 10 ký tự. Tối đa 500 ký tự.</span>
+                    <span id="charCount">0/500</span>
+                </div>
+                <div class="modal-error" id="modalError">Vui lòng nhập lý do gỡ (ít nhất 10 ký tự).</div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" onclick="closeRemoveModal()">Hủy</button>
+                    <button type="submit" class="btn-confirm-remove" id="confirmRemoveBtn" disabled>
+                        <i class="fa-solid fa-trash-can"></i> Xác nhận gỡ
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openRemoveModal(productId, productTitle) {
+            document.getElementById('modalProductId').value = productId;
+            document.getElementById('modalProductName').innerHTML =
+                '<strong>Sản phẩm:</strong> ' + productTitle;
+            document.getElementById('modalRemoveReason').value = '';
+            document.getElementById('charCount').textContent = '0/500';
+            document.getElementById('modalError').classList.remove('show');
+            document.getElementById('confirmRemoveBtn').disabled = true;
+            document.getElementById('removeModal').classList.add('show');
+            setTimeout(function() {
+                document.getElementById('modalRemoveReason').focus();
+            }, 100);
         }
-        .floating-report-btn:hover {
-            transform: translateY(-5px);
-            background-color: #dc2626;
-            color: white;
-            box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+
+        function closeRemoveModal() {
+            document.getElementById('removeModal').classList.remove('show');
         }
-    </style>
+
+        function closeModalOnOverlay(event) {
+            if (event.target === event.currentTarget) {
+                closeRemoveModal();
+            }
+        }
+
+        function validateRemoveReason() {
+            var reason = document.getElementById('modalRemoveReason').value.trim();
+            var charCount = reason.length;
+            var isValid = charCount >= 10;
+            document.getElementById('charCount').textContent = charCount + '/500';
+            document.getElementById('confirmRemoveBtn').disabled = !isValid;
+            if (isValid) {
+                document.getElementById('modalError').classList.remove('show');
+            }
+        }
+
+        document.getElementById('removeForm').addEventListener('submit', function(e) {
+            var reason = document.getElementById('modalRemoveReason').value.trim();
+            if (reason.length < 10) {
+                e.preventDefault();
+                document.getElementById('modalError').classList.add('show');
+                document.getElementById('modalRemoveReason').focus();
+            }
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeRemoveModal();
+        });
+    </script>
 </body>
 </html>
-

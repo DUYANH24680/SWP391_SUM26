@@ -323,6 +323,12 @@
             <a href="<%= request.getContextPath() %>/admin/customers" class="active">
                 <i class="fa-solid fa-users"></i> Khách Hàng
             </a>
+                            <a href="<%= request.getContextPath() %>/admin/orders">
+                <i class="fa-solid fa-chart-line" style="margin-right:4px;"></i> Monitor Đơn Hàng
+            </a>
+            <a href="<%= request.getContextPath() %>/admin/seller-requests">
+                <i class="fa-solid fa-store" style="margin-right:4px;"></i> Duyệt Seller
+            </a>
         </div>
         <div class="nav-right">
             <span class="nav-username">Admin: <%= user.getFullname() != null ? user.getFullname() : user.getUsername() %></span>

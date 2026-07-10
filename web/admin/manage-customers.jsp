@@ -329,6 +329,9 @@
                             <a href="<%= request.getContextPath() %>/admin/orders">
                 <i class="fa-solid fa-chart-line"></i> Monitor Đơn Hàng
             </a>
+                            <a href="<%= request.getContextPath() %>/admin/seller-requests">
+                <i class="fa-solid fa-store"></i> Duyệt Seller
+            </a>
         </div>
         <div class="nav-right">
             <span class="nav-username">Admin: <%= user.getFullname() != null ? user.getFullname() : user.getUsername() %></span>
