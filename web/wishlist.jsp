@@ -110,16 +110,6 @@
 
         .nav-icon-btn:hover { background: var(--green-light); color: var(--green-dark); }
 
-        .cart-badge {
-            position: absolute; top: -4px; right: -4px;
-            min-width: 18px; height: 18px;
-            background: var(--orange); color: #fff;
-            font-size: 0.62rem; font-weight: 700;
-            border-radius: 999px;
-            display: flex; align-items: center; justify-content: center;
-            padding: 0 4px;
-        }
-
         .wishlist-badge {
             position: absolute; top: -4px; right: -4px;
             min-width: 18px; height: 18px;
@@ -440,7 +430,6 @@
 </head>
 <body>
 
-<!-- TOPNAV -->
 <nav class="topnav">
     <a href="home.jsp" class="nav-logo">
         <i class="fa-solid fa-apple-whole"></i> Sena Shop
@@ -451,13 +440,6 @@
             <% Integer wlCount = (Integer) session.getAttribute("wishlistCount"); %>
             <% if (wlCount != null && wlCount > 0) { %>
             <span class="wishlist-badge"><%= wlCount %></span>
-            <% } %>
-        </a>
-        <a href="cart" class="nav-icon-btn" title="Gio hang">
-            <i class="fa-solid fa-basket-shopping"></i>
-            <% Integer cartCount = (Integer) session.getAttribute("cartCount"); %>
-            <% if (cartCount != null && cartCount > 0) { %>
-            <span class="cart-badge"><%= cartCount %></span>
             <% } %>
         </a>
         <img class="nav-avatar" src="<%= Account.getAvatar() != null ? Account.getAvatar() : "https://ui-avatars.com/api/?name=" + java.net.URLEncoder.encode(Account.getFullname(), "UTF-8") + "&background=4caf50&color=fff&size=80&bold=true&rounded=true" %>" alt="avatar">
@@ -497,7 +479,7 @@
             </div>
         <% } else { %>
 
-            <!-- ===== SELECT ALL BAR ===== -->
+           
             <div class="select-all-bar">
                 <label class="custom-checkbox" id="selectAllLabel">
                     <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()">
@@ -519,7 +501,7 @@
                  data-product-id="<%= item.getProductId() %>"
                  data-in-stock="<%= !isOutOfStock %>">
 
-                <!-- Checkbox -->
+       
                 <div class="item-checkbox">
                     <% if (!isOutOfStock) { %>
                     <label class="custom-checkbox">
@@ -546,7 +528,7 @@
                     <% } %>
                 </div>
 
-                <!-- Details -->
+               
                 <div class="item-details">
                     <a href="info?id=<%= item.getProductId() %>" class="item-title">
                         <%= item.getTitle() != null ? item.getTitle() : "San pham" %>
@@ -573,14 +555,14 @@
                     </div>
                 </div>
 
-                <!-- Price -->
+            
                 <div class="item-price">
                     <%= nf.format((long) item.getUnitPrice()) %> d
                 </div>
 
-                <!-- Actions -->
+               
                 <div class="item-actions">
-                    <!-- Xoa khoi wishlist -->
+                   
                     <form action="remove-wishlist" method="POST" style="display:inline;" onsubmit="return confirm('Xoa san pham nay khoi wishlist?')">
                         <input type="hidden" name="productId" value="<%= item.getProductId() %>">
                         <button type="submit" class="btn btn-danger" title="Xoa khoi wishlist">
@@ -591,7 +573,7 @@
             </div>
             <% } %>
 
-            <!-- ===== BOTTOM ACTION BAR ===== -->
+         
             <div class="bottom-bar">
                 <div class="left-info">
                     Da chon <strong id="summarySelectedCount">0</strong> san pham
@@ -600,12 +582,18 @@
                     <a href="home.jsp" class="btn btn-secondary">
                         <i class="fa-solid fa-arrow-left"></i> Tiep Tuc Mua Sam
                     </a>
-                    <button type="button" class="btn btn-green" id="moveSelectedBtn" onclick="moveSelectedToCart()" disabled>
-                        Chuyen vao gio hang (<span id="moveSelectedCount">0</span>)
-                    </button>
+                    <form id="moveToCartForm" action="move-wishlist-to-cart-redirect" method="POST" style="display:inline;">
+                        <input type="hidden" id="selectedProductIds" name="productIds" value="">
+                        <button type="button" class="btn btn-green" id="moveSelectedBtn" onclick="moveSelectedToCart()" disabled>
+                            Chuyen vao gio hang (<span id="moveSelectedCount">0</span>)
+                        </button>
+                    </form>
                     <button type="button" class="btn btn-orange" id="buySelectedBtn" onclick="buySelected()" disabled>
                         <i class="fa-solid fa-credit-card"></i> Mua Hang (<span id="buySelectedCount">0</span>)
                     </button>
+                    <form id="buyForm" action="move-wishlist-to-cart-redirect" method="POST" style="display:none;">
+                        <input type="hidden" id="buyProductIds" name="productIds" value="">
+                    </form>
                 </div>
             </div>
         <% } %>
@@ -615,7 +603,7 @@
 <script>
     const totalItems = <%= wishlist.isEmpty() ? 0 : wishlist.getTotalItems() %>;
 
-    // ---- Chon / bo chon tat ca ----
+  
     function toggleSelectAll() {
         const selectAll = document.getElementById('selectAllCheckbox');
         const checked = selectAll.checked;
@@ -675,152 +663,29 @@
         updateAllSelectAllState();
     }
 
-    // ---- Mua cac san pham da chon ----
+ 
     function buySelected() {
         const checkedBoxes = document.querySelectorAll('.product-checkbox:checked');
         if (checkedBoxes.length === 0) return;
 
         const selectedIds = Array.from(checkedBoxes).map(function(cb) { return cb.value; });
 
-        // Neu chi 1 san pham -> chuyen thang den trang chi tiet san pham
-        if (selectedIds.length === 1) {
-            window.location.href = ctx + '/info?id=' + selectedIds[0];
-            return;
-        }
-
-        // Neu nhieu san pham -> chuyen tat ca vao gio hang roi chuyen den trang gio hang
-        let completed = 0;
-        const total = selectedIds.length;
-
-        checkedBoxes.forEach(function(checkbox) {
-            const productId = checkbox.value;
-
-            const data = new URLSearchParams();
-            data.append('productId', productId);
-
-            fetch('move-wishlist-to-cart', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: data
-            })
-            .then(function(response) {
-                completed++;
-                if (completed === total) {
-                    window.location.href = ctx + '/view-cart';
-                }
-            })
-            .catch(function(error) {
-                completed++;
-                console.error('Loi chuyen san pham ' + productId + ' vao gio hang:', error);
-                if (completed === total) {
-                    window.location.href = ctx + '/view-cart';
-                }
-            });
-        });
+        // Chuyen tat ca vao gio hang roi chuyen den trang gio hang
+        document.getElementById('buyProductIds').value = selectedIds.join(',');
+        document.getElementById('buyForm').submit();
     }
 
-    // ---- Chuyen cac san pham da chon vao gio hang ----
+
     function moveSelectedToCart() {
         const checkedBoxes = document.querySelectorAll('.product-checkbox:checked');
         if (checkedBoxes.length === 0) return;
 
-        const items = Array.from(checkedBoxes).map(function(cb) {
-            const row = cb.closest('.wishlist-item');
-            return {
-                productId: cb.value,
-                row: row,
-                checkbox: cb
-            };
-        });
-
-        let completed = 0;
-        const total = items.length;
-        let lastError = null;
-
-        items.forEach(function(item) {
-            const data = new URLSearchParams();
-            data.append('productId', item.productId);
-
-            fetch('move-wishlist-to-cart', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: data
-            })
-            .then(function(response) {
-                const contentType = response.headers.get('content-type') || '';
-                if (!contentType.includes('application/json')) {
-                    return response.text().then(function(text) {
-                        throw new Error(text || 'Phan hoi khong hop le tu server.');
-                    });
-                }
-                return response.json().then(function(result) {
-                    if (!result.success) {
-                        lastError = result.message || 'Khong the chuyen san pham vao gio hang.';
-                    }
-                    return result;
-                });
-            })
-            .catch(function(error) {
-                lastError = lastError || (error && error.message ? error.message : 'Loi ket noi den server.');
-            })
-            .finally(function() {
-                if (lastError) {
-                    alert(lastError);
-                } else {
-                    const row = item.row;
-                    if (row && row.parentNode) {
-                        row.parentNode.removeChild(row);
-                    }
-                }
-
-                completed++;
-                if (completed === total) {
-                    updateWishlistCountersAfterMove();
-                    updateAllSelectAllState();
-                    recalcUI();
-                }
-            });
-        });
+        const selectedIds = Array.from(checkedBoxes).map(function(cb) { return cb.value; });
+        document.getElementById('selectedProductIds').value = selectedIds.join(',');
+        document.getElementById('moveToCartForm').submit();
     }
 
-    function updateWishlistCountersAfterMove() {
-        const remainingItems = document.querySelectorAll('.wishlist-item');
-        const remainingCount = remainingItems.length;
-        const summaryEl = document.getElementById('summarySelectedCount');
-        if (summaryEl) summaryEl.textContent = '0';
 
-        const emptyState = document.querySelector('.empty-state');
-        const selectAllBar = document.querySelector('.select-all-bar');
-        const bottomBar = document.querySelector('.bottom-bar');
-
-        if (remainingCount === 0) {
-            const card = document.querySelector('.wishlist-card');
-            if (!card) return;
-
-            if (emptyState) {
-                emptyState.style.display = '';
-            } else if (card) {
-                const html = '<div class="empty-state">'
-                    + '<div class="empty-state-icon"><i class="fa-solid fa-heart"></i></div>'
-                    + '<h2>Wishlist Dang Trong</h2>'
-                    + '<p>Hay them san pham yeu thich de luu lai va chuyen vao gio hang sau.</p>'
-                    + '<a href="home.jsp" class="btn btn-green" style="display:inline-flex; margin-top: 0.5rem;">'
-                    + '<i class="fa-solid fa-basket-shopping"></i> Kham Pha San Pham'
-                    + '</a>'
-                    + '</div>';
-
-                const wrapper = document.createElement('div');
-                wrapper.innerHTML = html;
-                const newEmptyState = wrapper.firstElementChild;
-                card.insertBefore(newEmptyState, card.firstChild);
-
-                if (selectAllBar) selectAllBar.style.display = 'none';
-                if (bottomBar) bottomBar.style.display = 'none';
-            }
-        }
-    }
-
-    // ---- Khoi tao khi load trang ----
     document.addEventListener('DOMContentLoaded', function() {
         updateAllSelectAllState();
         recalcUI();

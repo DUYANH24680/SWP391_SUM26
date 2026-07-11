@@ -94,28 +94,7 @@ public class CartService {
         int cartId = cartDAO.getOrCreateCartId(customerId);
         CartItem existing = cartItemDAO.getItemByProductId(cartId, productId);
         if (existing != null) {
-            int combinedQuantity = existing.getQuantity() + quantity;
-            if (combinedQuantity > product.getStockQuantity()) {
-                throw new IllegalArgumentException("Số lượng mới vượt quá tồn kho hiện có.");
-            }
-            double combinedTotal = unitPrice * combinedQuantity;
-            if (voucher != null) {
-                discountAmount = voucher.calculateCartDiscount(combinedTotal);
-            } else {
-                discountAmount = existing.getDiscountAmount();
-            }
-            existing.setQuantity(combinedQuantity);
-            existing.setDiscountAmount(discountAmount);
-            existing.setTotalPrice(combinedTotal - discountAmount);
-            existing.setNote(note);
-            if (voucherId != null) {
-                existing.setVoucherId(voucherId);
-                existing.setDiscountCode(voucher.getCode());
-            } else {
-                existing.setVoucherId(0);
-                existing.setDiscountCode(null);
-            }
-            cartItemDAO.updateItem(existing);
+            throw new IllegalArgumentException("Sản phẩm đã có trong giỏ hàng. Vui lòng vào giỏ hàng để cập nhật số lượng.");
         } else {
             double totalPrice = unitPrice * quantity;
             CartItem item = new CartItem();

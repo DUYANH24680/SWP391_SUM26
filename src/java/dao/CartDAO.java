@@ -99,5 +99,22 @@ public class CartDAO extends DbContext {
             throw new RuntimeException("CartDAO.recalculateCartTotals error: " + e.getMessage(), e);
         }
     }
+
+    public boolean isProductInCart(int customerId, int productId) {
+        String sql = "SELECT 1 FROM CartItems ci "
+                   + "INNER JOIN Carts c ON ci.cart_id = c.id "
+                   + "WHERE c.customer_id = ? AND ci.product_id = ? AND (ci.size IS NULL OR ci.size = '')";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, customerId);
+            ps.setInt(2, productId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            System.err.println("[CartDAO] isProductInCart error: " + e.getMessage());
+            throw new RuntimeException("CartDAO.isProductInCart error: " + e.getMessage(), e);
+        }
+    }
 }
 

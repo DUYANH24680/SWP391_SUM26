@@ -220,35 +220,6 @@
         .shop-name { font-size: 0.95rem; font-weight: 700; color: var(--gray-800); }
         .shop-meta { font-size: 0.8rem; color: var(--gray-400); }
 
-        /* ===== PRODUCT CODE ===== */
-        .product-code-box {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: var(--gray-50);
-            border: 1px solid var(--gray-200);
-            border-radius: var(--radius-sm);
-            padding: 0.75rem 1rem;
-            font-family: 'Courier New', monospace;
-            font-weight: 600;
-            font-size: 0.9rem;
-            color: var(--gray-800);
-        }
-        .code-text { flex: 1; }
-        .btn-copy {
-            background: none;
-            border: none;
-            color: var(--green);
-            cursor: pointer;
-            padding: 0.4rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-            font-size: 1rem;
-        }
-        .btn-copy:hover { color: var(--green-dark); transform: scale(1.1); }
-
         /* ===== QUANTITY CONTROL ===== */
         .quantity-control {
             display: flex;
@@ -286,61 +257,6 @@
         .qty-input::-webkit-outer-spin-button,
         .qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         .qty-input[type=number] { -moz-appearance: textfield; }
-
-        /* ===== DISCOUNT CODE ===== */
-        .discount-input-group {
-            display: flex;
-            gap: 0.5rem;
-        }
-        .discount-input {
-            flex: 1;
-            padding: 0.75rem 1rem;
-            border: 1px solid var(--gray-200);
-            border-radius: var(--radius-sm);
-            font-size: 0.9rem;
-            outline: none;
-            transition: border-color 0.2s;
-            background: var(--gray-50);
-        }
-        .discount-input:focus {
-            border-color: var(--green);
-            background: #fff;
-        }
-        .btn-apply-code {
-            padding: 0.75rem 1.25rem;
-            background: var(--gray-100);
-            border: 1px solid var(--gray-200);
-            border-radius: var(--radius-sm);
-            color: var(--gray-600);
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: all 0.2s;
-            white-space: nowrap;
-        }
-        .btn-apply-code:hover {
-            background: var(--gray-50);
-            color: var(--green);
-            border-color: var(--green);
-        }
-        #discountMessage {
-            font-weight: 600;
-            border-radius: 6px;
-        }
-        #discountMessage.success {
-            background: #dcfce7;
-            color: #166534;
-            border-left: 3px solid var(--green);
-            padding-left: 0.75rem;
-        }
-        #discountMessage.error {
-            background: #fee2e2;
-            color: #991b1b;
-            border-left: 3px solid #dc2626;
-            padding-left: 0.75rem;
-        }
 
         /* ===== NOTES TEXTAREA ===== */
         .notes-textarea {
@@ -404,8 +320,16 @@
         }
         .btn-green { background: var(--green); color: #fff; }
         .btn-green:hover { background: var(--green-dark); transform: translateY(-1px); }
+        .btn-orange { background: #ff6b35; color: #fff; }
+        .btn-orange:hover { background: #e55a2b; transform: translateY(-1px); }
         .btn-outline { background: #fff; color: var(--gray-600); border: 1.5px solid var(--gray-200); }
         .btn-outline:hover { background: var(--gray-50); color: var(--gray-800); }
+        .btn-outline-wishlist {
+            background: #fff; color: #dc2626; border: 1.5px solid #fecaca;
+            padding: 0.75rem 1rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+        }
+        .btn-outline-wishlist:hover { background: #fef2f2; border-color: #dc2626; }
+        .btn-outline-wishlist i { font-size: 1.1rem; }
 
         /* ================= REVIEW SECTION (PREMIUM) ================= */
         .reviews-section {
@@ -770,17 +694,6 @@
                     </div>
                 </div>
 
-                <!-- Product Code -->
-                <div>
-                    <div class="section-label">Mã Sản Phẩm</div>
-                    <div class="product-code-box">
-                        <span class="code-text"><%= product.getId() %></span>
-                        <button class="btn-copy" onclick="copyToClipboard('<%= product.getId() %>')" title="Sao chép">
-                            <i class="fa-solid fa-copy"></i>
-                        </button>
-                    </div>
-                </div>
-
                 <!-- Quantity Input -->
                 <div>
                     <div class="section-label">Số Lượng</div>
@@ -793,18 +706,6 @@
                             <i class="fa-solid fa-plus"></i>
                         </button>
                     </div>
-                </div>
-
-                <!-- Discount Code -->
-                <div>
-                    <div class="section-label">Mã Giảm Giá (Tùy Chọn)</div>
-                    <div class="discount-input-group">
-                        <input type="text" id="discountCode" class="discount-input" placeholder="Nhập mã giảm giá...">
-                        <button class="btn-apply-code" onclick="applyDiscountCode()">
-                            <i class="fa-solid fa-tag"></i> Áp Dụng
-                        </button>
-                    </div>
-                    <div id="discountMessage" style="display:none; margin-top:0.5rem; font-size:0.85rem; padding:0.5rem 0.75rem; border-radius:6px;"></div>
                 </div>
 
                 <!-- Notes -->
@@ -827,29 +728,35 @@
                     <% } %>
                 </div>
 
-                <!-- Action buttons -->
-                <!-- Mô tả sản phẩm -->
-                <% if (product.getDescription() != null && !product.getDescription().trim().isEmpty()) { %>
-                <div class="product-description" style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--gray-200);">
-                    <h3 style="font-size: 1rem; color: var(--gray-800); margin-bottom: 0.5rem;"><i class="fa-solid fa-align-left" style="color: var(--green); margin-right: 0.3rem;"></i> Mô Tả Sản Phẩm</h3>
-                    <p style="font-size: 0.95rem; color: var(--gray-600); line-height: 1.5; white-space: pre-wrap;"><%= product.getDescription() %></p>
-                </div>
-                <% } %>
-
                 <div class="action-buttons" style="margin-top: 1.5rem;">
-                    <button class="btn btn-green" onclick="alert('Chuc nang them vao gio hang chua duoc trien khai.')">
+                    <button class="btn btn-green" onclick="addToCart()">
                         <i class="fa-solid fa-basket-shopping"></i> Them Vao Gio Hang
+                    </button>
+                    <button class="btn btn-orange" onclick="buyNow()" style="background: #ff6b35; color: #fff; border: none;">
+                        <i class="fa-solid fa-bolt"></i> Mua Ngay
                     </button>
                     <a href="home.jsp" class="btn btn-outline">
                         <i class="fa-solid fa-arrow-left"></i> Quay Lai
                     </a>
+                    <% if (session.getAttribute("Account") != null) { %>
+                    <form action="add-to-wishlist" method="POST" style="display:inline;">
+                        <input type="hidden" name="productId" value="<%= product.getId() %>">
+                        <button type="submit" class="btn btn-outline-wishlist" title="Yêu thích">
+                            <i class="fa-solid fa-heart"></i>
+                        </button>
+                    </form>
+                    <% } %>
                 </div>
                 <form id="cartForm" action="cart" method="post" style="display:none;">
                     <input type="hidden" id="cartAction" name="action" value="add">
                     <input type="hidden" name="productId" value="<%= product.getId() %>">
                     <input type="hidden" id="cartQty" name="quantity" value="1">
-                    <input type="hidden" id="cartDiscountCode" name="discountCode" value="">
                     <input type="hidden" id="cartNote" name="note" value="">
+                </form>
+                <form id="buyNowForm" action="buy-now" method="post" style="display:none;">
+                    <input type="hidden" name="productId" value="<%= product.getId() %>">
+                    <input type="hidden" id="buyNowQty" name="quantity" value="1">
+                    <input type="hidden" id="buyNowNote" name="note" value="">
                 </form>
             </div>
         </div>
@@ -980,52 +887,13 @@
             if (val < 999) input.value = val + 1;
         }
 
-        // ===== DISCOUNT CODE =====
-        function applyDiscountCode() {
-            const code = document.getElementById('discountCode').value.trim();
-            const msg = document.getElementById('discountMessage');
-            
-            if (!code) {
-                msg.textContent = 'Vui lòng nhập mã giảm giá';
-                msg.className = 'error';
-                msg.style.display = 'block';
-                return;
-            }
-            
-            // Mock validation - replace with actual API call
-            if (code.toUpperCase() === 'SAVE10') {
-                msg.textContent = '✓ Mã giảm giá "SAVE10" đã được áp dụng! Giảm 10%';
-                msg.className = 'success';
-                msg.style.display = 'block';
-            } else if (code.toUpperCase() === 'SAVE20') {
-                msg.textContent = '✓ Mã giảm giá "SAVE20" đã được áp dụng! Giảm 20%';
-                msg.className = 'success';
-                msg.style.display = 'block';
-            } else {
-                msg.textContent = '✗ Mã giảm giá không hợp lệ hoặc đã hết hạn';
-                msg.className = 'error';
-                msg.style.display = 'block';
-            }
-        }
-
-        // ===== COPY PRODUCT CODE =====
-        function copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(() => {
-                alert('Đã sao chép mã sản phẩm: ' + text);
-            }).catch(() => {
-                alert('Không thể sao chép');
-            });
-        }
-
         // ===== ADD TO CART =====
         function addToCart() {
             const qty = parseInt(document.getElementById('quantityInput').value) || 1;
             const notes = document.getElementById('orderNotes').value;
-            const code = document.getElementById('discountCode').value;
 
             document.getElementById('cartQty').value = qty;
             document.getElementById('cartNote').value = notes;
-            document.getElementById('cartDiscountCode').value = code;
             document.getElementById('cartAction').value = 'add';
             document.getElementById('cartForm').submit();
         }
@@ -1034,13 +902,10 @@
         function buyNow() {
             const qty = parseInt(document.getElementById('quantityInput').value) || 1;
             const notes = document.getElementById('orderNotes').value;
-            const code = document.getElementById('discountCode').value;
 
-            document.getElementById('cartQty').value = qty;
-            document.getElementById('cartNote').value = notes;
-            document.getElementById('cartDiscountCode').value = code;
-            document.getElementById('cartAction').value = 'buyNow';
-            document.getElementById('cartForm').submit();
+            document.getElementById('buyNowQty').value = qty;
+            document.getElementById('buyNowNote').value = notes;
+            document.getElementById('buyNowForm').submit();
         }
 
         // ===== SUBMIT REVIEW (AJAX) =====
