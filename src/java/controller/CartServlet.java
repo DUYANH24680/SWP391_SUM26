@@ -110,17 +110,7 @@ public class CartServlet extends HttpServlet {
             session.setAttribute("error", "Lỗi khi thêm sản phẩm vào giỏ hàng. Vui lòng thử lại.");
         }
 
-        if (redirectToCart) {
-            resp.sendRedirect(req.getContextPath() + "/cart");
-            return;
-        }
-
-        String referer = req.getHeader("Referer");
-        if (referer != null && !referer.trim().isEmpty()) {
-            resp.sendRedirect(referer);
-        } else {
-            resp.sendRedirect(req.getContextPath() + "/cart");
-        }
+        resp.sendRedirect(req.getContextPath() + "/cart");
     }
 
     private void handleUpdate(HttpServletRequest req, HttpServletResponse resp,

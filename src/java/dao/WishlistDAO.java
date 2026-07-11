@@ -342,18 +342,7 @@ public class WishlistDAO extends DbContext {
                 }
             }
 
-            if (existingItemId != null) {
-                int newQty = existingQuantity + 1;
-                if (newQty > stock) { conn.rollback(); throw new IllegalArgumentException("Số lượng trong giỏ hàng vượt quá tồn kho."); }
-                double newTotal = unitPrice * newQty;
-                String sqlUpdateItem = "UPDATE CartItems SET quantity = ?, total_price = ?, updated_at = GETDATE() WHERE id = ?";
-                try (PreparedStatement ps = conn.prepareStatement(sqlUpdateItem)) {
-                    ps.setInt(1, newQty);
-                    ps.setDouble(2, newTotal);
-                    ps.setInt(3, existingItemId);
-                    ps.executeUpdate();
-                }
-            } else {
+            if (existingItemId == null) {
                 String sqlInsertItem = "INSERT INTO CartItems (cart_id, product_id, size, quantity, unit_price, discount_amount, total_price, created_at, updated_at) VALUES (?, ?, ?, ?, ?, 0, ?, GETDATE(), GETDATE())";
                 try (PreparedStatement ps = conn.prepareStatement(sqlInsertItem)) {
                     ps.setInt(1, cartId);
@@ -365,6 +354,7 @@ public class WishlistDAO extends DbContext {
                     ps.executeUpdate();
                 }
             }
+            // If product already in cart, do NOT update quantity - just remove from wishlist
 
             String sqlDeleteWishlistItem = "DELETE FROM WishlistItems WHERE wishlist_id = ? AND product_id = ?";
             try (PreparedStatement ps = conn.prepareStatement(sqlDeleteWishlistItem)) {

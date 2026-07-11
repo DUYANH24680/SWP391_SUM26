@@ -87,8 +87,8 @@ public class BuyNowServlet extends HttpServlet {
             cartService.close();
         }
 
-        // Always redirect to cart after adding
-        response.sendRedirect(request.getContextPath() + "/cart");
+        // Always redirect to checkout-cart page with the selected product
+        response.sendRedirect(request.getContextPath() + "/checkout-cart?selectedProducts=" + productId);
     }
 
     @Override

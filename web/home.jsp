@@ -2017,7 +2017,7 @@
                                             </span>
                                         </div>
                                         <div class="dropdown-menu">
-                                            <% if ("customer".equals(user.getRoleName())) { %>
+                                            <% if ("customer".equals(Account.getRoleName())) { %>
                                             <a class="dropdown-item" href="<%= request.getContextPath() %>/register-seller">
                                                 <i class="fa-solid fa-store"></i> Đăng Ký Cửa Hàng
                                             </a>
