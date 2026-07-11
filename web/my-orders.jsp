@@ -4,6 +4,8 @@
 <%@ page import="model.OrderDetail" %>
 <%@ page import="java.util.List" %>
 <%@ page import="java.util.Map" %>
+<%@ page import="java.text.SimpleDateFormat" %>
+<%@ page import="Utils.ImageUrlUtil" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%
@@ -13,6 +15,18 @@
         return;
     }
 
+    String statusParam = request.getParameter("status");
+    Integer activeStatus = null;
+    if (statusParam != null && !statusParam.trim().isEmpty()) {
+        try { activeStatus = Integer.parseInt(statusParam.trim()); } catch (NumberFormatException e) { activeStatus = null; }
+    }
+
+    Integer currentPage = (Integer) request.getAttribute("currentPage");
+    Integer totalPages = (Integer) request.getAttribute("totalPages");
+    if (currentPage == null) currentPage = 1;
+    if (totalPages == null) totalPages = 1;
+%>
+<%
     String avatarUrl = Account.getAvatar();
     if (avatarUrl == null || avatarUrl.trim().isEmpty()) {
         String fullname = Account.getFullname() != null ? Account.getFullname() : Account.getUsername();
@@ -376,6 +390,52 @@
             .sidebar-nav { display: flex; flex-wrap: wrap; gap: 0.25rem; }
             .sidebar-nav a { width: auto; }
         }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+        }
+        .page-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 36px;
+            height: 36px;
+            padding: 0 0.5rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--gray-600);
+            text-decoration: none;
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            transition: all 0.15s ease;
+            cursor: pointer;
+        }
+        .page-link:hover {
+            border-color: var(--green);
+            color: var(--green-dark);
+            background: var(--green-light);
+        }
+        .page-link.active {
+            background: var(--green);
+            border-color: var(--green);
+            color: #fff;
+        }
+        .page-link.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+        .page-link.prev-next {
+            padding: 0 1rem;
+            gap: 0.35rem;
+        }
     </style>
 </head>
 <body>
@@ -387,8 +447,8 @@
         </a>
         <div class="nav-links">
             <a href="home.jsp">Trang Chủ</a>
+            <a href="danh-muc">Danh Mục</a>
             <a href="products">Sản Phẩm</a>
-            <a href="#">Khuyến Mãi</a>
         </div>
         <div class="nav-right">
             <img class="nav-avatar" src="<%= avatarUrl %>" alt="avatar">
@@ -401,10 +461,10 @@
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="sidebar-nav">
-                <a href="profile"><i class="fa-regular fa-Account"></i> Hồ Sơ</a>
-                <a href="products"><i class="fa-brands fa-opencart"></i> Sản Phẩm</a>
+                <a href="customer-dashboard"><i class="fa-solid fa-gauge"></i> Dashboard</a>
                 <a href="my-orders" class="active"><i class="fa-solid fa-basket-shopping"></i> Đơn Hàng</a>
-                <a href="#"><i class="fa-regular fa-heart"></i> Yêu Thích</a>
+                <a href="profile"><i class="fa-regular fa-user"></i> Hồ Sơ</a>
+                <a href="address"><i class="fa-solid fa-map-location-dot"></i> Sổ Địa Chỉ</a>
                 <a href="logout" class="logout"><i class="fa-solid fa-right-from-bracket"></i> Đăng Xuất</a>
             </div>
         </aside>
@@ -427,12 +487,12 @@
 
             <!-- Tab Filtering -->
             <div class="tabs-card">
-                <button class="tab-btn active" onclick="filterOrders('all')">Tất Cả</button>
-                <button class="tab-btn" onclick="filterOrders('1')">Chờ xác nhận</button>
-                <button class="tab-btn" onclick="filterOrders('2')">Đã xác nhận</button>
-                <button class="tab-btn" onclick="filterOrders('3')">Đang giao</button>
-                <button class="tab-btn" onclick="filterOrders('4')">Đã giao</button>
-                <button class="tab-btn" onclick="filterOrders('5')">Đã hủy</button>
+                <a class="tab-btn <%= activeStatus == null ? "active" : "" %>" href="my-orders">Tất Cả</a>
+                <a class="tab-btn <%= activeStatus != null && activeStatus == 1 ? "active" : "" %>" href="my-orders?status=1">Chờ xác nhận</a>
+                <a class="tab-btn <%= activeStatus != null && activeStatus == 2 ? "active" : "" %>" href="my-orders?status=2">Đã xác nhận</a>
+                <a class="tab-btn <%= activeStatus != null && activeStatus == 3 ? "active" : "" %>" href="my-orders?status=3">Đang giao</a>
+                <a class="tab-btn <%= activeStatus != null && activeStatus == 4 ? "active" : "" %>" href="my-orders?status=4">Đã giao</a>
+                <a class="tab-btn <%= activeStatus != null && activeStatus == 5 ? "active" : "" %>" href="my-orders?status=5">Đã hủy</a>
             </div>
 
             <!-- Order Cards List -->
@@ -447,7 +507,7 @@
                         <div class="order-header">
                             <div class="order-date-id">
                                 Ngày đặt: <strong><%= new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(o.getOrderDate()) %></strong>
-                                <span class="order-id">Mã đơn: #<%= o.getId() %></span>
+                                <span class="order-id"></span>
                             </div>
                             <span class="badge <%= o.getStatusClass() %>"><%= o.getStatusLabel() %></span>
                         </div>
@@ -460,7 +520,7 @@
                             %>
                                 <div class="item-row">
                                     <% if (od.getProductImage() != null && !od.getProductImage().trim().isEmpty()) { %>
-                                        <img src="<%= od.getProductImage() %>" alt="<%= od.getProductTitle() %>" class="item-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                                        <img src="<%= ImageUrlUtil.resolve(od.getProductImage(), request.getContextPath()) %>" alt="<%= od.getProductTitle() %>" class="item-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
                                         <div class="item-img-placeholder" style="display:none;">🍎</div>
                                     <% } else { %>
                                         <div class="item-img-placeholder">🍎</div>
@@ -521,56 +581,83 @@
                 <% 
                         }
                     } else { 
+                        String emptyMessage = "Bạn chưa có đơn hàng nào.";
+                        if (activeStatus != null) {
+                            switch (activeStatus) {
+                                case 1:
+                                    emptyMessage = "Bạn không có đơn hàng nào đang chờ xác nhận.";
+                                    break;
+                                case 2:
+                                    emptyMessage = "Bạn không có đơn hàng nào đã xác nhận.";
+                                    break;
+                                case 3:
+                                    emptyMessage = "Bạn không có đơn hàng nào đang giao.";
+                                    break;
+                                case 4:
+                                    emptyMessage = "Bạn không có đơn hàng nào đã giao.";
+                                    break;
+                                case 5:
+                                    emptyMessage = "Bạn không có đơn hàng nào đã hủy.";
+                                    break;
+                                default:
+                                    emptyMessage = "Bạn không có đơn hàng nào ở trạng thái này.";
+                                    break;
+                            }
+                        }
                 %>
                     <div class="empty-state">
                         <i class="fa-solid fa-receipt"></i>
-                        <p>Bạn chưa có đơn hàng nào.</p>
-                        <a href="home.jsp" class="btn" style="background:var(--green); color:#fff; padding:0.6rem 1.5rem; border-radius:var(--radius-sm);">Mua ngay sản phẩm</a>
+                        <p><%= emptyMessage %></p>
+                        <a href="my-orders" class="btn" style="background:var(--green); color:#fff; padding:0.6rem 1.5rem; border-radius:var(--radius-sm);">Xem tất cả đơn hàng</a>
                     </div>
                 <% } %>
             </div>
+
+            <!-- Pagination -->
+            <% if (totalPages > 1) { %>
+                <div class="pagination">
+                    <% if (currentPage > 1) { %>
+                        <a href="my-orders?page=<%= currentPage - 1 %><%= activeStatus != null ? "&status=" + activeStatus : "" %>" class="page-link prev-next"><i class="fa-solid fa-chevron-left"></i> Trước</a>
+                    <% } else { %>
+                        <span class="page-link prev-next disabled"><i class="fa-solid fa-chevron-left"></i> Trước</span>
+                    <% } %>
+
+                    <% for (int i = 1; i <= totalPages; i++) { %>
+                        <% if (i == currentPage) { %>
+                            <span class="page-link active"><%= i %></span>
+                        <% } else { %>
+                            <a href="my-orders?page=<%= i %><%= activeStatus != null ? "&status=" + activeStatus : "" %>" class="page-link"><%= i %></a>
+                        <% } %>
+                    <% } %>
+
+                    <% if (currentPage < totalPages) { %>
+                        <a href="my-orders?page=<%= currentPage + 1 %><%= activeStatus != null ? "&status=" + activeStatus : "" %>" class="page-link prev-next">Sau <i class="fa-solid fa-chevron-right"></i></a>
+                    <% } else { %>
+                        <span class="page-link prev-next disabled">Sau <i class="fa-solid fa-chevron-right"></i></span>
+                    <% } %>
+                </div>
+            <% } %>
 
         </main>
     </div>
 
     <script>
-        // Lọc đơn hàng theo tab trạng thái
-        function filterOrders(status) {
-            // Đổi active tab button
-            var buttons = document.querySelectorAll('.tab-btn');
-            buttons.forEach(btn => btn.classList.remove('active'));
-            event.currentTarget.classList.add('active');
-
-            var cards = document.querySelectorAll('.order-card');
-            var shownCount = 0;
-            cards.forEach(card => {
-                var cardStatus = card.getAttribute('data-status');
-                if (status === 'all' || cardStatus === status) {
-                    card.style.display = 'flex';
-                    shownCount++;
-                } else {
-                    card.style.display = 'none';
-                }
-            });
-
-            // Nếu không có card nào hiển thị, tạo empty state
-            var container = document.getElementById('ordersContainer');
-            var emptyDiv = document.getElementById('tempEmptyState');
-            if (shownCount === 0 && cards.length > 0) {
-                if (!emptyDiv) {
-                    emptyDiv = document.createElement('div');
-                    emptyDiv.id = 'tempEmptyState';
-                    emptyDiv.className = 'empty-state';
-                    emptyDiv.innerHTML = '<i class="fa-solid fa-receipt"></i><p>Không tìm thấy đơn hàng nào ở trạng thái này.</p>';
-                    container.appendChild(emptyDiv);
-                }
-            } else {
-                if (emptyDiv) {
-                    emptyDiv.remove();
-                }
+        function filterOrders(status, el) {
+            if (el) {
+                document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+                el.classList.add('active');
             }
+
+            var url = 'my-orders';
+            if (status === 'all') {
+                url += '?';
+            } else {
+                url += '?status=' + encodeURIComponent(status);
+            }
+            window.location.href = url;
         }
     </script>
 </body>
 </html>
+
 

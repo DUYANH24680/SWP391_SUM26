@@ -84,39 +84,19 @@ public class CartService {
                 throw new IllegalArgumentException("Mã voucher không tồn tại.");
             }
             double voucherTotal = unitPrice * quantity;
-            if (!voucher.isValid(voucherTotal)) {
+            if (!voucher.isValidForCart(voucherTotal)) {
                 throw new IllegalArgumentException("Mã voucher không hợp lệ cho đơn hàng này.");
             }
             voucherId = voucher.getId();
+            discountAmount = voucher.calculateCartDiscount(voucherTotal);
         }
 
         int cartId = cartDAO.getOrCreateCartId(customerId);
         CartItem existing = cartItemDAO.getItemByProductId(cartId, productId);
         if (existing != null) {
-            int combinedQuantity = existing.getQuantity() + quantity;
-            if (combinedQuantity > product.getStockQuantity()) {
-                throw new IllegalArgumentException("Số lượng mới vượt quá tồn kho hiện có.");
-            }
-            double combinedTotal = unitPrice * combinedQuantity;
-            if (voucher != null) {
-                discountAmount = voucher.calculateDiscount(combinedTotal);
-            } else {
-                discountAmount = existing.getDiscountAmount();
-            }
-            existing.setQuantity(combinedQuantity);
-            existing.setDiscountAmount(discountAmount);
-            existing.setTotalPrice(combinedTotal - discountAmount);
-            existing.setNote(note);
-            if (voucherId != null) {
-                existing.setVoucherId(voucherId);
-                existing.setDiscountCode(voucher.getCode());
-            }
-            cartItemDAO.updateItem(existing);
+            throw new IllegalArgumentException("Sản phẩm đã có trong giỏ hàng. Vui lòng vào giỏ hàng để cập nhật số lượng.");
         } else {
             double totalPrice = unitPrice * quantity;
-            if (voucher != null) {
-                discountAmount = voucher.calculateDiscount(totalPrice);
-            }
             CartItem item = new CartItem();
             item.setCartId(cartId);
             item.setProductId(product.getId());
@@ -128,6 +108,9 @@ public class CartService {
             if (voucherId != null) {
                 item.setVoucherId(voucherId);
                 item.setDiscountCode(voucher.getCode());
+            } else {
+                item.setVoucherId(0);
+                item.setDiscountCode(null);
             }
             item.setSelected(true);
             cartItemDAO.insertItem(item);
@@ -163,12 +146,20 @@ public class CartService {
         if (quantity > product.getStockQuantity()) {
             throw new IllegalArgumentException("Số lượng vượt quá tồn kho hiện có.");
         }
+
         item.setQuantity(quantity);
         double totalPrice = item.getUnitPrice() * quantity;
         if (item.getVoucherId() > 0) {
             Voucher voucher = voucherDAO.findByCode(item.getDiscountCode());
-            if (voucher != null && voucher.isValid(totalPrice)) {
-                item.setDiscountAmount(voucher.calculateDiscount(totalPrice));
+            if (voucher != null) {
+                double discount = voucher.calculateCartDiscount(totalPrice);
+                if (discount > 0) {
+                    item.setDiscountAmount(discount);
+                } else {
+                    item.setDiscountAmount(0);
+                    item.setVoucherId(0);
+                    item.setDiscountCode(null);
+                }
             } else {
                 item.setDiscountAmount(0);
                 item.setVoucherId(0);
@@ -183,9 +174,6 @@ public class CartService {
 
     public Cart updateCartItem(int customerId, int productId,
                                Integer quantity, String note, String discountCode) {
-        System.out.println("[updateCartItem] customerId=" + customerId + ", productId=" + productId
-                + ", quantity=" + quantity + ", note='" + note + "', discountCode='" + discountCode + "'");
-
         if (customerId <= 0) {
             throw new IllegalArgumentException("Vui lòng đăng nhập để tiếp tục.");
         }
@@ -199,8 +187,6 @@ public class CartService {
         }
 
         CartItem item = cartItemDAO.getItemByProductId(cart.getId(), productId);
-        System.out.println("[updateCartItem] item found: " + (item != null)
-                + " (cartId=" + cart.getId() + ", productId=" + productId + ")");
         if (item == null) {
             throw new IllegalArgumentException("Mặt hàng không tồn tại trong giỏ hàng. productId=" + productId);
         }
@@ -210,7 +196,6 @@ public class CartService {
             throw new IllegalArgumentException("Sản phẩm không hợp lệ.");
         }
 
-        // Neu khong truyen quantity thi giu nguyen
         if (quantity == null || quantity <= 0) {
             quantity = item.getQuantity();
         }
@@ -219,27 +204,29 @@ public class CartService {
             throw new IllegalArgumentException("Số lượng vượt quá tồn kho hiện có (" + product.getStockQuantity() + ").");
         }
 
-        // Cap nhat thong tin item
         item.setQuantity(quantity);
         if (note != null) {
             item.setNote(note);
         }
 
-        // Xu ly voucher / ma giam gia
         if (discountCode != null && !discountCode.trim().isEmpty()) {
             Voucher voucher = voucherDAO.findByCode(discountCode);
             if (voucher == null) {
                 throw new IllegalArgumentException("Mã voucher không tồn tại.");
             }
             double checkTotal = item.getUnitPrice() * quantity;
-            if (!voucher.isValid(checkTotal)) {
+            double discount = voucher.calculateCartDiscount(checkTotal);
+            if (discount <= 0) {
                 throw new IllegalArgumentException("Mã voucher không hợp lệ cho đơn hàng này.");
             }
             item.setVoucherId(voucher.getId());
             item.setDiscountCode(voucher.getCode());
-            item.setDiscountAmount(voucher.calculateDiscount(checkTotal));
+            item.setDiscountAmount(discount);
+        } else {
+            item.setVoucherId(0);
+            item.setDiscountCode(null);
+            item.setDiscountAmount(0);
         }
-        // Nếu discountCode là null/empty -> giữ nguyên voucher hiện tại
 
         double totalPrice = item.getUnitPrice() * quantity;
         item.setTotalPrice(totalPrice - item.getDiscountAmount());
@@ -266,8 +253,9 @@ public class CartService {
 
         Cart cart = cartDAO.getCartByCustomerId(customerId);
         if (cart == null) {
-            throw new IllegalArgumentException("Giỏ hàng không tồn tại.");
+            return null;
         }
+
         cartItemDAO.deleteItemByProductId(cart.getId(), productId);
         cartDAO.recalculateCartTotals(cart.getId());
         return cartDAO.getCartByCustomerId(customerId);
@@ -281,6 +269,7 @@ public class CartService {
         if (cart == null) {
             return null;
         }
+
         cartItemDAO.deleteItemsByCartId(cart.getId());
         cartDAO.updateCartTotals(cart.getId(), 0, 0);
         return cartDAO.getCartByCustomerId(customerId);

@@ -17,6 +17,8 @@
                   + "&background=4caf50&color=fff&size=80&bold=true&rounded=true";
     }
 
+   
+
     String error = (String) request.getAttribute("error");
 %>
 <!DOCTYPE html>
@@ -189,6 +191,37 @@
             background: var(--green);
             color: #fff;
             font-weight: 600;
+        }
+
+        #inventory-submenu {
+            display: none;
+            flex-direction: column;
+            gap: 2px;
+            padding-left: 1.1rem;
+            margin-bottom: 4px;
+        }
+
+        #inventory-submenu .submenu-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.45rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--gray-600);
+            text-decoration: none;
+            transition: all 0.15s;
+        }
+
+        #inventory-submenu .submenu-item:hover {
+            background: var(--green-light);
+            color: var(--green-dark);
+        }
+
+        #inventory-submenu .submenu-item.active {
+            background: var(--green);
+            color: #fff;
         }
 
         .sidebar-nav a.logout {
@@ -579,10 +612,30 @@
 
     <!-- SIDEBAR -->
     <aside class="sidebar">
-        <div class="sidebar-nav">
-            <a href="profile"><i class="fa-regular fa-Account"></i> Ho So</a>
+    <%
+        role = (String) session.getAttribute("role");
+        if (role == null) {
+            Object r = session.getAttribute("user");
+            if (r instanceof Account) {
+                role = ((Account) r).getRoleName();
+            }
+        }
+    %>
+    <div class="sidebar-nav">
+        <% if ("customer".equalsIgnoreCase(role)) { %>
+        <a href="customer-dashboard"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+        <% } else if ("seller".equalsIgnoreCase(role)) { %>
+        <a href="seller/dashboard"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+        <% } %>
+        <a href="profile"><i class="fa-regular fa-Account"></i> Ho So</a>
             <a href="products" class="active"><i class="fa-brands fa-opencart"></i> San Pham</a>
-            <a href="#"><i class="fa-solid fa-basket-shopping"></i> Don Hang</a>
+            <% if ("customer".equalsIgnoreCase(role)) { %>
+            <a href="my-orders"><i class="fa-solid fa-basket-shopping"></i> Don Hang</a>
+            <% } else if ("seller".equalsIgnoreCase(role)) { %>
+            <a href="seller/orders"><i class="fa-solid fa-basket-shopping"></i> Don Hang</a>
+            <% } else if ("admin".equalsIgnoreCase(role)) { %>
+            <a href="admin/orders"><i class="fa-solid fa-basket-shopping"></i> Don Hang</a>
+            <% } %>
             <a href="#"><i class="fa-regular fa-heart"></i> Yeu Thich</a>
             <a href="#"><i class="fa-regular fa-credit-card"></i> Thanh Toan</a>
             <a href="logout" class="logout" style="margin-top:0.5rem;"><i class="fa-solid fa-right-from-bracket"></i> Dang Xuat</a>
@@ -697,7 +750,7 @@
                                         <c:choose>
                                             <c:when test="${not empty p.image}">
                                                 <div class="product-img">
-                                                    <img src="${p.image}" alt="${p.title}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                                                    <img data-img-src="${p.image}" alt="${p.title}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
                                                     <div class="product-img-placeholder" style="display:none;">🍎</div>
                                                 </div>
                                             </c:when>
@@ -849,5 +902,39 @@
     <span class="footer-copy">&copy; 2024 Sena Shop. Trai cay tuoi ngon moi ngay.</span>
 </footer>
 
+<script>
+(function() {
+    var path = window.location.pathname;
+    var subItems = document.querySelectorAll('#inventory-submenu .submenu-item');
+    subItems.forEach(function(item) {
+        if (item.getAttribute('href') === path) item.classList.add('active');
+    });
+
+    // Rewrite local image src to ImageServlet (run immediately on page load)
+    var ctxt2 = window.location.pathname.split('/')[1] || '';
+    document.querySelectorAll('img[data-img-src]').forEach(function(img) {
+        var raw = img.getAttribute('data-img-src');
+        if (raw && !raw.startsWith('http')) {
+            img.src = '/' + ctxt2 + '/image?path=' + encodeURIComponent(raw);
+        } else if (raw) {
+            img.src = raw;
+        }
+    });
+})();
+
+function toggleInventoryMenu() {
+    var sub = document.getElementById('inventory-submenu');
+    var chev = document.getElementById('inventory-chevron');
+    if (sub.style.display === 'none' || sub.style.display === '') {
+        sub.style.display = 'flex';
+        chev.style.transform = 'rotate(180deg)';
+    } else {
+        sub.style.display = 'none';
+        chev.style.transform = '';
+    }
+}
+</script>
+
 </body>
 </html>
+

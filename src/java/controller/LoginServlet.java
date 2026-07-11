@@ -34,6 +34,7 @@ public class LoginServlet extends HttpServlet {
         if (account != null) {
             HttpSession session = request.getSession();
             session.setAttribute("Account", account);
+            session.setAttribute("user", account);
             session.setAttribute("userId", account.getId());
             session.setAttribute("role", account.getRoleName());
 
@@ -81,3 +82,4 @@ public class LoginServlet extends HttpServlet {
         }
     }
 }
+

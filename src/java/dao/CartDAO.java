@@ -13,7 +13,8 @@ public class CartDAO extends DbContext {
     public Cart getCartByCustomerId(int customerId) {
         String sql = "SELECT id, customer_id, total_items, total_amount, created_at, updated_at "
                    + "FROM Carts WHERE customer_id = ?";
-        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, customerId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -48,7 +49,8 @@ public class CartDAO extends DbContext {
 
         String sql = "INSERT INTO Carts (customer_id, total_items, total_amount, created_at, updated_at) "
                    + "VALUES (?, 0, 0, GETDATE(), GETDATE())";
-        try (PreparedStatement ps = getConnection().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, customerId);
             int affected = ps.executeUpdate();
             if (affected == 0) {
@@ -68,7 +70,8 @@ public class CartDAO extends DbContext {
 
     public boolean updateCartTotals(int cartId, int totalItems, double totalAmount) {
         String sql = "UPDATE Carts SET total_items = ?, total_amount = ?, updated_at = GETDATE() WHERE id = ?";
-        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, totalItems);
             ps.setDouble(2, totalAmount);
             ps.setInt(3, cartId);
@@ -85,7 +88,8 @@ public class CartDAO extends DbContext {
                    + "total_amount = ISNULL((SELECT SUM(total_price) FROM CartItems WHERE cart_id = ?), 0), "
                    + "updated_at = GETDATE() "
                    + "WHERE id = ?";
-        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, cartId);
             ps.setInt(2, cartId);
             ps.setInt(3, cartId);
@@ -93,6 +97,23 @@ public class CartDAO extends DbContext {
         } catch (SQLException e) {
             System.err.println("[CartDAO] recalculateCartTotals error: " + e.getMessage());
             throw new RuntimeException("CartDAO.recalculateCartTotals error: " + e.getMessage(), e);
+        }
+    }
+
+    public boolean isProductInCart(int customerId, int productId) {
+        String sql = "SELECT 1 FROM CartItems ci "
+                   + "INNER JOIN Carts c ON ci.cart_id = c.id "
+                   + "WHERE c.customer_id = ? AND ci.product_id = ? AND (ci.size IS NULL OR ci.size = '')";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, customerId);
+            ps.setInt(2, productId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            System.err.println("[CartDAO] isProductInCart error: " + e.getMessage());
+            throw new RuntimeException("CartDAO.isProductInCart error: " + e.getMessage(), e);
         }
     }
 }

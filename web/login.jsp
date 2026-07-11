@@ -1,9 +1,23 @@
-<%@ page contentType="text/html;charset=UTF-8" %>
+﻿<%@ page contentType="text/html;charset=UTF-8" %>
 <%
     if (session.getAttribute("Account") != null) {
         response.sendRedirect("home.jsp");
         return;
     }
+    
+    String registerError = (String) request.getAttribute("registerError");
+    Boolean showRegister = (Boolean) request.getAttribute("showRegister");
+    String registerSuccess = (String) session.getAttribute("registerSuccess");
+    session.removeAttribute("registerSuccess");
+
+    String valFullname = request.getAttribute("val_fullname") != null
+        ? (String) request.getAttribute("val_fullname") : "";
+    String valUsername = request.getAttribute("val_username") != null
+        ? (String) request.getAttribute("val_username") : "";
+    String valEmail = request.getAttribute("val_email") != null
+        ? (String) request.getAttribute("val_email") : "";
+    String valPhone = request.getAttribute("val_phone") != null
+        ? (String) request.getAttribute("val_phone") : "";
 %>
 <!DOCTYPE html>
 <html lang="vi">
@@ -344,28 +358,47 @@
     
     <!-- Sign Up Form -->
     <div class="form-container sign-up-container">
-        <form action="register" method="post">
+        <form action="register" method="post" name="registerForm" id="registerForm">
             <h1 class="brand"><i class="fa-solid fa-apple-whole"></i> Sena Shop</h1>
             <h1>Tạo Tài Khoản</h1>
             <span>Nhập thông tin bên dưới để tham gia Sena Shop</span>
-            
+
+            <% if (registerError != null) { %>
+                <div class="error-msg">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    <%= registerError %>
+                </div>
+            <% } %>
+
             <div class="input-group">
-                <i class="fa-regular fa-Account"></i>
-                <input type="text" name="fullname" placeholder="Họ và tên" required />
+                <i class="fa-regular fa-user"></i>
+                <input type="text" name="fullname" placeholder="Họ và tên"
+                       value="<%= valFullname %>" required />
+            </div>
+            <div class="input-group">
+                <i class="fa-solid fa-user"></i>
+                <input type="text" name="username" placeholder="Tên đăng nhập"
+                       value="<%= valUsername %>" required />
             </div>
             <div class="input-group">
                 <i class="fa-regular fa-envelope"></i>
-                <input type="email" name="email" placeholder="Email" required />
+                <input type="email" name="email" placeholder="Email"
+                       value="<%= valEmail %>" required />
             </div>
             <div class="input-group">
-                <i class="fa-solid fa-Account"></i>
-                <input type="text" name="username" placeholder="Tên đăng nhập" required />
+                <i class="fa-solid fa-phone"></i>
+                <input type="tel" name="phone" placeholder="Số điện thoại (tùy chọn)"
+                       value="<%= valPhone %>" />
             </div>
             <div class="input-group">
                 <i class="fa-solid fa-lock"></i>
-                <input type="password" name="password" placeholder="Mật khẩu" required />
+                <input type="password" name="password" placeholder="Mật khẩu" required minlength="6" />
             </div>
-            
+            <div class="input-group">
+                <i class="fa-solid fa-lock"></i>
+                <input type="password" name="confirmPassword" placeholder="Xác nhận mật khẩu" required />
+            </div>
+
             <button type="submit">Đăng Ký Ngay</button>
         </form>
     </div>
@@ -383,6 +416,14 @@
                     <%= request.getAttribute("error") %>
                 </div>
             <% } %>
+            
+                        <% if (registerSuccess != null) { %>
+                <div class="error-msg" style="background:#dcfce7;border-color:#bbf7d0;color:#15803d;">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <%= registerSuccess %>
+                </div>
+            <% } %>
+
 
             <div class="input-group">
                 <i class="fa-solid fa-Account"></i>
@@ -427,7 +468,13 @@
     signInButton.addEventListener('click', () => {
         container.classList.remove("right-panel-active");
     });
+    
+    // If registration failed, stay on the sign-up panel
+    <% if (Boolean.TRUE.equals(showRegister)) { %>
+    container.classList.add("right-panel-active");
+    <% } %>
 </script>
 
 </body>
 </html>
+

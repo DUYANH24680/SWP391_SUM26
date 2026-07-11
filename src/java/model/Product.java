@@ -22,6 +22,7 @@ public class Product {
     private int status;
     private boolean isDelete;
     private Timestamp createdAt;
+        private String removedReason;
 
     public Product() {
     }
@@ -201,6 +202,14 @@ public class Product {
     public void setCreatedAt(Timestamp createdAt) {
         this.createdAt = createdAt;
     }
+        public String getRemovedReason() {
+        return removedReason;
+    }
+
+    public void setRemovedReason(String removedReason) {
+        this.removedReason = removedReason;
+    }
+
 
     public boolean isActive() {
         return status == 1 && !isDelete;

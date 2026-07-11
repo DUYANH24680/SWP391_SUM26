@@ -3,7 +3,13 @@
 <%@ page import="model.CartItem" %>
 <%@ page import="model.Account" %>
 <%@ page import="java.text.NumberFormat" %>
+<%@ page import="Utils.ImageUrlUtil" %>
 <%@ page import="java.util.Locale" %>
+<%
+    response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    response.setHeader("Pragma", "no-cache");
+    response.setDateHeader("Expires", 0);
+%>
 <%
     Account Account = (Account) session.getAttribute("Account");
     if (Account == null) {
@@ -734,7 +740,6 @@
                 </a>
             </div>
         <% } else { %>
-
             <!-- ===== SELECT ALL BAR ===== -->
             <div class="select-all-bar">
                 <label class="custom-checkbox" id="selectAllLabel">
@@ -745,12 +750,12 @@
                     <span class="select-info" style="margin-left:0.5rem;">Chon Tat Ca</span>
                 </label>
                 <span class="select-info" id="selectedCountInfo">
-                    Da chon <strong id="selectedCountNum">0</strong> / <%= cart.getTotalItems() %> san pham
+                    Da chon <strong id="selectedCountNum">0</strong> / <%= cart.getItems().size() %> san pham
                 </span>
             </div>
 
-            <form id="checkoutForm" action="checkout" method="POST">
-                <input type="hidden" name="removeFromCart" id="removeFromCart" value="true">
+            <form id="checkoutForm" action="checkout-cart" method="GET">
+                <input type="hidden" name="selectedProducts" id="selectedProducts">
 
                 <table class="cart-table">
                     <thead>
@@ -787,13 +792,18 @@
                                 <div class="cart-item">
                                     <div class="cart-item-image">
                                         <% if (item.getImage() != null && !item.getImage().trim().isEmpty()) { %>
-                                            <img src="<%= item.getImage() %>" alt="<%= item.getTitle() %>">
+                                            <img src="<%= ImageUrlUtil.resolve(item.getImage(), request.getContextPath()) %>" alt="<%= item.getTitle() %>">
                                         <% } else { %>
-                                            <span style="font-size: 1.5rem;">&#127822;</span>
+                                            <span style="font-size: 1.5rem;">🍎</span>
                                         <% } %>
                                     </div>
                                     <div class="cart-item-details">
                                         <div class="cart-item-title"><%= item.getTitle() %></div>
+                                        <div class="cart-item-meta">
+                                            <% if (item.getSize() != null && !item.getSize().isEmpty()) { %>
+                                                <span>Kich co: <strong><%= item.getSize() %></strong></span>
+                                            <% } %>
+                                        </div>
                                         <% if (item.getNote() != null && !item.getNote().isEmpty()) { %>
                                             <div class="notes-text">Ghi chu: <%= item.getNote() %></div>
                                         <% } %>
@@ -807,9 +817,9 @@
                             <td>
                                 <div class="cart-item-image" style="width: 60px; height: 60px;">
                                     <% if (item.getImage() != null && !item.getImage().trim().isEmpty()) { %>
-                                        <img src="<%= item.getImage() %>" alt="<%= item.getTitle() %>">
+                                        <img src="<%= ImageUrlUtil.resolve(item.getImage(), request.getContextPath()) %>" alt="<%= item.getTitle() %>">
                                     <% } else { %>
-                                        <span style="font-size: 1.2rem;">&#127822;</span>
+                                        <span style="font-size: 1.2rem;">🍎</span>
                                     <% } %>
                                 </div>
                             </td>
@@ -843,7 +853,7 @@
 
                             <td>
                                 <button type="button" class="btn btn-edit btn-sm"
-                                        onclick="openEditModal('<%= item.getProductId() %>', '<%= item.getQuantity() %>', '<%= item.getNote() != null ? item.getNote().replace("'", "\\'") : "" %>', '<%= item.getDiscountCode() != null ? item.getDiscountCode() : "" %>', '<%= item.getTitle() != null ? item.getTitle().replace("'", "\\'") : "" %>', '<%= nf.format((long) item.getUnitPrice()) %>', '<%= item.getImage() != null ? item.getImage() : "" %>')">
+                                        onclick="openEditModal('<%= item.getProductId() %>', '<%= item.getNote() != null ? item.getNote().replace("'", "\\'") : "" %>', '<%= item.getTitle() != null ? item.getTitle().replace("'", "\\'") : "" %>', '<%= nf.format((long) item.getUnitPrice()) %>', '<%= item.getImage() != null ? ImageUrlUtil.resolve(item.getImage(), request.getContextPath()) : "" %>')">
                                     <i class="fa-solid fa-pen"></i> Sua
                                 </button>
                                 <button type="button" class="btn btn-danger btn-sm"
@@ -882,7 +892,6 @@
                         <button type="button" class="btn btn-danger" onclick="confirmClearCart()">
                             <i class="fa-solid fa-trash"></i> Xoa Gio Hang
                         </button>
-                        <input type="hidden" name="selectedProducts" id="selectedProducts">
                         <button type="submit" class="btn btn-orange" id="checkoutBtn">
                             <i class="fa-solid fa-credit-card"></i> Mua Hang
                         </button>
@@ -906,7 +915,6 @@
             <div class="modal-body">
                 <input type="hidden" name="productId" id="editProductId">
                 <input type="hidden" id="editInitialNote">
-                <input type="hidden" id="editInitialDiscountCode">
 
                 <div class="modal-product-info">
                     <img id="editProductImg" class="modal-product-img" src="" alt="">
@@ -914,18 +922,6 @@
                         <div class="modal-product-name" id="editProductName"></div>
                         <div class="modal-product-price" id="editProductPrice"></div>
                     </div>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">So Luong</label>
-                    <input type="number" class="form-input" id="editQuantity" name="quantity"
-                           min="1" max="9999" value="1" required>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Ma Giam Gia</label>
-                    <input type="text" class="form-input" id="editDiscountCode" name="discountCode"
-                           placeholder="Nhap ma voucher (neu co)" maxlength="50">
                 </div>
 
                 <div class="form-group" style="margin-bottom:0;">
@@ -952,7 +948,7 @@
         maximumFractionDigits: 0
     });
 
-    const totalItems = <%= cart.isEmpty() ? 0 : cart.getTotalItems() %>;
+    const totalItems = <%= cart.isEmpty() ? 0 : cart.getItems().size() %>;
 
     // ---- Xoa san pham ----
     function confirmRemove(productId) {
@@ -964,7 +960,7 @@
     // ---- Xoa toan bo gio hang ----
     function confirmClearCart() {
         if (confirm('Ban co chan chan muon xoa toan bo gio hang?')) {
-            window.location.href = 'clear-cart';
+            window.location.href = '<%= request.getContextPath() %>/cart?action=clear';
         }
     }
 
@@ -1112,19 +1108,7 @@
 
         const selectedIds = Array.from(checkboxes).map(function(cb) { return cb.value; });
         document.getElementById('selectedProducts').value = selectedIds.join(',');
-        removeSelectedItemsFromCart(selectedIds);
     });
-
-    function removeSelectedItemsFromCart(selectedIds) {
-        fetch('remove-selected-items', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams({ 'selectedProducts': selectedIds.join(',') })
-        })
-        .catch(function(error) {
-            console.error('Loi xoa san pham da chon:', error);
-        });
-    }
 
     // ---- Khoi tao khi load trang ----
     document.addEventListener('DOMContentLoaded', function() {
@@ -1135,15 +1119,12 @@
     // ========== MODAL SUA ==========
     var currentEditProductId = '';
 
-    function openEditModal(productId, quantity, note, discountCode, title, price, image) {
+    function openEditModal(productId, note, title, price, image) {
         currentEditProductId = productId;
 
         document.getElementById('editProductId').value = productId;
-        document.getElementById('editQuantity').value = quantity;
         document.getElementById('editInitialNote').value = note || '';
-        document.getElementById('editInitialDiscountCode').value = discountCode || '';
         document.getElementById('editNote').value = note || '';
-        document.getElementById('editDiscountCode').value = discountCode || '';
 
         document.getElementById('editProductName').textContent = title || 'San pham';
         document.getElementById('editProductPrice').textContent = (price || '0') + ' d';
@@ -1185,11 +1166,8 @@
         event.preventDefault();
 
         var productId = document.getElementById('editProductId').value;
-        var quantity = document.getElementById('editQuantity').value;
         var note = document.getElementById('editNote').value;
-        var discountCode = document.getElementById('editDiscountCode').value;
         var initialNote = document.getElementById('editInitialNote').value;
-        var initialDiscountCode = document.getElementById('editInitialDiscountCode').value;
 
         var errEl = document.getElementById('editErrorMsg');
         var submitBtn = document.getElementById('editSubmitBtn');
@@ -1200,15 +1178,10 @@
 
         var data = new URLSearchParams();
         data.append('productId', productId);
-        data.append('quantity', quantity);
 
-        // Chỉ gửi note nếu thay đổi so với ban đầu
+        // Chi gui note neu co thay doi so voi ban dau
         if (note !== initialNote) {
             data.append('note', note);
-        }
-        // Chỉ gửi discountCode nếu thay đổi so với ban đầu
-        if (discountCode !== initialDiscountCode) {
-            data.append('discountCode', discountCode);
         }
 
         fetch('update-cart', {
@@ -1223,12 +1196,13 @@
                 errEl.style.display = 'block';
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Luu Thay Doi';
-                return;
+            } else {
+                closeEditModal();
+                location.reload();
             }
-            closeEditModal();
-            window.location.reload();
         })
         .catch(function(error) {
+            console.error('Loi:', error);
             errEl.textContent = 'Da xay ra loi. Vui long thu lai.';
             errEl.style.display = 'block';
             submitBtn.disabled = false;
@@ -1239,3 +1213,4 @@
 
 </body>
 </html>
+

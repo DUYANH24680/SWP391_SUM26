@@ -28,7 +28,7 @@ public class AddToWishlistServlet extends HttpServlet {
             return;
         }
 
-        Account Account = (Account) session.getAttribute("Account");
+        Account user = (Account) session.getAttribute("Account");
 
         String productIdStr = req.getParameter("productId");
         int productId = parsePositiveInt(productIdStr, 0);
@@ -37,14 +37,13 @@ public class AddToWishlistServlet extends HttpServlet {
             session.setAttribute("error", "Sản phẩm không hợp lệ.");
             redirectBack(req, resp);
             return;
-        }
-
+    }
         try {
-            WishlistService.AddResult result = wishlistService.addToWishlist(Account.getId(), productId);
+            WishlistService.AddResult result = wishlistService.addToWishlist(user.getId(), productId);
 
             if (result.isSuccess()) {
                 session.setAttribute("message", result.getMessage());
-                refreshWishlistCount(session, Account.getId());
+                refreshWishlistCount(session, user.getId());
             } else {
                 session.setAttribute("error", result.getMessage());
             }
@@ -64,12 +63,8 @@ public class AddToWishlistServlet extends HttpServlet {
     }
 
     private void redirectBack(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        String referer = req.getHeader("Referer");
-        if (referer != null && !referer.isEmpty()) {
-            resp.sendRedirect(referer);
-        } else {
-            resp.sendRedirect(req.getContextPath() + "/wishlist");
-        }
+        // Always redirect to wishlist page after adding
+        resp.sendRedirect(req.getContextPath() + "/wishlist");
     }
 
     private int parsePositiveInt(String value, int defaultValue) {
@@ -84,3 +79,4 @@ public class AddToWishlistServlet extends HttpServlet {
         }
     }
 }
+

@@ -72,14 +72,19 @@ public class AddToCartServlet extends HttpServlet {
             }
         }
 
+        // ---- Buoc 4.1: Doc ghi chu ----
+        String note = request.getParameter("note");
+        String discountCode = request.getParameter("discountCode");
+
         // ---- Buoc 5: Them vao gio hang ----
         try {
             System.out.println("[AddToCartServlet] Goi cartService.addToCart(customerId="
                     + account.getId() + ", productId=" + productId
-                    + ", quantity=" + quantity + ")");
+                    + ", quantity=" + quantity + ", discountCode=" + discountCode
+                    + ", note=" + note + ")");
 
             Cart cart = cartService.addToCart(
-                    account.getId(), productId, quantity, null, null);
+                    account.getId(), productId, quantity, discountCode, note);
 
             if (cart != null) {
                 System.out.println("[AddToCartServlet] SUCCESS: Da them vao gio hang. "
@@ -105,7 +110,8 @@ public class AddToCartServlet extends HttpServlet {
             session.setAttribute("error", "Loi he thong khi them san pham vao gio hang.");
         }
 
-        redirectBack(request, response);
+        // Success - redirect to cart page
+        response.sendRedirect(request.getContextPath() + "/cart");
     }
 
     @Override
@@ -115,11 +121,7 @@ public class AddToCartServlet extends HttpServlet {
     }
 
     private void redirectBack(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        String referer = request.getHeader("Referer");
-        if (referer != null && !referer.trim().isEmpty()) {
-            response.sendRedirect(referer);
-        } else {
-            response.sendRedirect(request.getContextPath() + "/view-cart");
-        }
+        response.sendRedirect(request.getContextPath() + "/view-cart");
     }
 }
+

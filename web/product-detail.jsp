@@ -1,8 +1,9 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="model.Account" %>
 <%@ page import="model.Product" %>
 <%@ page import="model.Shop" %>
 <%@ page import="model.Wishlist" %>
+<%@ page import="Utils.ImageUrlUtil" %>
 <%@ page import="model.Cart" %>
 <%@ page import="dao.CategoryDAO" %>
 <%@ page import="dao.ShopDAO" %>
@@ -79,7 +80,7 @@
     Shop shopInfo = (Shop) request.getAttribute("shopInfo");
     if (shopInfo == null) {
         shopInfo = new Shop();
-        shopInfo.setName(product.getShopName() != null ? product.getShopName() : "-");
+        shopInfo.setShopName(product.getShopName() != null ? product.getShopName() : "-");
     }
 
     // ---- Avatar ----
@@ -543,6 +544,14 @@
         .shop-info { display: flex; flex-direction: column; gap: 0.2rem; }
         .shop-name { font-size: 0.9rem; font-weight: 700; color: var(--gray-800); }
         .shop-meta { font-size: 0.78rem; color: var(--gray-400); }
+                .report-shop-btn {
+            display: inline-flex; align-items: center; gap: 4px;
+            margin-top: 6px; padding: 3px 10px;
+            background: #fee2e2; color: #991b1b;
+            border-radius: 100px; font-size: 0.75rem; font-weight: 600;
+            text-decoration: none; transition: all 0.15s;
+        }
+        .report-shop-btn:hover { background: #fecaca; color: #dc2626; }
 
         /* Action buttons */
         .action-buttons {
@@ -614,6 +623,32 @@
 
         .btn-wishlist.in-wishlist i {
             color: #ef4444;
+        }
+
+        /* Size selector */
+        .size-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            border: 2px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--gray-600);
+            transition: all 0.15s;
+        }
+
+        .size-option input:checked + .size-btn {
+            border-color: var(--green);
+            background: var(--green-light);
+            color: var(--green-dark);
+        }
+
+        .size-option:hover .size-btn {
+            border-color: var(--green);
+            color: var(--green-dark);
         }
 
         /* Toast notification */
@@ -756,7 +791,7 @@
                     <div>
                         <% if (product.getImage() != null && !product.getImage().trim().isEmpty()) { %>
                         <div class="product-image-wrap">
-                            <img src="<%= product.getImage() %>"
+                            <img src="<%= ImageUrlUtil.resolve(product.getImage(), request.getContextPath()) %>"
                                  alt="<%= product.getTitle() %>"
                                  onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
                             <div class="product-image-placeholder" style="display:none;">🍎</div>
@@ -900,8 +935,8 @@
                             </div>
                             <div class="shop-card">
                                 <% if (shopInfo.getLogo() != null && !shopInfo.getLogo().trim().isEmpty()) { %>
-                                <img class="shop-avatar" src="<%= shopInfo.getLogo() %>"
-                                     alt="<%= shopInfo.getName() %>"
+                                <img class="shop-avatar" src="<%= ImageUrlUtil.resolve(shopInfo.getLogo(), request.getContextPath()) %>"
+                                     alt="<%= shopInfo.getShopName() %>"
                                      onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
                                 <div class="shop-avatar-placeholder" style="display:none;">&#127974;</div>
                                 <% } else { %>
@@ -909,14 +944,9 @@
                                 <% } %>
                                 <div class="shop-info">
                                     <div class="shop-name">
-                                        <%= shopInfo.getName() != null ? shopInfo.getName() : "-" %>
+                                        <%= shopInfo.getShopName() != null ? shopInfo.getShopName() : "-" %>
                                     </div>
                                     <div class="shop-meta">
-                                        <% if (shopInfo.getRating() > 0) { %>
-                                            <i class="fa-solid fa-star" style="color:#f59e0b;"></i>
-                                            <%= String.format(java.util.Locale.US, "%.1f", shopInfo.getRating()) %>
-                                            &bull;
-                                        <% } %>
                                         <% if (shopInfo.getAddress() != null && !shopInfo.getAddress().isEmpty()) { %>
                                             <%= shopInfo.getAddress() %>
                                         <% } else { %>
@@ -1021,6 +1051,22 @@
         }, 3000);
     }
 
+    // ---- Set size truoc khi submit ----
+    var addToCartForm = document.getElementById('addToCartForm');
+    if (addToCartForm) {
+        addToCartForm.addEventListener('submit', function(e) {
+            var sizeInputs = document.getElementsByName('selectedSize');
+            if (sizeInputs.length > 0) {
+                for (var i = 0; i < sizeInputs.length; i++) {
+                    if (sizeInputs[i].checked) {
+                        document.getElementById('selectedSizeInput').value = sizeInputs[i].value;
+                        break;
+                    }
+                }
+            }
+        });
+    }
+
     // ---- AJAX Toggle Wishlist ----
     function toggleWishlist(productId, btn) {
         fetch('add-to-wishlist', {
@@ -1063,4 +1109,5 @@
 
 </body>
 </html>
+
 

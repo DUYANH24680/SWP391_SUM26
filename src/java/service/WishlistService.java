@@ -58,13 +58,31 @@ public class WishlistService {
         return wishlistDAO.removeWishlist(customerId, productId);
     }
 
-    public Cart moveWishlistItemToCart(int customerId, int productId) {
+    public MoveToCartResult moveWishlistItemToCart(int customerId, int productId) {
         if (customerId <= 0) throw new IllegalArgumentException("Vui lòng đăng nhập để tiếp tục.");
         if (productId <= 0) throw new IllegalArgumentException("Sản phẩm không hợp lệ.");
 
+        // Check if product already in cart before moving
+        boolean alreadyInCart = cartDAO.isProductInCart(customerId, productId);
+
         boolean moved = wishlistDAO.moveToCart(customerId, productId);
         if (!moved) throw new IllegalArgumentException("Không thể chuyển sản phẩm từ wishlist vào giỏ hàng.");
-        return cartDAO.getCartByCustomerId(customerId);
+
+        Cart cart = cartDAO.getCartByCustomerId(customerId);
+        return new MoveToCartResult(cart, alreadyInCart);
+    }
+
+    public static class MoveToCartResult {
+        private final Cart cart;
+        private final boolean alreadyInCart;
+
+        public MoveToCartResult(Cart cart, boolean alreadyInCart) {
+            this.cart = cart;
+            this.alreadyInCart = alreadyInCart;
+        }
+
+        public Cart getCart() { return cart; }
+        public boolean wasAlreadyInCart() { return alreadyInCart; }
     }
 
     public boolean isInWishlist(int customerId, int productId) {

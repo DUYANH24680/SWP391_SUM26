@@ -42,7 +42,8 @@ public class CartItemDAO extends DbContext {
                    + "LEFT JOIN Vouchers v ON ci.voucher_id = v.id "
                    + "LEFT JOIN Products p ON ci.product_id = p.id "
                    + "WHERE ci.cart_id = ? ORDER BY ci.created_at DESC";
-        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, cartId);
             try (ResultSet rs = ps.executeQuery()) {
                 List<CartItem> items = new ArrayList<>();
@@ -60,7 +61,8 @@ public class CartItemDAO extends DbContext {
     public boolean insertItem(CartItem item) {
         String sql = "INSERT INTO CartItems (cart_id, product_id, quantity, unit_price, discount_amount, total_price, voucher_id, note, is_selected, created_at, updated_at) "
                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, GETDATE(), GETDATE())";
-        try (PreparedStatement ps = getConnection().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, item.getCartId());
             ps.setInt(2, item.getProductId());
             ps.setInt(3, item.getQuantity());
@@ -93,7 +95,8 @@ public class CartItemDAO extends DbContext {
     public boolean updateItem(CartItem item) {
         String sql = "UPDATE CartItems SET quantity = ?, discount_amount = ?, total_price = ?, voucher_id = ?, note = ?, updated_at = GETDATE() "
                    + "WHERE id = ?";
-        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, item.getQuantity());
             ps.setDouble(2, item.getDiscountAmount());
             ps.setDouble(3, item.getTotalPrice());
@@ -113,7 +116,8 @@ public class CartItemDAO extends DbContext {
 
     public boolean deleteItemByProductId(int cartId, int productId) {
         String sql = "DELETE FROM CartItems WHERE cart_id = ? AND product_id = ?";
-        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, cartId);
             ps.setInt(2, productId);
             return ps.executeUpdate() > 0;
@@ -125,7 +129,8 @@ public class CartItemDAO extends DbContext {
 
     public boolean deleteItemsByCartId(int cartId) {
         String sql = "DELETE FROM CartItems WHERE cart_id = ?";
-        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, cartId);
             ps.executeUpdate();
             return true;
@@ -137,7 +142,8 @@ public class CartItemDAO extends DbContext {
 
     public boolean updateItemSelectionByProductId(int cartId, int productId, boolean selected) {
         String sql = "UPDATE CartItems SET is_selected = ? WHERE cart_id = ? AND product_id = ?";
-        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setBoolean(1, selected);
             ps.setInt(2, cartId);
             ps.setInt(3, productId);
@@ -155,7 +161,8 @@ public class CartItemDAO extends DbContext {
             sql.append(i > 0 ? ",?" : "?");
         }
         sql.append(")");
-        try (PreparedStatement ps = getConnection().prepareStatement(sql.toString())) {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
             ps.setInt(1, cartId);
             for (int i = 0; i < productIds.size(); i++) {
                 ps.setInt(i + 2, productIds.get(i));

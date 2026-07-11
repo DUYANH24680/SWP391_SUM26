@@ -111,6 +111,19 @@ public class Voucher {
         this.status = status;
     }
 
+    public boolean isActive() {
+        return status;
+    }
+
+    public boolean isExpired() {
+        Timestamp now = new Timestamp(System.currentTimeMillis());
+        return endDate != null && now.after(endDate);
+    }
+
+    public boolean hasAvailableUsage() {
+        return usedCount < quantity;
+    }
+
     /**
      * Check if the voucher is valid currently and for the given order total.
      */
@@ -125,10 +138,35 @@ public class Voucher {
     }
 
     /**
+     * Check if voucher can be applied to cart without checking used_count.
+     * Used when adding/updating cart items; used_count is only changed at checkout.
+     */
+    public boolean isValidForCart(double orderTotal) {
+        if (!status) return false;
+        Timestamp now = new Timestamp(System.currentTimeMillis());
+        if (startDate != null && now.before(startDate)) return false;
+        if (endDate != null && now.after(endDate)) return false;
+        if (orderTotal < minimumOrder) return false;
+        return true;
+    }
+
+    /**
      * Calculate discount amount for a given order total.
      */
     public double calculateDiscount(double orderTotal) {
         if (!isValid(orderTotal)) return 0.0;
+        double discount = orderTotal * (discountPercent / 100.0);
+        if (maxDiscount > 0 && discount > maxDiscount) {
+            discount = maxDiscount;
+        }
+        return discount;
+    }
+
+    /**
+     * Calculate discount for cart operations without checking used_count.
+     */
+    public double calculateCartDiscount(double orderTotal) {
+        if (!isValidForCart(orderTotal)) return 0.0;
         double discount = orderTotal * (discountPercent / 100.0);
         if (maxDiscount > 0 && discount > maxDiscount) {
             discount = maxDiscount;

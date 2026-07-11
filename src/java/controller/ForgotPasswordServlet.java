@@ -16,7 +16,7 @@ import service.EmailService;
 public class ForgotPasswordServlet extends HttpServlet {
 
     private PasswordResetTokenDAO tokenDAO = new PasswordResetTokenDAO();
-    private AccountDAO accountDAO = new AccountDAO();
+    private AccountDAO userDAO = new AccountDAO();
 
     /**
      * GET - Display forgot password form
@@ -42,43 +42,58 @@ public class ForgotPasswordServlet extends HttpServlet {
         }
 
         email = email.trim();
-
-        // Check if email exists
-        Account account = accountDAO.findByUsernameOrEmail(email);
-        if (account == null) {
-            // For security, don't reveal if email exists or not
-            request.setAttribute("success", "Nếu email tồn tại, bạn sẽ nhận được link đặt lại mật khẩu");
+        if (!email.matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")) {
+            request.setAttribute("error", "Email không hợp lệ");
             request.getRequestDispatcher("forgot-password.jsp").forward(request, response);
             return;
         }
 
-        // Generate reset token
-        String token = generateResetToken();
-        long expiryMs = System.currentTimeMillis() + (1 * 60 * 60 * 1000); // 1 hour
-        Timestamp expiryTime = new Timestamp(expiryMs);
+        try {
+            // Check if email exists
+            Account user = userDAO.findByUsernameOrEmail(email);
+            if (user == null) {
+                // For security, don't reveal if email exists or not
+                request.setAttribute("success", "Nếu email tồn tại, bạn sẽ nhận được link đặt lại mật khẩu");
+                request.getRequestDispatcher("forgot-password.jsp").forward(request, response);
+                return;
+            }
 
-        // Save token to database - dùng account_id thay vì email
-        boolean tokenSaved = tokenDAO.createToken(account.getId(), token, expiryTime);
-        if (!tokenSaved) {
+            // Generate reset token
+            String token = generateResetToken();
+            long expiryMs = System.currentTimeMillis() + (1 * 60 * 60 * 1000); // 1 hour
+            Timestamp expiryTime = new Timestamp(expiryMs);
+
+            // Save token to database - dùng email thay vì id
+            boolean tokenSaved = tokenDAO.createToken(email, token, expiryTime);
+            if (!tokenSaved) {
+                request.setAttribute("error", "Lỗi hệ thống, vui lòng thử lại sau");
+                request.getRequestDispatcher("forgot-password.jsp").forward(request, response);
+                return;
+            }
+
+            // Build reset link
+            String resetLink = buildResetLink(request, token, email);
+
+            // Send email
+            boolean emailSent = EmailService.sendPasswordResetEmail(email, resetLink, user.getFullname());
+            if (!emailSent) {
+                request.setAttribute("error", "Không thể gửi email, vui lòng thử lại sau");
+                request.getRequestDispatcher("forgot-password.jsp").forward(request, response);
+                return;
+            }
+
+            // Success message
+            request.setAttribute("success", "Hướng dẫn đặt lại mật khẩu đã được gửi đến email của bạn");
+            request.getRequestDispatcher("forgot-password.jsp").forward(request, response);
+        } catch (Exception e) {
+            System.err.println("[ForgotPasswordServlet] error: " + e.getMessage());
+            e.printStackTrace();
             request.setAttribute("error", "Lỗi hệ thống, vui lòng thử lại sau");
             request.getRequestDispatcher("forgot-password.jsp").forward(request, response);
-            return;
+        } finally {
+            userDAO.close();
+            tokenDAO.close();
         }
-
-        // Build reset link
-        String resetLink = buildResetLink(request, token, email);
-
-        // Send email
-        boolean emailSent = EmailService.sendPasswordResetEmail(email, resetLink, account.getFullname());
-        if (!emailSent) {
-            request.setAttribute("error", "Không thể gửi email, vui lòng thử lại sau");
-            request.getRequestDispatcher("forgot-password.jsp").forward(request, response);
-            return;
-        }
-
-        // Success message
-        request.setAttribute("success", "Hướng dẫn đặt lại mật khẩu đã được gửi đến email của bạn");
-        request.getRequestDispatcher("forgot-password.jsp").forward(request, response);
     }
 
     /**
@@ -115,4 +130,3 @@ public class ForgotPasswordServlet extends HttpServlet {
         }
     }
 }
-

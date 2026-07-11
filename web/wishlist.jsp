@@ -1,6 +1,7 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="model.Wishlist" %>
 <%@ page import="model.WishlistItem" %>
+<%@ page import="Utils.ImageUrlUtil" %>
 <%@ page import="model.Account" %>
 <%@ page import="java.text.NumberFormat" %>
 <%@ page import="java.util.Locale" %>
@@ -22,6 +23,7 @@
     session.removeAttribute("error");
 
     NumberFormat nf = NumberFormat.getNumberInstance(Locale.forLanguageTag("vi"));
+    String ctx = request.getContextPath();
 %>
 <!DOCTYPE html>
 <html lang="vi">
@@ -428,7 +430,6 @@
 </head>
 <body>
 
-<!-- TOPNAV -->
 <nav class="topnav">
     <a href="home.jsp" class="nav-logo">
         <i class="fa-solid fa-apple-whole"></i> Sena Shop
@@ -478,7 +479,7 @@
             </div>
         <% } else { %>
 
-            <!-- ===== SELECT ALL BAR ===== -->
+           
             <div class="select-all-bar">
                 <label class="custom-checkbox" id="selectAllLabel">
                     <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()">
@@ -500,7 +501,7 @@
                  data-product-id="<%= item.getProductId() %>"
                  data-in-stock="<%= !isOutOfStock %>">
 
-                <!-- Checkbox -->
+       
                 <div class="item-checkbox">
                     <% if (!isOutOfStock) { %>
                     <label class="custom-checkbox">
@@ -521,13 +522,13 @@
                 <!-- Image -->
                 <div class="item-image">
                     <% if (item.getImage() != null && !item.getImage().trim().isEmpty()) { %>
-                        <img src="<%= item.getImage() %>" alt="<%= item.getTitle() %>">
+                        <img src="<%= ImageUrlUtil.resolve(item.getImage(), request.getContextPath()) %>" alt="<%= item.getTitle() %>">
                     <% } else { %>
                         <span style="font-size: 2rem;">&#127822;</span>
                     <% } %>
                 </div>
 
-                <!-- Details -->
+               
                 <div class="item-details">
                     <a href="info?id=<%= item.getProductId() %>" class="item-title">
                         <%= item.getTitle() != null ? item.getTitle() : "San pham" %>
@@ -554,21 +555,14 @@
                     </div>
                 </div>
 
-                <!-- Price -->
+            
                 <div class="item-price">
                     <%= nf.format((long) item.getUnitPrice()) %> d
                 </div>
 
-                <!-- Actions -->
+               
                 <div class="item-actions">
-                    <!-- Chuyen vao gio hang -->
-                    <% if (!isOutOfStock) { %>
-                    <button type="button" class="btn btn-green" title="Chuyen vao gio hang"
-                            onclick="moveSingleToCart(<%= item.getProductId() %>, this.closest('.wishlist-item'))">
-                        <i class="fa-solid fa-cart-shopping"></i>
-                    </button>
-                    <% } %>
-                    <!-- Xoa khoi wishlist -->
+                   
                     <form action="remove-wishlist" method="POST" style="display:inline;" onsubmit="return confirm('Xoa san pham nay khoi wishlist?')">
                         <input type="hidden" name="productId" value="<%= item.getProductId() %>">
                         <button type="submit" class="btn btn-danger" title="Xoa khoi wishlist">
@@ -579,7 +573,7 @@
             </div>
             <% } %>
 
-            <!-- ===== BOTTOM ACTION BAR ===== -->
+         
             <div class="bottom-bar">
                 <div class="left-info">
                     Da chon <strong id="summarySelectedCount">0</strong> san pham
@@ -588,12 +582,18 @@
                     <a href="home.jsp" class="btn btn-secondary">
                         <i class="fa-solid fa-arrow-left"></i> Tiep Tuc Mua Sam
                     </a>
-                    <button type="button" class="btn btn-green" id="moveSelectedBtn" onclick="moveSelectedToCart()" disabled>
-                        Chuyen vao gio hang (<span id="moveSelectedCount">0</span>)
-                    </button>
+                    <form id="moveToCartForm" action="move-wishlist-to-cart-redirect" method="POST" style="display:inline;">
+                        <input type="hidden" id="selectedProductIds" name="productIds" value="">
+                        <button type="button" class="btn btn-green" id="moveSelectedBtn" onclick="moveSelectedToCart()" disabled>
+                            Chuyen vao gio hang (<span id="moveSelectedCount">0</span>)
+                        </button>
+                    </form>
                     <button type="button" class="btn btn-orange" id="buySelectedBtn" onclick="buySelected()" disabled>
                         <i class="fa-solid fa-credit-card"></i> Mua Hang (<span id="buySelectedCount">0</span>)
                     </button>
+                    <form id="buyForm" action="move-wishlist-to-cart-redirect" method="POST" style="display:none;">
+                        <input type="hidden" id="buyProductIds" name="productIds" value="">
+                    </form>
                 </div>
             </div>
         <% } %>
@@ -603,7 +603,7 @@
 <script>
     const totalItems = <%= wishlist.isEmpty() ? 0 : wishlist.getTotalItems() %>;
 
-    // ---- Chon / bo chon tat ca ----
+  
     function toggleSelectAll() {
         const selectAll = document.getElementById('selectAllCheckbox');
         const checked = selectAll.checked;
@@ -663,158 +663,35 @@
         updateAllSelectAllState();
     }
 
-    // ---- Mua cac san pham da chon ----
+ 
     function buySelected() {
         const checkedBoxes = document.querySelectorAll('.product-checkbox:checked');
         if (checkedBoxes.length === 0) return;
 
         const selectedIds = Array.from(checkedBoxes).map(function(cb) { return cb.value; });
 
-        // Neu chi 1 san pham -> chuyen thang den trang chi tiet san pham
-        if (selectedIds.length === 1) {
-            window.location.href = 'info?id=' + selectedIds[0];
-            return;
-        }
-
-        // Neu nhieu san pham -> chuyen tat ca vao gio hang roi chuyen den trang gio hang
-        let completed = 0;
-        const total = selectedIds.length;
-
-        checkedBoxes.forEach(function(checkbox) {
-            const productId = checkbox.value;
-
-            const data = new URLSearchParams();
-            data.append('productId', productId);
-
-            fetch('move-wishlist-to-cart', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: data
-            })
-            .then(function(response) {
-                completed++;
-                if (completed === total) {
-                    window.location.href = 'view-cart';
-                }
-            })
-            .catch(function(error) {
-                completed++;
-                console.error('Loi chuyen san pham ' + productId + ' vao gio hang:', error);
-                if (completed === total) {
-                    window.location.href = 'view-cart';
-                }
-            });
-        });
+        // Chuyen tat ca vao gio hang roi chuyen den trang gio hang
+        document.getElementById('buyProductIds').value = selectedIds.join(',');
+        document.getElementById('buyForm').submit();
     }
 
-    // ---- Mua cac san pham da chon ----
-    function buySelected() {
-        const checkedBoxes = document.querySelectorAll('.product-checkbox:checked');
-        if (checkedBoxes.length === 0) return;
 
-        const selectedIds = Array.from(checkedBoxes).map(function(cb) { return cb.value; });
-
-        // Neu chi 1 san pham -> chuyen thang den trang chi tiet san pham
-        if (selectedIds.length === 1) {
-            window.location.href = 'info?id=' + selectedIds[0];
-            return;
-        }
-
-        // Neu nhieu san pham -> chuyen tat ca vao gio hang roi chuyen den trang gio hang
-        let completed = 0;
-        const total = selectedIds.length;
-
-        checkedBoxes.forEach(function(checkbox) {
-            const productId = checkbox.value;
-
-            const data = new URLSearchParams();
-            data.append('productId', productId);
-
-            fetch('move-wishlist-to-cart', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: data
-            })
-            .then(function(response) {
-                completed++;
-                if (completed === total) {
-                    window.location.href = 'view-cart';
-                }
-            })
-            .catch(function(error) {
-                completed++;
-                console.error('Loi chuyen san pham ' + productId + ' vao gio hang:', error);
-                if (completed === total) {
-                    window.location.href = 'view-cart';
-                }
-            });
-        });
-    }
-
-    // ---- Chuyen cac san pham da chon vao gio hang ----
     function moveSelectedToCart() {
         const checkedBoxes = document.querySelectorAll('.product-checkbox:checked');
         if (checkedBoxes.length === 0) return;
 
-        let completed = 0;
-        const total = checkedBoxes.length;
-
-        checkedBoxes.forEach(function(checkbox) {
-            const productId = checkbox.value;
-
-            const data = new URLSearchParams();
-            data.append('productId', productId);
-
-            fetch('move-wishlist-to-cart', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: data
-            })
-            .then(function(response) {
-                completed++;
-                if (completed === total) {
-                    window.location.reload();
-                }
-            })
-            .catch(function(error) {
-                completed++;
-                console.error('Loi chuyen san pham ' + productId + ' vao gio hang:', error);
-                if (completed === total) {
-                    window.location.reload();
-                }
-            });
-        });
+        const selectedIds = Array.from(checkedBoxes).map(function(cb) { return cb.value; });
+        document.getElementById('selectedProductIds').value = selectedIds.join(',');
+        document.getElementById('moveToCartForm').submit();
     }
 
-    function moveSingleToCart(productId, itemRow) {
-        const data = new URLSearchParams();
-        data.append('productId', productId);
 
-        fetch('move-wishlist-to-cart', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: data
-        })
-        .then(function(response) {
-            if (response.redirected) {
-                window.location.href = response.url;
-                return;
-            }
-            if (!response.ok) {
-                throw new Error('Network error');
-            }
-            if (itemRow) {
-                itemRow.style.transition = 'opacity 0.3s';
-                itemRow.style.opacity = '0';
-                setTimeout(function() { itemRow.remove(); }, 300);
-            }
-            recalcUI();
-        })
-        .catch(function(error) {
-            console.error('Loi chuyen san pham vao gio hang:', error);
-        });
-    }
+    document.addEventListener('DOMContentLoaded', function() {
+        updateAllSelectAllState();
+        recalcUI();
+    });
 </script>
 
 </body>
 </html>
+

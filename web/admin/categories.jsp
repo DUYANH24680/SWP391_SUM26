@@ -1,8 +1,8 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ page import="model.Customer" %>
+<%@ page import="model.Account" %>
 <%@ page import="model.Category" %>
 <%@ page import="java.util.List" %>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%!
     // Helper: chuyen duong dan image thanh URL hop le (di qua ImageServlet neu la uploads/)
     public static String imgUrl(String path, String contextPath) {
@@ -17,8 +17,8 @@
     }
 %>
 <%
-    Object rawUser = session.getAttribute("user");
-    Customer user = (Customer) rawUser;
+    Object rawUser = session.getAttribute("Account");
+    Account user = (Account) rawUser;
     if (user == null) {
         response.sendRedirect(request.getContextPath() + "/login");
         return;
@@ -51,17 +51,7 @@
     List<Category> categories = (List<Category>) request.getAttribute("categories");
     if (categories == null) categories = java.util.Collections.emptyList();
 
-    // ---- Image URL helper ----
-    java.util.function.Function<String, String> imgUrl = (String path) -> {
-        if (path == null || path.trim().isEmpty()) return null;
-        String trimmed = path.trim();
-        if (trimmed.startsWith("uploads/")) {
-            try {
-                return request.getContextPath() + "/image?path=" + java.net.URLEncoder.encode(trimmed, "UTF-8");
-            } catch (java.io.UnsupportedEncodingException e) { return trimmed; }
-        }
-        return trimmed;
-    };
+
 %>
 <!DOCTYPE html>
 <html lang="vi">
@@ -571,6 +561,7 @@
     </a>
     <div class="nav-links">
         <a href="home.jsp">Trang Chủ</a>
+        <a href="../danh-muc">Danh Mục</a>
         <a href="products">Sản Phẩm</a>
     </div>
     <div class="nav-right">
@@ -589,7 +580,13 @@
             <a href="products"><i class="fa-brands fa-opencart"></i> Sản Phẩm</a>
             <a href="add-product"><i class="fa-solid fa-plus"></i> Thêm Sản Phẩm</a>
             <a href="category" class="active"><i class="fa-solid fa-layer-group"></i> Danh Mục</a>
-            <a href="#"><i class="fa-solid fa-basket-shopping"></i> Đơn Hàng</a>
+            <% if ("customer".equalsIgnoreCase(role)) { %>
+            <a href="my-orders"><i class="fa-solid fa-basket-shopping"></i> Đơn Hàng</a>
+            <% } else if ("seller".equalsIgnoreCase(role)) { %>
+            <a href="seller/orders"><i class="fa-solid fa-basket-shopping"></i> Đơn Hàng</a>
+            <% } else if ("admin".equalsIgnoreCase(role)) { %>
+            <a href="admin/orders"><i class="fa-solid fa-basket-shopping"></i> Đơn Hàng</a>
+            <% } %>
             <a href="#"><i class="fa-regular fa-heart"></i> Yêu Thích</a>
             <a href="logout" class="logout" style="margin-top:0.5rem;"><i class="fa-solid fa-right-from-bracket"></i> Đăng Xuất</a>
         </div>
@@ -679,7 +676,7 @@
                                     <!-- Trang thai -->
                                     <td>
                                         <c:choose>
-                                            <c:when test="${!c.isIsDelete()}">
+                                            <c:when test="${!c.isDelete}">
                                                 <span class="badge badge-green">
                                                     <i class="fa-solid fa-circle" style="font-size:0.45rem;"></i> Hoạt Động
                                                 </span>
@@ -782,8 +779,37 @@
     });
 </script>
 
+    <!-- Floating Report Button -->
+    <a href="<%= request.getContextPath() %>/admin/reports" class="floating-report-btn" title="Kiểm tra báo cáo">
+        <i class="fa-solid fa-flag"></i>
+    </a>
+    <style>
+        .floating-report-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background-color: #ef4444;
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            cursor: pointer;
+            z-index: 1000;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        .floating-report-btn:hover {
+            transform: translateY(-5px);
+            background-color: #dc2626;
+            color: white;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+        }
+    </style>
 </body>
 </html>
-
-
 

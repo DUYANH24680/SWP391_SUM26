@@ -1,0 +1,145 @@
+package controller;
+
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import model.*;
+import service.CheckoutService;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+import service.CartService;
+
+@WebServlet(name = "CheckoutCartServlet", urlPatterns = {"/checkout-cart"})
+public class CheckoutCartServlet extends HttpServlet {
+
+    private CheckoutService checkoutService;
+
+    @Override
+    public void init() throws ServletException {
+        this.checkoutService = new CheckoutService();
+    }
+
+    @Override
+    public void destroy() {
+        if (checkoutService != null) {
+            checkoutService.close();
+        }
+    }
+
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
+        HttpSession session = req.getSession(false);
+        if (session == null || session.getAttribute("Account") == null) {
+            resp.sendRedirect(req.getContextPath() + "/login");
+            return;
+        }
+
+        Account account = (Account) session.getAttribute("Account");
+        String selectedProductsParam = req.getParameter("selectedProducts");
+        if (selectedProductsParam == null || selectedProductsParam.trim().isEmpty()) {
+            resp.sendRedirect(req.getContextPath() + "/view-cart");
+            return;
+        }
+
+        List<Integer> selectedProductIds = parseSelectedProductIds(selectedProductsParam);
+        if (selectedProductIds.isEmpty()) {
+            resp.sendRedirect(req.getContextPath() + "/view-cart");
+            return;
+        }
+
+        SelectedItemsCheckoutResult result = checkoutService.getSelectedItemsCheckoutData(
+                account.getId(), selectedProductIds);
+
+        if (!result.isSuccess()) {
+            session.setAttribute("error", result.getError());
+            resp.sendRedirect(req.getContextPath() + "/view-cart");
+            return;
+        }
+
+        req.setAttribute("selectedItems", result.getSelectedItems());
+        req.setAttribute("totalCost", result.getTotalCost());
+        req.setAttribute("addresses", result.getAddresses());
+        req.setAttribute("vouchers", result.getVouchers());
+        req.setAttribute("shopMap", result.getShopMap());
+        req.setAttribute("selectedProductIds", result.getSelectedProductIds());
+
+        req.getRequestDispatcher("/checkout-cart.jsp").forward(req, resp);
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
+        HttpSession session = req.getSession(false);
+        if (session == null || session.getAttribute("Account") == null) {
+            resp.sendRedirect(req.getContextPath() + "/login");
+            return;
+        }
+
+        Account account = (Account) session.getAttribute("Account");
+
+        String selectedProductsParam = req.getParameter("selectedProducts");
+        String recipientName = req.getParameter("recipientName");
+        String recipientPhone = req.getParameter("recipientPhone");
+        String address = req.getParameter("address");
+        String paymentMethod = req.getParameter("paymentMethod");
+        String note = req.getParameter("note");
+        String voucherCode = req.getParameter("voucherCode");
+
+        if (selectedProductsParam == null || selectedProductsParam.trim().isEmpty()
+                || recipientName == null || recipientPhone == null || address == null) {
+            session.setAttribute("error", "Vui lòng nhập đầy đủ thông tin giao hàng.");
+            resp.sendRedirect(req.getContextPath() + "/view-cart");
+            return;
+        }
+
+        List<Integer> selectedProductIds = parseSelectedProductIds(selectedProductsParam);
+
+        PlaceOrderResult result = checkoutService.placeCartOrderFromSelected(
+                account.getId(), selectedProductIds,
+                recipientName, recipientPhone, address, paymentMethod, note, voucherCode);
+
+        if (result.isSuccess()) {
+            try {
+                CartService cartService = new CartService();
+                Cart updatedCart = cartService.getCartByCustomerId(account.getId());
+                session.setAttribute("cart", updatedCart);
+                session.setAttribute("cartCount", updatedCart != null ? updatedCart.getTotalQuantity() : 0);
+                cartService.close();
+            } catch (Exception e) {
+                System.err.println("[CheckoutCartServlet] Error updating cart session: " + e.getMessage());
+            }
+
+            String message;
+            if (result.getOrderCount() > 1) {
+                message = String.format(
+                        "Đặt hàng thành công! Bạn đã tạo %d đơn hàng từ %d shop khác nhau. Vui lòng kiểm tra email để xem chi tiết từng đơn.",
+                        result.getOrderCount(), result.getShopCount());
+            } else {
+                message = "Đặt hàng thành công! Cảm ơn bạn đã đặt hàng.";
+            }
+            session.setAttribute("message", message);
+            resp.sendRedirect(req.getContextPath() + "/my-orders");
+        } else {
+            session.setAttribute("error", result.getError());
+            resp.sendRedirect(req.getContextPath() + "/view-cart");
+        }
+    }
+
+    private List<Integer> parseSelectedProductIds(String param) {
+        if (param == null || param.trim().isEmpty()) {
+            return List.of();
+        }
+        return Arrays.stream(param.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .map(Integer::parseInt)
+                .collect(Collectors.toList());
+    }
+}

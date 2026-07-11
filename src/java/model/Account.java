@@ -11,14 +11,18 @@ public class Account {
     private String passwordHash;
     private String email;
     private String phone;
+    private String address;
     private String avatar;
+    private Boolean gender;
     private int status;
     private Timestamp createdAt;
+    
+        private java.util.Map<String, Object> extra;
 
     public Account() {
     }
 
-    public Account(int id, int roleId, String roleName, String fullname, String username, String passwordHash, String email, String phone, String avatar, int status, Timestamp createdAt) {
+    public Account(int id, int roleId, String roleName, String fullname, String username, String passwordHash, String email, String phone, String address, String avatar, Boolean gender, int status, Timestamp createdAt) {
         this.id = id;
         this.roleId = roleId;
         this.roleName = roleName;
@@ -27,7 +31,9 @@ public class Account {
         this.passwordHash = passwordHash;
         this.email = email;
         this.phone = phone;
+        this.address = address;
         this.avatar = avatar;
+        this.gender = gender;
         this.status = status;
         this.createdAt = createdAt;
     }
@@ -96,12 +102,28 @@ public class Account {
         this.phone = phone;
     }
 
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
     public String getAvatar() {
         return avatar;
     }
 
     public void setAvatar(String avatar) {
         this.avatar = avatar;
+    }
+
+    public Boolean getGender() {
+        return gender;
+    }
+
+    public void setGender(Boolean gender) {
+        this.gender = gender;
     }
 
     public int getStatus() {
@@ -119,5 +141,12 @@ public class Account {
     public void setCreatedAt(Timestamp createdAt) {
         this.createdAt = createdAt;
     }
+    
+        public java.util.Map<String, Object> getExtra() {
+        if (extra == null) extra = new java.util.HashMap<>();
+        return extra;
+    }
+        public void setExtra(String key, Object value) {
+        getExtra().put(key, value);
+    }
 }
-
