@@ -179,7 +179,7 @@
                         <div class="vc-exp">HSD: <%= v.getEndDate() != null ? sdf.format(v.getEndDate()) : "Không giới hạn" %></div>
                         <div class="vc-footer">
                             <div class="vc-code" id="code-<%= v.getCode() %>"><%= v.getCode() %></div>
-                            <button class="vc-btn" onclick="copyCode('<%= v.getCode() %>')">Copy Mã</button>
+                            <button class="vc-btn" onclick="copyCode('<%= v.getCode() %>', this)">Copy Mã</button>
                         </div>
                     </div>
                 </div>
@@ -189,19 +189,53 @@
     </div>
 
     <script>
-        function copyCode(code) {
-            navigator.clipboard.writeText(code).then(() => {
-                let btn = event.target;
-                let originalText = btn.innerText;
-                btn.innerText = 'Đã Copy!';
-                btn.style.background = '#0ea5e9';
-                setTimeout(() => {
-                    btn.innerText = originalText;
-                    btn.style.background = '#10b981';
-                }, 2000);
-            }).catch(err => {
+        function copyCode(code, btn) {
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(code).then(() => {
+                    showSuccess(btn);
+                }).catch(err => {
+                    fallbackCopyTextToClipboard(code, btn);
+                });
+            } else {
+                fallbackCopyTextToClipboard(code, btn);
+            }
+        }
+
+        function fallbackCopyTextToClipboard(text, btn) {
+            var textArea = document.createElement("textarea");
+            textArea.value = text;
+            
+            // Avoid scrolling to bottom
+            textArea.style.top = "0";
+            textArea.style.left = "0";
+            textArea.style.position = "fixed";
+
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+
+            try {
+                var successful = document.execCommand('copy');
+                if (successful) {
+                    showSuccess(btn);
+                } else {
+                    alert('Không thể copy mã. Vui lòng copy tay!');
+                }
+            } catch (err) {
                 alert('Không thể copy mã. Vui lòng copy tay!');
-            });
+            }
+
+            document.body.removeChild(textArea);
+        }
+
+        function showSuccess(btn) {
+            let originalText = btn.innerText;
+            btn.innerText = 'Đã Copy!';
+            btn.style.background = '#0ea5e9';
+            setTimeout(() => {
+                btn.innerText = originalText;
+                btn.style.background = '#10b981';
+            }, 2000);
         }
     </script>
 </body>
