@@ -41,6 +41,7 @@ public class ViewCartServlet extends HttpServlet {
         }
         session.setAttribute("cartTotal", cartTotal);
         session.setAttribute("cart", cart);
+        session.setAttribute("cartCount", cart.getTotalQuantity());
 
         request.setAttribute("cart", cart);
         if (cart.isEmpty()) {

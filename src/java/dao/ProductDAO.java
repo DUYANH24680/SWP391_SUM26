@@ -15,7 +15,7 @@ public class ProductDAO extends DbContext {
                    + "s.shop_name "
                    + "FROM Products p "
                    + "LEFT JOIN Shops s ON p.shop_id = s.id "
-                   + "WHERE p.isDelete = 0 ORDER BY p.created_at DESC";
+                   + "WHERE p.isDelete = 0 AND p.status = 1 ORDER BY p.created_at DESC";
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
@@ -33,7 +33,7 @@ public class ProductDAO extends DbContext {
     }
 
     public int countAllProducts() {
-        String sql = "SELECT COUNT(*) FROM Products WHERE isDelete = 0";
+        String sql = "SELECT COUNT(*) FROM Products WHERE isDelete = 0 AND status = 1";
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
@@ -104,7 +104,7 @@ public class ProductDAO extends DbContext {
                    + "s.shop_name "
                    + "FROM Products p "
                    + "LEFT JOIN Shops s ON p.shop_id = s.id "
-                   + "WHERE p.isDelete = 0 "
+                   + "WHERE p.isDelete = 0 AND p.status = 1 "
                    + "  AND (p.title LIKE ? OR p.description LIKE ?) "
                    + "ORDER BY p.created_at DESC";
         try (Connection conn = getConnection();
@@ -162,7 +162,7 @@ public class ProductDAO extends DbContext {
                    + "s.shop_name "
                    + "FROM Products p "
                    + "LEFT JOIN Shops s ON p.shop_id = s.id "
-                   + "WHERE p.shop_id = ? AND p.isDelete = 0 "
+                   + "WHERE p.shop_id = ? AND p.isDelete = 0 AND p.status = 1 "
                    + "ORDER BY p.created_at DESC";
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -829,7 +829,7 @@ public class ProductDAO extends DbContext {
               + "s.shop_name "
               + "FROM Products p "
               + "LEFT JOIN Shops s ON p.shop_id = s.id "
-              + "WHERE p.isDelete = 0 "
+              + "WHERE p.isDelete = 0 AND p.status = 1 "
         );
 
         List<Object> params = new ArrayList<>();

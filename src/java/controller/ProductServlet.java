@@ -123,6 +123,14 @@ public class ProductServlet extends HttpServlet {
                 resp.sendRedirect(req.getContextPath() + "/products");
                 return;
             }
+            
+                        // Khach hang: chi duoc xem san pham da duoc duyet
+            String userRole = (session != null) ? (String) session.getAttribute("role") : null;
+            if (!ROLE_SELLER.equals(userRole) && product.getStatus() != 1) {
+                session.setAttribute("error", "San pham nay chua duoc duyet.");
+                resp.sendRedirect(req.getContextPath() + "/products");
+                return;
+            }
 
             // Load category name
             String categoryName = "-";

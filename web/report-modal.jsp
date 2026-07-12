@@ -1,29 +1,25 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="model.Account" %>
 <%
-    Account reportUser = (Account) session.getAttribute("user");
+    Account reportUser = (Account) session.getAttribute("Account");
     String reportRole = reportUser != null ? reportUser.getRoleName() : "";
     if (reportRole == null) reportRole = "";
     String reportCtx = request.getContextPath();
 %>
 <% if ("customer".equalsIgnoreCase(reportRole)) { %>
-<!-- FLOAT REPORT BUTTON -->
-<div id="report-fab" onclick="openReportModal()" style="position:fixed;bottom:2rem;right:2rem;width:60px;height:60px;background:#ef4444;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.5rem;box-shadow:0 4px 15px rgba(239,68,68,0.4);cursor:pointer;z-index:999;transition:all 0.3s;">
-    <i class="fa-solid fa-triangle-exclamation"></i>
-</div>
+<!-- REPORT MODAL INLINE (no fab) -->
 <!-- REPORT MODAL -->
 <div id="report-modal" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;display:none;align-items:center;justify-content:center;">
     <div style="background:#fff;width:400px;border-radius:12px;padding:2rem;box-shadow:0 10px 25px rgba(0,0,0,0.2);">
         <h3 style="margin-top:0;font-family:'Inter',sans-serif;color:#0f172a;display:flex;align-items:center;gap:0.5rem;">
             <i class="fa-solid fa-triangle-exclamation" style="color:#ef4444;"></i> Báo Cáo Sản Phẩm
         </h3>
-        <p style="font-size:0.85rem;color:#64748b;margin-bottom:1rem;">Chọn sản phẩm bạn đã mua để gửi báo cáo hỗ trợ.</p>
+        <p style="font-size:0.85rem;color:#64748b;margin-bottom:1rem;">Gửi báo cáo hỗ trợ cho sản phẩm này.</p>
         
         <div style="margin-bottom:1rem;">
             <label style="display:block;font-size:0.85rem;font-weight:600;margin-bottom:0.4rem;color:#334155;">Sản phẩm</label>
-            <select id="report-product-id" style="width:100%;padding:0.65rem;border-radius:8px;border:1px solid #cbd5e1;font-family:'Inter';">
-                <option value="">Đang tải...</option>
-            </select>
+            <input type="hidden" id="report-product-id" value="">
+            <div id="report-product-name" style="width:100%;padding:0.65rem;border-radius:8px;border:1px solid #cbd5e1;background:#f8fafb;font-family:'Inter';color:#334155;"></div>
         </div>
         
         <div style="margin-bottom:1.5rem;">
@@ -39,22 +35,11 @@
 </div>
 
 <script>
-    function openReportModal() {
+    function openReportModal(productId, productName) {
+        document.getElementById('report-product-id').value = productId;
+        document.getElementById('report-product-name').textContent = productName;
+        document.getElementById('report-reason').value = '';
         document.getElementById('report-modal').style.display = 'flex';
-        // Fetch purchased products
-        fetch('<%= reportCtx %>/report?action=getPurchased')
-            .then(res => res.json())
-            .then(data => {
-                let select = document.getElementById('report-product-id');
-                select.innerHTML = '<option value="">-- Chọn sản phẩm --</option>';
-                if(data && data.length > 0) {
-                    data.forEach(p => {
-                        select.innerHTML += `<option value="` + p.id + `">` + p.name + `</option>`;
-                    });
-                } else {
-                    select.innerHTML = '<option value="">Bạn chưa mua sản phẩm nào</option>';
-                }
-            });
     }
 
     function closeReportModal() {
@@ -64,8 +49,8 @@
     function submitReport() {
         let pid = document.getElementById('report-product-id').value;
         let reason = document.getElementById('report-reason').value;
-        if (!pid || !reason) {
-            alert("Vui lòng chọn sản phẩm và nhập lý do!");
+        if (!pid || !reason.trim()) {
+            alert("Vui lòng nhập lý do báo cáo!");
             return;
         }
         

@@ -38,12 +38,23 @@ public class MoveWishlistToCartServlet extends HttpServlet {
         LOG.info("[MoveWishlistToCartServlet] customerId=" + Account.getId() + " parsedProductId=" + productId);
 
         try {
-            Cart cart = wishlistService.moveWishlistItemToCart(Account.getId(), productId);
-            session.setAttribute("message", "Đã chuyển sản phẩm vào giỏ hàng.");
+            WishlistService.MoveToCartResult result = wishlistService.moveWishlistItemToCart(Account.getId(), productId);
+            Cart cart = result.getCart();
+            boolean alreadyInCart = result.wasAlreadyInCart();
+
             session.setAttribute("cart", cart);
             refreshBothCounts(session, Account.getId());
 
-            String json = "{\"success\":true,\"message\":\"Đã chuyển sản phẩm vào giỏ hàng.\",\"cartTotalQuantity\":" + (cart != null ? cart.getTotalQuantity() : 0) + "}";
+            // Set message based on whether product was already in cart
+            if (alreadyInCart) {
+                session.setAttribute("error", "San pham da co trong gio hang.");
+            } else {
+                session.setAttribute("message", "Da chuyen san pham vao gio hang.");
+            }
+
+            String json = "{\"success\":true,\"alreadyInCart\":" + alreadyInCart + ",\"message\":\""
+                        + (alreadyInCart ? "San pham da co trong gio hang." : "Da chuyen san pham vao gio hang.")
+                        + "\",\"cartTotalQuantity\":" + (cart != null ? cart.getTotalQuantity() : 0) + "}";
             LOG.info("[MoveWishlistToCartServlet] success json=" + json);
             resp.setContentType("application/json");
             resp.setCharacterEncoding("UTF-8");

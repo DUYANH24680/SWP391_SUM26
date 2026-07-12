@@ -56,7 +56,7 @@ public class AccountService {
             return new RegisterResult("Mật khẩu phải có ít nhất 6 ký tự.", null);
         }
         if (!password.equals(confirmPassword)) {
-            return new RegisterResult("Xác nhận mật khẩu không khớp.", null);
+            return new RegisterResult("Xác nhận mật khẩu không khớp,Vui lòng nhập lại.", null);
         }
         if (phone != null && !phone.trim().isEmpty() && !phone.trim().matches("^0[0-9]{9,10}$")) {
             return new RegisterResult("Số điện thoại không hợp lệ (phải bắt đầu bằng 0, 10-11 chữ số).", null);
