@@ -961,7 +961,7 @@
                         <div class="action-buttons">
                             <% if (product.isActive() && product.getStockQuantity() > 0) { %>
 
-                                <form action="add-to-cart" method="POST" id="addToCartForm" style="display:inline;">
+                                <form action="add-to-cart123" method="POST" id="addToCartForm" style="display:inline;">
                                     <input type="hidden" name="productId" value="<%= product.getId() %>">
                                     <input type="hidden" name="quantity" id="quantityInput" value="1">
                                     <button type="submit" class="btn btn-green" id="addToCartBtn">

@@ -13,7 +13,7 @@ import service.CartService;
 import java.io.IOException;
 import java.io.PrintWriter;
 
-@WebServlet(name = "AddToCartServlet", urlPatterns = {"/add-to-cart"})
+@WebServlet(name = "AddToCartServlet", urlPatterns = {"/add-to-cart123"})
 public class AddToCartServlet extends HttpServlet {
 
     private final CartService cartService = new CartService();
