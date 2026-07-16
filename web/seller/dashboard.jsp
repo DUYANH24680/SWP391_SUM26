@@ -29,6 +29,9 @@
 
     String message = (String) session.getAttribute("message");
     String error = (String) session.getAttribute("error");
+    if (error == null) {
+        error = (String) request.getAttribute("error");
+    }
     session.removeAttribute("message");
     session.removeAttribute("error");
 
@@ -378,7 +381,7 @@
                     <i class="fa-solid fa-shop-slash"></i>
                     <span><strong>Không thể truy cập:</strong> <%= shopNotApprovedMsg %></span>
                 </div>
-            <% } else { %>
+            <% } else if (shop != null) { %>
 
                 <!-- Hero Section -->
                 <div class="hero">

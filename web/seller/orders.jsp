@@ -1,4 +1,4 @@
-﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="model.Account" %>
 <%@ page import="model.Order" %>
 <%@ page import="model.OrderDetail" %>
@@ -31,6 +31,9 @@
 
     String message = (String) session.getAttribute("message");
     String error = (String) session.getAttribute("error");
+    if (error == null) {
+        error = (String) request.getAttribute("error");
+    }
     session.removeAttribute("message");
     session.removeAttribute("error");
 
@@ -450,7 +453,7 @@
                     <i class="fa-solid fa-shop-slash"></i>
                     <span><strong>Không thể truy cập:</strong> <%= shopNotApprovedMsg %></span>
                 </div>
-            <% } else { %>
+            <% } else if (shop != null) { %>
 
                 <!-- Tab Filtering -->
                 <div class="tabs-card">
@@ -525,13 +528,15 @@
                                 <div class="order-cost-details">
                                     Thanh toán: <strong><%= o.getPaymentMethod() %></strong> (<%= o.getPaymentStatusLabel() %>)<br>
                                     Tiền hàng: <%= nf.format((long) o.getTotalCost()) %> đ 
-                                    <% if (o.getDiscountAmount() > 0) { %> | Khách dùng Voucher: -<%= nf.format((long) o.getDiscountAmount()) %> đ (Mã: <%= o.getVoucherCode() %>)<% } %>
+                                    <% if (o.getDiscountAmount() > 0) { %> | Voucher của Shop: -<%= nf.format((long) o.getDiscountAmount()) %> đ (Mã: <%= o.getVoucherCode() %>)<% } %>
+                                    <% if (o.getPlatformDiscountAmount() > 0) { %> | Voucher của Sàn: -<%= nf.format((long) o.getPlatformDiscountAmount()) %> đ (Sàn chịu)<% } %>
                                     | Phí ship: +<%= nf.format((long) o.getShippingFee()) %> đ
                                 </div>
                                 
                                 <div style="display:flex; align-items:center; gap:1.25rem;">
-                                    <div class="order-total-pay">
-                                        Thực thu từ khách: <span><%= nf.format((long) o.getFinalCost()) %> đ</span>
+                                    <div class="order-total-pay" style="display:flex; flex-direction:column; align-items:flex-end; gap:0.25rem;">
+                                        <div style="font-size:0.82rem; color:var(--gray-600);">Thực thu từ khách: <strong><%= nf.format((long) o.getFinalCost()) %> đ</strong></div>
+                                        <div style="font-size:1.05rem; font-weight:800; color:var(--green-dark);">Doanh thu của Shop: <span><%= nf.format((long) o.getShopActualRevenue()) %> đ</span></div>
                                     </div>
 
                                     <div class="order-actions">
