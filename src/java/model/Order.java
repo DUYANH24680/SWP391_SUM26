@@ -23,7 +23,11 @@ public class Order {
     // Additional fields for displaying info in views
     private String customerName;
     private String voucherCode;
-        private String shopName;
+    private String shopName;
+
+    // Track platform vs shop discount separately
+    private double platformDiscountAmount;  // Phần giảm giá sàn (sàn chịu)
+    private double shopActualRevenue;       // Tiền shop thực nhận (chưa tính platform discount)
 
     public Order() {
     }
@@ -193,12 +197,35 @@ public class Order {
     public void setVoucherCode(String voucherCode) {
         this.voucherCode = voucherCode;
     }
-        public String getShopName() {
+    public String getShopName() {
         return shopName;
     }
 
     public void setShopName(String shopName) {
         this.shopName = shopName;
+    }
+
+    public double getPlatformDiscountAmount() {
+        if (platformDiscountAmount <= 0) {
+            double calc = totalCost - discountAmount - finalCost + shippingFee;
+            return calc > 0 ? calc : 0;
+        }
+        return platformDiscountAmount;
+    }
+
+    public void setPlatformDiscountAmount(double platformDiscountAmount) {
+        this.platformDiscountAmount = platformDiscountAmount;
+    }
+
+    public double getShopActualRevenue() {
+        if (shopActualRevenue <= 0) {
+            return totalCost - discountAmount;
+        }
+        return shopActualRevenue;
+    }
+
+    public void setShopActualRevenue(double shopActualRevenue) {
+        this.shopActualRevenue = shopActualRevenue;
     }
 
     // Helper status strings

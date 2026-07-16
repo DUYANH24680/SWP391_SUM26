@@ -528,6 +528,9 @@
                                     
                                     <div class="item-details">
                                         <div class="item-title"><%= od.getProductTitle() %></div>
+                                        <% if (od.getShopName() != null) { %>
+                                        <div class="item-meta"><i class="fa-solid fa-store"></i> <%= od.getShopName() %></div>
+                                        <% } %>
                                         <div class="item-meta">Đơn vị: <%= od.getProductUnit() != null ? od.getProductUnit() : "kg" %></div>
                                         <div class="item-meta">Số lượng: <%= od.getQuantity() %></div>
                                     </div>
@@ -558,7 +561,8 @@
                             <div class="order-cost-details">
                                 Thanh toán: <strong><%= o.getPaymentMethod() %></strong> (<%= o.getPaymentStatusLabel() %>)<br>
                                 Tiền hàng: <%= nf.format((long) o.getTotalCost()) %> đ 
-                                <% if (o.getDiscountAmount() > 0) { %> | Giảm giá: -<%= nf.format((long) o.getDiscountAmount()) %> đ<% } %>
+                                <% if (o.getDiscountAmount() > 0) { %> | Giảm giá Shop: -<%= nf.format((long) o.getDiscountAmount()) %> đ<% } %>
+                                <% if (o.getPlatformDiscountAmount() > 0) { %> | Giảm giá Sàn: -<%= nf.format((long) o.getPlatformDiscountAmount()) %> đ<% } %>
                                 | Ship: +<%= nf.format((long) o.getShippingFee()) %> đ
                             </div>
                             

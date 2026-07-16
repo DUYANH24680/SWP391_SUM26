@@ -2023,7 +2023,7 @@
                                             </span>
                                         </div>
                                         <div class="dropdown-menu">
-                                            <% if ("customer".equalsIgnoreCase(user.getRoleName())) { %>
+                                            <% if ("customer".equalsIgnoreCase(Account.getRoleName())) { %>
                                             <a class="dropdown-item" href="<%= request.getContextPath() %>/register-seller">
                                                 <i class="fa-solid fa-store"></i> Đăng Ký Cửa Hàng
                                             </a>

@@ -220,6 +220,28 @@ public class VoucherDAO extends DbContext {
         return list;
     }
 
+    // Lấy voucher đang hoạt động của một Shop
+    public List<Voucher> getActiveVouchersByShop(int shopId) {
+        ensureTableExists();
+        List<Voucher> list = new ArrayList<>();
+        String sql = "SELECT * FROM Vouchers "
+                   + "WHERE shop_id = ? AND status = 1 AND used_count < quantity "
+                   + "AND (start_date IS NULL OR start_date <= GETDATE()) "
+                   + "AND (end_date IS NULL OR end_date >= GETDATE()) "
+                   + "ORDER BY discount_percent DESC";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            ps.setInt(1, shopId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapRow(rs));
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return list;
+    }
+
     private Voucher mapRow(ResultSet rs) throws SQLException {
         Voucher v = new Voucher();
         v.setId(rs.getInt("id"));

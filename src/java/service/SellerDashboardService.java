@@ -37,7 +37,7 @@ public class SellerDashboardService {
                         pendingOrders++;
                     }
                     if (o.getStatus() == 4) {
-                        totalRevenue += o.getFinalCost();
+                        totalRevenue += o.getShopActualRevenue();
                     }
                 }
                 

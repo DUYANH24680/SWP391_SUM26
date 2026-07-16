@@ -23,9 +23,9 @@ public class OrderDAO extends DbContext {
      * Create a new order with multiple details in a transaction.
      */
     public boolean createOrder(Order order, List<OrderDetail> details) {
-        String sqlOrder = "INSERT INTO Orders (customer_id, voucher_id, recipient_name, recipient_phone, address, payment_method, status, payment_status, total_cost, discount_amount, shipping_fee, final_cost, note, order_date) "
-                        + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, GETDATE())";
-        
+        String sqlOrder = "INSERT INTO Orders (customer_id, voucher_id, recipient_name, recipient_phone, address, payment_method, status, payment_status, total_cost, discount_amount, shipping_fee, final_cost, note, order_date, platform_discount_amount, shop_actual_revenue) "
+                        + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, GETDATE(), ?, ?)";
+
         String sqlDetail = "INSERT INTO OrderDetails (order_id, product_id, quantity, unit_price, total_price) VALUES (?, ?, ?, ?, ?)";
 
         Connection conn = null;
@@ -55,6 +55,8 @@ public class OrderDAO extends DbContext {
             psOrder.setDouble(11, order.getShippingFee());
             psOrder.setDouble(12, order.getFinalCost());
             psOrder.setString(13, order.getNote());
+            psOrder.setDouble(14, order.getPlatformDiscountAmount());
+            psOrder.setDouble(15, order.getShopActualRevenue());
 
             int affectedRows = psOrder.executeUpdate();
             if (affectedRows == 0) {
@@ -116,8 +118,8 @@ public class OrderDAO extends DbContext {
             return false;
         }
 
-        String sqlOrder = "INSERT INTO Orders (customer_id, voucher_id, recipient_name, recipient_phone, address, payment_method, status, payment_status, total_cost, discount_amount, shipping_fee, final_cost, note, order_date) "
-                        + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, GETDATE())";
+        String sqlOrder = "INSERT INTO Orders (customer_id, voucher_id, recipient_name, recipient_phone, address, payment_method, status, payment_status, total_cost, discount_amount, shipping_fee, final_cost, note, order_date, platform_discount_amount, shop_actual_revenue) "
+                        + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, GETDATE(), ?, ?)";
         
         String sqlDetail = "INSERT INTO OrderDetails (order_id, product_id, quantity, unit_price, total_price) VALUES (?, ?, ?, ?, ?)";
 
@@ -154,6 +156,8 @@ public class OrderDAO extends DbContext {
                 psOrder.setDouble(11, order.getShippingFee());
                 psOrder.setDouble(12, order.getFinalCost());
                 psOrder.setString(13, order.getNote());
+                psOrder.setDouble(14, order.getPlatformDiscountAmount());
+                psOrder.setDouble(15, order.getShopActualRevenue());
 
                 int affectedRows = psOrder.executeUpdate();
                 if (affectedRows == 0) {
@@ -218,7 +222,7 @@ public class OrderDAO extends DbContext {
         List<Order> list = new ArrayList<>();
         String sql = "SELECT o.id, o.customer_id, o.voucher_id, o.recipient_name, o.recipient_phone, o.address, o.payment_method, "
                    + "o.status, o.payment_status, o.total_cost, o.discount_amount, o.shipping_fee, o.final_cost, o.note, o.order_date, o.cancelled_at, "
-                   + "v.code AS voucher_code "
+                   + "o.platform_discount_amount, o.shop_actual_revenue, v.code AS voucher_code "
                    + "FROM Orders o "
                    + "LEFT JOIN Vouchers v ON o.voucher_id = v.id "
                    + "WHERE o.customer_id = ? "
@@ -246,7 +250,7 @@ public class OrderDAO extends DbContext {
         List<Order> list = new ArrayList<>();
         String sql = "SELECT DISTINCT o.id, o.customer_id, o.voucher_id, o.recipient_name, o.recipient_phone, o.address, o.payment_method, "
                    + "o.status, o.payment_status, o.total_cost, o.discount_amount, o.shipping_fee, o.final_cost, o.note, o.order_date, o.cancelled_at, "
-                   + "a.fullname AS customer_name, v.code AS voucher_code "
+                   + "o.platform_discount_amount, o.shop_actual_revenue, a.fullname AS customer_name, v.code AS voucher_code "
                    + "FROM Orders o "
                    + "JOIN OrderDetails od ON o.id = od.order_id "
                    + "JOIN Products p ON od.product_id = p.id "
@@ -277,7 +281,7 @@ public class OrderDAO extends DbContext {
     public Order getOrderById(int orderId) {
         String sql = "SELECT o.id, o.customer_id, o.voucher_id, o.recipient_name, o.recipient_phone, o.address, o.payment_method, "
                    + "o.status, o.payment_status, o.total_cost, o.discount_amount, o.shipping_fee, o.final_cost, o.note, o.order_date, o.cancelled_at, "
-                   + "a.fullname AS customer_name, v.code AS voucher_code "
+                   + "o.platform_discount_amount, o.shop_actual_revenue, a.fullname AS customer_name, v.code AS voucher_code "
                    + "FROM Orders o "
                    + "JOIN Accounts a ON o.customer_id = a.id "
                    + "LEFT JOIN Vouchers v ON o.voucher_id = v.id "
@@ -309,7 +313,7 @@ public class OrderDAO extends DbContext {
         StringBuilder sql = new StringBuilder(
             "SELECT o.id, o.customer_id, o.voucher_id, o.recipient_name, o.recipient_phone, o.address, o.payment_method, "
           + "o.status, o.payment_status, o.total_cost, o.discount_amount, o.shipping_fee, o.final_cost, o.note, o.order_date, o.cancelled_at, "
-          + "a.fullname AS customer_name, v.code AS voucher_code, s.shop_name "
+          + "o.platform_discount_amount, o.shop_actual_revenue, a.fullname AS customer_name, v.code AS voucher_code, s.shop_name "
           + "FROM Orders o "
           + "JOIN OrderDetails od ON o.id = od.order_id "
           + "JOIN Products p ON od.product_id = p.id "
@@ -347,7 +351,7 @@ public class OrderDAO extends DbContext {
 
         sql.append("GROUP BY o.id, o.customer_id, o.voucher_id, o.recipient_name, o.recipient_phone, o.address, o.payment_method, "
                  + "o.status, o.payment_status, o.total_cost, o.discount_amount, o.shipping_fee, o.final_cost, o.note, o.order_date, o.cancelled_at, "
-                 + "a.fullname, v.code, s.shop_name "
+                 + "o.platform_discount_amount, o.shop_actual_revenue, a.fullname, v.code, s.shop_name "
                  + "ORDER BY o.order_date DESC");
 
         try (PreparedStatement ps = getConnection().prepareStatement(sql.toString())) {
@@ -438,7 +442,7 @@ public class OrderDAO extends DbContext {
         StringBuilder sql = new StringBuilder(
             "SELECT o.id, o.customer_id, o.voucher_id, o.recipient_name, o.recipient_phone, o.address, o.payment_method, "
           + "o.status, o.payment_status, o.total_cost, o.discount_amount, o.shipping_fee, o.final_cost, o.note, o.order_date, o.cancelled_at, "
-          + "a.fullname AS customer_name, v.code AS voucher_code, s.shop_name "
+          + "o.platform_discount_amount, o.shop_actual_revenue, a.fullname AS customer_name, v.code AS voucher_code, s.shop_name "
           + "FROM Orders o "
           + "JOIN OrderDetails od ON o.id = od.order_id "
           + "JOIN Products p ON od.product_id = p.id "
@@ -476,7 +480,7 @@ public class OrderDAO extends DbContext {
 
         sql.append("GROUP BY o.id, o.customer_id, o.voucher_id, o.recipient_name, o.recipient_phone, o.address, o.payment_method, "
                  + "o.status, o.payment_status, o.total_cost, o.discount_amount, o.shipping_fee, o.final_cost, o.note, o.order_date, o.cancelled_at, "
-                 + "a.fullname, v.code, s.shop_name "
+                 + "o.platform_discount_amount, o.shop_actual_revenue, a.fullname, v.code, s.shop_name "
                  + "ORDER BY o.order_date DESC "
                  + "OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
 
@@ -510,9 +514,10 @@ public class OrderDAO extends DbContext {
     public List<OrderDetail> getOrderDetails(int orderId) {
         List<OrderDetail> list = new ArrayList<>();
         String sql = "SELECT od.id, od.order_id, od.product_id, od.quantity, od.unit_price, od.total_price, "
-                   + "p.title AS product_title, p.image AS product_image, p.unit AS product_unit "
+                   + "p.title AS product_title, p.image AS product_image, p.unit AS product_unit, p.shop_id, s.shop_name "
                    + "FROM OrderDetails od "
                    + "JOIN Products p ON od.product_id = p.id "
+                   + "LEFT JOIN Shops s ON p.shop_id = s.id "
                    + "WHERE od.order_id = ?";
         try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
             ps.setInt(1, orderId);
@@ -528,6 +533,7 @@ public class OrderDAO extends DbContext {
                     od.setProductTitle(rs.getString("product_title"));
                     od.setProductImage(rs.getString("product_image"));
                     od.setProductUnit(rs.getString("product_unit"));
+                    od.setShopName(rs.getString("shop_name"));
                     list.add(od);
                 }
             }
@@ -564,7 +570,7 @@ public class OrderDAO extends DbContext {
         StringBuilder sql = new StringBuilder(
             "SELECT DISTINCT o.id, o.customer_id, o.voucher_id, o.recipient_name, o.recipient_phone, o.address, o.payment_method, "
           + "o.status, o.payment_status, o.total_cost, o.discount_amount, o.shipping_fee, o.final_cost, o.note, o.order_date, o.cancelled_at, "
-          + "a.fullname AS customer_name, v.code AS voucher_code "
+          + "o.platform_discount_amount, o.shop_actual_revenue, a.fullname AS customer_name, v.code AS voucher_code "
           + "FROM Orders o "
           + "JOIN OrderDetails od ON o.id = od.order_id "
           + "JOIN Products p ON od.product_id = p.id "
@@ -637,6 +643,8 @@ public class OrderDAO extends DbContext {
         o.setNote(rs.getString("note"));
         o.setOrderDate(rs.getTimestamp("order_date"));
         o.setCancelledAt(rs.getTimestamp("cancelled_at"));
+        o.setPlatformDiscountAmount(rs.getDouble("platform_discount_amount"));
+        o.setShopActualRevenue(rs.getDouble("shop_actual_revenue"));
         return o;
     }
 }

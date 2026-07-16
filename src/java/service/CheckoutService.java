@@ -5,6 +5,8 @@ import dao.ProductDAO;
 import dao.ShopDAO;
 import dao.VoucherDAO;
 import model.*;
+import model.VoucherValidationRequest;
+import model.VoucherValidationResult;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -106,15 +108,47 @@ public class CheckoutService {
 
     public PlaceOrderResult placeOrder(int customerId, String recipientName, String recipientPhone,
                                         String address, String paymentMethod, String note,
-                                        String voucherCode, Integer buyNowProductId, Integer buyNowQuantity) {
+                                        Map<Integer, String> shopVoucherCodes, String platformVoucherCode,
+                                        Integer buyNowProductId, Integer buyNowQuantity) {
         OrderService orderService = new OrderService();
         try {
             return orderService.placeOrderWithDetails(
                 customerId, recipientName, recipientPhone, address,
-                paymentMethod, note, voucherCode, buyNowProductId, buyNowQuantity
+                paymentMethod, note, shopVoucherCodes, platformVoucherCode,
+                buyNowProductId, buyNowQuantity
             );
         } finally {
             orderService = null;
+        }
+    }
+
+    public PlaceOrderResult placeCartOrderFromSelected(int customerId, List<Integer> selectedProductIds,
+                                                        String recipientName, String recipientPhone,
+                                                        String address, String paymentMethod,
+                                                        String note, Map<Integer, String> shopVoucherCodes, String platformVoucherCode) {
+        CartService cartService = new CartService();
+        OrderService orderService = new OrderService();
+        try {
+            Cart cart = cartService.getCartByCustomerId(customerId);
+            if (cart == null || cart.isEmpty()) {
+                return model.PlaceOrderResult.failure("Giỏ hàng của bạn đang trống.");
+            }
+
+            List<CartItem> selectedItems = new ArrayList<>();
+            for (CartItem item : cart.getItems()) {
+                if (selectedProductIds.contains(item.getProductId())) {
+                    selectedItems.add(item);
+                }
+            }
+
+            if (selectedItems.isEmpty()) {
+                return model.PlaceOrderResult.failure("Không có sản phẩm nào được chọn để thanh toán.");
+            }
+
+            return orderService.placeCartOrder(customerId, selectedItems, recipientName, recipientPhone,
+                    address, paymentMethod, note, shopVoucherCodes, platformVoucherCode);
+        } finally {
+            cartService.close();
         }
     }
 
@@ -214,36 +248,6 @@ public class CheckoutService {
         }
     }
 
-    public PlaceOrderResult placeCartOrderFromSelected(int customerId, List<Integer> selectedProductIds,
-                                                        String recipientName, String recipientPhone,
-                                                        String address, String paymentMethod,
-                                                        String note, String voucherCode) {
-        CartService cartService = new CartService();
-        OrderService orderService = new OrderService();
-        try {
-            Cart cart = cartService.getCartByCustomerId(customerId);
-            if (cart == null || cart.isEmpty()) {
-                return model.PlaceOrderResult.failure("Giỏ hàng của bạn đang trống.");
-            }
-
-            List<CartItem> selectedItems = new ArrayList<>();
-            for (CartItem item : cart.getItems()) {
-                if (selectedProductIds.contains(item.getProductId())) {
-                    selectedItems.add(item);
-                }
-            }
-
-            if (selectedItems.isEmpty()) {
-                return model.PlaceOrderResult.failure("Không có sản phẩm nào được chọn để thanh toán.");
-            }
-
-            return orderService.placeCartOrder(customerId, selectedItems, recipientName, recipientPhone,
-                    address, paymentMethod, note, voucherCode);
-        } finally {
-            cartService.close();
-        }
-    }
-
     // ===================== Parse Helpers =====================
 
     public Integer parseProductId(String param) {
@@ -276,6 +280,167 @@ public class CheckoutService {
             return Double.parseDouble(param.trim());
         } catch (NumberFormatException e) {
             return 0.0;
+        }
+    }
+
+    // ===================== Dual Voucher Validation =====================
+
+    public VoucherValidationResult validateBothVouchers(VoucherValidationRequest request) {
+        VoucherDAO voucherDAO = new VoucherDAO();
+        try {
+            double totalSubtotal = request.getTotalSubtotal();
+            Map<Integer, Double> shopSubtotals = request.getShopSubtotals();
+            Map<Integer, String> shopVoucherCodes = request.getShopVoucherCodes();
+
+            if (shopSubtotals == null || shopSubtotals.isEmpty()) {
+                return VoucherValidationResult.error("Không có sản phẩm nào trong giỏ hàng.");
+            }
+
+            // Step 1: Validate each shop voucher against its shop's subtotal
+            double totalShopDiscount = 0.0;
+            Map<Integer, Double> shopDiscountMap = new HashMap<>();
+            Map<Integer, Integer> shopVoucherIdMap = new HashMap<>();
+            Map<Integer, String> shopVoucherErrorsMap = new HashMap<>();
+
+            for (Map.Entry<Integer, Double> entry : shopSubtotals.entrySet()) {
+                int shopId = entry.getKey();
+                double shopSubtotal = entry.getValue();
+                String voucherCode = shopVoucherCodes != null ? shopVoucherCodes.get(shopId) : null;
+
+                if (voucherCode == null || voucherCode.trim().isEmpty()) {
+                    // No voucher for this shop
+                    shopDiscountMap.put(shopId, 0.0);
+                    continue;
+                }
+
+                Voucher shopVoucher = voucherDAO.findByCode(voucherCode.trim());
+                if (shopVoucher == null) {
+                    shopVoucherErrorsMap.put(shopId, "Mã '" + voucherCode + "' không tồn tại.");
+                    shopDiscountMap.put(shopId, 0.0);
+                    continue;
+                }
+                if (shopVoucher.getShopId() == null || shopVoucher.getShopId() != shopId) {
+                    shopVoucherErrorsMap.put(shopId, "Mã này không áp dụng cho cửa hàng này.");
+                    shopDiscountMap.put(shopId, 0.0);
+                    continue;
+                }
+                if (!shopVoucher.isStatus()) {
+                    shopVoucherErrorsMap.put(shopId, "Mã giảm giá đã bị khóa.");
+                    shopDiscountMap.put(shopId, 0.0);
+                    continue;
+                }
+                if (shopVoucher.getUsedCount() >= shopVoucher.getQuantity()) {
+                    shopVoucherErrorsMap.put(shopId, "Mã đã hết lượt sử dụng.");
+                    shopDiscountMap.put(shopId, 0.0);
+                    continue;
+                }
+                if (shopVoucher.getStartDate() != null && new java.util.Date().before(shopVoucher.getStartDate())) {
+                    shopVoucherErrorsMap.put(shopId, "Mã chưa đến hạn sử dụng.");
+                    shopDiscountMap.put(shopId, 0.0);
+                    continue;
+                }
+                if (shopVoucher.getEndDate() != null && new java.util.Date().after(shopVoucher.getEndDate())) {
+                    shopVoucherErrorsMap.put(shopId, "Mã đã hết hạn sử dụng.");
+                    shopDiscountMap.put(shopId, 0.0);
+                    continue;
+                }
+                if (shopSubtotal < shopVoucher.getMinimumOrder()) {
+                    shopVoucherErrorsMap.put(shopId, "Đơn tối thiểu " + String.format("%,.0f", shopVoucher.getMinimumOrder()) + " đ để dùng mã này.");
+                    shopDiscountMap.put(shopId, 0.0);
+                    continue;
+                }
+
+                double discount = shopVoucher.calculateDiscount(shopSubtotal);
+                shopDiscountMap.put(shopId, discount);
+                shopVoucherIdMap.put(shopId, shopVoucher.getId());
+                totalShopDiscount += discount;
+            }
+
+            // Step 2: Calculate base for platform discount
+            double baseForPlatform = totalSubtotal - totalShopDiscount;
+            if (baseForPlatform < 0) baseForPlatform = 0;
+
+            // Step 3: Validate and calculate platform voucher
+            double platformDiscount = 0.0;
+            Integer platformVoucherId = null;
+
+            if (request.getPlatformVoucherCode() != null && !request.getPlatformVoucherCode().trim().isEmpty()) {
+                Voucher platformVoucher = voucherDAO.findByCode(request.getPlatformVoucherCode());
+                if (platformVoucher == null) {
+                    return VoucherValidationResult.error("Mã giảm giá sàn không tồn tại.");
+                }
+                if (!platformVoucher.isStatus()) {
+                    return VoucherValidationResult.error("Mã giảm giá sàn đã bị khóa.");
+                }
+                if (platformVoucher.getUsedCount() >= platformVoucher.getQuantity()) {
+                    return VoucherValidationResult.error("Mã giảm giá sàn đã hết lượt sử dụng.");
+                }
+                if (platformVoucher.getStartDate() != null && new java.util.Date().before(platformVoucher.getStartDate())) {
+                    return VoucherValidationResult.error("Mã giảm giá sàn chưa đến hạn sử dụng.");
+                }
+                if (platformVoucher.getEndDate() != null && new java.util.Date().after(platformVoucher.getEndDate())) {
+                    return VoucherValidationResult.error("Mã giảm giá sàn đã hết hạn sử dụng.");
+                }
+                if (platformVoucher.getShopId() != null) {
+                    return VoucherValidationResult.error("Mã này là mã của Shop, không phải mã Sàn.");
+                }
+                if (baseForPlatform < platformVoucher.getMinimumOrder()) {
+                    return VoucherValidationResult.error(
+                        "Giá trị sau khi giảm shop chưa đạt mức tối thiểu (" + String.format("%,.0f", platformVoucher.getMinimumOrder()) + " đ) cho mã sàn.");
+                }
+
+                platformDiscount = platformVoucher.calculateDiscount(baseForPlatform);
+                if (platformDiscount > baseForPlatform) {
+                    platformDiscount = baseForPlatform;
+                }
+                platformVoucherId = platformVoucher.getId();
+            }
+
+            // Step 4: Allocate platform discount to each shop proportionally
+            Map<Integer, Double> shopAllocatedPlatformDiscount = new HashMap<>();
+            double allocatedPlatformDiscount = 0.0;
+            int shopIndex = 0;
+            int numShops = shopSubtotals.size();
+
+            for (Map.Entry<Integer, Double> entry : shopSubtotals.entrySet()) {
+                int shopId = entry.getKey();
+                double shopSubtotal = entry.getValue();
+                shopIndex++;
+
+                double allocated;
+                if (shopIndex == numShops) {
+                    allocated = platformDiscount - allocatedPlatformDiscount;
+                } else {
+                    allocated = Math.round((platformDiscount * (shopSubtotal / totalSubtotal)) * 100.0) / 100.0;
+                    allocatedPlatformDiscount += allocated;
+                }
+                shopAllocatedPlatformDiscount.put(shopId, allocated);
+            }
+
+            // Step 5: Calculate final amounts
+            double totalDiscount = totalShopDiscount + platformDiscount;
+            double finalTotal = totalSubtotal - totalDiscount;
+
+            // Build result with per-shop voucher errors
+            VoucherValidationResult result = VoucherValidationResult.error("");
+            result.setSuccess(true);
+            result.setMessage("Áp dụng mã giảm giá thành công!");
+            result.setTotalShopDiscount(totalShopDiscount);
+            result.setPlatformDiscount(platformDiscount);
+            result.setTotalDiscount(totalDiscount);
+            result.setFinalTotal(finalTotal);
+            result.setShopAllocatedPlatformDiscount(shopAllocatedPlatformDiscount);
+            result.setShopDiscountsPerShop(shopDiscountMap);
+            result.setShopVoucherIdsPerShop(shopVoucherIdMap);
+            result.setShopVoucherErrorsPerShop(shopVoucherErrorsMap);
+            result.setPlatformVoucherId(platformVoucherId);
+            return result;
+        } catch (Exception e) {
+            System.err.println("[CheckoutService] validateBothVouchers error: " + e.getMessage());
+            e.printStackTrace();
+            return VoucherValidationResult.error("Lỗi khi xử lý mã giảm giá: " + e.getMessage());
+        } finally {
+            voucherDAO.close();
         }
     }
 }
