@@ -129,7 +129,7 @@ public class ManageCustomerServlet extends HttpServlet {
     private void handleToggleStatus(HttpServletRequest req, HttpSession session) {
         String idParam = req.getParameter("id");
         if (idParam == null || idParam.trim().isEmpty()) {
-            session.setAttribute("error", "ID tài khoản không hợp lệ.");
+            session.setAttribute("error", "ID tài khoản không  hợp lệ.");
             return;
         }
 
