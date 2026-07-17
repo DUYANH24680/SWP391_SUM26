@@ -43,7 +43,7 @@ public class ApproveProductServlet extends HttpServlet {
         } catch (Exception e) {
             System.err.println("[ApproveProductServlet] load error: " + e.getMessage());
             e.printStackTrace();
-            req.setAttribute("error", "Lỗi khi tải danh sách sản phẩm: " + e.getMessage());
+            req.setAttribute("error", "Lỗi khi tải danh sách sản phẩm lên: " + e.getMessage());
             req.setAttribute("pendingProducts", java.util.Collections.emptyList());
         }
 

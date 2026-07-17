@@ -148,9 +148,9 @@ public class OrderService {
 
     // Place Order Business Logic
     public Order placeOrder(int customerId, String recipientName, String recipientPhone, String address,
-                             String paymentMethod, String note, String voucherCode,
+                             String paymentMethod, String note, java.util.Map<Integer, String> shopVoucherCodes, String platformVoucherCode,
                              Integer buyNowProductId, Integer buyNowQuantity) {
-        
+
         if (recipientName == null || recipientName.trim().isEmpty() ||
             recipientPhone == null || recipientPhone.trim().isEmpty() ||
             address == null || address.trim().isEmpty()) {
@@ -160,7 +160,7 @@ public class OrderService {
         ProductDAO productDAO = new ProductDAO();
         VoucherDAO voucherDAO = new VoucherDAO();
         OrderDAO orderDAO = new OrderDAO();
-        
+
         try {
             List<CartItem> selectedItems = new ArrayList<>();
             boolean isBuyNow = (buyNowProductId != null);
@@ -195,7 +195,8 @@ public class OrderService {
                 address,
                 paymentMethod,
                 note,
-                voucherCode,
+                shopVoucherCodes,
+                platformVoucherCode,
                 productDAO,
                 voucherDAO,
                 orderDAO
@@ -217,7 +218,7 @@ public class OrderService {
 
     // Place order with full result details (order count, shop count)
     public PlaceOrderResult placeOrderWithDetails(int customerId, String recipientName, String recipientPhone, 
-            String address, String paymentMethod, String note, String voucherCode,
+            String address, String paymentMethod, String note, java.util.Map<Integer, String> shopVoucherCodes, String platformVoucherCode,
             Integer buyNowProductId, Integer buyNowQuantity) {
         
         if (recipientName == null || recipientName.trim().isEmpty() ||
@@ -264,7 +265,8 @@ public class OrderService {
                 address,
                 paymentMethod,
                 note,
-                voucherCode,
+                shopVoucherCodes,
+                platformVoucherCode,
                 productDAO,
                 voucherDAO,
                 orderDAO
@@ -311,7 +313,8 @@ public class OrderService {
             String address,
             String paymentMethod,
             String note,
-            String voucherCode,
+            java.util.Map<Integer, String> shopVoucherCodes,
+            String platformVoucherCode,
             ProductDAO productDAO,
             VoucherDAO voucherDAO,
             OrderDAO orderDAO) {
@@ -350,31 +353,78 @@ public class OrderService {
             overallTotalCost += shopTotalCost;
         }
 
-        double overallDiscountAmount = 0.0;
-        Integer voucherId = null;
-        if (voucherCode != null && !voucherCode.trim().isEmpty()) {
-            Voucher voucher = voucherDAO.findByCode(voucherCode);
-            if (voucher != null && voucher.isValid(overallTotalCost)) {
-                voucherId = voucher.getId();
-                overallDiscountAmount = voucher.calculateDiscount(overallTotalCost);
+        // Step 1: Calculate shop discounts (applied to each shop's subtotal)
+        double totalShopDiscount = 0.0;
+        Map<Integer, Double> shopDiscountMap = new HashMap<>();
+        Map<Integer, Integer> shopVoucherIdMap = new HashMap<>();
+
+        for (int shopId : itemsByShop.keySet()) {
+            String voucherCode = shopVoucherCodes != null ? shopVoucherCodes.get(shopId) : null;
+            double shopSubtotal = shopTotalCostMap.get(shopId);
+
+            if (voucherCode == null || voucherCode.trim().isEmpty()) {
+                shopDiscountMap.put(shopId, 0.0);
+                continue;
+            }
+
+            Voucher voucher = voucherDAO.findByCode(voucherCode.trim());
+            if (voucher == null || !voucher.isValid(shopSubtotal)) {
+                shopDiscountMap.put(shopId, 0.0);
+                continue;
+            }
+
+            double discount = voucher.calculateDiscount(shopSubtotal);
+            shopDiscountMap.put(shopId, discount);
+            shopVoucherIdMap.put(shopId, voucher.getId());
+            totalShopDiscount += discount;
+        }
+
+        // Step 2: Calculate base for platform discount (after shop discounts)
+        double baseForPlatform = overallTotalCost - totalShopDiscount;
+        if (baseForPlatform < 0) baseForPlatform = 0;
+
+        // Step 3: Validate and calculate platform voucher
+        double platformDiscount = 0.0;
+        Integer platformVoucherId = null;
+
+        if (platformVoucherCode != null && !platformVoucherCode.trim().isEmpty()) {
+            Voucher voucher = voucherDAO.findByCode(platformVoucherCode);
+            if (voucher != null && voucher.isValid(baseForPlatform)) {
+                platformVoucherId = voucher.getId();
+                platformDiscount = voucher.calculateDiscount(baseForPlatform);
+                // Ensure platform discount doesn't exceed base
+                if (platformDiscount > baseForPlatform) {
+                    platformDiscount = baseForPlatform;
+                }
             }
         }
 
-        Map<Integer, Double> shopDiscountMap = new HashMap<>();
-        double allocatedDiscount = 0.0;
+        // Step 4: Allocate platform discount to each shop proportionally
+        Map<Integer, Double> shopAllocatedPlatformDiscount = new HashMap<>();
+        double allocatedPlatformDiscount = 0.0;
         int shopIndex = 0;
         int numShops = itemsByShop.size();
+
         for (int shopId : itemsByShop.keySet()) {
             shopIndex++;
-            double shopTotal = shopTotalCostMap.get(shopId);
-            double shopDiscount = 0.0;
+            double shopSubtotal = shopTotalCostMap.get(shopId);
+            double allocated;
+
             if (shopIndex == numShops) {
-                shopDiscount = overallDiscountAmount - allocatedDiscount;
+                // Last shop gets the remainder to avoid rounding issues
+                allocated = platformDiscount - allocatedPlatformDiscount;
             } else {
-                shopDiscount = Math.round((overallDiscountAmount * (shopTotal / overallTotalCost)) * 100.0) / 100.0;
-                allocatedDiscount += shopDiscount;
+                allocated = Math.round((platformDiscount * (shopSubtotal / overallTotalCost)) * 100.0) / 100.0;
+                allocatedPlatformDiscount += allocated;
             }
-            shopDiscountMap.put(shopId, shopDiscount);
+            shopAllocatedPlatformDiscount.put(shopId, allocated);
+        }
+
+        // Final discount for each shop = shop discount ONLY (platform discount is borne by platform)
+        Map<Integer, Double> shopFinalDiscountMap = new HashMap<>();
+        for (int shopId : itemsByShop.keySet()) {
+            double shopDiscount = shopDiscountMap.getOrDefault(shopId, 0.0);
+            shopFinalDiscountMap.put(shopId, shopDiscount);
         }
 
         Map<Integer, Double> shopShippingMap = new HashMap<>();
@@ -390,13 +440,23 @@ public class OrderService {
         for (int shopId : itemsByShop.keySet()) {
             List<CartItem> shopItems = itemsByShop.get(shopId);
             double totalCost = shopTotalCostMap.get(shopId);
-            double discountAmount = shopDiscountMap.get(shopId);
+            double discountAmount = shopFinalDiscountMap.getOrDefault(shopId, 0.0);
             double shippingFee = shopShippingMap.get(shopId);
-            double finalCost = totalCost - discountAmount + shippingFee;
+            double platformDiscountForShop = shopAllocatedPlatformDiscount.getOrDefault(shopId, 0.0);
+            // Customer pays: totalCost - shopDiscount - platformDiscount + shipping
+            double finalCost = totalCost - discountAmount - platformDiscountForShop + shippingFee;
+            // Shop actual revenue: what shop receives (totalCost - shopDiscount, platform covers its own discount)
+            double shopActualRevenue = totalCost - discountAmount;
+
+            // Each shop order uses its own shop voucher
+            Integer voucherIdForOrder = shopVoucherIdMap.get(shopId);
+            if (voucherIdForOrder == null && platformVoucherId != null) {
+                voucherIdForOrder = platformVoucherId;
+            }
 
             Order order = new Order();
             order.setCustomerId(customerId);
-            order.setVoucherId(voucherId);
+            order.setVoucherId(voucherIdForOrder);
             order.setRecipientName(recipientName.trim());
             order.setRecipientPhone(recipientPhone.trim());
             order.setAddress(address.trim());
@@ -407,6 +467,8 @@ public class OrderService {
             order.setDiscountAmount(discountAmount);
             order.setShippingFee(shippingFee);
             order.setFinalCost(finalCost);
+            order.setPlatformDiscountAmount(platformDiscountForShop);
+            order.setShopActualRevenue(shopActualRevenue);
             order.setNote(note != null ? note.trim() : "");
 
             List<OrderDetail> details = new ArrayList<>();
@@ -433,8 +495,12 @@ public class OrderService {
             throw new RuntimeException("Đặt hàng thất bại. Vui lòng thử lại.");
         }
 
-        if (voucherId != null) {
-            voucherDAO.incrementUsedCount(voucherId);
+        // Increment voucher usage counts
+        for (Integer vid : shopVoucherIdMap.values()) {
+            voucherDAO.incrementUsedCount(vid);
+        }
+        if (platformVoucherId != null) {
+            voucherDAO.incrementUsedCount(platformVoucherId);
         }
 
         return orders;
@@ -453,7 +519,7 @@ public class OrderService {
         }
     }
 
-    public model.PlaceOrderResult placeCartOrder(int customerId, List<CartItem> selectedItems, String recipientName, String recipientPhone, String address, String paymentMethod, String note, String voucherCode) {
+    public model.PlaceOrderResult placeCartOrder(int customerId, List<CartItem> selectedItems, String recipientName, String recipientPhone, String address, String paymentMethod, String note, java.util.Map<Integer, String> shopVoucherCodes, String platformVoucherCode) {
         if (selectedItems == null || selectedItems.isEmpty()) {
             return new model.PlaceOrderResult(false, "Không có sản phẩm nào được chọn.");
         }
@@ -476,7 +542,8 @@ public class OrderService {
                 address,
                 paymentMethod,
                 note,
-                voucherCode,
+                shopVoucherCodes,
+                platformVoucherCode,
                 productDAO,
                 voucherDAO,
                 orderDAO
