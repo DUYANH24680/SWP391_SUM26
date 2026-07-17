@@ -536,9 +536,11 @@
                                     </div>
                                     <div class="item-price" style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem;">
                                         <div><%= nf.format((long) od.getUnitPrice()) %> đ</div>
+                                        <% if (o.getStatus() == 4) { %>
                                         <button style="padding: 0.2rem 0.6rem; font-size: 0.8rem; border-radius: 4px; border: 1px solid #ef4444; color: #ef4444; background: transparent; cursor: pointer; font-family: 'Inter', sans-serif;" onclick="openReportModal('<%= od.getProductId() %>', '<%= od.getProductTitle().replace("'", "\\'") %>')" onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background='transparent'">
                                             <i class="fa-solid fa-triangle-exclamation"></i> Báo Cáo
                                         </button>
+                                        <% } %>
                                     </div>
                                 </div>
                             <% 

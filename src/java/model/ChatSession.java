@@ -19,6 +19,7 @@ public class ChatSession {
     private String adminName;
     private String adminAvatar;
     private String productName;
+    private String reportReason;
     private String lastMessage;
     private Timestamp lastMessageTime;
 
@@ -65,6 +66,9 @@ public class ChatSession {
 
     public String getProductName() { return productName; }
     public void setProductName(String productName) { this.productName = productName; }
+    
+    public String getReportReason() { return reportReason; }
+    public void setReportReason(String reportReason) { this.reportReason = reportReason; }
 
     public String getLastMessage() { return lastMessage; }
     public void setLastMessage(String lastMessage) { this.lastMessage = lastMessage; }

@@ -7,6 +7,30 @@
     Account currentUser = (Account) session.getAttribute("user");
     String ctx = request.getContextPath();
 %>
+<%!
+    // Hàm hỗ trợ sửa lỗi avatar và chuỗi null
+    public String safeAvatar(String avatar, String defaultLetter, String ctx) {
+        if (avatar == null || avatar.trim().isEmpty() || avatar.equals("null")) {
+            return "https://ui-avatars.com/api/?name=" + defaultLetter + "&background=random";
+        }
+        if (avatar.startsWith("http")) return avatar;
+        if (avatar.startsWith("uploads/")) {
+            try { return ctx + "/image?path=" + java.net.URLEncoder.encode(avatar.trim(), "UTF-8"); } 
+            catch (Exception e) { return ctx + "/" + avatar; }
+        }
+        return ctx + "/" + avatar;
+    }
+    
+    public String safeName(String name) {
+        if (name == null || name.equals("null")) return "Người dùng";
+        return name;
+    }
+    
+    public String escapeJs(String str) {
+        if (str == null || str.equals("null")) return "";
+        return str.replace("'", "\\'").replace("\"", "&quot;");
+    }
+%>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -67,16 +91,12 @@
         .chat-item-name {
             font-weight: 600;
             margin-bottom: 4px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            word-break: break-word;
         }
         .chat-item-last {
             font-size: 0.85rem;
             color: #b0b3b8;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            word-break: break-word;
         }
 
         /* Main Chat Area */
@@ -102,6 +122,30 @@
         .chat-main-name { font-weight: 600; font-size: 1.1rem; }
         .chat-main-product { font-size: 0.85rem; color: #b0b3b8; margin-top: 2px; }
         
+        .chat-report-card {
+            background-color: #2c2d2f;
+            border-left: 4px solid #ef4444;
+            margin: 15px 20px 0 20px;
+            padding: 15px 20px;
+            border-radius: 6px;
+            display: none;
+        }
+        .chat-report-card-title {
+            font-size: 0.9rem;
+            color: #ef4444;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .chat-report-card-content {
+            font-size: 0.95rem;
+            color: #e4e6eb;
+            line-height: 1.6;
+        }
+        
         .chat-messages {
             flex: 1;
             padding: 20px;
@@ -124,6 +168,8 @@
             font-size: 0.95rem;
             line-height: 1.4;
             position: relative;
+            word-break: break-word;
+            overflow-wrap: break-word;
         }
         /* My message */
         .message-row.me .message-bubble {
@@ -207,22 +253,29 @@
                 for (ChatSession s : sessions) {
                     String title = "";
                     String avatar = "";
+                    
+                    String cName = safeName(s.getCustomerName());
+                    String sName = safeName(s.getSellerName());
+                    
                     if ("customer".equals(currentUser.getRoleName())) {
-                        title = s.getSellerName() + " & Admin";
-                        avatar = s.getSellerAvatar() != null ? s.getSellerAvatar() : "https://ui-avatars.com/api/?name=S";
+                        title = sName + " & Admin";
+                        avatar = safeAvatar(s.getSellerAvatar(), "S", ctx);
                     } else if ("seller".equals(currentUser.getRoleName())) {
-                        title = s.getCustomerName() + " & Admin";
-                        avatar = s.getCustomerAvatar() != null ? s.getCustomerAvatar() : "https://ui-avatars.com/api/?name=C";
+                        title = cName + " & Admin";
+                        avatar = safeAvatar(s.getCustomerAvatar(), "C", ctx);
                     } else {
-                        title = s.getCustomerName() + " & " + s.getSellerName();
-                        avatar = s.getCustomerAvatar() != null ? s.getCustomerAvatar() : "https://ui-avatars.com/api/?name=U";
+                        title = cName + " & " + sName;
+                        avatar = safeAvatar(s.getCustomerAvatar(), "U", ctx);
                     }
+                    
+                    String lastMsg = s.getLastMessage() != null && !s.getLastMessage().equals("null") ? s.getLastMessage() : "Phòng chat đã tạo";
+                    String reason = s.getReportReason() != null ? s.getReportReason() : "Chưa cập nhật lý do";
             %>
-            <div class="chat-item" onclick="loadMessages(<%= s.getId() %>, '<%= title %>', '<%= s.getProductName() %>')">
-                <img src="<%= avatar %>" class="chat-avatar">
+            <div class="chat-item" onclick="loadMessages(<%= s.getId() %>, '<%= escapeJs(title) %>', '<%= escapeJs(s.getProductName()) %>', '<%= escapeJs(reason) %>')">
+                <img src="<%= avatar %>" class="chat-avatar" onerror="this.src='https://ui-avatars.com/api/?name=U'">
                 <div class="chat-item-info">
                     <div class="chat-item-name"><%= title %></div>
-                    <div class="chat-item-last"><%= s.getLastMessage() != null ? s.getLastMessage() : "Phòng chat đã tạo" %></div>
+                    <div class="chat-item-last"><%= lastMsg %></div>
                 </div>
             </div>
             <% } } %>
@@ -236,6 +289,14 @@
                 <div class="chat-main-name" id="headerTitle">...</div>
                 <div class="chat-main-product" id="headerProduct">Sản phẩm: ...</div>
             </div>
+        </div>
+        
+        <!-- DuyAnhNgo- Thẻ hiển thị Lý do Báo cáo (Ẩn mặc định, chỉ hiện khi có dữ liệu) -->
+        <div class="chat-report-card" id="chatReportCard">
+            <div class="chat-report-card-title">
+                <i class="fa-solid fa-triangle-exclamation"></i> Thông tin Tố cáo / Báo cáo
+            </div>
+            <div class="chat-report-card-content" id="reportReasonText">...</div>
         </div>
         
         <div class="chat-messages" id="messagesArea">
@@ -260,23 +321,46 @@
         let myUserId = <%= currentUser.getId() %>;
         let fetchInterval = null;
 
-        function loadMessages(sessionId, title, product) {
+        // DuyAnhNgo- Hàm chạy khi người dùng Bấm vào một phòng chat ở cột bên trái
+        // Nhiệm vụ: Ẩn màn hình trống đi, hiện khung chat lên, đổi tên tiêu đề và gọi API lấy tin nhắn
+        function loadMessages(sessionId, title, product, reason) {
             currentSessionId = sessionId;
             document.getElementById('emptyChat').style.display = 'none';
             document.getElementById('chatMain').style.display = 'flex';
             document.getElementById('headerTitle').innerText = title;
             document.getElementById('headerProduct').innerText = "Sản phẩm: " + product;
             
+            // DuyAnhNgo- Hiển thị Card lý do báo cáo
+            if (reason && reason !== 'Chưa cập nhật lý do') {
+                document.getElementById('chatReportCard').style.display = 'block';
+                
+                // DuyAnhNgo- Format lại chuỗi lý do: Tách chuỗi thành nhiều dòng (Thay thế "] [" thành "] <br>&bull; [")
+                // Ví dụ: "[Hàng giả] [Mức độ: Cao] - Kém chất lượng" -> 3 dòng có dấu chấm tròn
+                let formattedReason = reason;
+                if (formattedReason.startsWith("[")) {
+                    formattedReason = formattedReason.replace(/\] \[/g, "]<br>&bull; [");
+                    formattedReason = formattedReason.replace(/\] - /g, "]<br>&bull; <b>Chi tiết:</b> ");
+                    formattedReason = "&bull; " + formattedReason;
+                }
+                
+                document.getElementById('reportReasonText').innerHTML = formattedReason;
+            } else {
+                document.getElementById('chatReportCard').style.display = 'none';
+            }
+            
             // Highlight active session
             document.querySelectorAll('.chat-item').forEach(el => el.classList.remove('active'));
             event.currentTarget.classList.add('active');
 
+            // DuyAnhNgo- Gọi API lần đầu để lấy tin nhắn ngay lập tức
             fetchMessages();
 
+            // DuyAnhNgo- Quan trọng: Cứ mỗi 2.5 giây lại tự động gọi API 1 lần để lôi tin nhắn mới về (Polling)
             if (fetchInterval) clearInterval(fetchInterval);
             fetchInterval = setInterval(fetchMessages, 2500); // Poll every 2.5s
         }
 
+        // DuyAnhNgo- Hàm lấy tin nhắn: Gọi AJAX GET đến /chat?action=getMessages để lấy file JSON
         function fetchMessages() {
             if (!currentSessionId) return;
             fetch('<%= ctx %>/chat?action=getMessages&sessionId=' + currentSessionId)
@@ -288,14 +372,12 @@
                         let roleBadge = m.senderRole === 'admin' ? '<span style="color:#ef4444">[Admin] </span>' : '';
                         let avatar = m.senderAvatar || 'https://ui-avatars.com/api/?name=' + m.senderName;
                         
-                        html += `
-                        <div class="message-row ` + (isMe ? 'me' : 'them') + `">
-                            ` + (!isMe ? `<img src="${avatar}" class="message-avatar">` : '') + `
-                            <div class="message-bubble">
-                                ` + (!isMe ? `<span class="message-sender">${roleBadge}${m.senderName}</span>` : '') + `
-                                ${m.message}
-                            </div>
-                        </div>`;
+                        html += '<div class="message-row ' + (isMe ? 'me' : 'them') + '">' +
+                                (!isMe ? '<img src="' + avatar + '" class="message-avatar" onerror="this.src=\\\'https://ui-avatars.com/api/?name=U\\\';">' : '') +
+                                '<div class="message-bubble">' +
+                                (!isMe ? '<span class="message-sender">' + roleBadge + (m.senderName || 'Người dùng') + '</span>' : '') +
+                                (m.message || '') +
+                                '</div></div>';
                     });
                     
                     let box = document.getElementById('messagesArea');
@@ -322,6 +404,7 @@
             fd.append('sessionId', currentSessionId);
             fd.append('message', msg);
 
+            // DuyAnhNgo- Dùng fetch API gửi gói tin POST chứa action=sendMessage lên ChatServlet
             fetch('<%= ctx %>/chat', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/x-www-form-urlencoded'},

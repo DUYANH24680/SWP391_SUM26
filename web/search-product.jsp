@@ -1,5 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
     <div class="nav-search search-product-container" style="position: relative; flex: 1; max-width: 440px;">
+        <!-- DuyAnhNgo- UI ô nhập liệu tìm kiếm và thanh gợi ý -->
         <i id="searchIcon" class="fa-solid fa-magnifying-glass"
             style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--gray-400); font-size: 0.85rem; cursor: pointer;"></i>
         <input type="text" id="searchInput" placeholder="Tìm kiếm trái cây, rau củ..." autocomplete="off"
@@ -91,6 +92,8 @@
             let debounceTimer;
 
             searchInput.addEventListener('input', function () {
+                // DuyAnhNgo- Hủy bỏ timer cũ mỗi khi người dùng gõ phím mới (Kỹ thuật Debounce)
+                // Giúp tránh việc gọi API liên tục mỗi khi gõ 1 chữ, chỉ gọi khi dừng gõ
                 clearTimeout(debounceTimer);
                 const query = this.value.trim();
 
@@ -99,7 +102,9 @@
                     return;
                 }
 
+                // Thiết lập timer mới: Đợi 300ms sau khi người dùng ngừng gõ mới thực hiện gọi API
                 debounceTimer = setTimeout(() => {
+                    // Gọi API (Servlet) /search-suggest qua AJAX để lấy danh sách sản phẩm gợi ý
                     fetch('<%= request.getContextPath() %>/search-suggest?q=' + encodeURIComponent(query))
                         .then(response => response.json())
                         .then(data => {
@@ -112,6 +117,7 @@
                                     const imgUrl = item.image ? '<%= request.getContextPath() %>/image?type=product&id=' + item.id : '<%= request.getContextPath() %>/images/default-product.png';
 
                                     const a = document.createElement('a');
+                                    // DuyAnhNgo- Gắn link điều hướng sang trang Product Info khi click vào gợi ý
                                     a.href = '<%= request.getContextPath() %>/info?id=' + item.id;
                                     a.className = 'search-item';
                                     a.innerHTML =
@@ -141,8 +147,12 @@
             });
 
             function triggerSearch() {
+                // DuyAnhNgo- Logic xử lý khi submit tìm kiếm, chuyển hướng sang trang hiển thị kết quả
+                // Lấy từ khóa người dùng nhập vào, loại bỏ khoảng trắng dư thừa
                 const query = searchInput.value.trim();
                 if (query.length > 0) {
+                    // Chuyển hướng trình duyệt tới URL trang danh sách sản phẩm kèm theo tham số search
+                    // Ví dụ: /products?search=tao
                     window.location.href = '<%= request.getContextPath() %>/products?search=' + encodeURIComponent(query);
                 }
             }

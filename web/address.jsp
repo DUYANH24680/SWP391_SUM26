@@ -3,6 +3,7 @@
 <%@ page import="model.DeliveryAddress" %>
 <%@ page import="java.util.List" %>
 <%
+    // DuyAnhNgo- LOGIC 1: Lấy thông tin user đăng nhập. Nếu chưa đăng nhập thì tự động đẩy về trang Login
     Account user = (Account) session.getAttribute("Account");
     String role   = (String) session.getAttribute("role");
 
@@ -11,11 +12,13 @@
         return;
     }
 
+    // DuyAnhNgo- LOGIC 2: Dịch mã Role (Vai trò) từ tiếng Anh sang tiếng Việt để hiển thị ra màn hình cho đẹp
     String roleDisplay = "Member";
     if ("admin".equalsIgnoreCase(role))         roleDisplay = "Quản Trị Viên";
     else if ("seller".equalsIgnoreCase(role))   roleDisplay = "Nhân Viên Bán Hàng";
     else if ("delivery".equalsIgnoreCase(role)) roleDisplay = "Nhân Viên Giao Hàng";
 
+    // DuyAnhNgo- LOGIC 3: Lấy ảnh đại diện. Nếu khách chưa có ảnh thì gọi API của "ui-avatars" để tự động tạo ra cái ảnh có chứa Chữ cái đầu tiên của tên khách (Ví dụ: tên Duy thì avatar có chữ D)
     String fullname    = user.getFullname();
     String avatarUrl   = user.getAvatar();
     if (avatarUrl == null || avatarUrl.trim().isEmpty())
@@ -23,6 +26,7 @@
                   + java.net.URLEncoder.encode(fullname, "UTF-8")
                   + "&background=4caf50&color=fff&size=160&bold=true&rounded=true";
 
+    // DuyAnhNgo- LOGIC 4: Cơ chế "Flash Message" (Thông báo chỉ hiện 1 lần). Lấy thông báo lỗi/thành công từ Session ra để in, sau đó XÓA NGAY (removeAttribute) để lỡ khách có F5 load lại trang thì thông báo không bị dính lại màn hình.
     String message = (String) session.getAttribute("message");
     String error   = (String) session.getAttribute("error");
     session.removeAttribute("message");
@@ -402,6 +406,7 @@
                     </div>
                 <%
                     } else {
+                        // DuyAnhNgo- Logic lặp danh sách địa chỉ: Hiển thị từng ô địa chỉ lấy từ Database
                         for (DeliveryAddress da : addresses) {
                 %>
                     <div class="address-card <%= da.isIsDefault() ? "default-address" : "" %>">
@@ -426,6 +431,9 @@
                                 <button type="button" class="btn-icon edit" title="Chỉnh sửa" onclick="openAddressEdit(<%= da.getId() %>, '<%= da.getRecipientName().replace("'", "\\'") %>', '<%= da.getRecipientPhone() %>', '<%= da.getAddress().replace("'", "\\'") %>', '<%= da.getNote() != null ? da.getNote().replace("'", "\\'") : "" %>', <%= da.isIsDefault() %>)">
                                     <i class="fa-solid fa-pen"></i>
                                 </button>
+                                <%
+                                // DuyAnhNgo- Nút Xóa Địa Chỉ: Gọi POST request lên AddressServlet với action=deleteAddress
+                                %>
                                 <form action="address" method="POST" style="margin:0;" onsubmit="return confirm('Bạn có chắc muốn xóa địa chỉ này?');">
                                     <input type="hidden" name="action" value="deleteAddress">
                                     <input type="hidden" name="id" value="<%= da.getId() %>">
@@ -434,7 +442,9 @@
                                     </button>
                                 </form>
                             </div>
-                            <% if (!da.isIsDefault()) { %>
+                            <% if (!da.isIsDefault()) { 
+                                // DuyAnhNgo- Nút Đặt Mặc Định: Gọi POST request với action=setDefaultAddress
+                            %>
                             <form action="address" method="POST" style="margin:0; width: 100%;">
                                 <input type="hidden" name="action" value="setDefaultAddress">
                                 <input type="hidden" name="id" value="<%= da.getId() %>">
@@ -493,6 +503,7 @@
 </div>
 
 <script>
+    // DuyAnhNgo- Mở Form Thêm Mới: Xóa trắng toàn bộ các ô nhập liệu và đổi action thành "addAddress"
     function openAddressModal() {
         document.getElementById('addressAction').value = 'addAddress';
         document.getElementById('addressId').value = '0';
@@ -507,6 +518,7 @@
         document.body.style.overflow = 'hidden';
     }
 
+    // DuyAnhNgo- Mở Form Chỉnh Sửa: Đổ dữ liệu cũ của địa chỉ vào các ô nhập liệu để người dùng sửa, đổi action thành "updateAddress"
     function openAddressEdit(id, name, phone, address, note, isDefault) {
         document.getElementById('addressAction').value = 'updateAddress';
         document.getElementById('addressId').value = id;

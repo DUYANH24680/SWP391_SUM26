@@ -32,11 +32,13 @@ public class ReportServlet extends HttpServlet {
             return;
         }
 
+        // DuyAnhNgo- Nếu Admin vào đường dẫn /admin/reports -> Lấy danh sách tất cả các đơn tố cáo chờ xử lý (PENDING)
         if ("/admin/reports".equals(path)) {
             if (!"admin".equals(user.getRoleName())) {
                 response.sendError(HttpServletResponse.SC_FORBIDDEN, "Access Denied");
                 return;
             }
+            // DuyAnhNgo- Gọi ReportDAO (hàm getPendingReports) lấy danh sách báo cáo đang chờ xử lý
             List<Report> reports = reportDAO.getPendingReports();
             request.setAttribute("reports", reports);
             request.getRequestDispatcher("/admin/reports.jsp").forward(request, response);
@@ -98,14 +100,18 @@ public class ReportServlet extends HttpServlet {
         }
 
         String action = request.getParameter("action");
+        
+        // DuyAnhNgo- Nhận yêu cầu TẠO BÁO CÁO (Tố cáo sản phẩm) từ phía Khách hàng
         if ("create".equals(action)) {
             int productId = Integer.parseInt(request.getParameter("productId"));
             String reason = request.getParameter("reason");
+            // DuyAnhNgo- Gọi ReportDAO (hàm createReport) để INSERT báo cáo vào bảng Reports
             boolean success = reportDAO.createReport(user.getId(), productId, reason);
             response.setContentType("application/json");
             response.getWriter().write("{\"success\":" + success + "}");
             
         } else if ("confirm".equals(action)) {
+            // DuyAnhNgo- Khi Admin bấm XÁC NHẬN đơn tố cáo
             if (!"admin".equals(user.getRoleName())) {
                 response.sendError(HttpServletResponse.SC_FORBIDDEN);
                 return;
@@ -113,8 +119,9 @@ public class ReportServlet extends HttpServlet {
             int reportId = Integer.parseInt(request.getParameter("reportId"));
             Report r = reportDAO.getReportById(reportId);
             if (r != null && "PENDING".equals(r.getStatus())) {
+                // DuyAnhNgo- Đổi trạng thái Report thành CONFIRMED trong DB bằng ReportDAO (hàm confirmReport)
                 if (reportDAO.confirmReport(reportId)) {
-                    // Create ChatSession
+                    // DuyAnhNgo- TỰ ĐỘNG TẠO PHÒNG CHAT: Gọi ChatDAO (hàm createSession) kết nối người mua, người bán và admin vào chung 1 phòng chat để giải quyết tranh chấp
                     chatDAO.createSession(reportId, r.getCustomerId(), r.getSellerId(), user.getId());
                     response.sendRedirect(request.getContextPath() + "/admin/reports?msg=Confirmed");
                 } else {
@@ -133,11 +140,13 @@ public class ReportServlet extends HttpServlet {
             
             if (r != null && "PENDING".equals(r.getStatus())) {
                 if ("confirmAjax".equals(action)) {
+                    // DuyAnhNgo- Tương tự như trên nhưng chạy bằng AJAX: Gọi ReportDAO (hàm confirmReport) và ChatDAO (hàm createSession)
                     if (reportDAO.confirmReport(reportId)) {
                         chatDAO.createSession(reportId, r.getCustomerId(), r.getSellerId(), user.getId());
                         success = true;
                     }
                 } else if ("rejectAjax".equals(action)) {
+                    // DuyAnhNgo- Xử lý Từ Chối (Reject) bằng AJAX: Gọi ReportDAO (hàm rejectReport) để update trạng thái thành REJECTED
                     if (reportDAO.rejectReport(reportId)) {
                         success = true;
                     }

@@ -22,11 +22,11 @@ public class VoucherPageServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         
-        // 1. Lấy thông tin session hiện tại
+        // DuyAnhNgo- Lấy thông tin session hiện tại
         jakarta.servlet.http.HttpSession session = request.getSession(false);
         if (session != null) {
             model.Account account = (model.Account) session.getAttribute("Account");
-            // 2. Chặn quyền truy cập: Nếu là Admin hoặc Seller thì đẩy về trang chủ (chỉ khách hàng mới được xem trang này)
+            // DuyAnhNgo- Chặn quyền: Nếu là Admin hoặc Seller thì đẩy về trang chủ (chỉ hiển thị Voucher cho Khách hàng xem)
             if (account != null && ("admin".equalsIgnoreCase(account.getRoleName()) || "seller".equalsIgnoreCase(account.getRoleName()))) {
                 response.sendRedirect(request.getContextPath() + "/home");
                 return;
@@ -37,11 +37,11 @@ public class VoucherPageServlet extends HttpServlet {
         ShopDAO shopDAO = new ShopDAO();
 
         try {
-            // 3. Lấy toàn bộ danh sách Voucher đang có hiệu lực (còn hạn, còn lượt)
+            // DuyAnhNgo- Gọi DAO Lấy toàn bộ danh sách Voucher đang có hiệu lực (còn hạn, còn số lượng)
             List<Voucher> activeVouchers = voucherDAO.getAllActiveVouchers();
             Map<Integer, Shop> shopMap = new HashMap<>();
 
-            // 4. Lặp qua các voucher để lấy thông tin Tên Shop sở hữu voucher đó (nếu là voucher của Shop)
+            // DuyAnhNgo- Lặp qua các voucher: Kiểm tra xem voucher đó thuộc Shop nào để lấy tên Shop hiển thị lên UI
             for (Voucher v : activeVouchers) {
                 if (v.getShopId() != null && !shopMap.containsKey(v.getShopId())) {
                     Shop shop = shopDAO.getShopById(v.getShopId());
@@ -51,7 +51,7 @@ public class VoucherPageServlet extends HttpServlet {
                 }
             }
 
-            // 5. Đẩy dữ liệu ra view (vouchers.jsp)
+            // DuyAnhNgo- Đẩy dữ liệu qua request để trang JSP vẽ giao diện
             request.setAttribute("vouchers", activeVouchers);
             request.setAttribute("shopMap", shopMap);
 

@@ -12,7 +12,8 @@ import java.util.List;
 public class UserReportDAO extends DbContext {
 
     /**
-     * Insert a new report from a customer.
+     * DuyAnhNgo- Hàm lưu Báo cáo Cửa hàng (Shop): Khách hàng tố cáo chủ shop (scam, hàng giả...)
+     * Lưu vào bảng UserReports. Trạng thái mặc định là 0 (Đang chờ xử lý).
      */
     public int insert(UserReport report) {
         String sql = "INSERT INTO UserReports "
@@ -42,7 +43,7 @@ public class UserReportDAO extends DbContext {
     }
 
     /**
-     * Check if customer already has a pending report for the same shop.
+     * DuyAnhNgo- Hàm kiểm tra trùng lặp: Ngăn không cho 1 khách hàng spam báo cáo cùng 1 cửa hàng nhiều lần khi đơn trước đó vẫn đang chờ xử lý (status = 0).
      */
     public boolean hasPendingReport(int reporterId, int shopId) {
         String sql = "SELECT COUNT(1) FROM UserReports WHERE reporter_id = ? AND reported_shop_id = ? AND status = 0";
@@ -59,7 +60,7 @@ public class UserReportDAO extends DbContext {
     }
 
     /**
-     * Get all reports, optionally filtered by status.
+     * DuyAnhNgo- Hàm lấy danh sách báo cáo (Cho Admin): Lấy toàn bộ hoặc lọc theo trạng thái (chờ xử lý, đã duyệt, từ chối).
      */
     public List<UserReport> getAll(String statusFilter) {
         List<UserReport> list = new ArrayList<>();
@@ -78,7 +79,7 @@ public class UserReportDAO extends DbContext {
     }
 
     /**
-     * Get reports for a specific shop.
+     * DuyAnhNgo- Lấy danh sách báo cáo của 1 Shop cụ thể: Admin dùng để xem "tiền án tiền sự" của 1 cửa hàng.
      */
     public List<UserReport> getByShopId(int shopId, String statusFilter) {
         List<UserReport> list = new ArrayList<>();

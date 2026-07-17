@@ -40,10 +40,12 @@ public class ChatServlet extends HttpServlet {
 
         String action = request.getParameter("action");
         
-        // --- API: Lấy danh sách các đoạn chat của người dùng ---
+        // DuyAnhNgo- API 1: Lấy danh sách các hộp thoại chat của người dùng
+        // Được gọi bằng AJAX khi người dùng mở trang Chat. 
         if ("getSessions".equals(action)) {
             response.setContentType("application/json");
             response.setCharacterEncoding("UTF-8");
+            // Gọi DAO để tìm tất cả các phòng chat mà tài khoản này tham gia
             List<ChatSession> sessions = chatDAO.getSessionsByUser(user.getId(), user.getRoleName());
             
             StringBuilder json = new StringBuilder("[");
@@ -56,6 +58,7 @@ public class ChatServlet extends HttpServlet {
                     .append("\"sellerName\":\"").append(escapeJson(s.getSellerName())).append("\",")
                     .append("\"sellerAvatar\":\"").append(escapeJson(s.getSellerAvatar())).append("\",")
                     .append("\"productName\":\"").append(escapeJson(s.getProductName())).append("\",")
+                    .append("\"reportReason\":\"").append(escapeJson(s.getReportReason())).append("\",")
                     .append("\"lastMessage\":\"").append(escapeJson(s.getLastMessage())).append("\"")
                     .append("}");
                 if (i < sessions.size() - 1) json.append(",");
@@ -66,11 +69,13 @@ public class ChatServlet extends HttpServlet {
             return;
         }
         
-        // --- API: Lấy tất cả tin nhắn trong 1 phòng chat cụ thể ---
+        // DuyAnhNgo- API 2: Lấy tất cả tin nhắn trong 1 phòng chat cụ thể
+        // Gọi khi người dùng click vào 1 phòng chat bên thanh Sidebar (bên trái)
         if ("getMessages".equals(action)) {
             response.setContentType("application/json");
             response.setCharacterEncoding("UTF-8");
             int sessionId = Integer.parseInt(request.getParameter("sessionId"));
+            // Lấy toàn bộ lịch sử tin nhắn của phòng chat này
             List<ChatMessage> messages = chatDAO.getMessages(sessionId);
             
             StringBuilder json = new StringBuilder("[");
@@ -94,7 +99,7 @@ public class ChatServlet extends HttpServlet {
             return;
         }
 
-        // --- MẶC ĐỊNH: Chuyển hướng tới giao diện Chat (chat.jsp) ---
+        // DuyAnhNgo- MẶC ĐỊNH: Nếu không truyền 'action' gì cả -> Mở giao diện chat.jsp
         // Lấy danh sách phiên chat để hiển thị ở Sidebar bên trái của trang Chat
         List<ChatSession> sessions = chatDAO.getSessionsByUser(user.getId(), user.getRoleName());
         request.setAttribute("sessions", sessions);
@@ -117,12 +122,12 @@ public class ChatServlet extends HttpServlet {
 
         String action = request.getParameter("action");
         
-        // --- API: Gửi tin nhắn mới vào phòng chat ---
+        // DuyAnhNgo- API 3 (POST): Gửi tin nhắn mới vào phòng chat
         if ("sendMessage".equals(action)) {
             int sessionId = Integer.parseInt(request.getParameter("sessionId"));
             String message = request.getParameter("message");
             
-            // Lưu tin nhắn vào cơ sở dữ liệu
+            // DuyAnhNgo- Gọi ChatDAO (hàm sendMessage) để INSERT nội dung chat vào bảng ChatMessages
             boolean success = chatDAO.sendMessage(sessionId, user.getId(), message);
             
             // Trả về kết quả JSON báo thành công hay thất bại

@@ -53,7 +53,7 @@ public class ManageVoucherServlet extends HttpServlet {
         Account account = (Account) session.getAttribute("Account");
         String role = account.getRoleName();
 
-        // 1. Chỉ cho phép Admin hoặc Seller truy cập trang quản lý Voucher
+        // DuyAnhNgo- Chỉ cho phép Admin hoặc Seller truy cập trang quản lý Voucher
         if (!"admin".equalsIgnoreCase(role) && !"seller".equalsIgnoreCase(role)) {
             session.setAttribute("error", "Bạn không có quyền truy cập trang này.");
             response.sendRedirect(request.getContextPath() + "/home");
@@ -63,29 +63,29 @@ public class ManageVoucherServlet extends HttpServlet {
         VoucherDAO voucherDAO = new VoucherDAO();
         try {
             List<Voucher> vouchers;
-            // 2. Nếu là Admin: Lấy danh sách Voucher toàn hệ thống (shop_id = NULL)
+            // DuyAnhNgo- Nếu là Admin: Lấy danh sách toàn bộ Voucher của hệ thống (shop_id = NULL)
             if ("admin".equalsIgnoreCase(role)) {
                 vouchers = voucherDAO.getGlobalVouchers();
                 request.setAttribute("isGlobal", true);
             } else {
-                // 3. Nếu là Seller: Tìm ID của Shop thuộc về Seller này
+                // DuyAnhNgo- Nếu là Seller: Tìm ID của Shop thuộc về Seller này
                 ShopDAO shopDAO = new ShopDAO();
                 Shop shop = shopDAO.getShopByOwnerId(account.getId());
                 shopDAO.close();
                 
-                // 4. Nếu chưa có Shop hợp lệ, không cho phép tạo Voucher
+                // DuyAnhNgo- Nếu chưa tạo Shop hợp lệ, chặn không cho tạo Voucher
                 if (shop == null || shop.getStatus() != 1) {
                     session.setAttribute("error", "Bạn chưa có shop hợp lệ để tạo voucher.");
                     response.sendRedirect(request.getContextPath() + "/seller-dashboard");
                     return;
                 }
-                // 5. Lấy danh sách Voucher chỉ thuộc về Shop này
+                // DuyAnhNgo- Chỉ lấy danh sách Voucher thuộc về Shop này
                 vouchers = voucherDAO.getVouchersByShop(shop.getId());
                 request.setAttribute("isGlobal", false);
                 request.setAttribute("shopId", shop.getId());
             }
 
-            // 6. Trả dữ liệu về view manage-vouchers.jsp
+            // DuyAnhNgo- Trả dữ liệu hiển thị về trang manage-vouchers.jsp
             request.setAttribute("vouchers", vouchers);
             request.getRequestDispatcher("/manage-vouchers.jsp").forward(request, response);
 
@@ -119,7 +119,7 @@ public class ManageVoucherServlet extends HttpServlet {
 
         try {
             Integer shopId = null;
-            // 7. Xác định shopId nếu người tạo là Seller
+            // DuyAnhNgo- Xác định shopId nếu người đang thao tác là Seller
             if ("seller".equalsIgnoreCase(role)) {
                 ShopDAO shopDAO = new ShopDAO();
                 Shop shop = shopDAO.getShopByOwnerId(account.getId());
@@ -129,7 +129,7 @@ public class ManageVoucherServlet extends HttpServlet {
                 }
             }
 
-            // 8. Xử lý tạo mới hoặc cập nhật Voucher
+            // DuyAnhNgo- Nhận request gửi lên. Nếu action là create/update thì xử lý:
             if ("create".equals(action) || "update".equals(action)) {
                 String idStr = request.getParameter("id");
                 String code = request.getParameter("code");
@@ -149,7 +149,7 @@ public class ManageVoucherServlet extends HttpServlet {
                     return;
                 }
 
-                // 9. Đóng gói dữ liệu vào Model
+                // DuyAnhNgo- Đóng gói dữ liệu từ các form input HTML vào đối tượng Voucher
                 Voucher v = new Voucher();
                 if ("update".equals(action) && idStr != null) {
                     v.setId(Integer.parseInt(idStr));
@@ -167,7 +167,7 @@ public class ManageVoucherServlet extends HttpServlet {
                 v.setStatus(status);
 
                 if ("create".equals(action)) {
-                    // 10. Kiểm tra trùng lặp mã trước khi tạo
+                    // DuyAnhNgo- Check Validation: Kiểm tra mã trùng lặp trong DB trước khi tạo mới
                     Voucher existing = voucherDAO.findByCode(v.getCode());
                     if (existing != null) {
                         session.setAttribute("error", "Mã voucher đã tồn tại.");
@@ -181,7 +181,7 @@ public class ManageVoucherServlet extends HttpServlet {
                     session.setAttribute("message", "Cập nhật voucher thành công!");
                 }
             } else if ("delete".equals(action)) {
-                // 11. Xử lý xóa Voucher (Chỉ Admin hoặc Seller sở hữu mới được xóa)
+                // DuyAnhNgo- Logic Xóa: Kiểm tra ID người gọi lệnh xóa có khớp với quyền sở hữu voucher không
                 int id = Integer.parseInt(request.getParameter("id"));
                 Voucher v = voucherDAO.getVoucherById(id);
                 if (v != null) {
