@@ -19,6 +19,8 @@ public class AddressServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
+        // DuyAnhNgo- Logic hiển thị Sổ Địa Chỉ: Khi người dùng vào trang /address
+        // Hệ thống sẽ kiểm tra đăng nhập, sau đó gọi DAO lấy danh sách địa chỉ rồi truyền qua JSP hiển thị
         HttpSession session = req.getSession(true);
         Account user = (Account) session.getAttribute("Account");
 
@@ -37,6 +39,8 @@ public class AddressServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
+        // DuyAnhNgo- Logic xử lý các thao tác của Sổ Địa Chỉ: Thêm, Sửa, Xóa, Đặt mặc định
+        // Nhận action từ form gửi lên và gọi các hàm tương ứng bên dưới
         HttpSession session = req.getSession(true);
         Account user = (Account) session.getAttribute("Account");
 
@@ -69,6 +73,7 @@ public class AddressServlet extends HttpServlet {
         resp.sendRedirect(req.getContextPath() + "/address");
     }
 
+    // DuyAnhNgo- Hàm Xử lý Thêm Địa Chỉ: Lấy dữ liệu từ form, đóng gói thành object rồi gọi DeliveryAddressDAO (hàm insert) để lưu vào DB
     private void handleAddAddress(HttpServletRequest req, HttpSession session, Account user) {
         String name = req.getParameter("recipientName");
         String phone = req.getParameter("recipientPhone");
@@ -92,6 +97,7 @@ public class AddressServlet extends HttpServlet {
         }
     }
 
+    // DuyAnhNgo- Hàm Xử lý Cập Nhật Địa Chỉ: Tương tự Thêm mới, nhưng gọi DeliveryAddressDAO (hàm update) kèm ID địa chỉ cũ để UPDATE trong DB
     private void handleUpdateAddress(HttpServletRequest req, HttpSession session, Account user) {
         try {
             int id = Integer.parseInt(req.getParameter("id"));
@@ -124,6 +130,7 @@ public class AddressServlet extends HttpServlet {
         }
     }
 
+    // DuyAnhNgo- Hàm Xử lý Xóa Địa Chỉ: Lấy ID từ giao diện, gọi DeliveryAddressDAO (hàm delete) thực thi lệnh DELETE
     private void handleDeleteAddress(HttpServletRequest req, HttpSession session, Account user) {
         try {
             int id = Integer.parseInt(req.getParameter("id"));
@@ -138,6 +145,7 @@ public class AddressServlet extends HttpServlet {
         }
     }
 
+    // DuyAnhNgo- Hàm Xử lý Đặt Mặc Định: Lấy ID địa chỉ cần ưu tiên, gọi DeliveryAddressDAO (hàm setDefault), các địa chỉ khác tự động về 0
     private void handleSetDefaultAddress(HttpServletRequest req, HttpSession session, Account user) {
         try {
             int id = Integer.parseInt(req.getParameter("id"));

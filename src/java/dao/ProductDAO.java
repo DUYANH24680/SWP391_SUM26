@@ -98,6 +98,8 @@ public class ProductDAO extends DbContext {
     }
 
     public List<Product> searchProducts(String keyword) {
+        // DuyAnhNgo- Logic SQL Tìm Kiếm: Truy vấn cơ sở dữ liệu để tìm sản phẩm
+        // Sử dụng toán tử LIKE để tìm kiếm gần đúng theo tên (title) hoặc mô tả (description)
         String sql = "SELECT p.id, p.category_id, p.seller_id, p.shop_id, p.title, p.image, p.description, p.unit, "
                    + "p.stock_quantity, p.sold_quantity, p.original_price, p.sale_price, p.expired_date, "
                    + "p.average_rating, p.is_featured, p.status, p.isDelete, p.created_at, "
@@ -109,9 +111,13 @@ public class ProductDAO extends DbContext {
                    + "ORDER BY p.created_at DESC";
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            // DuyAnhNgo- Gắn từ khóa tìm kiếm vào dấu ? trong câu SQL
+            // Ký tự % ở 2 đầu có nghĩa là: chuỗi tìm kiếm có thể nằm ở bất kỳ vị trí nào trong tên/mô tả
             String pattern = "%" + keyword + "%";
             ps.setString(1, pattern);
             ps.setString(2, pattern);
+            
             try (ResultSet rs = ps.executeQuery()) {
                 List<Product> list = new ArrayList<>();
                 while (rs.next()) {
@@ -894,6 +900,7 @@ public class ProductDAO extends DbContext {
             int page, 
             int pageSize) {
         
+        // DuyAnhNgo- Logic SQL: Tạo chuỗi SQL gốc lấy toàn bộ sản phẩm đang hoạt động (chưa xóa, đã duyệt)
         StringBuilder sql = new StringBuilder(
             "SELECT p.id, p.category_id, p.seller_id, p.shop_id, p.title, p.image, p.description, p.unit, "
           + "p.stock_quantity, p.sold_quantity, p.original_price, p.sale_price, p.expired_date, "
@@ -906,6 +913,7 @@ public class ProductDAO extends DbContext {
         
         List<Object> params = new ArrayList<>();
         
+        // DuyAnhNgo- Nối thêm điều kiện tìm kiếm theo tên hoặc mô tả sản phẩm nếu có từ khóa
         if (keyword != null && !keyword.trim().isEmpty()) {
             sql.append(" AND (p.title LIKE ? OR p.description LIKE ?) ");
             String pattern = "%" + keyword.trim() + "%";
@@ -913,41 +921,49 @@ public class ProductDAO extends DbContext {
             params.add(pattern);
         }
         
+        // DuyAnhNgo- Lọc theo Danh mục: Nếu người dùng chọn danh mục, nối thêm điều kiện IN (?, ?, ?)
+        // Vòng lặp for dùng để tạo ra số lượng dấu ? tương ứng với số danh mục được chọn
         if (categoryIds != null && !categoryIds.isEmpty()) {
             sql.append(" AND p.category_id IN (");
             for (int i = 0; i < categoryIds.size(); i++) {
-                sql.append("?");
+                sql.append("?"); // DuyAnhNgo- Thêm dấu ? làm chỗ trống
                 if (i < categoryIds.size() - 1) {
-                    sql.append(",");
+                    sql.append(","); // DuyAnhNgo- Thêm dấu phẩy ngăn cách các dấu ?
                 }
-                params.add(categoryIds.get(i));
+                params.add(categoryIds.get(i)); // DuyAnhNgo- Đưa ID danh mục thật vào danh sách params để thay thế dấu ?
             }
             sql.append(") ");
         }
         
+        // DuyAnhNgo- Lọc theo Giá tối thiểu (Min Price)
+        // Dùng COALESCE để ưu tiên lấy giá sale so sánh, nếu không có giá sale thì lấy giá gốc
         if (minPrice != null) {
             sql.append(" AND COALESCE(p.sale_price, p.original_price) >= ? ");
             params.add(minPrice);
         }
         
+        // DuyAnhNgo- Lọc theo Giá tối đa (Max Price)
         if (maxPrice != null) {
             sql.append(" AND COALESCE(p.sale_price, p.original_price) <= ? ");
             params.add(maxPrice);
         }
         
+        // DuyAnhNgo- Lọc theo Đánh giá trung bình (Min Rating)
         if (minRating != null) {
             sql.append(" AND p.average_rating >= ? ");
             params.add(minRating);
         }
         
+        // DuyAnhNgo- Lọc theo Tình trạng tồn kho
         if (status != null && !status.isEmpty()) {
             if ("in_stock".equals(status)) {
-                sql.append(" AND p.stock_quantity > 0 ");
+                sql.append(" AND p.stock_quantity > 0 "); // DuyAnhNgo- Nếu chọn Còn hàng: Tồn kho phải > 0
             } else if ("out_of_stock".equals(status)) {
-                sql.append(" AND p.stock_quantity <= 0 ");
+                sql.append(" AND p.stock_quantity <= 0 "); // DuyAnhNgo- Nếu chọn Hết hàng: Tồn kho <= 0
             }
         }
         
+        // DuyAnhNgo- Nối thêm câu lệnh ORDER BY để sắp xếp theo các tiêu chí (mới nhất, giá tăng, giá giảm...)
         // Sorting
         String orderByClause = " ORDER BY p.created_at DESC "; // default newest
         if (sort != null) {
@@ -971,6 +987,7 @@ public class ProductDAO extends DbContext {
         }
         sql.append(orderByClause);
         
+        // DuyAnhNgo- Nối thêm câu lệnh phân trang (lấy bao nhiêu sản phẩm mỗi trang, bỏ qua bao nhiêu sản phẩm)
         // Pagination (SQL Server OFFSET FETCH)
         sql.append(" OFFSET ? ROWS FETCH NEXT ? ROWS ONLY ");
         params.add((page - 1) * pageSize);
@@ -995,6 +1012,9 @@ public class ProductDAO extends DbContext {
         }
     }
 
+    // DuyAnhNgo- Hàm đếm tổng số sản phẩm thỏa mãn điều kiện lọc.
+    // Dùng chung logic lọc động (Dynamic SQL) như hàm trên nhưng trả về COUNT(*) thay vì lấy dữ liệu sản phẩm.
+    // Mục đích chính là phục vụ tính toán phân trang (biết được tổng cộng có bao nhiêu trang).
     public int countFilteredProducts(
             String keyword, 
             List<Integer> categoryIds, 
@@ -1030,21 +1050,25 @@ public class ProductDAO extends DbContext {
             sql.append(") ");
         }
         
+        // DuyAnhNgo- Lọc theo Giá tối thiểu
         if (minPrice != null) {
             sql.append(" AND COALESCE(p.sale_price, p.original_price) >= ? ");
             params.add(minPrice);
         }
         
+        // DuyAnhNgo- Lọc theo Giá tối đa
         if (maxPrice != null) {
             sql.append(" AND COALESCE(p.sale_price, p.original_price) <= ? ");
             params.add(maxPrice);
         }
         
+        // DuyAnhNgo- Lọc theo Đánh giá trung bình
         if (minRating != null) {
             sql.append(" AND p.average_rating >= ? ");
             params.add(minRating);
         }
         
+        // DuyAnhNgo- Lọc theo Tình trạng tồn kho (Còn hàng / Hết hàng)
         if (status != null && !status.isEmpty()) {
             if ("in_stock".equals(status)) {
                 sql.append(" AND p.stock_quantity > 0 ");
@@ -1071,6 +1095,9 @@ public class ProductDAO extends DbContext {
         return 0;
     }
 
+    // DuyAnhNgo- Hàm thống kê số lượng sản phẩm theo từng danh mục.
+    // Group By category_id để đếm. Trả về Map (Ví dụ: Danh mục ID 1 -> có 5 sản phẩm).
+    // Dùng để hiển thị con số nhỏ báo hiệu số lượng nằm bên cạnh mỗi tên danh mục trên Sidebar.
     public java.util.Map<Integer, Integer> getCategoryProductCounts() {
         String sql = "SELECT category_id, COUNT(*) FROM Products WHERE isDelete = 0 AND status = 1 GROUP BY category_id";
         java.util.Map<Integer, Integer> map = new java.util.HashMap<>();

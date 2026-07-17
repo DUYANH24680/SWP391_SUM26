@@ -35,6 +35,7 @@ public class ProductInfoServlet extends HttpServlet {
 
         int productId;
         try {
+            // DuyAnhNgo- Bước 1: Lấy ID sản phẩm từ URL (ví dụ /info?id=3 thì lấy số 3)
             productId = Integer.parseInt(idParam.trim());
         } catch (NumberFormatException e) {
             session.setAttribute("error", "ID sản phẩm không hợp lệ.");
@@ -44,6 +45,7 @@ public class ProductInfoServlet extends HttpServlet {
 
         ProductDAO productDAO = new ProductDAO();
         try {
+            // DuyAnhNgo- Bước 2: Dùng ID đó gọi ProductDAO (hàm getProductById) để truy xuất toàn bộ chi tiết sản phẩm từ Database
             Product product = productDAO.getProductById(productId);
 
             if (product == null || product.isIsDelete()) {
@@ -52,7 +54,7 @@ public class ProductInfoServlet extends HttpServlet {
                 return;
             }
 
-            // Load category name
+            // DuyAnhNgo- Bước 3: Lấy tên Danh mục (để hiển thị breadcrumb: Trang chủ > Trái cây nội địa) bằng cách gọi CategoryDAO (hàm getAllActiveCategories)
             String categoryName = "-";
             try {
                 CategoryDAO categoryDAO = new CategoryDAO();
@@ -71,7 +73,7 @@ public class ProductInfoServlet extends HttpServlet {
                 System.err.println("[ProductInfoServlet] load category name failed: " + ex.getMessage());
             }
 
-            // Load shop info
+            // DuyAnhNgo- Bước 4: Lấy thông tin Shop bán sản phẩm này (nếu có) bằng cách gọi ShopDAO (hàm getShopById)
             Shop shopInfo = null;
             if (product.getShopId() > 0) {
                 try {
@@ -92,7 +94,8 @@ public class ProductInfoServlet extends HttpServlet {
                 req.setAttribute("shopInfo", shopInfo);
             }
 
-            // Load reviews & rating summary
+            // DuyAnhNgo- Bước 5: KHU VỰC BÌNH LUẬN & ĐÁNH GIÁ (Rate vs Comment)
+            // Lấy toàn bộ danh sách bình luận (reviews) và thống kê số sao (ratingStats) bằng cách gọi ProductReviewDAO (hàm getReviewsByProductId và getRatingSummary)
             try {
                 dao.ProductReviewDAO reviewDAO = new dao.ProductReviewDAO();
                 try {
@@ -100,6 +103,15 @@ public class ProductInfoServlet extends HttpServlet {
                     Map<String, Object> ratingStats = reviewDAO.getRatingSummary(productId);
                     req.setAttribute("reviews", reviews);
                     req.setAttribute("ratingStats", ratingStats);
+
+                    // DuyAnhNgo- Bước 5b: Kiểm tra customer đã mua sản phẩm này chưa
+                    // canReview = true nếu user đã đăng nhập VÀ đã có đơn hàng giao thành công chứa sản phẩm này
+                    boolean canReview = false;
+                    if (session != null && session.getAttribute("user") != null) {
+                        model.Account curUser = (model.Account) session.getAttribute("user");
+                        canReview = reviewDAO.hasPurchasedProduct(curUser.getId(), productId);
+                    }
+                    req.setAttribute("canReview", canReview);
                 } finally {
                     reviewDAO.close();
                 }

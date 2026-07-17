@@ -681,7 +681,7 @@
                                         </div>
                                         <% } %>
 
-                                            <!-- CATEGORIES SECTION -->
+                                            <!-- DuyAnhNgo- KHU VỰC 1: HIỂN THỊ DANH MỤC -->
                                             <h2 class="section-title">
                                                 <i class="fa-solid fa-layer-group"></i> Tất Cả Danh Mục
                                             </h2>
@@ -694,13 +694,19 @@
                                                 </div>
                                                 <% } else { %>
                                                     <div class="category-grid">
-                                                        <% for (Category cat : categories) { %>
+                                                        <% 
+                                                            // DuyAnhNgo- Vòng lặp Danh Mục: Duyệt qua tất cả các danh mục để in ra dạng "thẻ" (card)
+                                                            // Mỗi danh mục sẽ có 1 đường link dẫn đến /danh-muc?categoryId=ID_CỦA_NÓ
+                                                            for (Category cat : categories) { 
+                                                        %>
                                                             <% boolean isSelected=selectedCategoryId !=null &&
                                                                 selectedCategoryId==cat.getId(); String catImgUrl=null;
                                                                 if (cat.getImage() !=null &&
                                                                 !cat.getImage().trim().isEmpty()) {
                                                                 catImgUrl=imgUrl(cat.getImage(),
                                                                 request.getContextPath()); } %>
+                                                                
+                                                                <!-- DuyAnhNgo- Link bấm vào Danh mục, nếu đang chọn thì thêm class "active" để tô màu đậm -->
                                                                 <a href="<%= request.getContextPath() %>/danh-muc?categoryId=<%= cat.getId() %>"
                                                                     class="cat-card <%= isSelected ? " active" : "" %>">
                                                                     <div class="cat-check"><i
@@ -724,9 +730,9 @@
                                                     </div>
                                                     <% } %>
 
-                                                        <!-- PRODUCTS SECTION -->
+                                                        <!-- DuyAnhNgo- KHU VỰC 2: HIỂN THỊ SẢN PHẨM (Chỉ hiện khi khách đã bấm chọn 1 Danh mục) -->
                                                         <% if (selectedCategoryId !=null) { %>
-                                                            <!-- Filter bar -->
+                                                            <!-- DuyAnhNgo- Thanh hiển thị đang lọc theo Danh mục nào và Nút Xóa lọc -->
                                                             <div class="filter-bar">
                                                                 <span class="filter-label"><i
                                                                         class="fa-solid fa-filter"></i> Lọc theo:</span>
@@ -768,7 +774,10 @@
                                                                 </div>
                                                                 <% } else { %>
                                                                     <div class="product-grid">
-                                                                        <% for (Product p : products) { String
+                                                                        <% 
+                                                                            // DuyAnhNgo- Vòng lặp Sản Phẩm: In ra các sản phẩm thuộc danh mục đã chọn
+                                                                            // Khi click vào sản phẩm, sẽ gọi đến trang /product-info?id=ID_SẢN_PHẨM
+                                                                            for (Product p : products) { String
                                                                             pImgUrl=imgUrl(p.getImage(),
                                                                             request.getContextPath()); double
                                                                             discount=p.getDiscountPercent(); boolean

@@ -32,12 +32,15 @@
             ws.close();
         }
     }
+    
+    // DuyAnhNgo- Logic backend nhận các tham số tìm kiếm và bộ lọc từ URL request
     ProductDAO dao = new ProductDAO();
     
-    // Extract parameters
+    // 1. Lấy tham số 'search' từ thanh tìm kiếm (VD: ?search=tao)
     String search = request.getParameter("search");
     if (search != null) search = search.trim();
     
+    // 2. Lấy tham số danh mục từ URL (VD: ?category=1)
     String categoryParam = request.getParameter("category");
     List<Integer> categoryIds = null;
     if (categoryParam != null && !categoryParam.isEmpty() && !"all".equals(categoryParam)) {
@@ -80,7 +83,8 @@
     
     int pageSize = 12;
     
-    // Fetch products
+    // DuyAnhNgo- Gọi DAO query DB để lấy danh sách sản phẩm theo kết quả tìm kiếm và bộ lọc
+    // Hàm getFilteredProducts sẽ nối chuỗi SQL (thêm WHERE, ORDER BY) linh hoạt dựa trên các tham số có giá trị khác null
     List<Product> productsList = dao.getFilteredProducts(search, categoryIds, minPrice, maxPrice, minRating, status, sort, pageNum, pageSize);
     int totalProducts = dao.countFilteredProducts(search, categoryIds, minPrice, maxPrice, minRating, status);
     int totalPages = (int) Math.ceil((double) totalProducts / pageSize);
@@ -2027,9 +2031,6 @@
                                             <a class="dropdown-item" href="<%= request.getContextPath() %>/register-seller">
                                                 <i class="fa-solid fa-store"></i> Đăng Ký Cửa Hàng
                                             </a>
-                                            <a class="dropdown-item" href="<%= request.getContextPath() %>/submit-report?shopId=0">
-                                                <i class="fa-solid fa-flag"></i> Báo Cáo Seller
-                                            </a>
                                             <div class="dropdown-divider"></div>
                                             <% } %>
                                             <a class="dropdown-item" href="profile?tab=profile">
@@ -2179,6 +2180,7 @@
                     <div class="shop-layout">
 
                         <!-- FILTER SIDEBAR -->
+                        <!-- DuyAnhNgo- UI Sidebar chứa các thẻ filter/bộ lọc sản phẩm -->
                         <aside class="filter-sidebar">
 
                             <!-- Price filter -->
@@ -2248,6 +2250,7 @@
                         <div class="products-area">
 
                             <!-- Sort bar -->
+                            <!-- DuyAnhNgo- UI thanh sắp xếp sản phẩm -->
                             <div class="sort-bar">
                                 <div class="sort-bar-left">Hiển thị <strong><%= productsList.size() %></strong> / <%= totalProducts %> sản phẩm</div>
                                 <div class="sort-tabs">
@@ -2736,6 +2739,7 @@
                             // Không chuyển trang nếu người dùng bấm vào nút Wishlist hoặc Thêm Giỏ Hàng
                             if (e.target.closest('.product-wishlist') || e.target.closest('.btn-cart') || e.target.closest('.btn-add-cart') || e.target.closest('.btn-buy-now')) return;
                             
+                            // DuyAnhNgo- Lấy ID của sản phẩm và điều hướng sang trang chi tiết (Product Info)
                             const productId = card.getAttribute('data-id');
                             if (productId) window.location.href = 'info?id=' + productId;
                         });
@@ -2824,7 +2828,7 @@
     <style>
         .floating-chat-btn {
             position: fixed;
-            bottom: <% if ("admin".equals(Account.getRoleName()) || "customer".equalsIgnoreCase(Account.getRoleName())) { out.print("100px"); } else { out.print("30px"); } %>;
+            bottom: <% if ("admin".equals(Account.getRoleName())) { out.print("100px"); } else { out.print("30px"); } %>;
             right: 30px;
             background-color: #3b82f6;
             color: white;

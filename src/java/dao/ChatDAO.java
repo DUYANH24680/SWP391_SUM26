@@ -13,6 +13,7 @@ import Utils.DbContext;
 
 public class ChatDAO extends DbContext {
 
+    // DuyAnhNgo- Hàm Tạo Phòng Chat: Sinh ra một phiên chat (ChatSession) nối người Mua, người Bán và Admin dựa trên 1 Đơn tố cáo (Report)
     public int createSession(int reportId, int customerId, int sellerId, int adminId) {
         String sql = "INSERT INTO ChatSessions (report_id, customer_id, seller_id, admin_id, status) VALUES (?, ?, ?, ?, 'OPEN')";
         try (Connection conn = getConnection();
@@ -31,13 +32,14 @@ public class ChatDAO extends DbContext {
         return -1;
     }
 
+    // DuyAnhNgo- Hàm Lấy Danh sách Hộp Thoại (Sidebar bên trái): Trả về các phòng chat mà người dùng này có mặt
     public List<ChatSession> getSessionsByUser(int userId, String role) {
         List<ChatSession> list = new ArrayList<>();
         String sql = "SELECT cs.*, " +
-                     "c.fullname as cName, c.avatar as cAvatar, " +
-                     "s.fullname as sName, s.avatar as sAvatar, " +
-                     "a.fullname as aName, a.avatar as aAvatar, " +
-                     "p.title as pName, " +
+                     "COALESCE(c.fullname, c.username) as cName, c.avatar as cAvatar, " +
+                     "COALESCE(s.fullname, s.username) as sName, s.avatar as sAvatar, " +
+                     "COALESCE(a.fullname, a.username) as aName, a.avatar as aAvatar, " +
+                     "p.title as pName, r.reason as rReason, " +
                      "(SELECT TOP 1 message FROM ChatMessages cm WHERE cm.session_id = cs.id ORDER BY created_at DESC) as lastMessage, " +
                      "(SELECT TOP 1 created_at FROM ChatMessages cm WHERE cm.session_id = cs.id ORDER BY created_at DESC) as lastMessageTime " +
                      "FROM ChatSessions cs " +
@@ -70,6 +72,7 @@ public class ChatDAO extends DbContext {
                     cs.setAdminName(rs.getString("aName"));
                     cs.setAdminAvatar(rs.getString("aAvatar"));
                     cs.setProductName(rs.getString("pName"));
+                    cs.setReportReason(rs.getString("rReason"));
                     cs.setLastMessage(rs.getString("lastMessage"));
                     cs.setLastMessageTime(rs.getTimestamp("lastMessageTime"));
                     list.add(cs);
@@ -81,9 +84,10 @@ public class ChatDAO extends DbContext {
         return list;
     }
 
+    // DuyAnhNgo- Hàm Lấy Lịch sử Tin nhắn: Tải toàn bộ nội dung chat trong 1 phòng cụ thể, sắp xếp theo thời gian cũ -> mới
     public List<ChatMessage> getMessages(int sessionId) {
         List<ChatMessage> list = new ArrayList<>();
-        String sql = "SELECT m.*, a.fullname as senderName, a.avatar as senderAvatar, a.role_id as roleId " +
+        String sql = "SELECT m.*, COALESCE(a.fullname, a.username) as senderName, a.avatar as senderAvatar, a.role_id as roleId " +
                      "FROM ChatMessages m " +
                      "JOIN Accounts a ON m.sender_id = a.id " +
                      "WHERE m.session_id = ? ORDER BY m.created_at ASC";
@@ -113,6 +117,7 @@ public class ChatDAO extends DbContext {
         return list;
     }
 
+    // DuyAnhNgo- Hàm Gửi Tin Nhắn: Thực thi câu lệnh INSERT để chèn 1 dòng chat mới vào CSDL
     public boolean sendMessage(int sessionId, int senderId, String message) {
         String sql = "INSERT INTO ChatMessages (session_id, sender_id, message) VALUES (?, ?, ?)";
         try (Connection conn = getConnection();

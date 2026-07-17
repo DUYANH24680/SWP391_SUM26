@@ -8,6 +8,12 @@
 <%@ page import="java.util.List" %>
 <%@ page import="java.util.Map" %>
 <%@ page import="model.ProductReview" %>
+<%!
+    public String escapeJs(String str) {
+        if (str == null || str.equals("null")) return "";
+        return str.replace("'", "\\'").replace("\"", "&quot;");
+    }
+%>
 <%
     // No auth guard for viewing product
 
@@ -595,7 +601,7 @@
         </div>
 
         <div class="detail-grid">
-            <!-- LEFT: Product image -->
+            <!-- DuyAnhNgo- CỘT TRÁI: Khu vực hiển thị Hình ảnh Sản phẩm -->
             <div>
                 <% if (product.getImage() != null && !product.getImage().trim().isEmpty()) { %>
                 <div class="product-image-wrap">
@@ -609,10 +615,11 @@
                 <% } %>
             </div>
 
-            <!-- RIGHT: Info panel -->
+            <!-- DuyAnhNgo- CỘT PHẢI: Khu vực Thông tin chi tiết, Giá bán, Nút mua hàng -->
             <div class="info-panel">
                 <h1 class="product-title"><%= product.getTitle() %></h1>
 
+                <!-- DuyAnhNgo- Khối hiển thị Giá bán (Tính toán hiển thị phần trăm giảm giá nếu có) -->
                 <div class="price-block">
                     <span class="price-sale"><%= nf.format((long) salePrice) %> d</span>
                     <% if (hasDiscount) { %>
@@ -687,10 +694,13 @@
                         <img class="shop-avatar" src="<%= ImageUrlUtil.resolve(shopInfo.getLogo(), request.getContextPath()) %>" alt="<%= shopInfo.getShopName() %>" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
                         <div class="shop-avatar-placeholder" style="display:none;">&#127974;</div>
                         <% } else { %><div class="shop-avatar-placeholder">&#127974;</div><% } %>
-                        <div class="shop-info">
+                        <div class="shop-info" style="flex:1;">
                             <div class="shop-name"><%= shopInfo.getShopName() != null ? shopInfo.getShopName() : "-" %></div>
                             <div class="shop-meta">Dia chi: <%= shopInfo.getAddress() != null && !shopInfo.getAddress().isEmpty() ? shopInfo.getAddress() : "Chua cap nhat" %></div>
                         </div>
+                        <a href="javascript:void(0)" onclick="openReportModal(<%= shopInfo.getId() %>, '<%= escapeJs(shopInfo.getShopName() != null ? shopInfo.getShopName() : "Cửa hàng") %>', 'SHOP')" style="color:var(--gray-400);font-size:1.1rem;padding:0.5rem;" title="Tố cáo Cửa hàng">
+                            <i class="fa-solid fa-flag"></i>
+                        </a>
                     </div>
                 </div>
 
@@ -728,10 +738,13 @@
                     <% } %>
                 </div>
 
+                <!-- DuyAnhNgo- Khối nút bấm chức năng (Thêm vào Giỏ, Mua Ngay, Lưu Yêu Thích) -->
                 <div class="action-buttons" style="margin-top: 1.5rem;">
+                    <!-- Nút gọi hàm JS addToCart() để nạp dữ liệu vào form ẩn rồi submit -->
                     <button class="btn btn-green" onclick="addToCart()">
                         <i class="fa-solid fa-basket-shopping"></i> Them Vao Gio Hang
                     </button>
+                    <!-- Nút gọi hàm JS buyNow() -->
                     <button class="btn btn-orange" onclick="buyNow()" style="background: #ff6b35; color: #fff; border: none;">
                         <i class="fa-solid fa-bolt"></i> Mua Ngay
                     </button>
@@ -768,6 +781,7 @@
             </div>
 
             <% 
+                // DuyAnhNgo- Lấy dữ liệu bình luận và thống kê từ Servlet truyền sang
                 List<ProductReview> reviews = (List<ProductReview>) request.getAttribute("reviews");
                 Map<String, Object> ratingStats = (Map<String, Object>) request.getAttribute("ratingStats");
                 
@@ -786,6 +800,7 @@
                 int pct1 = totalRev > 0 ? (s1 * 100 / totalRev) : 0;
             %>
 
+            <!-- DuyAnhNgo- Phần hiển thị Tổng quan Điểm đánh giá (Ví dụ: 3.5 Sao, Dựa trên 2 đánh giá) -->
             <div class="reviews-summary">
                 <div class="summary-score">
                     <h2><%= String.format(java.util.Locale.US, "%.1f", avgRev > 0 ? avgRev : 5.0) %></h2>
@@ -800,6 +815,7 @@
                     </div>
                     <p>Dựa trên <%= totalRev %> đánh giá</p>
                 </div>
+                <!-- DuyAnhNgo- Vẽ các thanh tiến trình biểu diễn tỷ lệ % của từng loại sao (Từ 5 sao đến 1 sao) -->
                 <div class="summary-stars">
                     <div class="star-row"><span>5 Sao</span> <div class="star-bar"><div class="star-fill" style="width: <%= pct5 %>%;"></div></div> <span><%= s5 %></span></div>
                     <div class="star-row"><span>4 Sao</span> <div class="star-bar"><div class="star-fill" style="width: <%= pct4 %>%;"></div></div> <span><%= s4 %></span></div>
@@ -810,7 +826,9 @@
             </div>
 
             <div class="comment-list">
-                <% if (reviews != null && !reviews.isEmpty()) { 
+                <% 
+                    // DuyAnhNgo- Duyệt vòng lặp danh sách bình luận (nếu có) để in ra thông tin người dùng, số sao họ chấm và nội dung chữ
+                    if (reviews != null && !reviews.isEmpty()) { 
                     java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm");
                     for (ProductReview rev : reviews) { 
                         String name = rev.getFullname() != null && !rev.getFullname().isEmpty() ? rev.getFullname() : rev.getUsername();
@@ -838,22 +856,29 @@
                 <% } %>
             </div>
 
-            <!-- Form Add Comment -->
-            <% if (session.getAttribute("user") == null) { %>
+            <%-- Form Add Comment --%>
+            <% 
+                // DuyAnhNgo- Kiểm tra nếu khách chưa đăng nhập thì hiện nút "Đăng Nhập Ngay" thay vì hiện khung nhập bình luận
+                if (session.getAttribute("user") == null) { 
+            %>
                 <div class="add-comment-form" style="text-align:center;">
                     <p style="margin-bottom: 1rem; color: var(--gray-600);">Bạn cần đăng nhập để đánh giá sản phẩm.</p>
                     <a href="<%= request.getContextPath() %>/login" class="btn btn-green">Đăng Nhập Ngay</a>
                 </div>
-            <% } else { 
+            <% } else {
                 model.Account curUser = (model.Account) session.getAttribute("user");
                 String curName = curUser.getFullname() != null && !curUser.getFullname().isEmpty() ? curUser.getFullname() : curUser.getUsername();
+                Boolean canReview = (Boolean) request.getAttribute("canReview");
+                if (Boolean.TRUE.equals(canReview)) {
             %>
+                <%-- DuyAnhNgo- Form Viết Đánh giá (Chỉ hiện khi customer đã mua sản phẩm) --%>
                 <div class="add-comment-form">
                     <div class="form-title">Gửi đánh giá của bạn</div>
                     <form id="reviewForm" onsubmit="submitReview(event)">
                         <input type="hidden" name="productId" value="<%= product.getId() %>">
                         <input type="hidden" name="rating" id="ratingValue" value="5">
                         
+                        <%-- DuyAnhNgo- Bảng chọn số sao (1-5) --%>
                         <div class="rating-input" id="ratingInput">
                             <span style="font-size:0.9rem;color:var(--gray-600);margin-right:0.5rem;">Đánh giá sao:</span>
                             <i class="fa-solid fa-star active" data-val="1"></i>
@@ -869,7 +894,17 @@
                 <script>
                     const CURRENT_USER_NAME = "<%= curName %>";
                 </script>
-            <% } %>
+            <% } else { %>
+                <%-- DuyAnhNgo- Thông báo khi khách đã đăng nhập nhưng chưa mua sản phẩm --%>
+                <div class="add-comment-form" style="text-align:center;">
+                    <div style="font-size:2.5rem; margin-bottom:1rem;">&#128722;</div>
+                    <p style="color: var(--gray-800); font-weight: 700; font-size: 1.1rem; margin-bottom: 0.5rem;">Bạn chưa mua sản phẩm này</p>
+                    <p style="color: var(--gray-600); margin-bottom: 1.5rem;">Chỉ những khách hàng đã mua và nhận hàng thành công mới có thể đánh giá sản phẩm.</p>
+                    <a href="<%= request.getContextPath() %>/home.jsp" class="btn btn-green">
+                        <i class="fa-solid fa-basket-shopping"></i> Mua Sản Phẩm Ngay
+                    </a>
+                </div>
+            <% } } %>
         </div>
         <!-- END REVIEWS SECTION -->
     </div>
@@ -1001,5 +1036,6 @@
             });
         }
     </script>
+    <jsp:include page="report-modal.jsp" />
 </body>
 </html>
