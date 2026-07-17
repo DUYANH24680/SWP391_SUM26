@@ -1984,6 +1984,12 @@
                         <a href="inventory-import">Nhập Kho</a>
                         <a href="products">Sản Phẩm</a>
                         <a href="danh-muc">Danh Mục</a>
+                        <% if (Account == null || "customer".equalsIgnoreCase(Account.getRoleName())) { %>
+                            <a href="vouchers" style="color:#ef4444;font-weight:600;"><i class="fa-solid fa-ticket"></i> Voucher</a>
+                        <% } %>
+                        <% if (Account != null && ("admin".equalsIgnoreCase(Account.getRoleName()) || "seller".equalsIgnoreCase(Account.getRoleName()))) { %>
+                            <a href="manage-vouchers" style="color:#3b82f6;font-weight:600;"><i class="fa-solid fa-gear"></i> Quản Lý Voucher</a>
+                        <% } %>
                     </div>
 
                     <div class="nav-right">
@@ -2017,11 +2023,11 @@
                                             </span>
                                         </div>
                                         <div class="dropdown-menu">
-                                            <% if ("customer".equals(user.getRoleName())) { %>
+                                            <% if ("customer".equalsIgnoreCase(Account.getRoleName())) { %>
                                             <a class="dropdown-item" href="<%= request.getContextPath() %>/register-seller">
                                                 <i class="fa-solid fa-store"></i> Đăng Ký Cửa Hàng
                                             </a>
-                                            <a class="dropdown-item" href="<%= request.getContextPath() %>/submit-report?shopId=0">
+                                            <a class="dropdown-item" href="<%= request.getContextPath() %>/submit-report">
                                                 <i class="fa-solid fa-flag"></i> Báo Cáo Seller
                                             </a>
                                             <div class="dropdown-divider"></div>
@@ -2775,7 +2781,7 @@
 
                     refreshCartBadge();
                 </script>
-            <jsp:include page="report-modal.jsp" />
+
     <% if (Account != null && "admin".equals(Account.getRoleName())) { %>
     <!-- Floating Report Button -->
     <a href="<%= request.getContextPath() %>/admin/reports" class="floating-report-btn" title="Kiểm tra báo cáo">

@@ -32,6 +32,7 @@ public class ProductReviewServlet extends HttpServlet {
         Account account = (Account) session.getAttribute("Account");
         
         try {
+            // DuyAnhNgo- Nhận ID sản phẩm, Số sao (rating) và Nội dung bình luận từ form gửi lên
             int productId = Integer.parseInt(req.getParameter("productId"));
             int rating = Integer.parseInt(req.getParameter("rating"));
             String comment = req.getParameter("comment");
@@ -50,8 +51,10 @@ public class ProductReviewServlet extends HttpServlet {
             String message = "";
             ProductReviewDAO dao = new ProductReviewDAO();
             try {
+                // DuyAnhNgo- Gọi ProductReviewDAO (hàm addReview) thực thi lệnh INSERT để lưu bình luận này vào bảng ProductReviews
                 success = dao.addReview(productId, account.getId(), rating, comment);
                 if (success) {
+                    // DuyAnhNgo- QUAN TRỌNG: Sau khi thêm bình luận thành công, phải gọi ProductReviewDAO (hàm updateProductAverageRating) tính toán lại "Điểm Đánh Giá Trung Bình" của cả sản phẩm
                     dao.updateProductAverageRating(productId);
                     message = "Cảm ơn bạn đã gửi đánh giá!";
                     session.setAttribute("success", message);

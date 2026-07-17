@@ -83,10 +83,10 @@ public class ManageSellerServlet extends HttpServlet {
         int productCount = productDAO.countProductsByShopId(shopId);
         List<Order> orders = orderDAO.getOrdersByShopId(shopId);
         int orderCount = orders.size();
-//        double revenue = orders.stream()
-//                .filter(o -> o.getStatus() == 4)
-//                .mapToDouble(o -> o.getFinalCost() != null ? o.getFinalCost().doubleValue() : 0)
-//                .sum(); 
+        double revenue = orders.stream()
+                .filter(o -> o.getStatus() == 4)
+                .mapToDouble(Order::getShopActualRevenue)
+                .sum(); 
 
         // Reports
         List<UserReport> reports = reportDAO.getByShopId(shopId, null);
@@ -102,7 +102,7 @@ public class ManageSellerServlet extends HttpServlet {
         req.setAttribute("detailShop", shop);
         req.setAttribute("productCount", productCount);
         req.setAttribute("orderCount", orderCount);
-//        req.setAttribute("totalRevenue", revenue); tạm xoá vì lỗi
+        req.setAttribute("totalRevenue", revenue);
         req.setAttribute("reports", reports);
         req.setAttribute("pendingReports", pendingReports);
         req.setAttribute("actionHistory", actions);

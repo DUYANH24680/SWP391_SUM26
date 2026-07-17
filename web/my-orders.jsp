@@ -528,11 +528,19 @@
                                     
                                     <div class="item-details">
                                         <div class="item-title"><%= od.getProductTitle() %></div>
+                                        <% if (od.getShopName() != null) { %>
+                                        <div class="item-meta"><i class="fa-solid fa-store"></i> <%= od.getShopName() %></div>
+                                        <% } %>
                                         <div class="item-meta">Đơn vị: <%= od.getProductUnit() != null ? od.getProductUnit() : "kg" %></div>
                                         <div class="item-meta">Số lượng: <%= od.getQuantity() %></div>
                                     </div>
-                                    <div class="item-price">
-                                        <%= nf.format((long) od.getUnitPrice()) %> đ
+                                    <div class="item-price" style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem;">
+                                        <div><%= nf.format((long) od.getUnitPrice()) %> đ</div>
+                                        <% if (o.getStatus() == 4) { %>
+                                        <button style="padding: 0.2rem 0.6rem; font-size: 0.8rem; border-radius: 4px; border: 1px solid #ef4444; color: #ef4444; background: transparent; cursor: pointer; font-family: 'Inter', sans-serif;" onclick="openReportModal('<%= od.getProductId() %>', '<%= od.getProductTitle().replace("'", "\\'") %>')" onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background='transparent'">
+                                            <i class="fa-solid fa-triangle-exclamation"></i> Báo Cáo
+                                        </button>
+                                        <% } %>
                                     </div>
                                 </div>
                             <% 
@@ -555,7 +563,8 @@
                             <div class="order-cost-details">
                                 Thanh toán: <strong><%= o.getPaymentMethod() %></strong> (<%= o.getPaymentStatusLabel() %>)<br>
                                 Tiền hàng: <%= nf.format((long) o.getTotalCost()) %> đ 
-                                <% if (o.getDiscountAmount() > 0) { %> | Giảm giá: -<%= nf.format((long) o.getDiscountAmount()) %> đ<% } %>
+                                <% if (o.getDiscountAmount() > 0) { %> | Giảm giá Shop: -<%= nf.format((long) o.getDiscountAmount()) %> đ<% } %>
+                                <% if (o.getPlatformDiscountAmount() > 0) { %> | Giảm giá Sàn: -<%= nf.format((long) o.getPlatformDiscountAmount()) %> đ<% } %>
                                 | Ship: +<%= nf.format((long) o.getShippingFee()) %> đ
                             </div>
                             
@@ -657,6 +666,7 @@
             window.location.href = url;
         }
     </script>
+    <jsp:include page="report-modal.jsp" />
 </body>
 </html>
 

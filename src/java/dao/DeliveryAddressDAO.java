@@ -8,12 +8,15 @@ import java.util.List;
 
 /**
  * DeliveryAddressDAO - Handles all DB operations for DeliveryAddresses table.
+ * DuyAnhNgo- Logic DAO Database cho Sổ Địa Chỉ: Các hàm ở đây sẽ thực hiện truy vấn SQL
+ * để Lấy danh sách, Thêm mới, Cập nhật, Xóa và Đặt làm mặc định cho Địa Chỉ Giao Hàng.
  */
 public class DeliveryAddressDAO extends DbContext {
 
     /**
      * Get all addresses for a user.
      * Auto-creates the table if it doesn't exist (backward compatible).
+     * DuyAnhNgo- Hàm Lấy Danh Sách: Dùng câu lệnh SELECT để lấy toàn bộ địa chỉ của một user, sắp xếp ưu tiên hiển thị địa chỉ Mặc Định (isDefault DESC) lên đầu tiên.
      * @param customerId
      * @return 
      */
@@ -88,6 +91,7 @@ public class DeliveryAddressDAO extends DbContext {
 
     /**
      * Insert a new address.
+     * DuyAnhNgo- Hàm Thêm Mới: Chạy lệnh INSERT INTO để lưu các thông tin (Tên, SĐT, Địa chỉ) mới nhập từ form vào DB.
      * @param da
      * @return 
      */
@@ -110,6 +114,7 @@ public class DeliveryAddressDAO extends DbContext {
 
     /**
      * Update an existing address.
+     * DuyAnhNgo- Hàm Cập Nhật: Dùng lệnh UPDATE ... SET ... WHERE id = ? để ghi đè thông tin mới lên dòng dữ liệu cũ trong DB.
      * @param da
      * @return 
      */
@@ -133,6 +138,7 @@ public class DeliveryAddressDAO extends DbContext {
 
     /**
      * Delete an address.
+     * DuyAnhNgo- Hàm Xóa: Dùng lệnh DELETE FROM ... WHERE id = ? để xóa cứng dòng địa chỉ ra khỏi DB.
      * @param id
      * @param customerId
      * @return 
@@ -152,6 +158,9 @@ public class DeliveryAddressDAO extends DbContext {
 
     /**
      * Unset all default addresses for a user, then set the given one as default.
+     * DuyAnhNgo- Hàm Đặt Mặc Định: Gồm 2 bước:
+     * Bước 1: UPDATE toàn bộ địa chỉ của user này thành isDefault = 0 (tắt mặc định cũ).
+     * Bước 2: UPDATE riêng cái địa chỉ được chọn thành isDefault = 1.
      * @param id
      * @param customerId
      * @return 

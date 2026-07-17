@@ -1,4 +1,4 @@
-﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="model.Account" %>
 <%@ page import="model.Order" %>
 <%@ page import="model.OrderDetail" %>
@@ -715,6 +715,9 @@
                                         <div class="item-placeholder">🍎</div>
                                         <div class="item-details">
                                             <div class="item-title"><%= od.getProductTitle() %></div>
+                                            <% if (od.getShopName() != null) { %>
+                                            <div class="item-meta"><i class="fa-solid fa-store"></i> <%= od.getShopName() %></div>
+                                            <% } %>
                                             <div class="item-meta">x<%= od.getQuantity() %> &middot; <%= od.getProductUnit() != null ? od.getProductUnit() : "kg" %></div>
                                         </div>
                                         <div class="item-price"><%= nf.format((long) od.getUnitPrice()) %> đ</div>
@@ -728,12 +731,15 @@
                                 <div>
                                     Thanh toán: <strong><%= o.getPaymentMethod() %></strong> &middot;
                                     <% if (o.getDiscountAmount() > 0) { %>
-                                        Giảm giá: -<%= nf.format((long) o.getDiscountAmount()) %> đ &middot;
+                                        Giảm giá Shop: -<%= nf.format((long) o.getDiscountAmount()) %> đ &middot;
+                                    <% } %>
+                                    <% if (o.getPlatformDiscountAmount() > 0) { %>
+                                        Giảm giá Sàn: -<%= nf.format((long) o.getPlatformDiscountAmount()) %> đ &middot;
                                     <% } %>
                                     Ship: +<%= nf.format((long) o.getShippingFee()) %> đ
                                 </div>
                                 <div class="order-total">
-                                    Thực thu: <%= nf.format((long) o.getFinalCost()) %> đ
+                                    Khách trả: <%= nf.format((long) o.getFinalCost()) %> đ
                                 </div>
                             </div>
                         </div>

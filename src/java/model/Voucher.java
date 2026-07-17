@@ -4,23 +4,30 @@ import java.sql.Timestamp;
 
 public class Voucher {
     private int id;
+    private Integer shopId; // null = Admin global voucher
     private String code;
-    private double discountPercent;
+    private String type; // 'DISCOUNT' or 'FREESHIP'
+    private double discountPercent; // also used for FREESHIP max value or just 100%
     private double maxDiscount;
     private double minimumOrder;
     private Timestamp startDate;
     private Timestamp endDate;
     private int quantity;
     private int usedCount;
+    private int maxUsagesPerUser; // max times a single user can use this
     private boolean status;
 
     public Voucher() {
+        this.type = "DISCOUNT";
+        this.maxUsagesPerUser = 3;
     }
 
-    public Voucher(int id, String code, double discountPercent, double maxDiscount, double minimumOrder,
-                   Timestamp startDate, Timestamp endDate, int quantity, int usedCount, boolean status) {
+    public Voucher(int id, Integer shopId, String code, String type, double discountPercent, double maxDiscount, double minimumOrder,
+                   Timestamp startDate, Timestamp endDate, int quantity, int usedCount, int maxUsagesPerUser, boolean status) {
         this.id = id;
+        this.shopId = shopId;
         this.code = code;
+        this.type = type != null ? type : "DISCOUNT";
         this.discountPercent = discountPercent;
         this.maxDiscount = maxDiscount;
         this.minimumOrder = minimumOrder;
@@ -28,92 +35,50 @@ public class Voucher {
         this.endDate = endDate;
         this.quantity = quantity;
         this.usedCount = usedCount;
+        this.maxUsagesPerUser = maxUsagesPerUser;
         this.status = status;
     }
 
-    public int getId() {
-        return id;
-    }
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
 
-    public void setId(int id) {
-        this.id = id;
-    }
+    public Integer getShopId() { return shopId; }
+    public void setShopId(Integer shopId) { this.shopId = shopId; }
 
-    public String getCode() {
-        return code;
-    }
+    public String getCode() { return code; }
+    public void setCode(String code) { this.code = code; }
 
-    public void setCode(String code) {
-        this.code = code;
-    }
+    public String getType() { return type; }
+    public void setType(String type) { this.type = type; }
 
-    public double getDiscountPercent() {
-        return discountPercent;
-    }
+    public double getDiscountPercent() { return discountPercent; }
+    public void setDiscountPercent(double discountPercent) { this.discountPercent = discountPercent; }
 
-    public void setDiscountPercent(double discountPercent) {
-        this.discountPercent = discountPercent;
-    }
+    public double getMaxDiscount() { return maxDiscount; }
+    public void setMaxDiscount(double maxDiscount) { this.maxDiscount = maxDiscount; }
 
-    public double getMaxDiscount() {
-        return maxDiscount;
-    }
+    public double getMinimumOrder() { return minimumOrder; }
+    public void setMinimumOrder(double minimumOrder) { this.minimumOrder = minimumOrder; }
 
-    public void setMaxDiscount(double maxDiscount) {
-        this.maxDiscount = maxDiscount;
-    }
+    public Timestamp getStartDate() { return startDate; }
+    public void setStartDate(Timestamp startDate) { this.startDate = startDate; }
 
-    public double getMinimumOrder() {
-        return minimumOrder;
-    }
+    public Timestamp getEndDate() { return endDate; }
+    public void setEndDate(Timestamp endDate) { this.endDate = endDate; }
 
-    public void setMinimumOrder(double minimumOrder) {
-        this.minimumOrder = minimumOrder;
-    }
+    public int getQuantity() { return quantity; }
+    public void setQuantity(int quantity) { this.quantity = quantity; }
 
-    public Timestamp getStartDate() {
-        return startDate;
-    }
+    public int getUsedCount() { return usedCount; }
+    public void setUsedCount(int usedCount) { this.usedCount = usedCount; }
 
-    public void setStartDate(Timestamp startDate) {
-        this.startDate = startDate;
-    }
+    public int getMaxUsagesPerUser() { return maxUsagesPerUser; }
+    public void setMaxUsagesPerUser(int maxUsagesPerUser) { this.maxUsagesPerUser = maxUsagesPerUser; }
 
-    public Timestamp getEndDate() {
-        return endDate;
-    }
+    public boolean isStatus() { return status; }
+    public void setStatus(boolean status) { this.status = status; }
 
-    public void setEndDate(Timestamp endDate) {
-        this.endDate = endDate;
-    }
-
-    public int getQuantity() {
-        return quantity;
-    }
-
-    public void setQuantity(int quantity) {
-        this.quantity = quantity;
-    }
-
-    public int getUsedCount() {
-        return usedCount;
-    }
-
-    public void setUsedCount(int usedCount) {
-        this.usedCount = usedCount;
-    }
-
-    public boolean isStatus() {
-        return status;
-    }
-
-    public void setStatus(boolean status) {
-        this.status = status;
-    }
-
-    public boolean isActive() {
-        return status;
-    }
+    public boolean isActive() { return status; }
 
     public boolean isExpired() {
         Timestamp now = new Timestamp(System.currentTimeMillis());
@@ -124,9 +89,6 @@ public class Voucher {
         return usedCount < quantity;
     }
 
-    /**
-     * Check if the voucher is valid currently and for the given order total.
-     */
     public boolean isValid(double orderTotal) {
         if (!status) return false;
         Timestamp now = new Timestamp(System.currentTimeMillis());
@@ -137,10 +99,6 @@ public class Voucher {
         return true;
     }
 
-    /**
-     * Check if voucher can be applied to cart without checking used_count.
-     * Used when adding/updating cart items; used_count is only changed at checkout.
-     */
     public boolean isValidForCart(double orderTotal) {
         if (!status) return false;
         Timestamp now = new Timestamp(System.currentTimeMillis());
@@ -150,9 +108,6 @@ public class Voucher {
         return true;
     }
 
-    /**
-     * Calculate discount amount for a given order total.
-     */
     public double calculateDiscount(double orderTotal) {
         if (!isValid(orderTotal)) return 0.0;
         double discount = orderTotal * (discountPercent / 100.0);
@@ -162,9 +117,6 @@ public class Voucher {
         return discount;
     }
 
-    /**
-     * Calculate discount for cart operations without checking used_count.
-     */
     public double calculateCartDiscount(double orderTotal) {
         if (!isValidForCart(orderTotal)) return 0.0;
         double discount = orderTotal * (discountPercent / 100.0);
@@ -174,4 +126,3 @@ public class Voucher {
         return discount;
     }
 }
-

@@ -12,6 +12,7 @@ public class OrderDetail {
     private String productTitle;
     private String productImage;
     private String productUnit;
+    private String shopName;
 
     public OrderDetail() {
     }
@@ -95,6 +96,14 @@ public class OrderDetail {
 
     public void setProductUnit(String productUnit) {
         this.productUnit = productUnit;
+    }
+
+    public String getShopName() {
+        return shopName;
+    }
+
+    public void setShopName(String shopName) {
+        this.shopName = shopName;
     }
 }
 

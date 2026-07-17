@@ -51,6 +51,7 @@ public class ProductServlet extends HttpServlet {
 
         HttpSession session = req.getSession(false);
         String role = (session != null) ? (String) session.getAttribute("role") : null;
+        // DuyAnhNgo- Lấy từ khóa tìm kiếm (biến "search") nằm trên thanh URL (nếu có). VD: /products?search=tao
         String keyword = req.getParameter("search");
 
         System.out.println("[ProductServlet] === NEW REQUEST ===");
@@ -62,12 +63,14 @@ public class ProductServlet extends HttpServlet {
         req.setAttribute("role", role);
 
         try {
+            // DuyAnhNgo- Gọi hàm loadProducts() (bên dưới hàm này sẽ gián tiếp gọi ProductDAO.searchProducts) để chọc xuống DB lấy danh sách sản phẩm theo từ khóa
             List<Product> products = loadProducts(role, session, keyword);
             int totalCount = getTotalCount(role, session);
 
             req.setAttribute("products", products);
             req.setAttribute("totalProductCount", totalCount);
 
+            // DuyAnhNgo- Nếu có từ khóa thì trả ngược từ khóa lại ra giao diện (jsp) để in lên màn hình (Ví dụ in dòng chữ: Kết quả tìm kiếm cho "Táo")
             if (keyword != null) {
                 req.setAttribute("searchKeyword", keyword.trim());
             }
@@ -120,6 +123,14 @@ public class ProductServlet extends HttpServlet {
 
             if (product == null || product.isIsDelete()) {
                 session.setAttribute("error", "San pham khong ton tai hoac da bi xoa.");
+                resp.sendRedirect(req.getContextPath() + "/products");
+                return;
+            }
+            
+                        // Khach hang: chi duoc xem san pham da duoc duyet
+            String userRole = (session != null) ? (String) session.getAttribute("role") : null;
+            if (!ROLE_SELLER.equals(userRole) && product.getStatus() != 1) {
+                session.setAttribute("error", "San pham nay chua duoc duyet.");
                 resp.sendRedirect(req.getContextPath() + "/products");
                 return;
             }

@@ -2,6 +2,8 @@ package model;
 
 import java.sql.Timestamp;
 
+// DuyAnhNgo- Class Model: Đại diện cho 1 dòng dữ liệu trong bảng DeliveryAddresses của cơ sở dữ liệu
+// Các thuộc tính trong này tương ứng với các cột: Tên, SĐT, Địa chỉ, Ghi chú, isDefault,...
 public class DeliveryAddress {
     private int id;
     private int customerId;

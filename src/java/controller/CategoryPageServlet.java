@@ -28,20 +28,21 @@ public class CategoryPageServlet extends HttpServlet {
         ProductDAO productDAO = new ProductDAO();
 
         try {
-            // Load all active categories
+            // DuyAnhNgo- Gọi CategoryDAO (hàm getAllActiveCategories) để tải toàn bộ danh sách Danh mục đang hoạt động (ví dụ: Trái cây cao cấp) hiển thị lên Header/Sidebar
             List<Category> categories = categoryDAO.getAllActiveCategories();
             req.setAttribute("categories", categories);
 
-            // If a category is selected, load its products
+            // DuyAnhNgo- Kiểm tra xem người dùng có đang click vào một Danh mục cụ thể nào không (qua biến categoryId trên URL)
             String catIdParam = req.getParameter("categoryId");
             if (catIdParam != null && !catIdParam.trim().isEmpty()) {
                 try {
                     int categoryId = Integer.parseInt(catIdParam.trim());
+                    // DuyAnhNgo- Nếu có, gọi ProductDAO (cụ thể là hàm getProductsByCategoryId) để lấy toàn bộ danh sách sản phẩm thuộc đúng danh mục đó
                     List<Product> products = productDAO.getProductsByCategoryId(categoryId);
                     req.setAttribute("products", products);
                     req.setAttribute("selectedCategoryId", categoryId);
 
-                    // Find the selected category name
+                    // DuyAnhNgo- Vòng lặp tìm Tên của danh mục đang được chọn (để in ra dòng chữ "Sản phẩm: Trái cây cao cấp" trên giao diện)
                     for (Category c : categories) {
                         if (c.getId() == categoryId) {
                             req.setAttribute("selectedCategoryName", c.getName());
@@ -53,6 +54,7 @@ public class CategoryPageServlet extends HttpServlet {
                 }
             }
 
+            // DuyAnhNgo- Đẩy toàn bộ dữ liệu danh mục & sản phẩm sang trang category-page.jsp để vẽ giao diện
             req.getRequestDispatcher("/category-page.jsp").forward(req, resp);
 
         } catch (Exception e) {

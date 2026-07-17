@@ -28,14 +28,14 @@ public class SearchSuggestServlet extends HttpServlet {
 
         response.setContentType("application/json;charset=UTF-8");
         response.setCharacterEncoding("UTF-8");
-        // Cho phép cache phía client 5 giây để giảm request liên tục
+        // DuyAnhNgo- Cho phép cache phía client 5 giây để giảm tải request liên tục (Do lúc gõ phím AJAX sẽ bắn liên tọi lên Server)
         response.setHeader("Cache-Control", "max-age=5");
 
         String q = request.getParameter("q");
 
         PrintWriter out = response.getWriter();
 
-        // Không có keyword -> trả mảng rỗng
+        // DuyAnhNgo- Lấy từ khóa khách hàng vừa gõ. Nếu rỗng (chưa gõ gì) -> lập tức ngắt hàm và trả về một mảng JSON rỗng "[]"
         if (q == null || q.trim().isEmpty()) {
             out.print("[]");
             return;
@@ -44,9 +44,11 @@ public class SearchSuggestServlet extends HttpServlet {
         q = q.trim();
 
         try {
+            // DuyAnhNgo- Gọi ProductDAO (hàm searchProducts) để truy vấn CSDL: SELECT * FROM Products WHERE title LIKE '%từ-khóa%'
             ProductDAO dao = new ProductDAO();
             List<Product> products = dao.searchProducts(q);
 
+            // DuyAnhNgo- Khởi tạo chuỗi JSON. Duyệt qua danh sách sản phẩm lấy được, bóc tách ID, Tên, Giá bán, Ảnh rồi nối chuỗi lại thành chuẩn JSON để gửi về cho AJAX xử lý
             StringBuilder json = new StringBuilder("[");
             int count = 0;
             for (Product p : products) {
