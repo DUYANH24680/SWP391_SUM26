@@ -222,27 +222,23 @@
 
     <!-- Topnav -->
     <nav class="topnav">
-        <a href="<%= request.getContextPath() %>/home.jsp" class="nav-logo">
-            <i class="fa-solid fa-apple-whole"></i> Sena Shop
+        <a href="<%= request.getContextPath() %>/admin/orders" class="nav-logo">
+            <i class="fa-solid fa-shield-halved"></i> Admin Panel
         </a>
         <div class="nav-links">
-            <a href="<%= request.getContextPath() %>/home.jsp">Trang Chủ</a>
-            <a href="<%= request.getContextPath() %>/admin/customers">
-                <i class="fa-solid fa-users" style="margin-right:4px;"></i> Khách Hàng
-            </a>
             <a href="<%= request.getContextPath() %>/admin/orders">
-                <i class="fa-solid fa-chart-line" style="margin-right:4px;"></i> Monitor Đơn Hàng
+                <i class="fa-solid fa-chart-line"></i> Monitor Đơn Hàng
+            </a>
+            <a href="<%= request.getContextPath() %>/admin/customers">
+                <i class="fa-solid fa-users"></i> Khách Hàng
             </a>
             <a href="<%= request.getContextPath() %>/admin/seller-requests" class="active">
-                <i class="fa-solid fa-store" style="margin-right:4px;"></i> Duyệt Seller
+                <i class="fa-solid fa-store"></i> Duyệt Seller
             </a>
         </div>
         <div class="nav-right">
             <span class="nav-username">Admin: <%= user.getFullname() != null ? user.getFullname() : user.getUsername() %></span>
-            <%
-                String avatarUrl = user.getAvatar();
-                if (avatarUrl == null || avatarUrl.trim().isEmpty()) {
-                    String fn = user.getFullname() != null ? user.getFullname() : user.getUsername();
+            <a href="<%= request.getContextPath() %>/logout" class="btn btn-sm" style="background: #fee2e2; color: #991b1b; text-decoration: none;">Đăng Xuất</a>
                     avatarUrl = "https://ui-avatars.com/api/?name=" + java.net.URLEncoder.encode(fn, "UTF-8") + "&background=4caf50&color=fff&size=80&bold=true&rounded=true";
                 }
             %>

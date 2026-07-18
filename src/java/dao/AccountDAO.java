@@ -254,6 +254,110 @@ public class AccountDAO extends Utils.DbContext {
         }
     }
 
+    /**
+     * Get all staff accounts.
+     */
+    public List<Account> getAllStaff() {
+        return getAccountsByRole("staff");
+    }
+    
+    /**
+     * Get all shipper accounts.
+     */
+    public List<Account> getAllShippers() {
+        return getAccountsByRole("shipper");
+    }
+    
+    /**
+     * Search staff accounts by keyword.
+     */
+    public List<Account> searchStaff(String keyword) {
+        return searchAccountsByRole("staff", keyword);
+    }
+    
+    /**
+     * Search shipper accounts by keyword.
+     */
+    public List<Account> searchShippers(String keyword) {
+        return searchAccountsByRole("shipper", keyword);
+    }
+    
+    /**
+     * Add a new staff account.
+     * Returns the generated account id, or -1 on failure.
+     */
+    public int addStaff(String fullname, String username, String passwordHash, String email, String phone) {
+        return register(fullname, username, passwordHash, email, phone, 4); // roleId 4 = staff
+    }
+    
+    /**
+     * Add a new shipper account.
+     * Returns the generated account id, or -1 on failure.
+     */
+    public int addShipper(String fullname, String username, String passwordHash, String email, String phone) {
+        return register(fullname, username, passwordHash, email, phone, 5); // roleId 5 = shipper
+    }
+    
+    /**
+     * Lock an account (set status = 0).
+     */
+    public boolean lockAccount(int id) {
+        return updateAccountStatus(id, 0);
+    }
+    
+    /**
+     * Unlock an account (set status = 1).
+     */
+    public boolean unlockAccount(int id) {
+        return updateAccountStatus(id, 1);
+    }
+    
+    /**
+     * Soft delete an account (set status = -1).
+     */
+    public boolean deleteAccount(int id) {
+        return updateAccountStatus(id, -1);
+    }
+    
+    /**
+     * Update staff details (fullname, email, phone, address, gender).
+     */
+    public boolean updateStaff(int id, String fullname, String email, String phone, String address, Boolean gender) {
+        return updateProfile(id, fullname, email, phone, address, gender, null);
+    }
+    
+    /**
+     * Update shipper details (fullname, email, phone, address, gender).
+     */
+    public boolean updateShipper(int id, String fullname, String email, String phone, String address, Boolean gender) {
+        return updateProfile(id, fullname, email, phone, address, gender, null);
+    }
+    
+    /**
+     * Change password for staff/shipper account.
+     */
+    public boolean changePassword(int id, String newPasswordHash) {
+        return updatePassword(id, newPasswordHash);
+    }
+    
+    /**
+     * Get role id by role name.
+     */
+    public int getRoleIdByName(String roleName) {
+        String sql = "SELECT id FROM Roles WHERE name = ?";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            ps.setString(1, roleName);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("id");
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[AccountDAO] getRoleIdByName error: " + e.getMessage());
+        }
+        return -1;
+    }
+    
     // ---- helper ----
     private Account mapRow(ResultSet rs) throws SQLException {
         Account u = new Account();

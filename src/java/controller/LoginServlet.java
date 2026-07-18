@@ -72,10 +72,26 @@ public class LoginServlet extends HttpServlet {
             }
 
             System.out.println("[LoginServlet] User '" + username
-                    + "' da login thanh cong. Cart: " + session.getAttribute("cartCount")
+                    + "' da login thanh cong. Role: " + account.getRoleName()
+                    + ". Cart: " + session.getAttribute("cartCount")
                     + " san pham, Wishlist: " + session.getAttribute("wishlistCount") + " san pham");
 
-            response.sendRedirect(request.getContextPath() + "/home.jsp");
+            // Redirect based on role
+            String role = account.getRoleName();
+            String redirectUrl = request.getContextPath() + "/home.jsp";
+            
+            if ("admin".equalsIgnoreCase(role)) {
+                redirectUrl = request.getContextPath() + "/admin/orders";
+            } else if ("staff".equalsIgnoreCase(role)) {
+                redirectUrl = request.getContextPath() + "/staff/delivery";
+            } else if ("shipper".equalsIgnoreCase(role)) {
+                redirectUrl = request.getContextPath() + "/shipper/delivery";
+            } else if ("seller".equalsIgnoreCase(role)) {
+                redirectUrl = request.getContextPath() + "/seller/dashboard";
+            }
+            // customer và các role khác sẽ về home.jsp
+            
+            response.sendRedirect(redirectUrl);
         } else {
             request.setAttribute("error", "Sai tai khoan hoac mat khau");
             request.getRequestDispatcher("login.jsp").forward(request, response);
