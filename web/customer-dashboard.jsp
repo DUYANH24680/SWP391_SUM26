@@ -4,8 +4,6 @@
 <%@ page import="model.OrderDetail" %>
 <%@ page import="java.util.List" %>
 <%@ page import="java.util.Map" %>
-<%@ taglib prefix="c" uri="jakarta.tags.core" %>
-<%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 <%
     Account Account = (Account) session.getAttribute("Account");
     if (Account == null) {
@@ -22,8 +20,13 @@
     }
 
     List<Order> orders = (List<Order>) request.getAttribute("orders");
+    if (orders == null) {
+        response.sendRedirect(request.getContextPath() + "/customer-dashboard");
+        return;
+    }
+
     Map<Integer, List<OrderDetail>> detailsMap = (Map<Integer, List<OrderDetail>>) request.getAttribute("detailsMap");
-    int totalOrders = (Integer) request.getAttribute("totalOrders");
+    int totalOrders = request.getAttribute("totalOrders") != null ? (Integer) request.getAttribute("totalOrders") : 0;
     double totalSpent = request.getAttribute("totalSpent") != null
             ? ((Number) request.getAttribute("totalSpent")).doubleValue()
             : 0;
@@ -693,7 +696,10 @@
                 </div>
                 <div class="order-list">
                     <%
-                        List<Order> displayOrders = recentOrders != null ? recentOrders : orders;
+                        List<Order> displayOrders = (recentOrders != null && !recentOrders.isEmpty()) ? recentOrders : orders;
+                        if (displayOrders != null && displayOrders.size() > 3) {
+                            displayOrders = new java.util.ArrayList<>(displayOrders.subList(0, 3));
+                        }
                         if (displayOrders != null && !displayOrders.isEmpty()) {
                             for (Order o : displayOrders) {
                                 List<OrderDetail> details = detailsMap.get(o.getId());
@@ -701,7 +707,7 @@
                         <div class="order-card">
                             <div class="order-header">
                                 <div>
-                                    Ngày đặt: <strong><%= new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(o.getOrderDate()) %></strong>
+                                    Ngày đặt: <strong><%= o.getOrderDate() != null ? new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(o.getOrderDate()) : "N/A" %></strong>
                                     <span class="order-id"></span>
                                 </div>
                                 <span class="badge <%= o.getStatusClass() %>"><%= o.getStatusLabel() %></span>
