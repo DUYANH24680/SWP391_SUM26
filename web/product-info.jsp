@@ -217,14 +217,23 @@
         .section-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--gray-400); margin-bottom: 0.5rem; }
         
         .shop-card {
-            background: var(--gray-50); border: 1px solid var(--gray-200);
+            background: var(--gray-50); border: 1.5px solid var(--gray-200);
             border-radius: var(--radius-sm); padding: 1rem 1.25rem;
             display: flex; align-items: center; gap: 0.75rem;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .shop-card:hover {
+            border-color: var(--green);
+            background: var(--green-light);
+            box-shadow: 0 4px 12px rgba(76,175,80,0.15);
+            transform: translateY(-1px);
         }
         .shop-avatar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid var(--green); }
         .shop-avatar-placeholder { width: 44px; height: 44px; border-radius: 50%; background: var(--green-light); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
         .shop-name { font-size: 0.95rem; font-weight: 700; color: var(--gray-800); }
-        .shop-meta { font-size: 0.8rem; color: var(--gray-400); }
+        .shop-meta { font-size: 0.8rem; color: var(--gray-400); display: flex; align-items: center; gap: 0.3rem; }
 
         /* ===== QUANTITY CONTROL ===== */
         .quantity-control {
@@ -666,19 +675,23 @@
                 <!-- Shop info -->
                 <div>
                     <div class="section-label"><i class="fa-solid fa-shop" style="color:var(--green);"></i> Cua Hang Ban</div>
-                    <div class="shop-card">
+                    <a href="<%= request.getContextPath() %>/shop-products?shopId=<%= shopInfo.getId() %>" class="shop-card" style="display:flex; align-items:center;">
                         <% if (shopInfo.getLogo() != null && !shopInfo.getLogo().trim().isEmpty()) { %>
-                        <img class="shop-avatar" src="<%= ImageUrlUtil.resolve(shopInfo.getLogo(), request.getContextPath()) %>" alt="<%= shopInfo.getShopName() %>" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                        <img class="shop-avatar" src="<%= shopInfo.getLogo() %>" alt="<%= shopInfo.getName() %>" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
                         <div class="shop-avatar-placeholder" style="display:none;">&#127974;</div>
                         <% } else { %><div class="shop-avatar-placeholder">&#127974;</div><% } %>
-                        <div class="shop-info" style="flex:1;">
-                            <div class="shop-name"><%= shopInfo.getShopName() != null ? shopInfo.getShopName() : "-" %></div>
-                            <div class="shop-meta">Dia chi: <%= shopInfo.getAddress() != null && !shopInfo.getAddress().isEmpty() ? shopInfo.getAddress() : "Chua cap nhat" %></div>
+                        <div class="shop-info">
+                            <div class="shop-name"><%= shopInfo.getName() != null ? shopInfo.getName() : "-" %></div>
+                            <div class="shop-meta">
+                                <i class="fa-solid fa-location-dot" style="color:var(--green);font-size:0.7rem;"></i>
+                                <%= shopInfo.getAddress() != null && !shopInfo.getAddress().isEmpty() ? shopInfo.getAddress() : "Chua cap nhat" %>
+                            </div>
                         </div>
-                        <a href="javascript:void(0)" onclick="openReportModal(<%= shopInfo.getId() %>, '<%= escapeJs(shopInfo.getShopName() != null ? shopInfo.getShopName() : "Cửa hàng") %>', 'SHOP')" style="color:var(--gray-400);font-size:1.1rem;padding:0.5rem;" title="Tố cáo Cửa hàng">
-                            <i class="fa-solid fa-flag"></i>
-                        </a>
-                    </div>
+                        <div style="margin-left:auto; display:flex; align-items:center; gap:0.5rem;">
+                            <span style="font-size:0.78rem;font-weight:600;color:var(--green-dark);">Xem shop</span>
+                            <i class="fa-solid fa-chevron-right" style="color:var(--green);font-size:0.8rem;"></i>
+                        </div>
+                    </a>
                 </div>
 
                 <!-- Quantity Input -->
