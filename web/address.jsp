@@ -321,58 +321,12 @@
 </head>
 <body>
 
-<nav class="topnav">
-    <a href="home.jsp" class="nav-logo">
-        <i class="fa-solid fa-apple-whole"></i> Sena Shop
-    </a>
-    <div class="nav-right">
-        <img class="nav-avatar" src="<%= avatarUrl %>" alt="avatar">
-    </div>
-</nav>
-
-<div class="layout">
-    <!-- SIDEBAR -->
-    <aside class="sidebar">
-        <div class="sidebar-user">
-            <div class="sidebar-user-row">
-                <img class="sidebar-user-avatar" src="<%= avatarUrl %>" alt="avatar">
-                <div>
-                    <div class="sidebar-welcome"><%= fullname.split(" ")[fullname.split(" ").length - 1] %></div>
-                </div>
-            </div>
-            <div class="sidebar-role-text"><%= roleDisplay %></div>
-        </div>
-
-        <div class="sidebar-nav">
-            <% if ("customer".equalsIgnoreCase(role)) { %>
-            <a href="customer-dashboard"><i class="fa-solid fa-gauge"></i> Dashboard</a>
-            <% } else if ("seller".equalsIgnoreCase(role)) { %>
-            <a href="seller/dashboard"><i class="fa-solid fa-gauge"></i> Dashboard</a>
-            <% } %>
-            <% if ("customer".equalsIgnoreCase(role)) { %>
-            <a href="my-orders"><i class="fa-solid fa-basket-shopping"></i> Đơn Hàng</a>
-            <% } else if ("seller".equalsIgnoreCase(role)) { %>
-            <a href="seller/orders"><i class="fa-solid fa-basket-shopping"></i> Đơn Hàng</a>
-            <% } else if ("admin".equalsIgnoreCase(role)) { %>
-            <a href="admin/orders"><i class="fa-solid fa-basket-shopping"></i> Đơn Hàng</a>
-            <% } %>
-            <a href="profile?tab=profile">
-                <i class="fa-regular fa-user"></i> Ho So
-            </a>
-            <a href="address" class="active">
-                <i class="fa-solid fa-map-location-dot"></i> Sổ Địa Chỉ
-            </a>
-            <a href="profile?tab=security">
-                <i class="fa-solid fa-shield-halved"></i> Bảo Mật
-            </a>
-            <a href="logout" style="color:#e53e3e;">
-                <i class="fa-solid fa-right-from-bracket" style="width:20px;text-align:center;"></i> Đăng Xuất
-            </a>
-        </div>
-    </aside>
+<jsp:include page="/sidebar.jsp">
+    <jsp:param name="activePage" value="address"/>
+</jsp:include>
 
     <!-- MAIN -->
-    <main class="main">
+    <main class="sena-main">
         <% if (message != null) { %>
         <div class="alert alert-success">
             <i class="fa-solid fa-circle-check"></i>
@@ -460,7 +414,7 @@
             </div>
         </div>
     </main>
-</div>
+</div><!-- end sena-layout -->
 
 <!-- Modal Thêm/Sửa Địa Chỉ -->
 <div class="modal-overlay" id="addressModal">

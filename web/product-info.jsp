@@ -677,11 +677,11 @@
                     <div class="section-label"><i class="fa-solid fa-shop" style="color:var(--green);"></i> Cua Hang Ban</div>
                     <a href="<%= request.getContextPath() %>/shop-products?shopId=<%= shopInfo.getId() %>" class="shop-card" style="display:flex; align-items:center;">
                         <% if (shopInfo.getLogo() != null && !shopInfo.getLogo().trim().isEmpty()) { %>
-                        <img class="shop-avatar" src="<%= shopInfo.getLogo() %>" alt="<%= shopInfo.getName() %>" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                        <img class="shop-avatar" src="<%= shopInfo.getLogo() %>" alt="<%= shopInfo.getShopName() %>" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
                         <div class="shop-avatar-placeholder" style="display:none;">&#127974;</div>
                         <% } else { %><div class="shop-avatar-placeholder">&#127974;</div><% } %>
                         <div class="shop-info">
-                            <div class="shop-name"><%= shopInfo.getName() != null ? shopInfo.getName() : "-" %></div>
+                            <div class="shop-name"><%= shopInfo.getShopName() != null ? shopInfo.getShopName() : "-" %></div>
                             <div class="shop-meta">
                                 <i class="fa-solid fa-location-dot" style="color:var(--green);font-size:0.7rem;"></i>
                                 <%= shopInfo.getAddress() != null && !shopInfo.getAddress().isEmpty() ? shopInfo.getAddress() : "Chua cap nhat" %>
@@ -882,7 +882,7 @@
                     <div style="font-size:2.5rem; margin-bottom:1rem;">&#128722;</div>
                     <p style="color: var(--gray-800); font-weight: 700; font-size: 1.1rem; margin-bottom: 0.5rem;">Bạn chưa mua sản phẩm này</p>
                     <p style="color: var(--gray-600); margin-bottom: 1.5rem;">Chỉ những khách hàng đã mua và nhận hàng thành công mới có thể đánh giá sản phẩm.</p>
-                    <a href="<%= request.getContextPath() %>/home.jsp" class="btn btn-green">
+                    <a href="#" onclick="document.querySelector('.modal-container').scrollTo({top: 0, behavior: 'smooth'}); return false;" class="btn btn-green">
                         <i class="fa-solid fa-basket-shopping"></i> Mua Sản Phẩm Ngay
                     </a>
                 </div>

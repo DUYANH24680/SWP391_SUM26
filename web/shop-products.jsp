@@ -30,7 +30,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= shop.getName() %> | Sena Shop</title>
+    <title><%= shop.getShopName() %> | Sena Shop</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
@@ -512,7 +512,7 @@
                 <div class="shop-avatar"><i class="fa-solid fa-store" style="color:var(--green);"></i></div>
             <% } %>
             <div class="shop-info">
-                <div class="shop-name"><%= shop.getName() %></div>
+                <div class="shop-name"><%= shop.getShopName() %></div>
                 <div class="shop-meta">
                     <span><i class="fa-solid fa-box"></i> <%= totalProducts %> sản phẩm</span>
                     <% if (shop.getAddress() != null && !shop.getAddress().isEmpty()) { %>

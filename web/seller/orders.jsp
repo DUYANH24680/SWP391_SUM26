@@ -401,39 +401,12 @@
 </head>
 <body>
 
-    <!-- Topnav -->
-    <nav class="topnav">
-        <a href="../home.jsp" class="nav-logo">
-            <i class="fa-solid fa-apple-whole"></i> Sena Shop
-        </a>
-        <div class="nav-links">
-            <a href="../home.jsp">Trang Chủ</a>
-            <a href="../products">Sản Phẩm</a>
-        </div>
-        <div class="nav-right" style="display:flex;align-items:center;gap:0.5rem;">
-            <% if (shop != null) { %>
-                <span class="badge badge-green" style="font-weight:700;"><%= shop.getShopName() %></span>
-            <% } %>
-            <img class="nav-avatar" src="<%= avatarUrl %>" alt="avatar">
-        </div>
-    </nav>
-
-    <!-- Layout Container -->
-    <div class="layout">
-        
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="sidebar-nav">
-                <a href="dashboard"><i class="fa-solid fa-gauge"></i> Dashboard</a>
-                <a href="../profile"><i class="fa-regular fa-Account"></i> Hồ Sơ</a>
-                <a href="../products"><i class="fa-brands fa-opencart"></i> Sản Phẩm</a>
-                <a href="orders" class="active"><i class="fa-solid fa-basket-shopping"></i> Đơn Hàng</a>
-                <a href="../logout" class="logout"><i class="fa-solid fa-right-from-bracket"></i> Đăng Xuất</a>
-            </div>
-        </aside>
+    <jsp:include page="/sidebar.jsp">
+        <jsp:param name="activePage" value="orders"/>
+    </jsp:include>
 
         <!-- Main Content -->
-        <main class="main">
+        <main class="sena-main">
             
             <% if (message != null) { %>
                 <div class="alert alert-success">
@@ -580,7 +553,7 @@
             <% } %>
 
         </main>
-    </div>
+    </div><!-- end sena-layout -->
 
     <script>
         // Lọc đơn hàng theo tab trạng thái

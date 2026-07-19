@@ -53,38 +53,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard | Sena Shop</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-        :root {
-            --green: #4caf50;
-            --green-dark: #388e3c;
-            --green-light: #e8f5e9;
-            --green-mid: #c8e6c9;
-            --bg: #f0f4f1;
-            --white: #ffffff;
-            --gray-50: #f8fafb;
-            --gray-100: #eef1ee;
-            --gray-200: #dde5dd;
-            --gray-400: #9aaa9a;
-            --gray-600: #5a6a5a;
-            --gray-800: #2d3d2d;
-            --shadow-sm: 0 1px 3px rgba(0,0,0,.08);
-            --shadow: 0 4px 12px rgba(0,0,0,.08);
-            --radius: 14px;
-            --radius-sm: 8px;
-        }
-
-        html, body {
-            min-height: 100vh;
-            font-family: 'Inter', sans-serif;
-            color: var(--gray-800);
-            background: var(--bg);
-        }
-
-        body { display: flex; flex-direction: column; }
+        /* Layout vars already provided by sidebar.jsp */
 
         /* ======= TOPNAV ======= */
         .topnav {
@@ -520,81 +490,27 @@
             transform: translateY(-1px);
         }
 
-        @media (max-width: 900px) {
-            .layout { flex-direction: column; }
-            .sidebar { width: 100%; position: static; }
-            .sidebar-nav { display: flex; flex-wrap: wrap; gap: 0.25rem; }
-        }
     </style>
 </head>
 <body>
 
-    <nav class="topnav">
-        <a href="home.jsp" class="nav-logo">
-            <i class="fa-solid fa-apple-whole"></i> Sena Shop
-        </a>
-        <div class="nav-links">
-            <a href="home.jsp">Trang Chủ</a>
-            <a href="danh-muc">Danh Mục</a>
-            <a href="products">Sản Phẩm</a>
-        </div>
-        <div class="nav-right">
-            <a href="view-cart" style="text-decoration:none; color:var(--gray-600); font-size:1.1rem;">
-                <i class="fa-solid fa-basket-shopping"></i>
-            </a>
-            <img class="nav-avatar" src="<%= avatarUrl %>" alt="avatar">
-        </div>
-    </nav>
+    <jsp:include page="/sidebar.jsp">
+        <jsp:param name="activePage" value="customer-dashboard"/>
+    </jsp:include>
 
-    <div class="layout">
-        <aside class="sidebar">
-            <div class="sidebar-user">
-                <img class="sidebar-avatar" src="<%= avatarUrl %>" alt="avatar">
-                <div>
-                    <div class="sidebar-name"><%= Account.getFullname() != null ? Account.getFullname() : Account.getUsername() %></div>
-                    <div class="sidebar-role">Khách hàng</div>
-                </div>
+    <main class="sena-main">
+        <% if (message != null) { %>
+            <div class="alert alert-success">
+                <i class="fa-solid fa-circle-check"></i>
+                <span><%= message %></span>
             </div>
-            <div class="sidebar-nav">
-                <a href="customer-dashboard" class="active"><i class="fa-solid fa-gauge"></i> Dashboard</a>
-                <a href="my-orders"><i class="fa-solid fa-basket-shopping"></i> Đơn Hàng</a>
-                <a href="profile"><i class="fa-regular fa-user"></i> Hồ Sơ</a>
-                <a href="address"><i class="fa-solid fa-map-location-dot"></i> Sổ Địa Chỉ</a>
-                <a href="logout" class="logout"><i class="fa-solid fa-right-from-bracket"></i> Đăng Xuất</a>
+        <% } %>
+        <% if (error != null) { %>
+            <div class="alert alert-danger">
+                <i class="fa-solid fa-circle-exclamation"></i>
+                <span><%= error %></span>
             </div>
-            <%
-                String customerRole = (String) session.getAttribute("role");
-                if (customerRole == null) {
-                    Object r = session.getAttribute("Account");
-                    if (r instanceof Account) {
-                        customerRole = ((Account) r).getRoleName();
-                    }
-                }
-                if (customerRole != null && customerRole.equalsIgnoreCase("seller")) {
-            %>
-            <div style="padding: 0.75rem; margin-top: 0.5rem; border-top: 1px solid var(--gray-100);">
-                <a href="${pageContext.request.contextPath}/seller/dashboard" class="btn" style="width:100%; justify-content:center; background:var(--green); color:#fff; border-radius:var(--radius-sm); padding:0.6rem 0.9rem; font-size:0.875rem; font-weight:600; text-decoration:none; box-shadow: 0 2px 8px rgba(76,175,80,0.3);">
-                    <i class="fa-solid fa-shop"></i> Chuyển sang Seller Dashboard
-                </a>
-            </div>
-            <%
-                }
-            %>
-        </aside>
-
-        <main class="main">
-            <% if (message != null) { %>
-                <div class="alert alert-success">
-                    <i class="fa-solid fa-circle-check"></i>
-                    <span><%= message %></span>
-                </div>
-            <% } %>
-            <% if (error != null) { %>
-                <div class="alert alert-danger">
-                    <i class="fa-solid fa-circle-exclamation"></i>
-                    <span><%= error %></span>
-                </div>
-            <% } %>
+        <% } %>
 
             <div class="stats-grid">
                 <div class="stat-card">
@@ -764,7 +680,7 @@
                 </div>
             </div>
         </main>
-    </div>
+    </div><!-- end sena-layout -->
 </body>
 </html>
 

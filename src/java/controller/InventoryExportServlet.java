@@ -29,6 +29,10 @@ public class InventoryExportServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         HttpSession session = req.getSession(false);
+        if (session == null || !"seller".equalsIgnoreCase((String) session.getAttribute("role"))) {
+            resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Access Denied");
+            return;
+        }
 
         int ownerId = 1;
         if (session != null && session.getAttribute("userId") != null) {
@@ -79,6 +83,10 @@ public class InventoryExportServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         HttpSession session = req.getSession(false);
+        if (session == null || !"seller".equalsIgnoreCase((String) session.getAttribute("role"))) {
+            resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Access Denied");
+            return;
+        }
 
         int ownerId = 1;
         if (session != null && session.getAttribute("userId") != null) {
