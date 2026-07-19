@@ -1,7 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="model.Account" %>
 <%
-    Account reportUser = (Account) session.getAttribute("Account");
+    Account reportUser = (Account) session.getAttribute("user");
     String reportRole = reportUser != null ? reportUser.getRoleName() : "";
     if (reportRole == null) reportRole = "";
     String reportCtx = request.getContextPath();

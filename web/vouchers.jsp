@@ -121,9 +121,11 @@
     <nav class="topnav">
         <a href="home.jsp" class="nav-logo"><i class="fa-solid fa-apple-whole"></i> Sena Shop</a>
         <div class="nav-links">
-            <% if (Account != null && ("admin".equalsIgnoreCase(Account.getRoleName()) || "seller".equalsIgnoreCase(Account.getRoleName()))) { %>
+            <% if (Account != null && "seller".equalsIgnoreCase(Account.getRoleName())) { %>
                 <a href="inventory-export">Xuất Kho</a>
                 <a href="inventory-import">Nhập Kho</a>
+            <% } %>
+            <% if (Account != null && ("admin".equalsIgnoreCase(Account.getRoleName()) || "seller".equalsIgnoreCase(Account.getRoleName()))) { %>
                 <a href="products">Sản Phẩm</a>
             <% } %>
             <a href="danh-muc">Danh Mục</a>

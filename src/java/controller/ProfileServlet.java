@@ -31,25 +31,9 @@ public class ProfileServlet extends HttpServlet {
             throws ServletException, IOException {
         HttpSession session = req.getSession(true);
         
-        // Auto-login if no user session exists (bypassing login page)
-        if (session.getAttribute("Account") == null) {
-            AccountDAO userDAO = new AccountDAO();
-            try {
-                Account defaultCust = userDAO.findById(1);
-                if (defaultCust != null) {
-                    
-                    session.setAttribute("user", defaultCust);
-                    session.setAttribute("userId", defaultCust.getId());
-                    session.setAttribute("role", defaultCust.getRoleName());
-                }
-            } finally {
-                userDAO.close();
-            }
-        }
-
         Account user = (Account) session.getAttribute("Account");
         if (user == null) {
-            resp.getWriter().println("No user found in the database. Please add sample data to Accounts table first.");
+            resp.sendRedirect(req.getContextPath() + "/login");
             return;
         }
 

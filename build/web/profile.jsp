@@ -36,8 +36,9 @@
     String rawAvatar = user.getAvatar();
     String avatarUrl = Utils.ImageUrlUtil.resolve(rawAvatar, request.getContextPath());
     if (avatarUrl == null || avatarUrl.trim().isEmpty()) {
+        String encodeName = (fullname != null && !fullname.trim().isEmpty()) ? fullname : username;
         avatarUrl = "https://ui-avatars.com/api/?name="
-                  + java.net.URLEncoder.encode(fullname, "UTF-8")
+                  + java.net.URLEncoder.encode(encodeName != null ? encodeName : "User", "UTF-8")
                   + "&background=4caf50&color=fff&size=160&bold=true&rounded=true";
     }
 
@@ -89,198 +90,6 @@
             flex-direction: column;
         }
 
-        /* ======= TOPNAV ======= */
-        .topnav {
-            background: var(--white);
-            border-bottom: 1px solid var(--gray-200);
-            height: 60px;
-            display: flex;
-            align-items: center;
-            padding: 0 2rem;
-            gap: 2rem;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            box-shadow: var(--shadow-sm);
-        }
-
-        .nav-logo {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 1.3rem;
-            font-weight: 800;
-            color: var(--green-dark);
-            text-decoration: none;
-            white-space: nowrap;
-            letter-spacing: -0.01em;
-        }
-
-        .nav-logo i { color: var(--green); font-size: 1.15rem; }
-
-        .nav-links {
-            display: flex;
-            gap: 0.25rem;
-            margin-left: 1rem;
-        }
-
-        .nav-links a {
-            padding: 0.4rem 0.85rem;
-            border-radius: 6px;
-            font-size: 0.875rem;
-            font-weight: 500;
-            color: var(--gray-600);
-            text-decoration: none;
-            transition: all 0.15s;
-        }
-
-        .nav-links a:hover { background: var(--green-light); color: var(--green-dark); }
-
-        .nav-right {
-            margin-left: auto;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        .nav-icon-btn {
-            width: 38px; height: 38px;
-            border-radius: 50%;
-            background: var(--gray-100);
-            border: none;
-            display: flex; align-items: center; justify-content: center;
-            color: var(--gray-600);
-            cursor: pointer;
-            font-size: 0.95rem;
-            transition: background 0.15s;
-        }
-
-        .nav-icon-btn:hover { background: var(--green-light); color: var(--green-dark); }
-
-        .nav-avatar {
-            width: 38px; height: 38px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid var(--green);
-            cursor: pointer;
-        }
-
-        /* ======= MAIN LAYOUT ======= */
-        .layout {
-            display: flex;
-            flex: 1;
-            max-width: 1080px;
-            width: 100%;
-            margin: 2rem auto;
-            padding: 0 1.5rem;
-            gap: 1.5rem;
-            align-items: flex-start;
-        }
-
-        /* ======= SIDEBAR ======= */
-        .sidebar {
-            width: 200px;
-            flex-shrink: 0;
-            background: var(--white);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow-sm);
-            border: 1px solid var(--gray-200);
-            overflow: hidden;
-            position: sticky;
-            top: 76px;
-        }
-
-        .sidebar-user {
-            padding: 1.25rem 1rem;
-            border-bottom: 1px solid var(--gray-100);
-        }
-
-        .sidebar-user-row {
-            display: flex;
-            align-items: center;
-            gap: 0.65rem;
-            margin-bottom: 0.3rem;
-        }
-
-        .sidebar-user-avatar {
-            width: 34px; height: 34px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid var(--green);
-        }
-
-        .sidebar-welcome {
-            font-size: 0.8rem;
-            font-weight: 700;
-            color: var(--gray-800);
-            line-height: 1.2;
-        }
-
-        .sidebar-role-text {
-            font-size: 0.72rem;
-            color: var(--gray-400);
-            padding-left: 0.1rem;
-        }
-
-        .sidebar-nav { padding: 0.5rem; }
-
-        .sidebar-nav button {
-            display: flex;
-            align-items: center;
-            gap: 0.65rem;
-            width: 100%;
-            padding: 0.65rem 0.9rem;
-            border-radius: var(--radius-sm);
-            font-size: 0.875rem;
-            font-weight: 500;
-            color: var(--gray-600);
-            border: none;
-            background: transparent;
-            cursor: pointer;
-            font-family: 'Inter', sans-serif;
-            text-align: left;
-            transition: all 0.15s;
-        }
-
-        .sidebar-nav button:hover { background: var(--green-light); color: var(--green-dark); }
-
-        .sidebar-nav button.active {
-            background: var(--green);
-            color: #fff;
-            font-weight: 600;
-        }
-
-        .sidebar-nav button.has-submenu {
-            justify-content: flex-start;
-            gap: 0.65rem;
-        }
-
-        #inventory-submenu {
-            overflow: hidden;
-        }
-
-        #inventory-submenu .submenu-item {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.45rem 0.75rem;
-            border-radius: 6px;
-            font-size: 0.8rem;
-            font-weight: 500;
-            color: var(--gray-600);
-            text-decoration: none;
-            transition: all 0.15s;
-        }
-
-        #inventory-submenu .submenu-item:hover {
-            background: var(--green-light);
-            color: var(--green-dark);
-        }
-
-        #inventory-submenu .submenu-item.active {
-            background: var(--green);
-            color: #fff;
-        }
 
         /* ======= MAIN CONTENT ======= */
         .main { flex: 1; display: flex; flex-direction: column; gap: 1.25rem; min-width: 0; }
@@ -691,101 +500,14 @@
 </head>
 <body>
 
-<!-- ====== TOPNAV ====== -->
-<nav class="topnav">
-    <a href="home.jsp" class="nav-logo">
-        <i class="fa-solid fa-apple-whole"></i> Sena Shop
-    </a>
-    <div class="nav-links">
-        <a href="home.jsp">Trang Chủ</a>
-        <a href="danh-muc">Danh Mục</a>
-        <a href="products">Sản Phẩm</a>
-    </div>
-    <div class="nav-right">
-        <button class="nav-icon-btn" title="Gio hang"><i class="fa-solid fa-basket-shopping"></i></button>
-        <img class="nav-avatar" src="<%= avatarUrl %>" alt="avatar">
-    </div>
-</nav>
+<jsp:include page="/sidebar.jsp">
+    <jsp:param name="activePage" value="profile"/>
+</jsp:include>
 
-<!-- ====== LAYOUT ====== -->
-<div class="layout">
-
-    <!-- SIDEBAR -->
-    <aside class="sidebar">
-        <div class="sidebar-user">
-            <div class="sidebar-user-row">
-                <img class="sidebar-user-avatar" src="<%= avatarUrl %>" alt="avatar">
-                <div>
-                    <div class="sidebar-welcome"><%= fullname.split(" ")[fullname.split(" ").length - 1] %></div>
-                </div>
-            </div>
-            <div class="sidebar-role-text"><%= roleDisplay %></div>
-        </div>
-
-        <div class="sidebar-nav">
-            <% if ("customer".equalsIgnoreCase(role)) { %>
-            <a href="customer-dashboard" style="display:flex; align-items:center; gap:0.65rem; width:100%; padding:0.65rem 0.9rem; border-radius:var(--radius-sm); font-size:0.875rem; font-weight:500; color:var(--gray-600); border:none; background:transparent; cursor:pointer; text-decoration:none; transition:all 0.15s;" onmouseover="this.style.background='var(--green-light)'; this.style.color='var(--green-dark)';" onmouseout="this.style.background='transparent'; this.style.color='var(--gray-600)';">
-                <i class="fa-solid fa-gauge"></i> Dashboard
-            </a>
-            <% } else if ("seller".equalsIgnoreCase(role)) { %>
-            <a href="seller/dashboard" style="display:flex; align-items:center; gap:0.65rem; width:100%; padding:0.65rem 0.9rem; border-radius:var(--radius-sm); font-size:0.875rem; font-weight:500; color:var(--gray-600); border:none; background:transparent; cursor:pointer; text-decoration:none; transition:all 0.15s;" onmouseover="this.style.background='var(--green-light)'; this.style.color='var(--green-dark)';" onmouseout="this.style.background='transparent'; this.style.color='var(--gray-600)';">
-                <i class="fa-solid fa-gauge"></i> Dashboard
-            </a>
-            <% } %>
-            <% if ("customer".equalsIgnoreCase(role)) { %>
-            <a href="my-orders" style="display:flex; align-items:center; gap:0.65rem; width:100%; padding:0.65rem 0.9rem; border-radius:var(--radius-sm); font-size:0.875rem; font-weight:500; color:var(--gray-600); border:none; background:transparent; cursor:pointer; text-decoration:none; transition:all 0.15s;" onmouseover="this.style.background='var(--green-light)'; this.style.color='var(--green-dark)';" onmouseout="this.style.background='transparent'; this.style.color='var(--gray-600)';" >
-                <i class="fa-solid fa-basket-shopping"></i> Đơn Hàng
-            </a>
-            <% } else if ("seller".equalsIgnoreCase(role)) { %>
-            <a href="seller/orders" style="display:flex; align-items:center; gap:0.65rem; width:100%; padding:0.65rem 0.9rem; border-radius:var(--radius-sm); font-size:0.875rem; font-weight:500; color:var(--gray-600); border:none; background:transparent; cursor:pointer; text-decoration:none; transition:all 0.15s;" onmouseover="this.style.background='var(--green-light)'; this.style.color='var(--green-dark)';" onmouseout="this.style.background='transparent'; this.style.color='var(--gray-600)';" >
-                <i class="fa-solid fa-basket-shopping"></i> Đơn Hàng
-            </a>
-            <% } else if ("admin".equalsIgnoreCase(role)) { %>
-            <a href="admin/orders" style="display:flex; align-items:center; gap:0.65rem; width:100%; padding:0.65rem 0.9rem; border-radius:var(--radius-sm); font-size:0.875rem; font-weight:500; color:var(--gray-600); border:none; background:transparent; cursor:pointer; text-decoration:none; transition:all 0.15s;" onmouseover="this.style.background='var(--green-light)'; this.style.color='var(--green-dark)';" onmouseout="this.style.background='transparent'; this.style.color='var(--gray-600)';" >
-                <i class="fa-solid fa-basket-shopping"></i> Đơn Hàng
-            </a>
-            <% } %>
-            <button class="active" id="nav-profile" onclick="showPanel('profile')">
-                <i class="fa-regular fa-user"></i> Ho So
-            </button>
-            <a href="address" style="display:flex; align-items:center; gap:0.65rem; width:100%; padding:0.65rem 0.9rem; border-radius:var(--radius-sm); font-size:0.875rem; font-weight:500; color:var(--gray-600); border:none; background:transparent; cursor:pointer; text-decoration:none; transition:all 0.15s;" onmouseover="this.style.background='var(--green-light)'; this.style.color='var(--green-dark)';" onmouseout="this.style.background='transparent'; this.style.color='var(--gray-600)';">
-                <i class="fa-solid fa-map-location-dot"></i> Sổ Địa Chỉ
-            </a>
-            <button id="nav-security" onclick="showPanel('security')">
-                <i class="fa-solid fa-shield-halved"></i> Bảo Mật
-            </button>
-            <% if ("admin".equalsIgnoreCase(role) || "seller".equalsIgnoreCase(role)) { %>
-            <button id="nav-inventory" onclick="toggleInventoryMenu()" class="has-submenu">
-                <i class="fa-solid fa-warehouse"></i> Kho
-                <i class="fa-solid fa-chevron-down" id="inventory-chevron" style="margin-left:auto; font-size:0.7rem; transition: transform 0.2s;"></i>
-            </button>
-            <div id="inventory-submenu" style="display:none; flex-direction:column; gap:2px; padding-left:1.1rem; margin-bottom:4px;">
-                <a href="inventory-import" class="submenu-item">
-                    <i class="fa-solid fa-arrow-down"></i> Nhập Kho
-                </a>
-                <a href="inventory-export" class="submenu-item">
-                    <i class="fa-solid fa-arrow-up"></i> Xuất Kho
-                </a>
-            </div>
-            <% } %>
-            <% if ("admin".equalsIgnoreCase(role) || "seller".equalsIgnoreCase(role)) { %>
-            <a href="category" style="display:flex; align-items:center; gap:0.65rem; width:100%; padding:0.65rem 0.9rem; border-radius:var(--radius-sm); font-size:0.875rem; font-weight:500; color:var(--gray-600); border:none; background:transparent; cursor:pointer; text-decoration:none; transition:all 0.15s;" onmouseover="this.style.background='var(--green-light)'; this.style.color='var(--green-dark)';" onmouseout="this.style.background='transparent'; this.style.color='var(--gray-600)';">
-                <i class="fa-solid fa-layer-group"></i> Quản Lý Danh Mục
-            </a>
-            <% } %>
-            <% if ("admin".equalsIgnoreCase(role) || "seller".equalsIgnoreCase(role)) { %>
-            <a href="products" style="display:flex; align-items:center; gap:0.65rem; width:100%; padding:0.65rem 0.9rem; border-radius:var(--radius-sm); font-size:0.875rem; font-weight:500; color:var(--gray-600); border:none; background:transparent; cursor:pointer; text-decoration:none; transition:all 0.15s;" onmouseover="this.style.background='var(--green-light)'; this.style.color='var(--green-dark)';" onmouseout="this.style.background='transparent'; this.style.color='var(--gray-600)';">
-                <i class="fa-brands fa-opencart"></i> Quản Lý Sản Phẩm
-            </a>
-            <% } %>
-            <a href="logout" style="text-decoration:none; display:flex; align-items:center; gap:0.75rem; padding:12px 16px; border-radius:12px; color:#e53e3e; font-weight:600; font-size:0.95rem; margin-bottom:8px; border:1px solid transparent; transition:all 0.2s;" onmouseover="this.style.background='#fff5f5'; this.style.borderColor='#fed7d7';" onmouseout="this.style.background='transparent'; this.style.borderColor='transparent';">
-                <i class="fa-solid fa-right-from-bracket" style="width:20px;text-align:center;"></i> Đăng Xuất
-            </a>
-        </div>
-    </aside>
 
     <!-- MAIN -->
-    <main class="main">
+    <main class="sena-main">
+
 
         <!-- Flash messages -->
         <% if (message != null) { %>
@@ -920,19 +642,10 @@
 
         </div><!-- /panel-security -->
 
-    </main>
-</div><!-- /layout -->
+        </main>
+</div><!-- end sena-layout --><!-- /layout -->
 
-<!-- ====== FOOTER ====== -->
-<footer class="footer">
-    <a href="home.jsp" class="footer-logo"><i class="fa-solid fa-apple-whole"></i> Sena Shop</a>
-    <span class="footer-copy">&copy; 2024 Sena Shop. Trái cây tươi ngon mỗi ngày.</span>
-    <div class="footer-links">
-        <a href="#">Privacy</a>
-        <a href="#">Terms</a>
-        <a href="#">Lien He</a>
-    </div>
-</footer>
+
 
 <!-- ====== MODAL: CHINH SUA HO SO ====== -->
 <div class="modal-overlay" id="editModal">

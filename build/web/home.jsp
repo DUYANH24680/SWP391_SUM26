@@ -1980,8 +1980,10 @@
                     <jsp:include page="search-product.jsp" />
 
                     <div class="nav-links">
-                        <a href="inventory-export">Xuất Kho</a>
-                        <a href="inventory-import">Nhập Kho</a>
+                        <% if (Account != null && "seller".equalsIgnoreCase(Account.getRoleName())) { %>
+                            <a href="inventory-export">Xuất Kho</a>
+                            <a href="inventory-import">Nhập Kho</a>
+                        <% } %>
                         <a href="products">Sản Phẩm</a>
                         <a href="danh-muc">Danh Mục</a>
                         <% if (Account == null || "customer".equalsIgnoreCase(Account.getRoleName())) { %>
