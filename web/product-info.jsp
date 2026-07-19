@@ -264,29 +264,6 @@
         .qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         .qty-input[type=number] { -moz-appearance: textfield; }
 
-        /* ===== NOTES TEXTAREA ===== */
-        .notes-textarea {
-            width: 100%;
-            padding: 0.75rem 1rem;
-            border: 1px solid var(--gray-200);
-            border-radius: var(--radius-sm);
-            font-family: inherit;
-            font-size: 0.9rem;
-            resize: vertical;
-            min-height: 80px;
-            outline: none;
-            transition: border-color 0.2s;
-            background: var(--gray-50);
-            color: var(--gray-800);
-        }
-        .notes-textarea:focus {
-            border-color: var(--green);
-            background: #fff;
-        }
-        .notes-textarea::placeholder {
-            color: var(--gray-400);
-        }
-
         /* ===== ORDER SUMMARY ===== */
         .order-summary {
             background: var(--green-light);
@@ -718,12 +695,6 @@
                     </div>
                 </div>
 
-                <!-- Notes -->
-                <div>
-                    <div class="section-label">Ghi Chú Đơn Hàng (Tùy Chọn)</div>
-                    <textarea id="orderNotes" class="notes-textarea" placeholder="Ví dụ: Không cắt mở gói, Giao vào buổi sáng..."></textarea>
-                </div>
-
                 <!-- Order Summary -->
                 <div class="order-summary">
                     <div class="summary-row">
@@ -764,12 +735,10 @@
                     <input type="hidden" id="cartAction" name="action" value="add">
                     <input type="hidden" name="productId" value="<%= product.getId() %>">
                     <input type="hidden" id="cartQty" name="quantity" value="1">
-                    <input type="hidden" id="cartNote" name="note" value="">
                 </form>
                 <form id="buyNowForm" action="buy-now" method="post" style="display:none;">
                     <input type="hidden" name="productId" value="<%= product.getId() %>">
                     <input type="hidden" id="buyNowQty" name="quantity" value="1">
-                    <input type="hidden" id="buyNowNote" name="note" value="">
                 </form>
             </div>
         </div>
@@ -925,10 +894,7 @@
         // ===== ADD TO CART =====
         function addToCart() {
             const qty = parseInt(document.getElementById('quantityInput').value) || 1;
-            const notes = document.getElementById('orderNotes').value;
-
             document.getElementById('cartQty').value = qty;
-            document.getElementById('cartNote').value = notes;
             document.getElementById('cartAction').value = 'add';
             document.getElementById('cartForm').submit();
         }
@@ -936,10 +902,7 @@
         // ===== BUY NOW =====
         function buyNow() {
             const qty = parseInt(document.getElementById('quantityInput').value) || 1;
-            const notes = document.getElementById('orderNotes').value;
-
             document.getElementById('buyNowQty').value = qty;
-            document.getElementById('buyNowNote').value = notes;
             document.getElementById('buyNowForm').submit();
         }
 

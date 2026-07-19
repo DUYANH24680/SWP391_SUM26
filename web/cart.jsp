@@ -303,8 +303,6 @@
 
         .cart-item-meta { font-size: 0.875rem; color: var(--gray-400); }
 
-        .notes-text { font-size: 0.8rem; color: var(--gray-600); margin-top: 0.25rem; }
-
         /* QUANTITY CONTROL */
         .quantity-control {
             display: inline-flex;
@@ -403,24 +401,6 @@
         .btn-danger:hover {
             background: var(--red);
             color: #fff;
-        }
-
-        .btn-edit {
-            background: transparent;
-            color: var(--green);
-            border: 2px solid var(--green);
-            padding: 0.6rem 1rem;
-            font-size: 0.8rem;
-        }
-
-        .btn-edit:hover {
-            background: var(--green);
-            color: #fff;
-        }
-
-        .btn-sm {
-            padding: 0.45rem 0.9rem;
-            font-size: 0.8rem;
         }
 
         /* MODAL */
@@ -804,11 +784,8 @@
                                                 <span>Kich co: <strong><%= item.getSize() %></strong></span>
                                             <% } %>
                                         </div>
-                                        <% if (item.getNote() != null && !item.getNote().isEmpty()) { %>
-                                            <div class="notes-text">Ghi chu: <%= item.getNote() %></div>
-                                        <% } %>
                                         <% if (item.getDiscountCode() != null && !item.getDiscountCode().isEmpty()) { %>
-                                            <div class="notes-text">Ma giam gia: <strong><%= item.getDiscountCode() %></strong></div>
+                                            <div style="font-size: 0.8rem; color: var(--gray-600); margin-top: 0.25rem;">Ma giam gia: <strong><%= item.getDiscountCode() %></strong></div>
                                         <% } %>
                                     </div>
                                 </div>
@@ -852,10 +829,6 @@
                             </td>
 
                             <td>
-                                <button type="button" class="btn btn-edit btn-sm"
-                                        onclick="openEditModal('<%= item.getProductId() %>', '<%= item.getNote() != null ? item.getNote().replace("'", "\\'") : "" %>', '<%= item.getTitle() != null ? item.getTitle().replace("'", "\\'") : "" %>', '<%= nf.format((long) item.getUnitPrice()) %>', '<%= item.getImage() != null ? ImageUrlUtil.resolve(item.getImage(), request.getContextPath()) : "" %>')">
-                                    <i class="fa-solid fa-pen"></i> Sua
-                                </button>
                                 <button type="button" class="btn btn-danger btn-sm"
                                         onclick="confirmRemove('<%= item.getProductId() %>')">
                                     <i class="fa-solid fa-trash"></i>
@@ -899,46 +872,6 @@
                 </div>
             </form>
         <% } %>
-    </div>
-</div>
-
-<!-- ===== MODAL SUA SAN PHAM ===== -->
-<div class="modal-overlay" id="editModal">
-    <div class="modal-box">
-        <div class="modal-header">
-            <h3><i class="fa-solid fa-pen" style="color:var(--green); margin-right:0.4rem;"></i> Chinh Sua San Pham</h3>
-            <button type="button" class="modal-close" onclick="closeEditModal()">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-        </div>
-        <form id="editCartForm" onsubmit="submitEditForm(event)">
-            <div class="modal-body">
-                <input type="hidden" name="productId" id="editProductId">
-                <input type="hidden" id="editInitialNote">
-
-                <div class="modal-product-info">
-                    <img id="editProductImg" class="modal-product-img" src="" alt="">
-                    <div>
-                        <div class="modal-product-name" id="editProductName"></div>
-                        <div class="modal-product-price" id="editProductPrice"></div>
-                    </div>
-                </div>
-
-                <div class="form-group" style="margin-bottom:0;">
-                    <label class="form-label">Ghi Chu</label>
-                    <textarea class="form-textarea" id="editNote" name="note"
-                             placeholder="Ghi chu cho san pham (neu co)" maxlength="500"></textarea>
-                </div>
-
-                <div id="editErrorMsg" class="modal-error" style="display:none; margin-top:0.75rem;"></div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Huy</button>
-                <button type="submit" class="btn btn-green" id="editSubmitBtn">
-                    <i class="fa-solid fa-floppy-disk"></i> Luu Thay Doi
-                </button>
-            </div>
-        </form>
     </div>
 </div>
 
@@ -1115,100 +1048,6 @@
         updateAllSelectAllState();
         recalcUI();
     });
-
-    // ========== MODAL SUA ==========
-    var currentEditProductId = '';
-
-    function openEditModal(productId, note, title, price, image) {
-        currentEditProductId = productId;
-
-        document.getElementById('editProductId').value = productId;
-        document.getElementById('editInitialNote').value = note || '';
-        document.getElementById('editNote').value = note || '';
-
-        document.getElementById('editProductName').textContent = title || 'San pham';
-        document.getElementById('editProductPrice').textContent = (price || '0') + ' d';
-
-        var imgEl = document.getElementById('editProductImg');
-        if (image && image.trim() !== '') {
-            imgEl.src = image;
-        } else {
-            imgEl.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60"%3E%3Crect width="60" height="60" fill="%23eef1ee" rx="8"/%3E%3Ctext x="30" y="35" text-anchor="middle" font-size="20" fill="%239aaa9a"%3E🍎%3C/text%3E%3C/svg%3E';
-        }
-
-        document.getElementById('editErrorMsg').style.display = 'none';
-        document.getElementById('editSubmitBtn').disabled = false;
-        document.getElementById('editSubmitBtn').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Luu Thay Doi';
-
-        document.getElementById('editModal').classList.add('active');
-    }
-
-    function closeEditModal() {
-        document.getElementById('editModal').classList.remove('active');
-        currentEditProductId = '';
-    }
-
-    // Dong modal khi click ra ngoai
-    document.getElementById('editModal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            closeEditModal();
-        }
-    });
-
-    // ESC key dong modal
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            closeEditModal();
-        }
-    });
-
-    function submitEditForm(event) {
-        event.preventDefault();
-
-        var productId = document.getElementById('editProductId').value;
-        var note = document.getElementById('editNote').value;
-        var initialNote = document.getElementById('editInitialNote').value;
-
-        var errEl = document.getElementById('editErrorMsg');
-        var submitBtn = document.getElementById('editSubmitBtn');
-
-        errEl.style.display = 'none';
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Dang xu ly...';
-
-        var data = new URLSearchParams();
-        data.append('productId', productId);
-
-        // Chi gui note neu co thay doi so voi ban dau
-        if (note !== initialNote) {
-            data.append('note', note);
-        }
-
-        fetch('update-cart', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: data
-        })
-        .then(function(response) { return response.text(); })
-        .then(function(text) {
-            if (text.startsWith('ERROR:')) {
-                errEl.textContent = text.substring(6);
-                errEl.style.display = 'block';
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Luu Thay Doi';
-            } else {
-                closeEditModal();
-                location.reload();
-            }
-        })
-        .catch(function(error) {
-            console.error('Loi:', error);
-            errEl.textContent = 'Da xay ra loi. Vui long thu lai.';
-            errEl.style.display = 'block';
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Luu Thay Doi';
-        });
-    }
 </script>
 
 </body>
