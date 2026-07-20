@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import model.Account;
 import service.AdminAccountService;
+import service.ShipperService;
 import java.io.IOException;
 
 /**
@@ -17,7 +18,8 @@ import java.io.IOException;
 @WebServlet("/admin/shipper/action")
 public class ShipperActionServlet extends HttpServlet {
     
-    private AdminAccountService service = new AdminAccountService();
+    private AdminAccountService accountService = new AdminAccountService();
+    private ShipperService shipperService = new ShipperService();
     
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
@@ -52,19 +54,27 @@ public class ShipperActionServlet extends HttpServlet {
             
             switch (action.trim().toLowerCase()) {
                 case "lock":
-                    success = service.lockShipper(id);
+                    success = accountService.lockShipper(id);
                     successMsg = "Khóa tài khoản thành công.";
                     errorMsg = "Khóa tài khoản thất bại.";
                     break;
                 case "unlock":
-                    success = service.unlockShipper(id);
+                    success = accountService.unlockShipper(id);
                     successMsg = "Mở khóa tài khoản thành công.";
                     errorMsg = "Mở khóa tài khoản thất bại.";
                     break;
                 case "delete":
-                    success = service.deleteShipper(id);
-                    successMsg = "Xóa tài khoản thành công.";
-                    errorMsg = "Xóa tài khoản thất bại.";
+                    // Xóa ShipperDetails trước
+                    shipperService.deleteShipperDetails(id);
+                    // Xóa vĩnh viễn tài khoản
+                    try {
+                        success = accountService.hardDeleteShipper(id);
+                        successMsg = "Xóa tài khoản thành công.";
+                        errorMsg = "Xóa tài khoản thất bại.";
+                    } catch (RuntimeException ex) {
+                        success = false;
+                        errorMsg = accountService.getHardDeleteErrorMessageForShipper(id, ex);
+                    }
                     break;
                 default:
                     session.setAttribute("error", "Hành động không hợp lệ.");

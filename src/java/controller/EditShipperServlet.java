@@ -7,7 +7,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import model.Account;
+import model.ShipperDetails;
 import service.AdminAccountService;
+import service.ShipperService;
 import java.io.IOException;
 
 /**
@@ -16,7 +18,8 @@ import java.io.IOException;
 @WebServlet("/admin/shipper/edit")
 public class EditShipperServlet extends HttpServlet {
     
-    private AdminAccountService service = new AdminAccountService();
+    private AdminAccountService accountService = new AdminAccountService();
+    private ShipperService shipperService = new ShipperService();
     
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -43,7 +46,7 @@ public class EditShipperServlet extends HttpServlet {
         
         try {
             int id = Integer.parseInt(idParam.trim());
-            Account shipper = service.getShipperById(id);
+            Account shipper = accountService.getShipperById(id);
             
             if (shipper == null) {
                 session.setAttribute("error", "Shipper không tồn tại.");
@@ -57,7 +60,11 @@ public class EditShipperServlet extends HttpServlet {
                 return;
             }
             
+            // Lấy thông tin chi tiết shipper
+            ShipperDetails shipperDetails = shipperService.getShipperDetails(id);
+            
             req.setAttribute("shipper", shipper);
+            req.setAttribute("shipperDetails", shipperDetails);
             req.getRequestDispatcher("/admin/shipper-form.jsp").forward(req, resp);
             
         } catch (NumberFormatException e) {
@@ -89,6 +96,13 @@ public class EditShipperServlet extends HttpServlet {
         String address = req.getParameter("address");
         String genderParam = req.getParameter("gender");
         
+        // Các tham số shipper details
+        String shipperCode = req.getParameter("shipper_code");
+        String birthdate = req.getParameter("birthdate");
+        String cccd = req.getParameter("cccd");
+        String vehicleType = req.getParameter("vehicle_type");
+        String deliveryArea = req.getParameter("delivery_area");
+        
         if (idParam == null || idParam.trim().isEmpty()) {
             session.setAttribute("error", "ID shipper không hợp lệ.");
             resp.sendRedirect(req.getContextPath() + "/admin/shipper");
@@ -104,18 +118,37 @@ public class EditShipperServlet extends HttpServlet {
             req.setAttribute("val_phone", phone);
             req.setAttribute("val_address", address);
             req.setAttribute("val_gender", genderParam);
+            req.setAttribute("val_shipper_code", shipperCode);
+            req.setAttribute("val_birthdate", birthdate);
+            req.setAttribute("val_cccd", cccd);
+            req.setAttribute("val_vehicle_type", vehicleType);
+            req.setAttribute("val_delivery_area", deliveryArea);
             
             Boolean gender = null;
             if (genderParam != null && !genderParam.isEmpty()) {
                 gender = Boolean.parseBoolean(genderParam);
             }
             
-            String error = service.updateShipper(id, fullname, email, phone, address, gender);
-            
-            if (error != null) {
-                Account shipper = service.getShipperById(id);
+            // 1. Cập nhật thông tin tài khoản
+            String accountError = accountService.updateShipper(id, fullname, email, phone, address, gender);
+            if (accountError != null) {
+                Account shipper = accountService.getShipperById(id);
+                ShipperDetails details = shipperService.getShipperDetails(id);
                 req.setAttribute("shipper", shipper);
-                req.setAttribute("formError", error);
+                req.setAttribute("shipperDetails", details);
+                req.setAttribute("formError", accountError);
+                req.getRequestDispatcher("/admin/shipper-form.jsp").forward(req, resp);
+                return;
+            }
+            
+            // 2. Cập nhật thông tin chi tiết shipper
+            String detailsError = shipperService.updateShipperDetails(id, shipperCode, birthdate, cccd, vehicleType, deliveryArea);
+            if (detailsError != null) {
+                Account shipper = accountService.getShipperById(id);
+                ShipperDetails details = shipperService.getShipperDetails(id);
+                req.setAttribute("shipper", shipper);
+                req.setAttribute("shipperDetails", details);
+                req.setAttribute("formError", detailsError);
                 req.getRequestDispatcher("/admin/shipper-form.jsp").forward(req, resp);
                 return;
             }
