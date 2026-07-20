@@ -293,7 +293,14 @@ public class OrderService {
             }
 
             int returnOrderId = orders.isEmpty() ? 0 : orders.get(0).getId();
-            return new PlaceOrderResult(true, returnOrderId, orderCount, shopCount);
+            
+            // Collect all order IDs
+            List<Integer> allOrderIds = new java.util.ArrayList<>();
+            for (Order o : orders) {
+                allOrderIds.add(o.getId());
+            }
+            
+            return new PlaceOrderResult(true, returnOrderId, orderCount, shopCount, allOrderIds);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -568,7 +575,14 @@ public class OrderService {
             shopCount = uniqueShopIds.size();
 
             int returnOrderId = orders.isEmpty() ? 0 : orders.get(0).getId();
-            return new model.PlaceOrderResult(true, returnOrderId, orderCount, shopCount);
+
+            // Collect all order IDs for notification
+            List<Integer> allOrderIds = new java.util.ArrayList<>();
+            for (Order o : orders) {
+                allOrderIds.add(o.getId());
+            }
+
+            return new model.PlaceOrderResult(true, returnOrderId, orderCount, shopCount, allOrderIds);
 
         } catch (Exception e) {
             e.printStackTrace();

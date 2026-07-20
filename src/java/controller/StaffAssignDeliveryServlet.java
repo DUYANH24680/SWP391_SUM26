@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import model.Account;
 import service.DeliveryService;
+import service.NotificationService;
 import model.Order;
 import java.io.IOException;
 import java.util.List;
@@ -19,6 +20,7 @@ import java.util.List;
 public class StaffAssignDeliveryServlet extends HttpServlet {
     
     private DeliveryService deliveryService = new DeliveryService();
+    private NotificationService notifService = new NotificationService();
     
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -80,12 +82,38 @@ public class StaffAssignDeliveryServlet extends HttpServlet {
         }
         
         try {
-            // Get parameters
+            // Get parameters - support both single orderId and multiple orderIds
             String orderIdParam = req.getParameter("orderId");
+            String orderIdsParam = req.getParameter("orderIds");
             String shipperIdParam = req.getParameter("shipperId");
             String note = req.getParameter("note");
             
-            if (orderIdParam == null || orderIdParam.isEmpty()) {
+            int[] orderIds;
+            
+            // Get order IDs - either single or multiple
+            if (orderIdsParam != null && !orderIdsParam.isEmpty()) {
+                // Multiple orders (comma-separated)
+                String[] parts = orderIdsParam.split(",");
+                orderIds = new int[parts.length];
+                for (int i = 0; i < parts.length; i++) {
+                    try {
+                        orderIds[i] = Integer.parseInt(parts[i].trim());
+                    } catch (NumberFormatException e) {
+                        session.setAttribute("error", "Dữ liệu đơn hàng không hợp lệ.");
+                        resp.sendRedirect(req.getContextPath() + "/staff/orders-waiting");
+                        return;
+                    }
+                }
+            } else if (orderIdParam != null && !orderIdParam.isEmpty()) {
+                // Single order (legacy support)
+                orderIds = new int[]{Integer.parseInt(orderIdParam)};
+            } else {
+                session.setAttribute("error", "Vui lòng chọn đơn hàng.");
+                resp.sendRedirect(req.getContextPath() + "/staff/orders-waiting");
+                return;
+            }
+            
+            if (orderIds.length == 0) {
                 session.setAttribute("error", "Vui lòng chọn đơn hàng.");
                 resp.sendRedirect(req.getContextPath() + "/staff/orders-waiting");
                 return;
@@ -93,24 +121,32 @@ public class StaffAssignDeliveryServlet extends HttpServlet {
             
             if (shipperIdParam == null || shipperIdParam.isEmpty()) {
                 session.setAttribute("error", "Vui lòng chọn shipper.");
-                resp.sendRedirect(req.getContextPath() + "/staff/assign-delivery?orderId=" + orderIdParam);
+                resp.sendRedirect(req.getContextPath() + "/staff/orders-waiting");
                 return;
             }
             
-            int orderId = Integer.parseInt(orderIdParam);
             int shipperId = Integer.parseInt(shipperIdParam);
             int assignedBy = user.getId();
             
-            // Assign shipper
-            String errorMsg = deliveryService.assignShipper(orderId, shipperId, assignedBy, note);
+            // Assign shipper to multiple orders
+            String errorMsg = deliveryService.assignShipperBatch(orderIds, shipperId, assignedBy, note);
             
             if (errorMsg != null) {
                 session.setAttribute("error", errorMsg);
-                resp.sendRedirect(req.getContextPath() + "/staff/assign-delivery?orderId=" + orderId);
+                resp.sendRedirect(req.getContextPath() + "/staff/orders-waiting");
                 return;
             }
             
-            session.setAttribute("message", "Đã giao đơn hàng cho shipper thành công!");
+            // Notify shipper about each assigned order
+            for (int orderId : orderIds) {
+                notifService.notifyDeliveryAssignment(shipperId, orderId, "Đơn hàng #" + orderId);
+            }
+            
+            if (orderIds.length == 1) {
+                session.setAttribute("message", "Đã giao đơn hàng cho shipper thành công!");
+            } else {
+                session.setAttribute("message", "Đã giao " + orderIds.length + " đơn hàng cho shipper thành công!");
+            }
             resp.sendRedirect(req.getContextPath() + "/staff/delivery");
             
         } catch (NumberFormatException e) {

@@ -7,8 +7,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import model.Account;
-import service.DeliveryService;
 import model.Order;
+import service.DeliveryService;
 import java.io.IOException;
 import java.util.List;
 
@@ -39,7 +39,9 @@ public class StaffOrdersWaitingServlet extends HttpServlet {
         try {
             // Get orders that are confirmed (status=2) and not yet assigned to a delivery
             List<Order> waitingOrders = deliveryService.getOrdersWaitingForDelivery();
+            List<Account> shippers = deliveryService.getAvailableShippers();
             req.setAttribute("waitingOrders", waitingOrders);
+            req.setAttribute("shippers", shippers);
             
         } catch (Exception e) {
             System.err.println("[StaffOrdersWaitingServlet] Error: " + e.getMessage());

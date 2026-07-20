@@ -624,6 +624,31 @@ public class OrderDAO extends DbContext {
     }
 
 
+    /**
+     * Get seller ID for an order by joining Orders -> OrderDetails -> Products -> Shops -> Accounts.
+     */
+    public int getSellerIdByOrderId(int orderId) {
+        String sql = "SELECT TOP 1 a.id "
+                   + "FROM Orders o "
+                   + "JOIN OrderDetails od ON od.order_id = o.id "
+                   + "JOIN Products p ON p.id = od.product_id "
+                   + "JOIN Shops s ON s.id = p.shop_id "
+                   + "JOIN Accounts a ON a.id = s.owner_id "
+                   + "WHERE o.id = ?";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            ps.setInt(1, orderId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("id");
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[OrderDAO] getSellerIdByOrderId error: " + e.getMessage());
+        }
+        return -1;
+    }
+
+
     private Order mapRow(ResultSet rs) throws SQLException {
         Order o = new Order();
         o.setId(rs.getInt("id"));

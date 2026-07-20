@@ -9,7 +9,10 @@ import jakarta.servlet.http.HttpSession;
 import model.Account;
 import model.SellerOrderActionResult;
 import model.SellerOrderPageData;
+import service.NotificationService;
 import service.OrderService;
+import dao.ShopDAO;
+import model.Shop;
 
 import java.io.IOException;
 
@@ -19,6 +22,7 @@ public class SellerOrdersServlet extends HttpServlet {
     private static final String ROLE_SELLER = "seller";
 
     private OrderService orderService;
+    private NotificationService notifService = new NotificationService();
 
     @Override
     public void init() throws ServletException {
@@ -83,6 +87,19 @@ public class SellerOrdersServlet extends HttpServlet {
                 int orderId = Integer.parseInt(orderIdParam.trim());
                 SellerOrderActionResult result = orderService.processSellerOrderAction(orderId, user.getId(), action);
                 session.setAttribute(result.isSuccess() ? "message" : "error", result.getMessage());
+
+                // Nếu xác nhận đơn thành công → notify staff phân công shipper
+                if (result.isSuccess() && "confirm".equals(action)) {
+                    try {
+                        ShopDAO shopDAO = new ShopDAO();
+                        Shop shop = shopDAO.getShopByOwnerId(user.getId());
+                        shopDAO.close();
+                        String shopName = (shop != null) ? shop.getShopName() : "Người bán";
+                        notifService.notifyStaffOrderConfirmed(orderId, shopName);
+                    } catch (Exception ex) {
+                        System.err.println("[SellerOrdersServlet] notifyStaffOrderConfirmed error: " + ex.getMessage());
+                    }
+                }
             } catch (NumberFormatException e) {
                 session.setAttribute("error", "ID đơn hàng không hợp lệ.");
             }
