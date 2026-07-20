@@ -531,6 +531,9 @@
                             <% if (o.getNote() != null && !o.getNote().isEmpty()) { %>
                                 <div style="margin-top:0.2rem;"><i class="fa-solid fa-comment-dots" style="width:14px;color:var(--green);"></i> <strong>Ghi chú:</strong> <%= o.getNote() %></div>
                             <% } %>
+                            <% if (o.getStatus() == 5 && o.getCancelReason() != null && !o.getCancelReason().isEmpty()) { %>
+                                <div style="margin-top:0.2rem; color: #dc2626;"><i class="fa-solid fa-circle-xmark" style="width:14px;color:#dc2626;"></i> <strong>Lý do hủy:</strong> <%= o.getCancelReason() %></div>
+                            <% } %>
                         </div>
 
                         <!-- Order Footer -->
