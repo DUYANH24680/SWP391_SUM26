@@ -440,37 +440,12 @@
 </head>
 <body>
 
-    <!-- Topnav -->
-    <nav class="topnav">
-        <a href="home.jsp" class="nav-logo">
-            <i class="fa-solid fa-apple-whole"></i> Sena Shop
-        </a>
-        <div class="nav-links">
-            <a href="home.jsp">Trang Chủ</a>
-            <a href="danh-muc">Danh Mục</a>
-            <a href="products">Sản Phẩm</a>
-        </div>
-        <div class="nav-right">
-            <img class="nav-avatar" src="<%= avatarUrl %>" alt="avatar">
-        </div>
-    </nav>
-
-    <!-- Layout Container -->
-    <div class="layout">
-        
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="sidebar-nav">
-                <a href="customer-dashboard"><i class="fa-solid fa-gauge"></i> Dashboard</a>
-                <a href="my-orders" class="active"><i class="fa-solid fa-basket-shopping"></i> Đơn Hàng</a>
-                <a href="profile"><i class="fa-regular fa-user"></i> Hồ Sơ</a>
-                <a href="address"><i class="fa-solid fa-map-location-dot"></i> Sổ Địa Chỉ</a>
-                <a href="logout" class="logout"><i class="fa-solid fa-right-from-bracket"></i> Đăng Xuất</a>
-            </div>
-        </aside>
+    <jsp:include page="/sidebar.jsp">
+        <jsp:param name="activePage" value="orders"/>
+    </jsp:include>
 
         <!-- Main Content -->
-        <main class="main">
+        <main class="sena-main">
             
             <% if (message != null) { %>
                 <div class="alert alert-success">
@@ -648,7 +623,7 @@
             <% } %>
 
         </main>
-    </div>
+    </div><!-- end sena-layout -->
 
     <script>
         function filterOrders(status, el) {

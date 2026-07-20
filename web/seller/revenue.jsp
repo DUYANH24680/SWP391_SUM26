@@ -4,9 +4,9 @@
 <%@ page import="java.text.NumberFormat" %>
 <%@ page import="java.util.Locale" %>
 <%
-    Account user = (Account) session.getAttribute("Account");
+    Account user = (Account) session.getAttribute("user");
     if (user == null) {
-        response.sendRedirect(request.getContextPath() + "/login");
+        response.sendRedirect(request.getContextPath() + "/login.jsp");
         return;
     }
 
@@ -22,18 +22,14 @@
     Boolean shopNotApproved = (Boolean) request.getAttribute("shopNotApproved");
     String shopNotApprovedMsg = (String) request.getAttribute("shopNotApprovedMsg");
 
-    Integer totalProducts = (Integer) request.getAttribute("totalProducts");
-    Integer totalOrders = (Integer) request.getAttribute("totalOrders");
-    Integer pendingOrders = (Integer) request.getAttribute("pendingOrders");
     Double totalRevenue = (Double) request.getAttribute("totalRevenue");
-    if (totalRevenue == null) totalRevenue = 0.0;
+    Integer totalOrders = (Integer) request.getAttribute("totalOrders");
+    Integer completedOrders = (Integer) request.getAttribute("completedOrders");
 
-    String message = (String) session.getAttribute("message");
     String error = (String) session.getAttribute("error");
     if (error == null) {
         error = (String) request.getAttribute("error");
     }
-    session.removeAttribute("message");
     session.removeAttribute("error");
 
     NumberFormat nf = NumberFormat.getNumberInstance(Locale.forLanguageTag("vi"));
@@ -43,7 +39,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Seller Dashboard | Sena Shop</title>
+    <title>Doanh Thu | Sena Shop</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
@@ -53,7 +49,6 @@
             --green:       #4caf50;
             --green-dark:  #388e3c;
             --green-light: #e8f5e9;
-            --green-mid:   #c8e6c9;
             --bg:          #f0f4f1;
             --white:       #ffffff;
             --gray-50:     #f8fafb;
@@ -64,13 +59,8 @@
             --gray-800:    #2d3d2d;
             --shadow-sm:   0 1px 3px rgba(0,0,0,.08);
             --shadow:      0 4px 12px rgba(0,0,0,.08);
-            --shadow-md:   0 8px 24px rgba(0,0,0,.10);
             --radius:      14px;
             --radius-sm:   8px;
-            --blue:        #2196f3;
-            --blue-light:  #e3f2fd;
-            --orange:      #ff9800;
-            --orange-light: #fff3e0;
         }
 
         html, body {
@@ -96,7 +86,6 @@
             z-index: 100;
             box-shadow: var(--shadow-sm);
         }
-
         .nav-logo {
             display: flex;
             align-items: center;
@@ -106,15 +95,9 @@
             color: var(--green-dark);
             text-decoration: none;
             white-space: nowrap;
-            letter-spacing: -0.01em;
         }
-        .nav-logo i { color: var(--green); font-size: 1.15rem; }
-
-        .nav-links {
-            display: flex;
-            gap: 0.25rem;
-            margin-left: 1rem;
-        }
+        .nav-logo i { color: var(--green); }
+        .nav-links { display: flex; gap: 0.25rem; margin-left: 1rem; }
         .nav-links a {
             padding: 0.4rem 0.85rem;
             border-radius: 6px;
@@ -125,13 +108,7 @@
             transition: all 0.15s;
         }
         .nav-links a:hover { background: var(--green-light); color: var(--green-dark); }
-
-        .nav-right {
-            margin-left: auto;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
+        .nav-right { margin-left: auto; display: flex; align-items: center; gap: 0.75rem; }
         .nav-avatar {
             width: 38px; height: 38px;
             border-radius: 50%;
@@ -187,8 +164,8 @@
             color: #fff;
             font-weight: 600;
         }
-        .sidebar-nav a.logout { color: #e53e3e; }
-        .sidebar-nav a.logout:hover { background: #fff5f5; color: #c53030; }
+        .sidebar-nav a.logout { color: var(--red); }
+        .sidebar-nav a.logout:hover { background: var(--red-light); color: var(--red); }
 
         /* ======= MAIN CONTENT ======= */
         .main { flex: 1; display: flex; flex-direction: column; gap: 1.5rem; min-width: 0; }
@@ -203,16 +180,14 @@
             font-size: 0.875rem;
             font-weight: 500;
         }
-        .alert-success { background: #dcfce7; border: 1px solid #bbf7d0; color: #15803d; }
         .alert-danger { background: #fee2e2; border: 1px solid #fecaca; color: #991b1b; }
         .alert-warning { background: #fef9c3; border: 1px solid #fde68a; color: #92400e; }
 
-        /* ======= WELCOME HERO ======= */
-        .hero {
+        /* ======= HERO REVENUE ======= */
+        .hero-revenue {
             background: linear-gradient(135deg, #4caf50 0%, #2e7d32 100%);
             border-radius: var(--radius);
-            padding: 2.25rem 2.5rem;
-            color: #white;
+            padding: 2.5rem 3rem;
             color: white;
             box-shadow: var(--shadow);
             position: relative;
@@ -221,22 +196,43 @@
             align-items: center;
             justify-content: space-between;
         }
-        .hero::before {
+        .hero-revenue::before {
             content: '';
             position: absolute;
-            top: -20%; right: -10%;
-            width: 250px; height: 250px;
+            top: -30%; right: -5%;
+            width: 300px; height: 300px;
             border-radius: 50%;
-            background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 60%);
+            background: radial-gradient(circle, rgba(255,255,255,0.12) 0%, transparent 65%);
         }
-        .hero-text h1 {
-            font-size: 1.75rem;
+        .hero-revenue .icon-circle {
+            width: 80px; height: 80px;
+            background: rgba(255,255,255,0.18);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.2rem;
+            position: relative;
+            z-index: 1;
+        }
+        .hero-text { position: relative; z-index: 1; }
+        .hero-text .label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            opacity: 0.85;
+            margin-bottom: 0.4rem;
+        }
+        .hero-text .value {
+            font-size: 2.8rem;
             font-weight: 800;
+            line-height: 1;
             margin-bottom: 0.5rem;
         }
-        .hero-text p {
+        .hero-text .subtitle {
             font-size: 0.95rem;
-            opacity: 0.9;
+            opacity: 0.8;
         }
 
         /* ======= STATS GRID ======= */
@@ -269,80 +265,51 @@
             font-size: 1.35rem;
         }
         .stat-icon.revenue { background: var(--green-light); color: var(--green-dark); }
-        .stat-icon.orders { background: var(--blue-light); color: var(--blue); }
-        .stat-icon.pending { background: var(--orange-light); color: var(--orange); }
-        .stat-icon.products { background: var(--green-light); color: var(--green); }
+        .stat-icon.orders   { background: #e3f2fd; color: #1976d2; }
+        .stat-icon.done    { background: #e8f5e9; color: #388e3c; }
         .stat-info { display: flex; flex-direction: column; gap: 0.25rem; }
-        .stat-label { font-size: 0.8rem; font-weight: 600; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.02em;}
+        .stat-label { font-size: 0.8rem; font-weight: 600; color: var(--gray-400); text-transform: uppercase; }
         .stat-value { font-size: 1.4rem; font-weight: 800; color: var(--gray-800); }
 
-        /* ======= PANELS ======= */
-        .panel {
+        /* ======= FOOTER ======= */
+        .footer {
             background: var(--white);
-            border-radius: var(--radius);
-            border: 1px solid var(--gray-200);
-            box-shadow: var(--shadow-sm);
-            padding: 1.5rem;
-        }
-        .panel-title {
-            font-size: 1.05rem;
-            font-weight: 700;
-            color: var(--gray-800);
-            margin-bottom: 1.25rem;
+            border-top: 1px solid var(--gray-200);
+            padding: 1.2rem 2rem;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            justify-content: space-between;
         }
-        .panel-title i { color: var(--green); }
-
-        .quick-actions {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-        }
-        .action-card {
-            border: 1.5px solid var(--gray-100);
-            border-radius: var(--radius-sm);
-            padding: 1.1rem;
+        .footer-logo {
             display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--green-dark);
             text-decoration: none;
-            color: inherit;
-            transition: all 0.2s;
         }
-        .action-card:hover {
-            border-color: var(--green);
-            background: var(--green-light);
-        }
-        .action-title { font-weight: 700; font-size: 0.92rem; color: var(--gray-800); display: flex; align-items: center; gap: 0.4rem;}
-        .action-title i { color: var(--green); }
-        .action-desc { font-size: 0.8rem; color: var(--gray-600); line-height: 1.4; }
+        .footer-logo i { color: var(--green); }
+        .footer-copy { font-size: 0.78rem; color: var(--gray-400); }
 
-        /* ======= RESPONSIVE ======= */
         @media (max-width: 900px) {
             .layout { flex-direction: column; }
             .sidebar { width: 100%; position: static; }
             .sidebar-nav { display: flex; flex-wrap: wrap; gap: 0.25rem; }
             .sidebar-nav a { width: auto; }
+            .hero-revenue { flex-direction: column; text-align: center; gap: 1.5rem; }
         }
     </style>
 </head>
 <body>
 
     <jsp:include page="/sidebar.jsp">
-        <jsp:param name="activePage" value="dashboard"/>
+        <jsp:param name="activePage" value="revenue"/>
     </jsp:include>
 
         <!-- Main Content -->
         <main class="sena-main">
-            
-            <% if (message != null) { %>
-                <div class="alert alert-success">
-                    <i class="fa-solid fa-circle-check"></i>
-                    <span><%= message %></span>
-                </div>
-            <% } %>
+
             <% if (error != null) { %>
                 <div class="alert alert-danger">
                     <i class="fa-solid fa-circle-exclamation"></i>
@@ -357,81 +324,46 @@
                 </div>
             <% } else if (shop != null) { %>
 
-                <!-- Hero Section -->
-                <div class="hero">
+                <!-- Hero Revenue -->
+                <div class="hero-revenue">
+                    <div class="icon-circle">
+                        <i class="fa-solid fa-chart-line"></i>
+                    </div>
                     <div class="hero-text">
-                        <h1>Xin chào, <%= user.getFullname() %>!</h1>
-                        <p>Chào mừng bạn trở lại trang quản lý cửa hàng <strong><%= shop.getShopName() %></strong>. Hãy theo dõi các thông số bán hàng của bạn.</p>
+                        <div class="label">Tổng Doanh Thu Thực Thu</div>
+                        <div class="value"><%= nf.format((long) (totalRevenue != null ? totalRevenue : 0)) %> đ</div>
+                        <div class="subtitle">Từ tất cả đơn hàng đã giao thành công</div>
                     </div>
                 </div>
 
                 <!-- Stats Cards -->
                 <div class="stats-grid">
-                    <!-- Revenue -->
                     <div class="stat-card">
                         <div class="stat-icon revenue">
                             <i class="fa-solid fa-hand-holding-dollar"></i>
                         </div>
                         <div class="stat-info">
-                            <span class="stat-label">Doanh thu thực thu</span>
-                            <span class="stat-value"><%= nf.format(totalRevenue) %> đ</span>
+                            <span class="stat-label">Tổng doanh thu</span>
+                            <span class="stat-value"><%= nf.format((long) (totalRevenue != null ? totalRevenue : 0)) %> đ</span>
                         </div>
                     </div>
-
-                    <!-- Total Orders -->
                     <div class="stat-card">
                         <div class="stat-icon orders">
                             <i class="fa-solid fa-receipt"></i>
                         </div>
                         <div class="stat-info">
                             <span class="stat-label">Tổng đơn hàng</span>
-                            <span class="stat-value"><%= totalOrders %></span>
+                            <span class="stat-value"><%= totalOrders != null ? totalOrders : 0 %></span>
                         </div>
                     </div>
-
-                    <!-- Pending Orders -->
                     <div class="stat-card">
-                        <div class="stat-icon pending">
-                            <i class="fa-solid fa-clock-rotate-left"></i>
+                        <div class="stat-icon done">
+                            <i class="fa-solid fa-circle-check"></i>
                         </div>
                         <div class="stat-info">
-                            <span class="stat-label">Đơn hàng chờ duyệt</span>
-                            <span class="stat-value"><%= pendingOrders %></span>
+                            <span class="stat-label">Đơn đã giao</span>
+                            <span class="stat-value"><%= completedOrders != null ? completedOrders : 0 %></span>
                         </div>
-                    </div>
-
-                    <!-- Total Products -->
-                    <div class="stat-card">
-                        <div class="stat-icon products">
-                            <i class="fa-solid fa-boxes-stacked"></i>
-                        </div>
-                        <div class="stat-info">
-                            <span class="stat-label">Số sản phẩm</span>
-                            <span class="stat-value"><%= totalProducts %></span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Panel Quick Actions -->
-                <div class="panel">
-                    <div class="panel-title">
-                        <i class="fa-solid fa-compass"></i> Thao tác nhanh
-                    </div>
-                    <div class="quick-actions">
-                        <a href="orders" class="action-card">
-                            <span class="action-title"><i class="fa-solid fa-receipt"></i> Quản lý đơn hàng</span>
-                            <span class="action-desc">Xem, duyệt hoặc hủy các đơn đặt hàng từ khách hàng của bạn.</span>
-                        </a>
-
-                        <a href="../products" class="action-card">
-                            <span class="action-title"><i class="fa-brands fa-opencart"></i> Quản lý sản phẩm</span>
-                            <span class="action-desc">Thêm sản phẩm mới, cập nhật giá bán, số lượng tồn kho của shop.</span>
-                        </a>
-
-                        <a href="../profile" class="action-card">
-                            <span class="action-title"><i class="fa-regular fa-user"></i> Hồ sơ cá nhân</span>
-                            <span class="action-desc">Thay đổi thông tin liên hệ, mật khẩu, và thông tin tài khoản của bạn.</span>
-                        </a>
                     </div>
                 </div>
 
@@ -439,6 +371,14 @@
 
         </main>
     </div><!-- end sena-layout -->
+
+    <!-- Footer -->
+    <footer class="footer">
+        <a href="<%= request.getContextPath() %>/home.jsp" class="footer-logo">
+            <i class="fa-solid fa-apple-whole"></i> Sena Shop
+        </a>
+        <span class="footer-copy">&copy; 2024 Sena Shop. Trái cây tươi ngon mỗi ngày.</span>
+    </footer>
 
 </body>
 </html>

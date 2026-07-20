@@ -19,7 +19,7 @@ import java.util.Map;
 import java.io.IOException;
 import java.util.List;
 
-@WebServlet(name = "ProductInfoServlet", urlPatterns = {"/info"})
+@WebServlet(name = "ProductInfoServlet", urlPatterns = {"/info", "/product-info"})
 public class ProductInfoServlet extends HttpServlet {
 
     @Override

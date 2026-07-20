@@ -67,136 +67,6 @@
             background: var(--bg);
         }
 
-        body { display: flex; flex-direction: column; }
-
-        /* ======= TOPNAV ======= */
-        .topnav {
-            background: var(--white);
-            border-bottom: 1px solid var(--gray-200);
-            height: 60px;
-            display: flex;
-            align-items: center;
-            padding: 0 2rem;
-            gap: 2rem;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            box-shadow: var(--shadow-sm);
-        }
-
-        .nav-logo {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 1.3rem;
-            font-weight: 800;
-            color: var(--red-dark);
-            text-decoration: none;
-            white-space: nowrap;
-            letter-spacing: -0.01em;
-        }
-
-        .nav-logo i { color: var(--red); font-size: 1.15rem; }
-
-        .nav-links {
-            display: flex;
-            gap: 0.25rem;
-            margin-left: 1rem;
-        }
-
-        .nav-links a {
-            padding: 0.4rem 0.85rem;
-            border-radius: 6px;
-            font-size: 0.875rem;
-            font-weight: 500;
-            color: var(--gray-600);
-            text-decoration: none;
-            transition: all 0.15s;
-        }
-
-        .nav-links a:hover { background: var(--red-light); color: var(--red-dark); }
-
-        .nav-right {
-            margin-left: auto;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        .nav-icon-btn {
-            width: 38px; height: 38px;
-            border-radius: 50%;
-            background: var(--gray-100);
-            border: none;
-            display: flex; align-items: center; justify-content: center;
-            color: var(--gray-600);
-            cursor: pointer;
-            font-size: 0.95rem;
-            transition: background 0.15s;
-        }
-
-        .nav-icon-btn:hover { background: var(--red-light); color: var(--red-dark); }
-
-        .nav-avatar {
-            width: 38px; height: 38px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid var(--red);
-            cursor: pointer;
-        }
-
-        /* ======= LAYOUT ======= */
-        .layout {
-            display: flex;
-            flex: 1;
-            max-width: 1280px;
-            width: 100%;
-            margin: 1.5rem auto;
-            padding: 0 1.5rem;
-            gap: 1.5rem;
-            align-items: flex-start;
-        }
-
-        /* ======= SIDEBAR ======= */
-        .sidebar {
-            width: 200px;
-            flex-shrink: 0;
-            background: var(--white);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow-sm);
-            border: 1px solid var(--gray-200);
-            overflow: hidden;
-            position: sticky;
-            top: 76px;
-        }
-
-        .sidebar-nav { padding: 0.5rem; }
-
-        .sidebar-nav a,
-        .sidebar-nav button {
-            display: flex;
-            align-items: center;
-            gap: 0.65rem;
-            width: 100%;
-            padding: 0.65rem 0.9rem;
-            border-radius: var(--radius-sm);
-            font-size: 0.875rem;
-            font-weight: 500;
-            color: var(--gray-600);
-            border: none;
-            background: transparent;
-            cursor: pointer;
-            font-family: 'Inter', sans-serif;
-            text-align: left;
-            text-decoration: none;
-            transition: all 0.15s;
-        }
-
-        .sidebar-nav a:hover { background: var(--red-light); color: var(--red-dark); }
-        .sidebar-nav a.active { background: var(--red); color: #fff; font-weight: 600; }
-        .sidebar-nav a.logout { color: #e53e3e; }
-        .sidebar-nav a.logout:hover { background: #fff5f5; color: #c53030; }
-
         /* ======= MAIN ======= */
         .main { flex: 1; display: flex; flex-direction: column; gap: 1.25rem; min-width: 0; }
 
@@ -532,39 +402,12 @@
 </head>
 <body>
 
-<!-- ====== TOPNAV ====== -->
-<nav class="topnav">
-    <a href="home.jsp" class="nav-logo">
-        <i class="fa-solid fa-apple-whole"></i> Sena Shop
-    </a>
-    <div class="nav-links">
-        <a href="home.jsp">Trang Chủ</a>
-        <a href="products">Sản Phẩm</a>
-    </div>
-    <div class="nav-right">
-        <button class="nav-icon-btn" title="Giỏ hàng"><i class="fa-solid fa-basket-shopping"></i></button>
-        <img class="nav-avatar" src="<%= avatarUrl %>" alt="avatar">
-    </div>
-</nav>
-
-<!-- ====== LAYOUT ====== -->
-<div class="layout">
-
-    <!-- SIDEBAR -->
-    <aside class="sidebar">
-        <div class="sidebar-nav">
-            <a href="profile"><i class="fa-regular fa-user"></i> Hồ Sơ</a>
-            <a href="products"><i class="fa-brands fa-opencart"></i> Sản Phẩm</a>
-            <a href="add-product"><i class="fa-solid fa-plus"></i> Thêm Sản Phẩm</a>
-            <a href="inventory-import"><i class="fa-solid fa-arrow-down"></i> Nhập Kho</a>
-            <a href="#" class="active"><i class="fa-solid fa-arrow-up"></i> Xuất Kho</a>
-            <a href="#"><i class="fa-solid fa-basket-shopping"></i> Đơn Hàng</a>
-            <a href="logout" class="logout" style="margin-top:0.5rem;"><i class="fa-solid fa-right-from-bracket"></i> Đăng Xuất</a>
-        </div>
-    </aside>
+<jsp:include page="/sidebar.jsp">
+    <jsp:param name="activePage" value="inventory"/>
+</jsp:include>
 
     <!-- MAIN -->
-    <main class="main">
+    <main class="sena-main">
 
         <!-- Breadcrumb -->
         <div class="breadcrumb">

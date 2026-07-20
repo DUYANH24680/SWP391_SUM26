@@ -9,6 +9,7 @@ public class SellerDashboardData {
     private int totalProducts;
     private int totalOrders;
     private int pendingOrders;
+        private int completedOrders;
     private double totalRevenue;
     private List<Order> orders;
 
@@ -61,6 +62,14 @@ public class SellerDashboardData {
 
     public void setPendingOrders(int pendingOrders) {
         this.pendingOrders = pendingOrders;
+    }
+    
+        public int getCompletedOrders() {
+        return completedOrders;
+    }
+
+    public void setCompletedOrders(int completedOrders) {
+        this.completedOrders = completedOrders;
     }
 
     public double getTotalRevenue() {

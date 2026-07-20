@@ -44,7 +44,7 @@ public class SellerDashboardServlet extends HttpServlet {
                 req.setAttribute("totalOrders", data.getTotalOrders());
                 req.setAttribute("pendingOrders", data.getPendingOrders());
                 req.setAttribute("totalRevenue", data.getTotalRevenue());
-                req.setAttribute("orders", data.getOrders());
+
             }
             req.getRequestDispatcher("/seller/dashboard.jsp").forward(req, resp);
         } catch (Exception e) {

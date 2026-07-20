@@ -30,6 +30,7 @@ public class SellerDashboardService {
                 
                 int totalOrders = orders.size();
                 int pendingOrders = 0;
+                                int completedOrders = 0;
                 double totalRevenue = 0.0;
                 
                 for (Order o : orders) {
@@ -37,6 +38,7 @@ public class SellerDashboardService {
                         pendingOrders++;
                     }
                     if (o.getStatus() == 4) {
+                                                completedOrders++;
                         totalRevenue += o.getShopActualRevenue();
                     }
                 }
@@ -45,6 +47,7 @@ public class SellerDashboardService {
                 data.setTotalProducts(totalProducts);
                 data.setTotalOrders(totalOrders);
                 data.setPendingOrders(pendingOrders);
+                                data.setCompletedOrders(completedOrders);
                 data.setTotalRevenue(totalRevenue);
                 data.setOrders(orders);
             }
