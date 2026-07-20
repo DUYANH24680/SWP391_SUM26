@@ -953,6 +953,12 @@
                                             Dia chi chua cap nhat
                                         <% } %>
                                     </div>
+                                                                        <% if ("customer".equalsIgnoreCase(user.getRoleName())) { %>
+                                    <a href="<%= request.getContextPath() %>/submit-report?shopId=<%= shopInfo.getId() %>"
+                                       class="report-shop-btn" title="Báo cáo cửa hàng này">
+                                        <i class="fa-solid fa-flag"></i> Báo cáo
+                                    </a>
+                                    <% } %>
                                 </div>
                             </div>
                         </div>

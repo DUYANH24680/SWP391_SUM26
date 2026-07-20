@@ -77,7 +77,7 @@ public class AccountService {
             // ---- 4. Hash password + Insert ----
             String hashed = AccountService.hashPassword(password);
             int newId = dao.register(fullname.trim(), username.trim(), hashed,
-                                      email.trim().toLowerCase(), phone, 3, "");
+                                      email.trim().toLowerCase(), phone, 3, null);
 
             if (newId <= 0) {
                 return new RegisterResult("Đăng ký thất bại. Vui lòng thử lại sau.", null);

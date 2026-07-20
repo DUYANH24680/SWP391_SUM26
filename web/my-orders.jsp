@@ -369,6 +369,14 @@
             background: #fee2e2;
             border-color: #dc2626;
         }
+        .btn-green {
+            background: var(--green);
+            color: #fff;
+        }
+        .btn-green:hover {
+            background: var(--green-dark);
+            color: #fff;
+        }
 
         /* Empty state */
         .empty-state {
@@ -531,6 +539,9 @@
                             <% if (o.getNote() != null && !o.getNote().isEmpty()) { %>
                                 <div style="margin-top:0.2rem;"><i class="fa-solid fa-comment-dots" style="width:14px;color:var(--green);"></i> <strong>Ghi chú:</strong> <%= o.getNote() %></div>
                             <% } %>
+                            <% if (o.getStatus() == 5 && o.getCancelReason() != null && !o.getCancelReason().isEmpty()) { %>
+                                <div style="margin-top:0.2rem; color: #dc2626;"><i class="fa-solid fa-circle-xmark" style="width:14px;color:#dc2626;"></i> <strong>Lý do hủy:</strong> <%= o.getCancelReason() %></div>
+                            <% } %>
                         </div>
 
                         <!-- Order Footer -->
@@ -548,13 +559,22 @@
                                     Thực thu: <span><%= nf.format((long) o.getFinalCost()) %> đ</span>
                                 </div>
 
-                                <div class="order-actions">
+                                <div class="order-actions" style="display: flex; gap: 0.5rem;">
                                     <% if (o.getStatus() == 1) { %>
-                                        <form method="post" action="my-orders" onsubmit="return confirm('Bạn có chắc chắn muốn hủy đơn hàng này không?');">
+                                        <form method="post" action="my-orders" onsubmit="return confirm('Bạn có chắc chắn muốn hủy đơn hàng này không?');" style="margin: 0;">
                                             <input type="hidden" name="action" value="cancel">
                                             <input type="hidden" name="orderId" value="<%= o.getId() %>">
                                             <button type="submit" class="btn btn-danger-outline">
                                                 <i class="fa-solid fa-rectangle-xmark"></i> Hủy Đơn
+                                            </button>
+                                        </form>
+                                    <% } %>
+                                    <% if (o.getStatus() == 4) { %>
+                                        <form method="post" action="cart" style="margin: 0;">
+                                            <input type="hidden" name="action" value="reorder">
+                                            <input type="hidden" name="orderId" value="<%= o.getId() %>">
+                                            <button type="submit" class="btn btn-green">
+                                                <i class="fa-solid fa-cart-plus"></i> Mua Lại
                                             </button>
                                         </form>
                                     <% } %>
