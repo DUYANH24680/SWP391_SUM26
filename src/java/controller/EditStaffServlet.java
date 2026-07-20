@@ -7,7 +7,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import model.Account;
+import model.StaffDetails;
 import service.AdminAccountService;
+import service.StaffService;
 import java.io.IOException;
 
 /**
@@ -16,7 +18,8 @@ import java.io.IOException;
 @WebServlet("/admin/staff/edit")
 public class EditStaffServlet extends HttpServlet {
     
-    private AdminAccountService service = new AdminAccountService();
+    private AdminAccountService accountService = new AdminAccountService();
+    private StaffService staffService = new StaffService();
     
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -43,7 +46,7 @@ public class EditStaffServlet extends HttpServlet {
         
         try {
             int id = Integer.parseInt(idParam.trim());
-            Account staff = service.getStaffById(id);
+            Account staff = accountService.getStaffById(id);
             
             if (staff == null) {
                 session.setAttribute("error", "Nhân viên không tồn tại.");
@@ -57,7 +60,11 @@ public class EditStaffServlet extends HttpServlet {
                 return;
             }
             
+            // Lấy thông tin chi tiết staff
+            StaffDetails staffDetails = staffService.getStaffDetails(id);
+            
             req.setAttribute("staff", staff);
+            req.setAttribute("staffDetails", staffDetails);
             req.getRequestDispatcher("/admin/staff-form.jsp").forward(req, resp);
             
         } catch (NumberFormatException e) {
@@ -89,6 +96,11 @@ public class EditStaffServlet extends HttpServlet {
         String address = req.getParameter("address");
         String genderParam = req.getParameter("gender");
         
+        // Các tham số staff details
+        String staffCode = req.getParameter("staff_code");
+        String cccd = req.getParameter("cccd");
+        String managedArea = req.getParameter("managed_area");
+        
         if (idParam == null || idParam.trim().isEmpty()) {
             session.setAttribute("error", "ID nhân viên không hợp lệ.");
             resp.sendRedirect(req.getContextPath() + "/admin/staff");
@@ -104,18 +116,35 @@ public class EditStaffServlet extends HttpServlet {
             req.setAttribute("val_phone", phone);
             req.setAttribute("val_address", address);
             req.setAttribute("val_gender", genderParam);
+            req.setAttribute("val_staff_code", staffCode);
+            req.setAttribute("val_cccd", cccd);
+            req.setAttribute("val_managed_area", managedArea);
             
             Boolean gender = null;
             if (genderParam != null && !genderParam.isEmpty()) {
                 gender = Boolean.parseBoolean(genderParam);
             }
             
-            String error = service.updateStaff(id, fullname, email, phone, address, gender);
-            
-            if (error != null) {
-                Account staff = service.getStaffById(id);
+            // 1. Cập nhật thông tin tài khoản
+            String accountError = accountService.updateStaff(id, fullname, email, phone, address, gender);
+            if (accountError != null) {
+                Account staff = accountService.getStaffById(id);
+                StaffDetails details = staffService.getStaffDetails(id);
                 req.setAttribute("staff", staff);
-                req.setAttribute("formError", error);
+                req.setAttribute("staffDetails", details);
+                req.setAttribute("formError", accountError);
+                req.getRequestDispatcher("/admin/staff-form.jsp").forward(req, resp);
+                return;
+            }
+            
+            // 2. Cập nhật thông tin chi tiết staff
+            String detailsError = staffService.updateStaffDetails(id, staffCode, cccd, managedArea);
+            if (detailsError != null) {
+                Account staff = accountService.getStaffById(id);
+                StaffDetails details = staffService.getStaffDetails(id);
+                req.setAttribute("staff", staff);
+                req.setAttribute("staffDetails", details);
+                req.setAttribute("formError", detailsError);
                 req.getRequestDispatcher("/admin/staff-form.jsp").forward(req, resp);
                 return;
             }

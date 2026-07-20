@@ -119,6 +119,28 @@ public class AccountDAO extends Utils.DbContext {
         }
         return null;
     }
+
+    /**
+     * Find account by username.
+     */
+    public Account findByUsername(String username) {
+        String sql = "SELECT u.id, u.role_id, r.name AS role_name, u.fullname, u.username, u.password_hash, u.email, u.phone, u.address, u.avatar, u.gender, u.status, u.created_at "
+                   + "FROM Accounts u "
+                   + "JOIN Roles r ON u.role_id = r.id "
+                   + "WHERE u.username = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, username);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return mapRow(rs);
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("AccountDAO.findByUsername error: " + e.getMessage(), e);
+        }
+        return null;
+    }
             
                 public boolean updateAccountStatus(int id, int status) {
         String sql = "UPDATE Accounts SET status = ? WHERE id = ?";
@@ -133,9 +155,16 @@ public class AccountDAO extends Utils.DbContext {
 
     /**
      * Update profile details including address and gender.
+     * If avatar is null, keeps the existing avatar.
      */
     public boolean updateProfile(int id, String fullname, String email, String phone, String address, Boolean gender, String avatar) {
-        String sql = "UPDATE Accounts SET fullname = ?, email = ?, phone = ?, address = ?, gender = ?, avatar = ? WHERE id = ?";
+        String sql;
+        if (avatar == null) {
+            sql = "UPDATE Accounts SET fullname = ?, email = ?, phone = ?, address = ?, gender = ? WHERE id = ?";
+        } else {
+            sql = "UPDATE Accounts SET fullname = ?, email = ?, phone = ?, address = ?, gender = ?, avatar = ? WHERE id = ?";
+        }
+        
         try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
             ps.setString(1, fullname);
             ps.setString(2, email);
@@ -146,9 +175,20 @@ public class AccountDAO extends Utils.DbContext {
             } else {
                 ps.setNull(5, Types.BIT);
             }
-            ps.setString(6, avatar);
-            ps.setInt(7, id);
-            return ps.executeUpdate() > 0;
+            if (avatar != null) {
+                ps.setString(6, avatar);
+            }
+            if (avatar == null) {
+                ps.setInt(6, id);
+            } else {
+                ps.setInt(7, id);
+            }
+            
+            int rows = ps.executeUpdate();
+            if (rows == 0) {
+                System.err.println("[AccountDAO] updateProfile: No rows updated for id=" + id);
+            }
+            return rows > 0;
         } catch (SQLException e) {
             throw new RuntimeException("AccountDAO.updateProfile error: " + e.getMessage(), e);
         }
@@ -222,9 +262,9 @@ public class AccountDAO extends Utils.DbContext {
      * roleId must be the id for 'Customer' role (typically 3).
      * Returns the generated account id, or -1 on failure.
      */
-    public int register(String fullname, String username, String passwordHash, String email, String phone, int roleId) {
-        String sql = "INSERT INTO Accounts (role_id, fullname, username, password_hash, email, phone, status) "
-                   + "VALUES (?, ?, ?, ?, ?, ?, 1)";
+    public int register(String fullname, String username, String passwordHash, String email, String phone, int roleId, String address) {
+        String sql = "INSERT INTO Accounts (role_id, fullname, username, password_hash, email, phone, address, status) "
+                   + "VALUES (?, ?, ?, ?, ?, ?, ?, 1)";
         try (PreparedStatement ps = getConnection().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, roleId);
             ps.setString(2, fullname.trim());
@@ -235,6 +275,11 @@ public class AccountDAO extends Utils.DbContext {
                 ps.setString(6, phone.trim());
             } else {
                 ps.setNull(6, Types.VARCHAR);
+            }
+            if (address != null && !address.trim().isEmpty()) {
+                ps.setString(7, address.trim());
+            } else {
+                ps.setNull(7, Types.VARCHAR);
             }
             int rows = ps.executeUpdate();
             if (rows > 0) {
@@ -286,16 +331,16 @@ public class AccountDAO extends Utils.DbContext {
      * Add a new staff account.
      * Returns the generated account id, or -1 on failure.
      */
-    public int addStaff(String fullname, String username, String passwordHash, String email, String phone) {
-        return register(fullname, username, passwordHash, email, phone, 4); // roleId 4 = staff
+    public int addStaff(String fullname, String username, String passwordHash, String email, String phone, String address) {
+        return register(fullname, username, passwordHash, email, phone, 5, address); // roleId 5 = staff
     }
-    
+
     /**
      * Add a new shipper account.
      * Returns the generated account id, or -1 on failure.
      */
-    public int addShipper(String fullname, String username, String passwordHash, String email, String phone) {
-        return register(fullname, username, passwordHash, email, phone, 5); // roleId 5 = shipper
+    public int addShipper(String fullname, String username, String passwordHash, String email, String phone, String address) {
+        return register(fullname, username, passwordHash, email, phone, 6, address); // roleId 6 = shipper
     }
     
     /**
@@ -313,10 +358,35 @@ public class AccountDAO extends Utils.DbContext {
     }
     
     /**
-     * Soft delete an account (set status = -1).
+     * Soft delete an account (set status = 0 / inactive).
      */
     public boolean deleteAccount(int id) {
-        return updateAccountStatus(id, -1);
+        return updateAccountStatus(id, 0);
+    }
+
+    /**
+     * Hard delete an account from database (permanent delete).
+     * Returns error message if FK constraint prevents deletion.
+     */
+    public boolean hardDeleteAccount(int id) {
+        String sql = "DELETE FROM Accounts WHERE id = ?";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            ps.setInt(1, id);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            throw new RuntimeException("AccountDAO.hardDeleteAccount error: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Get error message for hard delete failure due to FK constraints.
+     */
+    public String getHardDeleteErrorMessage(int id, Exception e) {
+        String msg = e.getMessage();
+        if (msg != null && msg.contains("FK_DeliveryOrders_AssignedBy")) {
+            return "Không thể xóa: Nhân viên này đã giao đơn hàng cho shipper. Vui lòng chuyển giao các đơn hàng trước.";
+        }
+        return "Không thể xóa tài khoản: " + msg;
     }
     
     /**

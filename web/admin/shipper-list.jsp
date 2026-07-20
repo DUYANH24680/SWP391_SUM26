@@ -1,5 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="model.Account" %>
+<%@ page import="model.ShipperDetails" %>
+<%@ page import="java.util.Map" %>
 <%@ page import="java.util.List" %>
 <%@ page import="java.text.SimpleDateFormat" %>
 <%
@@ -10,6 +12,7 @@
     }
     
     List<Account> shipperList = (List<Account>) request.getAttribute("shipperList");
+    Map<Integer, ShipperDetails> shipperDetailsMap = (Map<Integer, ShipperDetails>) request.getAttribute("shipperDetailsMap");
     String keyword = (String) request.getAttribute("searchKeyword");
     String message = (String) session.getAttribute("message");
     String error = (String) session.getAttribute("error");
@@ -17,6 +20,7 @@
     session.removeAttribute("error");
     
     SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm");
+    SimpleDateFormat dateSdf = new SimpleDateFormat("dd/MM/yyyy");
 %>
 <!DOCTYPE html>
 <html lang="vi">
@@ -90,10 +94,8 @@
             <i class="fas fa-shield-halved"></i> Admin Panel
         </a>
         <div class="nav-links">
-            <a href="${pageContext.request.contextPath}/admin/orders">Monitor Đơn Hàng</a>
-            <a href="${pageContext.request.contextPath}/admin/staff">Nhân Viên</a>
-            <a href="${pageContext.request.contextPath}/admin/shipper" class="active">Shipper</a>
-            <a href="${pageContext.request.contextPath}/category">Danh Mục</a>
+            <a href="${pageContext.request.contextPath}/admin/staff">Quản Lý Nhân Viên</a>
+            <a href="${pageContext.request.contextPath}/admin/shipper" class="active">Quản Lý Shipper</a>
         </div>
         <div class="nav-right">
             <span class="nav-username"><%= user.getFullname() %></span>
@@ -138,22 +140,30 @@
                     <tr>
                         <th>ID</th>
                         <th>Họ Tên</th>
-                        <th>Username</th>
-                        <th>Email</th>
-                        <th>Điện Thoại</th>
+                        <th>Mã Shipper</th>
+                        <th>Ngày Sinh</th>
+                        <th>CCCD</th>
+                        <th>Phương Tiện</th>
+                        <th>Khu Vực</th>
                         <th>Trạng Thái</th>
-                        <th>Ngày Tạo</th>
                         <th>Hành Động</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <% for (Account shipper : shipperList) { %>
+                    <% for (Account shipper : shipperList) {
+                        ShipperDetails details = shipperDetailsMap != null ? shipperDetailsMap.get(shipper.getId()) : null;
+                    %>
                     <tr>
                         <td>#<%= shipper.getId() %></td>
-                        <td><%= shipper.getFullname() %></td>
-                        <td><%= shipper.getUsername() %></td>
-                        <td><%= shipper.getEmail() != null ? shipper.getEmail() : "-" %></td>
-                        <td><%= shipper.getPhone() != null ? shipper.getPhone() : "-" %></td>
+                        <td>
+                            <div style="font-weight: 600;"><%= shipper.getFullname() %></div>
+                            <div style="font-size: 0.75rem; color: var(--gray-400);"><%= shipper.getUsername() %></div>
+                        </td>
+                        <td><%= details != null && details.getShipperCode() != null ? details.getShipperCode() : "-" %></td>
+                        <td><%= details != null && details.getBirthdate() != null ? dateSdf.format(details.getBirthdate()) : "-" %></td>
+                        <td><%= details != null && details.getCccd() != null ? details.getCccd() : "-" %></td>
+                        <td><%= details != null && details.getVehicleType() != null ? details.getVehicleType() : "-" %></td>
+                        <td><%= details != null && details.getDeliveryArea() != null ? details.getDeliveryArea() : "-" %></td>
                         <td>
                             <% if (shipper.getStatus() == 1) { %>
                             <span class="badge badge-active"><i class="fas fa-check"></i> Hoạt động</span>
@@ -163,7 +173,6 @@
                             <span class="badge badge-deleted"><i class="fas fa-trash"></i> Đã xóa</span>
                             <% } %>
                         </td>
-                        <td><%= shipper.getCreatedAt() != null ? sdf.format(shipper.getCreatedAt()) : "-" %></td>
                         <td>
                             <div class="actions">
                                 <a href="${pageContext.request.contextPath}/admin/shipper/edit?id=<%= shipper.getId() %>" class="btn btn-sm" style="background: var(--gray-200); color: var(--gray-800);">
@@ -186,6 +195,7 @@
                                     </button>
                                 </form>
                                 <% } %>
+                                <% if (shipper.getStatus() != -1) { %>
                                 <form action="${pageContext.request.contextPath}/admin/shipper/action" method="post" style="display:inline;">
                                     <input type="hidden" name="id" value="<%= shipper.getId() %>">
                                     <input type="hidden" name="action" value="delete">
@@ -193,6 +203,7 @@
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </form>
+                                <% } %>
                             </div>
                         </td>
                     </tr>

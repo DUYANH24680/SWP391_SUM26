@@ -56,7 +56,7 @@ public class AdminAccountService {
      * Add a new staff account.
      * Returns error message or null on success.
      */
-    public String addStaff(String fullname, String username, String password, String email, String phone) {
+    public String addStaff(String fullname, String username, String password, String email, String phone, String address) {
         // Validate
         String error = validateAccountInput(fullname, username, password, email, phone);
         if (error != null) {
@@ -82,7 +82,8 @@ public class AdminAccountService {
                 username.trim(),
                 hashedPassword,
                 email.trim().toLowerCase(),
-                phone != null ? phone.trim() : null
+                phone != null ? phone.trim() : null,
+                address
             );
             
             if (newId <= 0) {
@@ -90,6 +91,52 @@ public class AdminAccountService {
             }
             
             System.out.println("[AdminAccountService] Staff created: id=" + newId + ", username=" + username);
+            return null;
+            
+        } finally {
+            dao.close();
+        }
+    }
+
+    /**
+     * Add a new shipper account.
+     * Returns error message or null on success.
+     */
+    public String addShipper(String fullname, String username, String password, String email, String phone, String address) {
+        // Validate
+        String error = validateAccountInput(fullname, username, password, email, phone);
+        if (error != null) {
+            return error;
+        }
+        
+        AccountDAO dao = new AccountDAO();
+        try {
+            // Check username uniqueness
+            if (dao.isUsernameTaken(username.trim())) {
+                return "Tên đăng nhập đã tồn tại.";
+            }
+            
+            // Check email uniqueness
+            if (dao.isEmailExists(email.trim().toLowerCase())) {
+                return "Email đã được sử dụng bởi tài khoản khác.";
+            }
+            
+            // Hash password and create account
+            String hashedPassword = hashPassword(password);
+            int newId = dao.addShipper(
+                fullname.trim(),
+                username.trim(),
+                hashedPassword,
+                email.trim().toLowerCase(),
+                phone != null ? phone.trim() : null,
+                address
+            );
+            
+            if (newId <= 0) {
+                return "Không thể tạo tài khoản. Vui lòng thử lại.";
+            }
+            
+            System.out.println("[AdminAccountService] Shipper created: id=" + newId + ", username=" + username);
             return null;
             
         } finally {
@@ -193,6 +240,30 @@ public class AdminAccountService {
             dao.close();
         }
     }
+
+    /**
+     * Hard delete staff account from database (permanent).
+     */
+    public boolean hardDeleteStaff(int id) {
+        AccountDAO dao = new AccountDAO();
+        try {
+            return dao.hardDeleteAccount(id);
+        } finally {
+            dao.close();
+        }
+    }
+
+    /**
+     * Get error message for hard delete failure.
+     */
+    public String getHardDeleteErrorMessage(int id, Exception e) {
+        AccountDAO dao = new AccountDAO();
+        try {
+            return dao.getHardDeleteErrorMessage(id, e);
+        } finally {
+            dao.close();
+        }
+    }
     
     // ==================== Shipper Management ====================
     
@@ -242,46 +313,34 @@ public class AdminAccountService {
             dao.close();
         }
     }
-    
+
     /**
-     * Add a new shipper account.
+     * Get shipper account by username.
      */
-    public String addShipper(String fullname, String username, String password, String email, String phone) {
-        // Validate
-        String error = validateAccountInput(fullname, username, password, email, phone);
-        if (error != null) {
-            return error;
-        }
-        
+    public Account getShipperByUsername(String username) {
         AccountDAO dao = new AccountDAO();
         try {
-            // Check username uniqueness
-            if (dao.isUsernameTaken(username.trim())) {
-                return "Tên đăng nhập đã tồn tại.";
+            Account account = dao.findByUsername(username);
+            if (account != null && "shipper".equalsIgnoreCase(account.getRoleName())) {
+                return account;
             }
-            
-            // Check email uniqueness
-            if (dao.isEmailExists(email.trim().toLowerCase())) {
-                return "Email đã được sử dụng bởi tài khoản khác.";
-            }
-            
-            // Hash password and create account
-            String hashedPassword = hashPassword(password);
-            int newId = dao.addShipper(
-                fullname.trim(),
-                username.trim(),
-                hashedPassword,
-                email.trim().toLowerCase(),
-                phone != null ? phone.trim() : null
-            );
-            
-            if (newId <= 0) {
-                return "Không thể tạo tài khoản. Vui lòng thử lại.";
-            }
-            
-            System.out.println("[AdminAccountService] Shipper created: id=" + newId + ", username=" + username);
             return null;
-            
+        } finally {
+            dao.close();
+        }
+    }
+
+    /**
+     * Get staff account by username.
+     */
+    public Account getStaffByUsername(String username) {
+        AccountDAO dao = new AccountDAO();
+        try {
+            Account account = dao.findByUsername(username);
+            if (account != null && "staff".equalsIgnoreCase(account.getRoleName())) {
+                return account;
+            }
+            return null;
         } finally {
             dao.close();
         }
@@ -379,6 +438,30 @@ public class AdminAccountService {
         AccountDAO dao = new AccountDAO();
         try {
             return dao.deleteAccount(id);
+        } finally {
+            dao.close();
+        }
+    }
+
+    /**
+     * Hard delete shipper account from database (permanent).
+     */
+    public boolean hardDeleteShipper(int id) {
+        AccountDAO dao = new AccountDAO();
+        try {
+            return dao.hardDeleteAccount(id);
+        } finally {
+            dao.close();
+        }
+    }
+
+    /**
+     * Get error message for hard delete failure.
+     */
+    public String getHardDeleteErrorMessageForShipper(int id, Exception e) {
+        AccountDAO dao = new AccountDAO();
+        try {
+            return dao.getHardDeleteErrorMessage(id, e);
         } finally {
             dao.close();
         }
