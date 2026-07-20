@@ -33,11 +33,18 @@ public class DeliveryService {
      * Assign a shipper to an order.
      */
     public String assignShipper(int orderId, int shipperId, int assignedBy, String note) {
-        if (orderId <= 0) {
-            return "ID đơn hàng không hợp lệ.";
+        return assignShipperBatch(new int[]{orderId}, shipperId, assignedBy, note);
+    }
+    
+    /**
+     * Assign a shipper to multiple orders at once.
+     */
+    public String assignShipperBatch(int[] orderIds, int shipperId, int assignedBy, String note) {
+        if (orderIds == null || orderIds.length == 0) {
+            return "Vui lòng chọn ít nhất một đơn hàng.";
         }
         if (shipperId <= 0) {
-            return "ID shipper không hợp lệ.";
+            return "Vui lòng chọn shipper.";
         }
         
         // Verify shipper exists and is a shipper
@@ -57,22 +64,44 @@ public class DeliveryService {
             accountDao.close();
         }
         
-        // Assign shipper
+        // Assign shipper to each order
         DeliveryDAO dao = new DeliveryDAO();
         try {
-            // Check if already assigned
-            DeliveryOrder existing = dao.getDeliveryByOrderId(orderId);
-            if (existing != null) {
-                return "Đơn hàng đã được giao cho shipper trước đó.";
+            int successCount = 0;
+            int failCount = 0;
+            StringBuilder failedOrders = new StringBuilder();
+            
+            for (int orderId : orderIds) {
+                // Check if already assigned
+                DeliveryOrder existing = dao.getDeliveryByOrderId(orderId);
+                if (existing != null) {
+                    failCount++;
+                    if (failedOrders.length() > 0) failedOrders.append(", ");
+                    failedOrders.append("#").append(orderId);
+                    continue;
+                }
+                
+                boolean success = dao.assignShipper(orderId, shipperId, assignedBy, note);
+                if (success) {
+                    successCount++;
+                } else {
+                    failCount++;
+                    if (failedOrders.length() > 0) failedOrders.append(", ");
+                    failedOrders.append("#").append(orderId);
+                }
             }
             
-            boolean success = dao.assignShipper(orderId, shipperId, assignedBy, note);
-            if (!success) {
-                return "Giao đơn hàng cho shipper thất bại. Vui lòng thử lại.";
+            System.out.println("[DeliveryService] Batch assign: " + successCount + " success, " + failCount + " failed");
+            
+            if (failCount > 0 && successCount == 0) {
+                return "Không thể giao đơn hàng " + failedOrders + ". Có thể đã được giao trước đó.";
             }
             
-            System.out.println("[DeliveryService] Order assigned: orderId=" + orderId + ", shipperId=" + shipperId);
-            return null;
+            if (failCount > 0) {
+                return "Đã giao " + successCount + " đơn. " + failCount + " đơn thất bại (" + failedOrders + ").";
+            }
+            
+            return null; // Success
             
         } finally {
             dao.close();

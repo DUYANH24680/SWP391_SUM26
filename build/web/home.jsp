@@ -2003,9 +2003,7 @@
                             <i class="fa-solid fa-basket-shopping"></i>
                             <span class="cart-badge"><%= cartCount %></span>
                         </a>
-                        <button class="nav-icon-btn" title="Thông báo">
-                            <i class="fa-regular fa-bell"></i>
-                        </button>
+                        <jsp:include page="/notification-icon.jsp" />
 
                         <% if (Account !=null) { %>
                             <!-- Avatar with dropdown -->

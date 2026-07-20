@@ -11,6 +11,7 @@ import jakarta.servlet.http.HttpSession;
 import model.Account;
 import model.Shop;
 import model.Voucher;
+import service.NotificationService;
 
 import java.io.IOException;
 import java.sql.Timestamp;
@@ -22,6 +23,7 @@ import java.util.List;
 @WebServlet(name = "ManageVoucherServlet", urlPatterns = {"/manage-vouchers"})
 public class ManageVoucherServlet extends HttpServlet {
 
+    private NotificationService notifService = new NotificationService();
     private Timestamp parseTimestamp(String dtStr) {
         if (dtStr == null || dtStr.trim().isEmpty()) {
             return null;
@@ -176,6 +178,26 @@ public class ManageVoucherServlet extends HttpServlet {
                     }
                     voucherDAO.insertVoucher(v);
                     session.setAttribute("message", "Tạo voucher thành công!");
+
+                    // Gửi thông báo đến tất cả customers
+                    try {
+                        String shopName = null;
+                        if (shopId != null) {
+                            ShopDAO sDAO = new ShopDAO();
+                            Shop s = sDAO.getShopById(shopId);
+                            sDAO.close();
+                            if (s != null) shopName = s.getShopName();
+                        }
+                        String discountInfo;
+                        if ("FREESHIP".equalsIgnoreCase(type)) {
+                            discountInfo = "Miễn phí vận chuyển";
+                        } else {
+                            discountInfo = (int) discountPercent + "% giảm tối đa " + String.format("%,.0f", maxDiscount) + "đ";
+                        }
+                        notifService.notifyNewVoucher(v.getCode(), shopName, discountInfo);
+                    } catch (Exception ex) {
+                        System.err.println("[ManageVoucherServlet] notifyNewVoucher error: " + ex.getMessage());
+                    }
                 } else {
                     voucherDAO.updateVoucher(v);
                     session.setAttribute("message", "Cập nhật voucher thành công!");

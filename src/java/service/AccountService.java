@@ -201,8 +201,20 @@ public class AccountService {
         try {
             Account account = dao.findByUsernameOrEmail(username);
             
-            // Kiểm tra (Logic)
-            if (account != null && account.getPasswordHash().equals(password)) {
+            if (account == null) {
+                return null;
+            }
+            
+            String storedHash = account.getPasswordHash();
+            
+            // Thử so sánh plain text trước (cho tài khoản cũ)
+            if (storedHash != null && storedHash.equals(password)) {
+                return account;
+            }
+            
+            // Thử so sánh SHA-256 hash (cho tài khoản mới)
+            String hashedPassword = hashPassword(password);
+            if (storedHash != null && storedHash.equals(hashedPassword)) {
                 return account;
             }
             

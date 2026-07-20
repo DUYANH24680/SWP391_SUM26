@@ -11,6 +11,7 @@ import model.Wishlist;
 import service.AccountService;
 import service.CartService;
 import service.WishlistService;
+import service.NotificationService;
 
 @WebServlet("/login")
 public class LoginServlet extends HttpServlet {
@@ -69,6 +70,18 @@ public class LoginServlet extends HttpServlet {
                 session.setAttribute("wishlistCount", 0);
             } finally {
                 wishlistService.close();
+            }
+
+            // Load notification unread count
+            NotificationService notifService = new NotificationService();
+            try {
+                int unreadCount = notifService.getUnreadCount(account.getId());
+                session.setAttribute("unreadNotifCount", unreadCount);
+            } catch (Exception e) {
+                System.err.println("[LoginServlet] Loi load notification count: " + e.getMessage());
+                session.setAttribute("unreadNotifCount", 0);
+            } finally {
+                notifService.close();
             }
 
             System.out.println("[LoginServlet] User '" + username

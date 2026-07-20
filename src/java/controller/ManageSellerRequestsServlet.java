@@ -9,6 +9,7 @@ import java.util.List;
 import dao.ShopRequestDAO;
 import model.Account;
 import model.ShopRequest;
+import service.NotificationService;
 
 /**
  * Admin: list all seller registration requests, approve or reject.
@@ -17,6 +18,7 @@ import model.ShopRequest;
 public class ManageSellerRequestsServlet extends HttpServlet {
 
     private final ShopRequestDAO dao = new ShopRequestDAO();
+    private final NotificationService notifService = new NotificationService();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -60,13 +62,18 @@ public class ManageSellerRequestsServlet extends HttpServlet {
             if ("approve".equals(action)) {
                 boolean ok = dao.approve(requestId);
                 if (ok) {
+                    ShopRequest shopReq = dao.findById(requestId);
+                    notifService.notifySellerRequestApproved(shopReq.getAccountId(), shopReq.getShopName());
                     session.setAttribute("message", "Duyệt thành công! Cửa hàng đã được tạo và tài khoản đã nâng cấp lên Seller.");
                 } else {
                     session.setAttribute("error", "Yêu cầu không tồn tại hoặc đã được xử lý trước đó.");
                 }
             } else if ("reject".equals(action)) {
+                String reason = req.getParameter("reason");
                 boolean ok = dao.reject(requestId);
                 if (ok) {
+                    ShopRequest shopReq = dao.findById(requestId);
+                    notifService.notifySellerRequestRejected(shopReq.getAccountId(), shopReq.getShopName(), reason);
                     session.setAttribute("message", "Đã từ chối yêu cầu.");
                 } else {
                     session.setAttribute("error", "Yêu cầu không tồn tại hoặc đã được xử lý trước đó.");
