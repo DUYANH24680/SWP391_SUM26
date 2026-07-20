@@ -231,8 +231,9 @@ public class AddProductServlet extends HttpServlet {
         product.setSalePrice(salePrice);
         product.setCategoryId(categoryId);
         product.setShopId(shopId);
+        product.setSellerId(ownerId);
         product.setExpiredDate(expiredDate);
-        product.setStatus(0);
+        product.setStatus(1); // Tự động duyệt sản phẩm để hiển thị ngay lập tức
 
         ProductDAO productDAO = new ProductDAO();
         try {

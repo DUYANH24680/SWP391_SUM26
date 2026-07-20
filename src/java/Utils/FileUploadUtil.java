@@ -161,12 +161,10 @@ public class FileUploadUtil {
         String uploadDirPath;
         if (parentPath != null) {
             uploadDirPath = parentPath.resolve("uploads")
-                    + File.separator + contextPath
                     + File.separator + subFolder;
         } else {
             // Fallback: dùng thư mục con trong webapp (vẫn hoạt động, nhưng sẽ bị xóa khi rebuild)
             uploadDirPath = webappPath.resolve("uploads")
-                    + File.separator + contextPath
                     + File.separator + subFolder;
         }
 

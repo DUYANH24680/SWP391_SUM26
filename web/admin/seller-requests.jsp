@@ -238,7 +238,11 @@
         </div>
         <div class="nav-right">
             <span class="nav-username">Admin: <%= user.getFullname() != null ? user.getFullname() : user.getUsername() %></span>
-            <a href="<%= request.getContextPath() %>/logout" class="btn btn-sm" style="background: #fee2e2; color: #991b1b; text-decoration: none;">Đăng Xuất</a>
+            <a href="<%= request.getContextPath() %>/logout" class="btn btn-sm" style="background: #fee2e2; color: #991b1b; text-decoration: none; margin-right: 10px;">Đăng Xuất</a>
+            <% 
+                String avatarUrl = user.getAvatar();
+                if (avatarUrl == null || avatarUrl.trim().isEmpty()) {
+                    String fn = user.getFullname() != null ? user.getFullname() : user.getUsername();
                     avatarUrl = "https://ui-avatars.com/api/?name=" + java.net.URLEncoder.encode(fn, "UTF-8") + "&background=4caf50&color=fff&size=80&bold=true&rounded=true";
                 }
             %>

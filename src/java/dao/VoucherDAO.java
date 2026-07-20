@@ -52,7 +52,9 @@ public class VoucherDAO extends DbContext {
                         + "id INT IDENTITY(1,1) PRIMARY KEY, "
                         + "user_id INT NOT NULL, "
                         + "voucher_id INT NOT NULL, "
-                        + "usage_count INT DEFAULT 0)";
+                        + "usage_count INT DEFAULT 0, "
+                        + "CONSTRAINT FK_UserVouchers_Accounts FOREIGN KEY (user_id) REFERENCES Accounts(id), "
+                        + "CONSTRAINT FK_UserVouchers_Vouchers FOREIGN KEY (voucher_id) REFERENCES Vouchers(id))";
                     try (Statement st = getConnection().createStatement()) {
                         st.execute(createSql);
                         System.out.println("[VoucherDAO] Created UserVouchers table");

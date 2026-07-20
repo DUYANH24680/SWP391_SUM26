@@ -199,6 +199,20 @@ CREATE TABLE Vouchers (
 
 
 -- ------------------------------------------------------------
+-- 11b. UserVouchers (Lượt sử dụng voucher của từng user)
+-- ------------------------------------------------------------
+CREATE TABLE UserVouchers (
+    id          INT IDENTITY(1,1) PRIMARY KEY,
+    user_id     INT NOT NULL,
+    voucher_id  INT NOT NULL,
+    usage_count INT DEFAULT 0,
+
+    CONSTRAINT FK_UserVouchers_Accounts FOREIGN KEY (user_id) REFERENCES Accounts(id),
+    CONSTRAINT FK_UserVouchers_Vouchers FOREIGN KEY (voucher_id) REFERENCES Vouchers(id)
+);
+
+
+-- ------------------------------------------------------------
 -- 12. Carts
 -- ------------------------------------------------------------
 CREATE TABLE Carts (

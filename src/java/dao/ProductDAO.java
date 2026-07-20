@@ -161,6 +161,9 @@ public class ProductDAO extends DbContext {
      * Lay danh sach san pham thuoc mot shop, bao gom ca san pham cho duyet (status = 0).
      * Su dung de hien thi danh sach san pham cua nguoi ban.
      */
+    /**
+     * xóa Status And 1 gán cứng
+     */
     public List<Product> getProductsByShopId(int shopId) {
         String sql = "SELECT p.id, p.category_id, p.seller_id, p.shop_id, p.title, p.image, p.description, p.unit, "
                    + "p.stock_quantity, p.sold_quantity, p.original_price, p.sale_price, p.expired_date, "
@@ -168,7 +171,7 @@ public class ProductDAO extends DbContext {
                    + "s.shop_name "
                    + "FROM Products p "
                    + "LEFT JOIN Shops s ON p.shop_id = s.id "
-                   + "WHERE p.shop_id = ? AND p.isDelete = 0 AND p.status = 1 "
+                   + "WHERE p.shop_id = ? AND p.isDelete = 0 "
                    + "ORDER BY p.created_at DESC";
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
