@@ -8,6 +8,12 @@ import model.Cart;
 import model.CartItem;
 import model.Product;
 import model.Voucher;
+import model.ReorderResult;
+import dao.OrderDAO;
+import model.Order;
+import model.OrderDetail;
+import java.util.ArrayList;
+import java.util.List;
 
 public class CartService {
 
@@ -273,5 +279,115 @@ public class CartService {
         cartItemDAO.deleteItemsByCartId(cart.getId());
         cartDAO.updateCartTotals(cart.getId(), 0, 0);
         return cartDAO.getCartByCustomerId(customerId);
+    }
+
+    public ReorderResult reorder(int customerId, int orderId) {
+        if (customerId <= 0) {
+            return ReorderResult.failure("Vui lòng đăng nhập để tiếp tục.");
+        }
+        if (orderId <= 0) {
+            return ReorderResult.failure("Đơn hàng không hợp lệ.");
+        }
+
+        OrderDAO orderDAO = new OrderDAO();
+        Order order = null;
+        List<OrderDetail> details = null;
+        try {
+            order = orderDAO.getOrderById(orderId);
+            if (order == null || order.getCustomerId() != customerId) {
+                return ReorderResult.failure("Đơn hàng không tồn tại hoặc không thuộc quyền sở hữu của bạn.");
+            }
+            details = orderDAO.getOrderDetails(orderId);
+        } finally {
+            orderDAO.close();
+        }
+
+        if (details == null || details.isEmpty()) {
+            return ReorderResult.failure("Đơn hàng không có sản phẩm nào để mua lại.");
+        }
+
+        int cartId = cartDAO.getOrCreateCartId(customerId);
+
+        List<String> added = new ArrayList<>();
+        List<String> adjusted = new ArrayList<>();
+        List<String> failed = new ArrayList<>();
+
+        for (OrderDetail detail : details) {
+            int productId = detail.getProductId();
+            Product product = productDAO.getProductById(productId);
+
+            // Check if product is available and has stock
+            if (product == null || !product.isActive() || !product.isInStock()) {
+                failed.add(detail.getProductTitle() != null ? detail.getProductTitle() : ("Sản phẩm #" + productId));
+                continue;
+            }
+
+            int targetQty = detail.getQuantity();
+            if (targetQty <= 0) {
+                targetQty = 1;
+            }
+
+            CartItem existing = cartItemDAO.getItemByProductId(cartId, productId);
+            if (existing != null) {
+                int newQty = existing.getQuantity() + targetQty;
+                if (newQty > product.getStockQuantity()) {
+                    newQty = product.getStockQuantity();
+                    adjusted.add(product.getTitle());
+                } else {
+                    added.add(product.getTitle());
+                }
+
+                existing.setQuantity(newQty);
+                double unitPrice = product.getSalePrice() > 0 && product.getSalePrice() < product.getOriginalPrice()
+                        ? product.getSalePrice() : product.getOriginalPrice();
+                existing.setUnitPrice(unitPrice);
+                existing.setVoucherId(0);
+                existing.setDiscountCode(null);
+                existing.setDiscountAmount(0);
+                existing.setTotalPrice(unitPrice * newQty);
+                cartItemDAO.updateItem(existing);
+            } else {
+                int finalQty = targetQty;
+                if (finalQty > product.getStockQuantity()) {
+                    finalQty = product.getStockQuantity();
+                    adjusted.add(product.getTitle());
+                } else {
+                    added.add(product.getTitle());
+                }
+
+                double unitPrice = product.getSalePrice() > 0 && product.getSalePrice() < product.getOriginalPrice()
+                        ? product.getSalePrice() : product.getOriginalPrice();
+                double totalPrice = unitPrice * finalQty;
+
+                CartItem item = new CartItem();
+                item.setCartId(cartId);
+                item.setProductId(productId);
+                item.setQuantity(finalQty);
+                item.setUnitPrice(unitPrice);
+                item.setDiscountAmount(0);
+                item.setTotalPrice(totalPrice);
+                item.setNote("");
+                item.setVoucherId(0);
+                item.setDiscountCode(null);
+                item.setSelected(true);
+                cartItemDAO.insertItem(item);
+            }
+        }
+
+        cartDAO.recalculateCartTotals(cartId);
+
+        if (added.isEmpty() && adjusted.isEmpty() && !failed.isEmpty()) {
+            return ReorderResult.failure("Không thể mua lại. Tất cả sản phẩm trong đơn hàng đã hết hàng hoặc ngừng bán.");
+        }
+
+        StringBuilder msg = new StringBuilder("Đã thêm các sản phẩm khả dụng vào giỏ hàng thành công.");
+        if (!failed.isEmpty()) {
+            msg.append(" Có ").append(failed.size()).append(" sản phẩm đã hết hàng hoặc ngừng bán nên bị bỏ qua.");
+        }
+        if (!adjusted.isEmpty()) {
+            msg.append(" Có ").append(adjusted.size()).append(" sản phẩm được điều chỉnh số lượng theo tồn kho.");
+        }
+
+        return ReorderResult.success(msg.toString());
     }
 }
