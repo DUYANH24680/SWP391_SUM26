@@ -504,6 +504,7 @@
     <jsp:param name="activePage" value="profile"/>
 </jsp:include>
 
+
     <!-- MAIN -->
     <main class="sena-main">
 

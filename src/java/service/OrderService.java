@@ -134,7 +134,12 @@ public class OrderService {
                 return SellerOrderActionResult.failure("Hành động không hợp lệ.");
             }
 
-            boolean ok = orderDAO.updateOrderStatus(orderId, newStatus);
+            boolean ok;
+            if ("cancel".equals(action)) {
+                ok = orderDAO.updateOrderStatus(orderId, newStatus, "Cửa hàng từ chối nhận đơn.");
+            } else {
+                ok = orderDAO.updateOrderStatus(orderId, newStatus);
+            }
             if (!ok) {
                 return SellerOrderActionResult.failure("Cập nhật trạng thái đơn hàng thất bại.");
             }
@@ -660,11 +665,20 @@ public class OrderService {
             if (order.getStatus() != 1) {
                 return CancelOrderResult.failure("Chỉ có thể hủy đơn hàng ở trạng thái Chờ xác nhận.");
             }
-            boolean ok = dao.updateOrderStatus(orderId, 5);
+            boolean ok = dao.updateOrderStatus(orderId, 5, "Khách hàng chủ động hủy.");
             if (!ok) {
                 return CancelOrderResult.failure("Hủy đơn hàng thất bại.");
             }
             return CancelOrderResult.success();
+        } finally {
+            dao.close();
+        }
+    }
+
+    public int cancelLateUnconfirmedOrders(int thresholdHours) {
+        OrderDAO dao = new OrderDAO();
+        try {
+            return dao.cancelLateUnconfirmedOrders(thresholdHours);
         } finally {
             dao.close();
         }

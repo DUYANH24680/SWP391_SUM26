@@ -660,8 +660,17 @@
                                     <% } %>
                                     Ship: +<%= nf.format((long) o.getShippingFee()) %> đ
                                 </div>
-                                <div class="order-total">
-                                    Khách trả: <%= nf.format((long) o.getFinalCost()) %> đ
+                                <div class="order-total" style="display: flex; align-items: center; gap: 1rem;">
+                                    <span>Khách trả: <%= nf.format((long) o.getFinalCost()) %> đ</span>
+                                    <% if (o.getStatus() == 4) { %>
+                                    <form method="post" action="cart" style="display:inline; margin:0;">
+                                        <input type="hidden" name="action" value="reorder">
+                                        <input type="hidden" name="orderId" value="<%= o.getId() %>">
+                                        <button type="submit" class="btn btn-green" style="padding: 0.3rem 0.8rem; font-size: 0.75rem; box-shadow: none;">
+                                            <i class="fa-solid fa-cart-plus"></i> Mua Lại
+                                        </button>
+                                    </form>
+                                    <% } %>
                                 </div>
                             </div>
                         </div>

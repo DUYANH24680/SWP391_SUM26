@@ -20,6 +20,7 @@ public class CartServlet extends HttpServlet {
     private static final String ACTION_CLEAR = "clear";
     private static final String ACTION_UPDATE = "update";
     private static final String ACTION_BUY_NOW = "buyNow";
+    private static final String ACTION_REORDER = "reorder";
     private final CartService cartService = new CartService();
 
     @Override
@@ -75,6 +76,10 @@ public class CartServlet extends HttpServlet {
         }
         if (ACTION_REMOVE.equals(action)) {
             handleRemove(req, resp, session);
+            return;
+        }
+        if (ACTION_REORDER.equals(action)) {
+            handleReorder(req, resp, session);
             return;
         }
 
@@ -166,6 +171,25 @@ public class CartServlet extends HttpServlet {
             System.err.println("[CartServlet] handleClear error: " + e.getMessage());
             e.printStackTrace();
             session.setAttribute("error", "Lỗi khi xóa giỏ hàng.");
+        }
+        resp.sendRedirect(req.getContextPath() + "/cart");
+    }
+
+    private void handleReorder(HttpServletRequest req, HttpServletResponse resp, HttpSession session)
+            throws IOException {
+        Account user = (Account) session.getAttribute("Account");
+        int orderId = parsePositiveInt(req.getParameter("orderId"), 0);
+        try {
+            model.ReorderResult result = cartService.reorder(user.getId(), orderId);
+            if (result.isSuccess()) {
+                session.setAttribute("message", result.getMessage());
+            } else {
+                session.setAttribute("error", result.getError());
+            }
+        } catch (Exception e) {
+            System.err.println("[CartServlet] handleReorder error: " + e.getMessage());
+            e.printStackTrace();
+            session.setAttribute("error", "Lỗi khi mua lại đơn hàng. Vui lòng thử lại.");
         }
         resp.sendRedirect(req.getContextPath() + "/cart");
     }

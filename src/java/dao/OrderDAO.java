@@ -221,7 +221,7 @@ public class OrderDAO extends DbContext {
     public List<Order> getOrdersByCustomerId(int customerId) {
         List<Order> list = new ArrayList<>();
         String sql = "SELECT o.id, o.customer_id, o.voucher_id, o.recipient_name, o.recipient_phone, o.address, o.payment_method, "
-                   + "o.status, o.payment_status, o.total_cost, o.discount_amount, o.shipping_fee, o.final_cost, o.note, o.order_date, o.cancelled_at, "
+                   + "o.status, o.payment_status, o.total_cost, o.discount_amount, o.shipping_fee, o.final_cost, o.note, o.order_date, o.cancelled_at, o.cancel_reason, "
                    + "o.platform_discount_amount, o.shop_actual_revenue, v.code AS voucher_code "
                    + "FROM Orders o "
                    + "LEFT JOIN Vouchers v ON o.voucher_id = v.id "
@@ -249,7 +249,7 @@ public class OrderDAO extends DbContext {
     public List<Order> getOrdersByShopId(int shopId) {
         List<Order> list = new ArrayList<>();
         String sql = "SELECT DISTINCT o.id, o.customer_id, o.voucher_id, o.recipient_name, o.recipient_phone, o.address, o.payment_method, "
-                   + "o.status, o.payment_status, o.total_cost, o.discount_amount, o.shipping_fee, o.final_cost, o.note, o.order_date, o.cancelled_at, "
+                   + "o.status, o.payment_status, o.total_cost, o.discount_amount, o.shipping_fee, o.final_cost, o.note, o.order_date, o.cancelled_at, o.cancel_reason, "
                    + "o.platform_discount_amount, o.shop_actual_revenue, a.fullname AS customer_name, v.code AS voucher_code "
                    + "FROM Orders o "
                    + "JOIN OrderDetails od ON o.id = od.order_id "
@@ -280,7 +280,7 @@ public class OrderDAO extends DbContext {
      */
     public Order getOrderById(int orderId) {
         String sql = "SELECT o.id, o.customer_id, o.voucher_id, o.recipient_name, o.recipient_phone, o.address, o.payment_method, "
-                   + "o.status, o.payment_status, o.total_cost, o.discount_amount, o.shipping_fee, o.final_cost, o.note, o.order_date, o.cancelled_at, "
+                   + "o.status, o.payment_status, o.total_cost, o.discount_amount, o.shipping_fee, o.final_cost, o.note, o.order_date, o.cancelled_at, o.cancel_reason, "
                    + "o.platform_discount_amount, o.shop_actual_revenue, a.fullname AS customer_name, v.code AS voucher_code "
                    + "FROM Orders o "
                    + "JOIN Accounts a ON o.customer_id = a.id "
@@ -312,7 +312,7 @@ public class OrderDAO extends DbContext {
         List<Order> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
             "SELECT o.id, o.customer_id, o.voucher_id, o.recipient_name, o.recipient_phone, o.address, o.payment_method, "
-          + "o.status, o.payment_status, o.total_cost, o.discount_amount, o.shipping_fee, o.final_cost, o.note, o.order_date, o.cancelled_at, "
+          + "o.status, o.payment_status, o.total_cost, o.discount_amount, o.shipping_fee, o.final_cost, o.note, o.order_date, o.cancelled_at, o.cancel_reason, "
           + "o.platform_discount_amount, o.shop_actual_revenue, a.fullname AS customer_name, v.code AS voucher_code, s.shop_name "
           + "FROM Orders o "
           + "JOIN OrderDetails od ON o.id = od.order_id "
@@ -350,7 +350,7 @@ public class OrderDAO extends DbContext {
         }
 
         sql.append("GROUP BY o.id, o.customer_id, o.voucher_id, o.recipient_name, o.recipient_phone, o.address, o.payment_method, "
-                 + "o.status, o.payment_status, o.total_cost, o.discount_amount, o.shipping_fee, o.final_cost, o.note, o.order_date, o.cancelled_at, "
+                 + "o.status, o.payment_status, o.total_cost, o.discount_amount, o.shipping_fee, o.final_cost, o.note, o.order_date, o.cancelled_at, o.cancel_reason, "
                  + "o.platform_discount_amount, o.shop_actual_revenue, a.fullname, v.code, s.shop_name "
                  + "ORDER BY o.order_date DESC");
 
@@ -441,7 +441,7 @@ public class OrderDAO extends DbContext {
         List<Order> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
             "SELECT o.id, o.customer_id, o.voucher_id, o.recipient_name, o.recipient_phone, o.address, o.payment_method, "
-          + "o.status, o.payment_status, o.total_cost, o.discount_amount, o.shipping_fee, o.final_cost, o.note, o.order_date, o.cancelled_at, "
+          + "o.status, o.payment_status, o.total_cost, o.discount_amount, o.shipping_fee, o.final_cost, o.note, o.order_date, o.cancelled_at, o.cancel_reason, "
           + "o.platform_discount_amount, o.shop_actual_revenue, a.fullname AS customer_name, v.code AS voucher_code, s.shop_name "
           + "FROM Orders o "
           + "JOIN OrderDetails od ON o.id = od.order_id "
@@ -479,7 +479,7 @@ public class OrderDAO extends DbContext {
         }
 
         sql.append("GROUP BY o.id, o.customer_id, o.voucher_id, o.recipient_name, o.recipient_phone, o.address, o.payment_method, "
-                 + "o.status, o.payment_status, o.total_cost, o.discount_amount, o.shipping_fee, o.final_cost, o.note, o.order_date, o.cancelled_at, "
+                 + "o.status, o.payment_status, o.total_cost, o.discount_amount, o.shipping_fee, o.final_cost, o.note, o.order_date, o.cancelled_at, o.cancel_reason, "
                  + "o.platform_discount_amount, o.shop_actual_revenue, a.fullname, v.code, s.shop_name "
                  + "ORDER BY o.order_date DESC "
                  + "OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
@@ -559,6 +559,38 @@ public class OrderDAO extends DbContext {
             throw new RuntimeException("OrderDAO.updateOrderStatus error: " + e.getMessage(), e);
         }
     }
+
+    public boolean updateOrderStatus(int orderId, int status, String cancelReason) {
+        String sql = "UPDATE Orders SET status = ?, cancelled_at = (CASE WHEN ? = 5 THEN GETDATE() ELSE NULL END), cancel_reason = ? WHERE id = ?";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            ps.setInt(1, status);
+            ps.setInt(2, status);
+            if (cancelReason != null) {
+                ps.setString(3, cancelReason);
+            } else {
+                ps.setNull(3, Types.NVARCHAR);
+            }
+            ps.setInt(4, orderId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("[OrderDAO] updateOrderStatus with reason error: " + e.getMessage());
+            throw new RuntimeException("OrderDAO.updateOrderStatus error: " + e.getMessage(), e);
+        }
+    }
+
+    public int cancelLateUnconfirmedOrders(int thresholdHours) {
+        String sql = "UPDATE Orders SET status = 5, cancelled_at = GETDATE(), "
+                   + "cancel_reason = N'Hủy tự động: Cửa hàng không xác nhận đơn hàng sau ' + CAST(? AS VARCHAR) + N' giờ.' "
+                   + "WHERE status = 1 AND DATEDIFF(hour, order_date, GETDATE()) >= ?";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            ps.setInt(1, thresholdHours);
+            ps.setInt(2, thresholdHours);
+            return ps.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("[OrderDAO] cancelLateUnconfirmedOrders error: " + e.getMessage());
+            throw new RuntimeException("OrderDAO.cancelLateUnconfirmedOrders error: " + e.getMessage(), e);
+        }
+    }
         /**
      * Get filtered orders for a specific shop (Seller view).
      * Supports filtering by status, date range, and total value range.
@@ -569,7 +601,7 @@ public class OrderDAO extends DbContext {
         List<Order> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
             "SELECT DISTINCT o.id, o.customer_id, o.voucher_id, o.recipient_name, o.recipient_phone, o.address, o.payment_method, "
-          + "o.status, o.payment_status, o.total_cost, o.discount_amount, o.shipping_fee, o.final_cost, o.note, o.order_date, o.cancelled_at, "
+          + "o.status, o.payment_status, o.total_cost, o.discount_amount, o.shipping_fee, o.final_cost, o.note, o.order_date, o.cancelled_at, o.cancel_reason, "
           + "o.platform_discount_amount, o.shop_actual_revenue, a.fullname AS customer_name, v.code AS voucher_code "
           + "FROM Orders o "
           + "JOIN OrderDetails od ON o.id = od.order_id "
@@ -668,6 +700,7 @@ public class OrderDAO extends DbContext {
         o.setNote(rs.getString("note"));
         o.setOrderDate(rs.getTimestamp("order_date"));
         o.setCancelledAt(rs.getTimestamp("cancelled_at"));
+        o.setCancelReason(rs.getString("cancel_reason"));
         o.setPlatformDiscountAmount(rs.getDouble("platform_discount_amount"));
         o.setShopActualRevenue(rs.getDouble("shop_actual_revenue"));
         return o;
