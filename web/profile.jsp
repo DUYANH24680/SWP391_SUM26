@@ -504,7 +504,6 @@
     <jsp:param name="activePage" value="profile"/>
 </jsp:include>
 
-<<<<<<< HEAD
 <!-- ====== LAYOUT ====== -->
 <div class="layout">
 
@@ -586,8 +585,6 @@
             </a>
         </div>
     </aside>
-=======
->>>>>>> origin/main
 
     <!-- MAIN -->
     <main class="sena-main">
