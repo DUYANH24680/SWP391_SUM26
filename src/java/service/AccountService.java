@@ -74,9 +74,8 @@ public class AccountService {
                 return new RegisterResult("Tên đăng nhập đã tồn tại. Vui lòng chọn tên khác.", null);
             }
 
-            // ---- 4. Hash password + Insert ----
-            String hashed = AccountService.hashPassword(password);
-            int newId = dao.register(fullname.trim(), username.trim(), hashed,
+            // ---- 4. Insert plain text password ----
+            int newId = dao.register(fullname.trim(), username.trim(), password,
                                       email.trim().toLowerCase(), phone, 3, null);
 
             if (newId <= 0) {
@@ -146,7 +145,8 @@ public class AccountService {
         try {
             Account c = dao.findById(userId);
             if (c == null) return "Không tìm thấy tài khoản.";
-            if (!currentPassword.equals(c.getPasswordHash())) {
+            String storedHash = c.getPasswordHash();
+            if (!currentPassword.equals(storedHash) && !hashPassword(currentPassword).equals(storedHash)) {
                 return "Mật khẩu hiện tại không đúng.";
             }
             boolean ok = dao.updatePassword(userId, newPassword);

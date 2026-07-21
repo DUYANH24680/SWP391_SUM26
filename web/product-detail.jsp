@@ -1,4 +1,4 @@
-﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="model.Account" %>
 <%@ page import="model.Product" %>
 <%@ page import="model.Shop" %>
@@ -744,7 +744,9 @@
         <div class="sidebar-nav">
             <a href="profile"><i class="fa-regular fa-user"></i> Ho So</a>
             <a href="products"><i class="fa-brands fa-opencart"></i> San Pham</a>
-            <a href="add-product"><i class="fa-solid fa-plus"></i> Them San Pham</a>
+            <% if ("admin".equals(role) || "seller".equals(role)) { %>
+                <a href="add-product"><i class="fa-solid fa-plus"></i> Them San Pham</a>
+            <% } %>
             <a href="<%= "seller".equals(role) ? "seller/orders" : "my-orders" %>"><i class="fa-solid fa-basket-shopping"></i> Don Hang</a>
             <a href="wishlist" class="active" style="color: #ef4444;"><i class="fa-regular fa-heart"></i> Yeu Thich</a>
             <a href="logout" class="logout" style="margin-top:0.5rem;">

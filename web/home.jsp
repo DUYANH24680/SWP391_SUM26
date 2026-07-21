@@ -1984,7 +1984,9 @@
                             <a href="inventory-export">Xuất Kho</a>
                             <a href="inventory-import">Nhập Kho</a>
                         <% } %>
-                        <a href="products">Sản Phẩm</a>
+                        <% if (Account != null && ("admin".equalsIgnoreCase(Account.getRoleName()) || "seller".equalsIgnoreCase(Account.getRoleName()))) { %>
+                            <a href="products">Sản Phẩm</a>
+                        <% } %>
                         <a href="danh-muc">Danh Mục</a>
                         <% if (Account == null || "customer".equalsIgnoreCase(Account.getRoleName())) { %>
                             <a href="vouchers" style="color:#ef4444;font-weight:600;"><i class="fa-solid fa-ticket"></i> Voucher</a>
