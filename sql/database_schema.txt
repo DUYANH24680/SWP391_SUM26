@@ -149,6 +149,7 @@ CREATE TABLE ProductReviews (
     account_id INT            NOT NULL,
     rating     INT            NOT NULL,  -- 1 den 5 sao
     comment    NVARCHAR(MAX)  NULL,
+    reply      NVARCHAR(MAX)  NULL,      -- Admin/Seller tra loi
     created_at DATETIME       NOT NULL DEFAULT GETDATE(),
 
     CONSTRAINT FK_ProductReviews_Products FOREIGN KEY (product_id) REFERENCES Products(id),

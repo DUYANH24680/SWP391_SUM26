@@ -8,6 +8,37 @@ import java.util.List;
 
 public class ProductDAO extends DbContext {
 
+    /**
+     * Lấy danh sách sản phẩm bán chạy nhất.
+     * @param limit Số lượng sản phẩm muốn lấy
+     * @return List<Product>
+     */
+    public List<Product> getTopSellingProducts(int limit) {
+        String sql = "SELECT TOP (?) p.id, p.category_id, p.seller_id, p.shop_id, p.title, p.image, p.description, p.unit, "
+                   + "p.stock_quantity, p.sold_quantity, p.original_price, p.sale_price, p.expired_date, "
+                   + "p.average_rating, p.is_featured, p.status, p.isDelete, p.created_at, "
+                   + "s.shop_name "
+                   + "FROM Products p "
+                   + "LEFT JOIN Shops s ON p.shop_id = s.id "
+                   + "WHERE p.isDelete = 0 AND p.status = 1 "
+                   + "ORDER BY p.sold_quantity DESC, p.average_rating DESC";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, limit);
+            ResultSet rs = ps.executeQuery();
+            List<Product> list = new ArrayList<>();
+            while (rs.next()) {
+                list.add(mapRow(rs));
+            }
+            System.out.println("[ProductDAO] getTopSellingProducts() returned " + list.size() + " products");
+            return list;
+        } catch (SQLException e) {
+            System.err.println("[ProductDAO] getTopSellingProducts() error: " + e.getMessage());
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+    }
+
     public List<Product> getAllProducts() {
         String sql = "SELECT p.id, p.category_id, p.seller_id, p.shop_id, p.title, p.image, p.description, p.unit, "
                    + "p.stock_quantity, p.sold_quantity, p.original_price, p.sale_price, p.expired_date, "

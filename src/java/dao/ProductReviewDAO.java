@@ -29,6 +29,11 @@ public class ProductReviewDAO extends DbContext {
                     pr.setAccountId(rs.getInt("account_id"));
                     pr.setRating(rs.getInt("rating"));
                     pr.setComment(rs.getString("comment"));
+                    try {
+                        pr.setReply(rs.getString("reply")); // DuyAnhNgo- Đọc dữ liệu cột reply
+                    } catch (SQLException ex) {
+                        pr.setReply(null); // Bỏ qua nếu cột chưa được tạo trong CSDL
+                    }
                     pr.setCreatedAt(rs.getTimestamp("created_at"));
                     pr.setUsername(rs.getString("username"));
                     pr.setFullname(rs.getString("fullname"));
@@ -40,6 +45,20 @@ public class ProductReviewDAO extends DbContext {
             System.err.println("getReviewsByProductId error: " + e.getMessage());
         }
         return list;
+    }
+
+    // DuyAnhNgo- Hàm Thêm/Cập nhật Trả Lời: Dành cho Admin/Seller trả lời đánh giá
+    public boolean addReply(int reviewId, String replyText) {
+        String sql = "UPDATE ProductReviews SET reply = ? WHERE id = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement st = conn.prepareStatement(sql)) {
+            st.setString(1, replyText);
+            st.setInt(2, reviewId);
+            return st.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("addReply error: " + e.getMessage());
+        }
+        return false;
     }
 
     // DuyAnhNgo- Hàm Thêm Bình Luận Mới: Lưu số sao (rating) và nội dung (comment) vào Database
@@ -135,6 +154,49 @@ public class ProductReviewDAO extends DbContext {
             }
         } catch (SQLException e) {
             System.err.println("hasPurchasedProduct error: " + e.getMessage());
+        }
+        return false;
+    }
+
+    // DuyAnhNgo- Cập nhật nội dung đánh giá sản phẩm
+    public boolean updateReview(int reviewId, int accountId, int rating, String comment) {
+        String sql = "UPDATE ProductReviews SET rating = ?, comment = ? WHERE id = ? AND account_id = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement st = conn.prepareStatement(sql)) {
+            st.setInt(1, rating);
+            st.setString(2, comment);
+            st.setInt(3, reviewId);
+            st.setInt(4, accountId);
+            return st.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("updateReview error: " + e.getMessage());
+        }
+        return false;
+    }
+
+    // DuyAnhNgo- Xóa đánh giá (Dành cho người dùng thông thường, kiểm tra Account ID)
+    public boolean deleteReview(int reviewId, int accountId) {
+        String sql = "DELETE FROM ProductReviews WHERE id = ? AND account_id = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement st = conn.prepareStatement(sql)) {
+            st.setInt(1, reviewId);
+            st.setInt(2, accountId);
+            return st.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("deleteReview error: " + e.getMessage());
+        }
+        return false;
+    }
+
+    // DuyAnhNgo- Admin xóa bình luận bất kỳ (Bỏ qua Account ID)
+    public boolean deleteReviewByAdmin(int reviewId) {
+        String sql = "DELETE FROM ProductReviews WHERE id = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement st = conn.prepareStatement(sql)) {
+            st.setInt(1, reviewId);
+            return st.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("deleteReviewByAdmin error: " + e.getMessage());
         }
         return false;
     }

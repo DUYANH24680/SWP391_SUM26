@@ -819,7 +819,9 @@
                 <div class="comment-item">
                     <div class="comment-avatar"><%= initial %></div>
                     <div class="comment-content">
-                        <div class="comment-user"><%= name %> <span class="comment-date"><%= sdf.format(rev.getCreatedAt()) %></span></div>
+                        <div class="comment-user">
+                            <span><%= name %> <span class="comment-date"><%= sdf.format(rev.getCreatedAt()) %></span></span>
+                        </div>
                         <div class="comment-stars">
                             <% for (int i = 1; i <= 5; i++) { 
                                 if (i <= rev.getRating()) { %>
@@ -830,6 +832,98 @@
                             } %>
                         </div>
                         <div class="comment-text"><%= rev.getComment() != null ? rev.getComment() : "" %></div>
+                        
+                        <% if (rev.getReply() != null && !rev.getReply().trim().isEmpty()) { %>
+                        <!-- DuyAnhNgo- Hiển thị phản hồi của Cửa hàng -->
+                        <div class="shop-reply" style="margin-top: 1rem; padding: 1rem; background-color: var(--gray-100); border-left: 3px solid var(--green); border-radius: var(--radius-sm);">
+                            <div style="font-weight: 600; color: var(--green); margin-bottom: 0.25rem;"><i class="fa-solid fa-store"></i> Phản hồi từ Cửa hàng:</div>
+                            <div style="color: var(--gray-800); font-size: 0.95rem; line-height: 1.5;"><%= rev.getReply() %></div>
+                        </div>
+                        <% } %>
+                        
+                        <% 
+                            // DuyAnhNgo- Lấy thông tin tài khoản đang đăng nhập và quyền (role)
+                            Account currentUser = (Account) session.getAttribute("Account");
+                            String userRoleStr = (String) session.getAttribute("role");
+                            if (userRoleStr == null && currentUser != null) userRoleStr = currentUser.getRoleName();
+                            
+                            // DuyAnhNgo- Kiểm tra xem bình luận này có phải của người đang đăng nhập không
+                            boolean isMyReview = currentUser != null && currentUser.getId() == rev.getAccountId();
+                            // DuyAnhNgo- Kiểm tra xem người đang đăng nhập có phải Admin hoặc Seller không
+                            boolean isAdminRole = "admin".equalsIgnoreCase(userRoleStr);
+                            boolean isSellerRole = "seller".equalsIgnoreCase(userRoleStr);
+                            boolean canReply = isAdminRole || isSellerRole;
+                            
+                            // DuyAnhNgo- Hiển thị khu vực Sửa/Xóa/Trả lời nếu là chính chủ HOẶC là Admin/Seller
+                            if (isMyReview || canReply) { 
+                        %>
+                        <div class="comment-actions" style="margin-top: 0.75rem; font-size: 0.85rem; display: flex; gap: 10px;">
+                            <% if (isMyReview) { %>
+                            <!-- DuyAnhNgo- Chỉ chính chủ mới thấy nút Sửa -->
+                            <button type="button" onclick="document.getElementById('edit-form-<%= rev.getId() %>').style.display='block'; document.getElementById('reply-form-<%= rev.getId() %>').style.display='none';" class="btn btn-sm btn-outline" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; border-color: var(--green); color: var(--green);"><i class="fa-solid fa-pen-to-square"></i> Sửa</button>
+                            <% } %>
+                            
+                            <% if (canReply) { %>
+                            <!-- DuyAnhNgo- Admin/Seller thấy nút Trả lời -->
+                            <button type="button" onclick="document.getElementById('reply-form-<%= rev.getId() %>').style.display='block'; if(document.getElementById('edit-form-<%= rev.getId() %>')) document.getElementById('edit-form-<%= rev.getId() %>').style.display='none';" class="btn btn-sm btn-outline" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; border-color: #3b82f6; color: #3b82f6;"><i class="fa-solid fa-reply"></i> Trả lời</button>
+                            <% } %>
+                            
+                            <% if (isAdminRole || isMyReview) { %>
+                            <!-- DuyAnhNgo- Form Xóa bình luận (Admin và Chính chủ đều thấy) -->
+                            <form action="review" method="POST" style="display:inline;" onsubmit="return confirm('Bạn có chắc chắn muốn xóa đánh giá này?');">
+                                <input type="hidden" name="action" value="delete">
+                                <input type="hidden" name="reviewId" value="<%= rev.getId() %>">
+                                <input type="hidden" name="productId" value="<%= product.getId() %>">
+                                <button type="submit" class="btn btn-sm btn-outline" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; border-color: #dc2626; color: #dc2626;"><i class="fa-solid fa-trash"></i> Xóa</button>
+                            </form>
+                            <% } %>
+                        </div>
+                        
+                        <% if (canReply) { %>
+                        <!-- DuyAnhNgo- Form Trả lời dành cho Admin/Seller -->
+                        <div id="reply-form-<%= rev.getId() %>" class="add-comment-form" style="display:none; margin-top: 1.5rem; border: 1px solid var(--gray-200); box-shadow: none; padding: 1.5rem;">
+                            <div class="form-title" style="font-size: 1.1rem; margin-bottom: 1rem; color: #3b82f6;"><i class="fa-solid fa-reply"></i> Trả Lời Đánh Giá</div>
+                            <form action="review" method="POST">
+                                <input type="hidden" name="action" value="reply">
+                                <input type="hidden" name="reviewId" value="<%= rev.getId() %>">
+                                <input type="hidden" name="productId" value="<%= product.getId() %>">
+                                
+                                <textarea name="replyText" class="comment-textarea" style="min-height: 80px; padding: 0.75rem; border: 1.5px solid var(--gray-200); border-radius: var(--radius-sm); font-size: 0.95rem; line-height: 1.5; color: var(--gray-800); width: 100%; margin-bottom: 1rem; outline: none;" placeholder="Nhập câu trả lời của cửa hàng..."><%= rev.getReply() != null ? rev.getReply() : "" %></textarea>
+                                
+                                <div style="display: flex; gap: 0.75rem;">
+                                    <button type="submit" class="btn btn-green" style="background-color: #3b82f6; border-color: #3b82f6;">Gửi Câu Trả Lời</button>
+                                    <button type="button" class="btn btn-outline" onclick="document.getElementById('reply-form-<%= rev.getId() %>').style.display='none'">Hủy Bỏ</button>
+                                </div>
+                            </form>
+                        </div>
+                        <% } %>
+                        
+                        <% if (isMyReview) { %>
+                        <!-- DuyAnhNgo- Form Sửa Đánh Giá với giao diện chuyên nghiệp -->
+                        <div id="edit-form-<%= rev.getId() %>" class="add-comment-form" style="display:none; margin-top: 1.5rem; border: 1px solid var(--gray-200); box-shadow: none; padding: 1.5rem;">
+                            <div class="form-title" style="font-size: 1.1rem; margin-bottom: 1rem;">Sửa Đánh Giá</div>
+                            <form action="review" method="POST">
+                                <input type="hidden" name="action" value="edit">
+                                <input type="hidden" name="reviewId" value="<%= rev.getId() %>">
+                                <input type="hidden" name="productId" value="<%= product.getId() %>">
+                                <input type="hidden" name="rating" id="ratingValue-<%= rev.getId() %>" value="<%= rev.getRating() %>">
+                                
+                                <div class="rating-input" id="ratingInput-<%= rev.getId() %>" style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.25rem;">
+                                    <span style="font-size:0.9rem;font-weight:600;color:var(--gray-800);margin-right:0.75rem;">Đánh giá sao:</span>
+                                    <% for (int i = 1; i <= 5; i++) { %>
+                                        <i class="fa-solid fa-star <%= i <= rev.getRating() ? "active" : "" %>" data-val="<%= i %>" onclick="setEditRating(<%= rev.getId() %>, <%= i %>)" style="cursor: pointer; font-size: 1.25rem; transition: color 0.2s; color: <%= i <= rev.getRating() ? "#f59e0b" : "var(--gray-200)" %>;"></i>
+                                    <% } %>
+                                </div>
+                                <textarea name="comment" class="comment-textarea" style="min-height: 100px; padding: 0.75rem; border: 1.5px solid var(--gray-200); border-radius: var(--radius-sm); font-size: 0.95rem; line-height: 1.5; color: var(--gray-800); width: 100%; margin-bottom: 1rem; transition: border-color 0.2s; outline: none;" placeholder="Chia sẻ trải nghiệm của bạn..." onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor='var(--gray-200)'"><%= rev.getComment() != null ? rev.getComment() : "" %></textarea>
+                                
+                                <div style="display: flex; gap: 0.75rem;">
+                                    <button type="submit" class="btn btn-green">Lưu Thay Đổi</button>
+                                    <button type="button" class="btn btn-outline" onclick="document.getElementById('edit-form-<%= rev.getId() %>').style.display='none'">Hủy Bỏ</button>
+                                </div>
+                            </form>
+                        </div>
+                        <% } %>
+                        <% } %>
                     </div>
                 </div>
                 <% } 
@@ -851,9 +945,18 @@
                 model.Account curUser = (model.Account) session.getAttribute("user");
                 String curName = curUser.getFullname() != null && !curUser.getFullname().isEmpty() ? curUser.getFullname() : curUser.getUsername();
                 Boolean canReview = (Boolean) request.getAttribute("canReview");
-                if (Boolean.TRUE.equals(canReview)) {
+                
+                // DuyAnhNgo- Lấy quyền của người dùng hiện tại để kiểm tra
+                String curRoleStr = (String) session.getAttribute("role");
+                if (curRoleStr == null && curUser != null) curRoleStr = curUser.getRoleName();
+                
+                // DuyAnhNgo- Admin và Seller được coi là tài khoản đặc quyền
+                boolean isPrivilegedUser = "admin".equalsIgnoreCase(curRoleStr) || "seller".equalsIgnoreCase(curRoleStr);
+                
+                // DuyAnhNgo- Cho phép form đánh giá hiện lên nếu đã mua hàng HOẶC là tài khoản đặc quyền
+                if (Boolean.TRUE.equals(canReview) || isPrivilegedUser) {
             %>
-                <%-- DuyAnhNgo- Form Viết Đánh giá (Chỉ hiện khi customer đã mua sản phẩm) --%>
+                <%-- DuyAnhNgo- Form Viết Đánh giá (Chỉ hiện khi customer đã mua sản phẩm HOẶC là Admin/Seller) --%>
                 <div class="add-comment-form">
                     <div class="form-title">Gửi đánh giá của bạn</div>
                     <form id="reviewForm" onsubmit="submitReview(event)">
@@ -1009,6 +1112,22 @@
                         }
                     });
                 });
+            });
+        }
+        
+        // ===== EDIT RATING STARS =====
+        function setEditRating(reviewId, val) {
+            document.getElementById('ratingValue-' + reviewId).value = val;
+            const stars = document.querySelectorAll('#ratingInput-' + reviewId + ' i');
+            stars.forEach(star => {
+                const sVal = parseInt(star.getAttribute('data-val'));
+                if (sVal <= val) {
+                    star.classList.add('active');
+                    star.style.color = '#f59e0b';
+                } else {
+                    star.classList.remove('active');
+                    star.style.color = 'var(--gray-200)';
+                }
             });
         }
     </script>
