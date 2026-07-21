@@ -19,6 +19,7 @@ public class Order {
     private String note;
     private Timestamp orderDate;
     private Timestamp cancelledAt;
+    private String cancelReason;
 
     // Additional fields for displaying info in views
     private String customerName;
@@ -226,6 +227,14 @@ public class Order {
 
     public void setShopActualRevenue(double shopActualRevenue) {
         this.shopActualRevenue = shopActualRevenue;
+    }
+
+    public String getCancelReason() {
+        return cancelReason;
+    }
+
+    public void setCancelReason(String cancelReason) {
+        this.cancelReason = cancelReason;
     }
 
     // Helper status strings

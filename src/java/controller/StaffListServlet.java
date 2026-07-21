@@ -7,9 +7,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import model.Account;
+import model.StaffDetails;
 import service.AdminAccountService;
+import service.StaffService;
 import java.io.IOException;
-import java.util.List;
+import java.util.*;
 
 /**
  * StaffListServlet - Admin: View and search staff accounts.
@@ -17,7 +19,8 @@ import java.util.List;
 @WebServlet("/admin/staff")
 public class StaffListServlet extends HttpServlet {
     
-    private AdminAccountService service = new AdminAccountService();
+    private AdminAccountService accountService = new AdminAccountService();
+    private StaffService staffService = new StaffService();
     
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -39,10 +42,21 @@ public class StaffListServlet extends HttpServlet {
         List<Account> staffList;
         
         try {
-            staffList = service.searchStaff(keyword);
+            staffList = accountService.searchStaff(keyword);
+            
+            // Load StaffDetails cho mỗi staff và lưu vào Map
+            Map<Integer, StaffDetails> staffDetailsMap = new HashMap<>();
+            for (Account staff : staffList) {
+                StaffDetails details = staffService.getStaffDetails(staff.getId());
+                if (details != null) {
+                    staffDetailsMap.put(staff.getId(), details);
+                }
+            }
+            req.setAttribute("staffDetailsMap", staffDetailsMap);
+            
         } catch (Exception e) {
             System.err.println("[StaffListServlet] Error loading staff: " + e.getMessage());
-            staffList = java.util.Collections.emptyList();
+            staffList = Collections.emptyList();
             session.setAttribute("error", "Lỗi khi tải danh sách nhân viên.");
         }
         

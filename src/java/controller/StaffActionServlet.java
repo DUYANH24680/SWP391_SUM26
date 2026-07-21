@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import model.Account;
 import service.AdminAccountService;
+import service.StaffService;
 import java.io.IOException;
 
 /**
@@ -17,7 +18,8 @@ import java.io.IOException;
 @WebServlet("/admin/staff/action")
 public class StaffActionServlet extends HttpServlet {
     
-    private AdminAccountService service = new AdminAccountService();
+    private AdminAccountService accountService = new AdminAccountService();
+    private StaffService staffService = new StaffService();
     
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
@@ -52,19 +54,27 @@ public class StaffActionServlet extends HttpServlet {
             
             switch (action.trim().toLowerCase()) {
                 case "lock":
-                    success = service.lockStaff(id);
+                    success = accountService.lockStaff(id);
                     successMsg = "Khóa tài khoản thành công.";
                     errorMsg = "Khóa tài khoản thất bại.";
                     break;
                 case "unlock":
-                    success = service.unlockStaff(id);
+                    success = accountService.unlockStaff(id);
                     successMsg = "Mở khóa tài khoản thành công.";
                     errorMsg = "Mở khóa tài khoản thất bại.";
                     break;
                 case "delete":
-                    success = service.deleteStaff(id);
-                    successMsg = "Xóa tài khoản thành công.";
-                    errorMsg = "Xóa tài khoản thất bại.";
+                    // Xóa StaffDetails trước
+                    staffService.deleteStaffDetails(id);
+                    // Xóa vĩnh viễn tài khoản
+                    try {
+                        success = accountService.hardDeleteStaff(id);
+                        successMsg = "Xóa tài khoản thành công.";
+                        errorMsg = "Xóa tài khoản thất bại.";
+                    } catch (RuntimeException ex) {
+                        success = false;
+                        errorMsg = accountService.getHardDeleteErrorMessage(id, ex);
+                    }
                     break;
                 default:
                     session.setAttribute("error", "Hành động không hợp lệ.");

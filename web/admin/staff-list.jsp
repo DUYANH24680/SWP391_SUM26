@@ -1,5 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="model.Account" %>
+<%@ page import="model.StaffDetails" %>
+<%@ page import="java.util.Map" %>
 <%@ page import="java.util.List" %>
 <%@ page import="java.text.SimpleDateFormat" %>
 <%
@@ -10,6 +12,7 @@
     }
     
     List<Account> staffList = (List<Account>) request.getAttribute("staffList");
+    Map<Integer, StaffDetails> staffDetailsMap = (Map<Integer, StaffDetails>) request.getAttribute("staffDetailsMap");
     String keyword = (String) request.getAttribute("searchKeyword");
     String message = (String) session.getAttribute("message");
     String error = (String) session.getAttribute("error");
@@ -90,10 +93,8 @@
             <i class="fas fa-shield-halved"></i> Admin Panel
         </a>
         <div class="nav-links">
-            <a href="${pageContext.request.contextPath}/admin/orders">Monitor Đơn Hàng</a>
-            <a href="${pageContext.request.contextPath}/admin/staff" class="active">Nhân Viên</a>
-            <a href="${pageContext.request.contextPath}/admin/shipper">Shipper</a>
-            <a href="${pageContext.request.contextPath}/category">Danh Mục</a>
+            <a href="${pageContext.request.contextPath}/admin/staff" class="active">Quản Lý Nhân Viên</a>
+            <a href="${pageContext.request.contextPath}/admin/shipper">Quản Lý Shipper</a>
         </div>
         <div class="nav-right">
             <span class="nav-username"><%= user.getFullname() %></span>
@@ -138,21 +139,27 @@
                     <tr>
                         <th>ID</th>
                         <th>Họ Tên</th>
-                        <th>Username</th>
-                        <th>Email</th>
+                        <th>Mã NV</th>
+                        <th>CCCD</th>
+                        <th>Khu Vực Quản Lý</th>
                         <th>Điện Thoại</th>
                         <th>Trạng Thái</th>
-                        <th>Ngày Tạo</th>
                         <th>Hành Động</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <% for (Account staff : staffList) { %>
+                    <% for (Account staff : staffList) {
+                        StaffDetails details = staffDetailsMap != null ? staffDetailsMap.get(staff.getId()) : null;
+                    %>
                     <tr>
                         <td>#<%= staff.getId() %></td>
-                        <td><%= staff.getFullname() %></td>
-                        <td><%= staff.getUsername() %></td>
-                        <td><%= staff.getEmail() != null ? staff.getEmail() : "-" %></td>
+                        <td>
+                            <div style="font-weight: 600;"><%= staff.getFullname() %></div>
+                            <div style="font-size: 0.75rem; color: var(--gray-400);"><%= staff.getUsername() %></div>
+                        </td>
+                        <td><%= details != null && details.getStaffCode() != null ? details.getStaffCode() : "-" %></td>
+                        <td><%= details != null && details.getCccd() != null ? details.getCccd() : "-" %></td>
+                        <td><%= details != null && details.getManagedArea() != null ? details.getManagedArea() : "-" %></td>
                         <td><%= staff.getPhone() != null ? staff.getPhone() : "-" %></td>
                         <td>
                             <% if (staff.getStatus() == 1) { %>
@@ -163,7 +170,6 @@
                             <span class="badge badge-deleted"><i class="fas fa-trash"></i> Đã xóa</span>
                             <% } %>
                         </td>
-                        <td><%= staff.getCreatedAt() != null ? sdf.format(staff.getCreatedAt()) : "-" %></td>
                         <td>
                             <div class="actions">
                                 <a href="${pageContext.request.contextPath}/admin/staff/edit?id=<%= staff.getId() %>" class="btn btn-sm" style="background: var(--gray-200); color: var(--gray-800);">
@@ -186,6 +192,7 @@
                                     </button>
                                 </form>
                                 <% } %>
+                                <% if (staff.getStatus() != -1) { %>
                                 <form action="${pageContext.request.contextPath}/admin/staff/action" method="post" style="display:inline;">
                                     <input type="hidden" name="id" value="<%= staff.getId() %>">
                                     <input type="hidden" name="action" value="delete">
@@ -193,6 +200,7 @@
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </form>
+                                <% } %>
                             </div>
                         </td>
                     </tr>

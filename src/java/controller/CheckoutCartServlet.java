@@ -8,6 +8,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import model.*;
 import service.CheckoutService;
+import service.NotificationService;
+import dao.OrderDAO;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -19,6 +21,8 @@ import service.CartService;
 public class CheckoutCartServlet extends HttpServlet {
 
     private CheckoutService checkoutService;
+    private NotificationService notifService = new NotificationService();
+    private OrderDAO orderDao = new OrderDAO();
 
     @Override
     public void init() throws ServletException {
@@ -126,6 +130,27 @@ public class CheckoutCartServlet extends HttpServlet {
                 shopVoucherCodes, platformVoucherCode);
 
         if (result.isSuccess()) {
+            // Notify each seller about new orders
+            List<Integer> orderIds = result.getOrderIds();
+            if (orderIds != null) {
+                for (int orderId : orderIds) {
+                    try {
+                        int sellerId = orderDao.getSellerIdByOrderId(orderId);
+                        if (sellerId > 0) {
+                            notifService.notifyNewOrder(orderId, sellerId);
+                        }
+                    } catch (Exception e) {
+                        System.err.println("[CheckoutCartServlet] notifyNewOrder error: " + e.getMessage());
+                    }
+                }
+                // Notify customer that order was placed successfully
+                try {
+                    notifService.notifyOrderPlaced(account.getId(), orderIds);
+                } catch (Exception e) {
+                    System.err.println("[CheckoutCartServlet] notifyOrderPlaced error: " + e.getMessage());
+                }
+            }
+
             try {
                 CartService cartService = new CartService();
                 Cart updatedCart = cartService.getCartByCustomerId(account.getId());

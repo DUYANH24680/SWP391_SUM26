@@ -7,9 +7,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import model.Account;
+import model.ShipperDetails;
 import service.AdminAccountService;
+import service.ShipperService;
 import java.io.IOException;
-import java.util.List;
+import java.util.*;
 
 /**
  * ShipperListServlet - Admin: View and search shipper accounts.
@@ -17,7 +19,8 @@ import java.util.List;
 @WebServlet("/admin/shipper")
 public class ShipperListServlet extends HttpServlet {
     
-    private AdminAccountService service = new AdminAccountService();
+    private AdminAccountService accountService = new AdminAccountService();
+    private ShipperService shipperService = new ShipperService();
     
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -39,10 +42,21 @@ public class ShipperListServlet extends HttpServlet {
         List<Account> shipperList;
         
         try {
-            shipperList = service.searchShippers(keyword);
+            shipperList = accountService.searchShippers(keyword);
+            
+            // Load ShipperDetails cho mỗi shipper và lưu vào Map
+            Map<Integer, ShipperDetails> shipperDetailsMap = new HashMap<>();
+            for (Account shipper : shipperList) {
+                ShipperDetails details = shipperService.getShipperDetails(shipper.getId());
+                if (details != null) {
+                    shipperDetailsMap.put(shipper.getId(), details);
+                }
+            }
+            req.setAttribute("shipperDetailsMap", shipperDetailsMap);
+            
         } catch (Exception e) {
             System.err.println("[ShipperListServlet] Error loading shippers: " + e.getMessage());
-            shipperList = java.util.Collections.emptyList();
+            shipperList = Collections.emptyList();
             session.setAttribute("error", "Lỗi khi tải danh sách shipper.");
         }
         

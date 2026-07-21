@@ -19,6 +19,16 @@
     String valPhone = request.getAttribute("val_phone") != null ? (String) request.getAttribute("val_phone") : (shipper != null ? shipper.getPhone() : "");
     String valAddress = request.getAttribute("val_address") != null ? (String) request.getAttribute("val_address") : (shipper != null ? shipper.getAddress() : "");
     String valGender = request.getAttribute("val_gender") != null ? (String) request.getAttribute("val_gender") : (shipper != null && shipper.getGender() != null ? String.valueOf(shipper.getGender()) : "");
+    
+    // Shipper details
+    Object shipperDetailsObj = request.getAttribute("shipperDetails");
+    model.ShipperDetails shipperDetails = shipperDetailsObj instanceof model.ShipperDetails ? (model.ShipperDetails) shipperDetailsObj : null;
+    
+    String valShipperCode = request.getAttribute("val_shipper_code") != null ? (String) request.getAttribute("val_shipper_code") : (shipperDetails != null ? shipperDetails.getShipperCode() : "");
+    String valBirthdate = request.getAttribute("val_birthdate") != null ? (String) request.getAttribute("val_birthdate") : (shipperDetails != null && shipperDetails.getBirthdate() != null ? shipperDetails.getBirthdate().toString() : "");
+    String valCccd = request.getAttribute("val_cccd") != null ? (String) request.getAttribute("val_cccd") : (shipperDetails != null ? shipperDetails.getCccd() : "");
+    String valVehicleType = request.getAttribute("val_vehicle_type") != null ? (String) request.getAttribute("val_vehicle_type") : (shipperDetails != null ? shipperDetails.getVehicleType() : "");
+    String valDeliveryArea = request.getAttribute("val_delivery_area") != null ? (String) request.getAttribute("val_delivery_area") : (shipperDetails != null ? shipperDetails.getDeliveryArea() : "");
 %>
 <!DOCTYPE html>
 <html lang="vi">
@@ -80,9 +90,8 @@
             <i class="fas fa-shield-halved"></i> Admin Panel
         </a>
         <div class="nav-links">
-            <a href="${pageContext.request.contextPath}/admin/orders">Monitor Đơn Hàng</a>
-            <a href="${pageContext.request.contextPath}/admin/staff">Nhân Viên</a>
-            <a href="${pageContext.request.contextPath}/admin/shipper" class="active">Shipper</a>
+            <a href="${pageContext.request.contextPath}/admin/staff">Quản Lý Nhân Viên</a>
+            <a href="${pageContext.request.contextPath}/admin/shipper" class="active">Quản Lý Shipper</a>
         </div>
         <div class="nav-right">
             <span class="nav-username"><%= user.getFullname() %></span>
@@ -153,7 +162,67 @@
                         </label>
                     </div>
                 </div>
-                
+
+                <hr style="border: none; border-top: 1px solid var(--gray-200); margin: 1.5rem 0;">
+                <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--gray-800); margin-bottom: 1rem;">
+                    <i class="fas fa-motorcycle" style="color: var(--green); margin-right: 0.5rem;"></i>
+                    Thông Tin Shipper
+                </h3>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Mã Shipper <span class="required">*</span></label>
+                        <input type="text" name="shipper_code" class="form-input" value="<%= valShipperCode %>" required
+                               placeholder="VD: SHP001" maxlength="20"
+                               pattern="[A-Za-z0-9]{3,20}" title="Mã shipper từ 3-20 ký tự, chỉ gồm chữ và số">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Ngày sinh <span class="required">*</span></label>
+                        <input type="date" name="birthdate" class="form-input" value="<%= valBirthdate %>" required
+                               max="<%= java.time.LocalDate.now().minusYears(18) %>"
+                               style="color-scheme: normal;">
+                        <small style="color: var(--gray-400); font-size: 0.75rem;">Shipper phải đủ 18 tuổi trở lên</small>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Số CCCD <span class="required">*</span></label>
+                    <input type="text" name="cccd" class="form-input" value="<%= valCccd %>" required
+                           placeholder="Nhập 12 số CCCD" maxlength="15"
+                           pattern="\d{12}" title="CCCD phải gồm 12 chữ số">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Loại phương tiện <span class="required">*</span></label>
+                        <select name="vehicle_type" class="form-input" required>
+                            <option value="">-- Chọn phương tiện --</option>
+                            <option value="Xe máy" <%= "Xe máy".equals(valVehicleType) ? "selected" : "" %>>Xe máy</option>
+                            <option value="Xe đạp" <%= "Xe đạp".equals(valVehicleType) ? "selected" : "" %>>Xe đạp</option>
+                            <option value="Xe đạp điện" <%= "Xe đạp điện".equals(valVehicleType) ? "selected" : "" %>>Xe đạp điện</option>
+                            <option value="Ô tô" <%= "Ô tô".equals(valVehicleType) ? "selected" : "" %>>Ô tô</option>
+                            <option value="Khác" <%= "Khác".equals(valVehicleType) ? "selected" : "" %>>Khác</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Khu vực giao hàng <span class="required">*</span></label>
+                        <select name="delivery_area" class="form-input" required>
+                            <option value="">-- Chọn khu vực --</option>
+                            <option value="TP. Hồ Chí Minh" <%= "TP. Hồ Chí Minh".equals(valDeliveryArea) ? "selected" : "" %>>TP. Hồ Chí Minh</option>
+                            <option value="Hà Nội" <%= "Hà Nội".equals(valDeliveryArea) ? "selected" : "" %>>Hà Nội</option>
+                            <option value="Đà Nẵng" <%= "Đà Nẵng".equals(valDeliveryArea) ? "selected" : "" %>>Đà Nẵng</option>
+                            <option value="Cần Thơ" <%= "Cần Thơ".equals(valDeliveryArea) ? "selected" : "" %>>Cần Thơ</option>
+                            <option value="Hải Phòng" <%= "Hải Phòng".equals(valDeliveryArea) ? "selected" : "" %>>Hải Phòng</option>
+                            <option value="Biên Hòa" <%= "Biên Hòa".equals(valDeliveryArea) ? "selected" : "" %>>Biên Hòa</option>
+                            <option value="Nha Trang" <%= "Nha Trang".equals(valDeliveryArea) ? "selected" : "" %>>Nha Trang</option>
+                            <option value="Huế" <%= "Huế".equals(valDeliveryArea) ? "selected" : "" %>>Huế</option>
+                            <option value="Quảng Ninh" <%= "Quảng Ninh".equals(valDeliveryArea) ? "selected" : "" %>>Quảng Ninh</option>
+                            <option value="Bình Dương" <%= "Bình Dương".equals(valDeliveryArea) ? "selected" : "" %>>Bình Dương</option>
+                            <option value="Toàn quốc" <%= "Toàn quốc".equals(valDeliveryArea) ? "selected" : "" %>>Toàn quốc</option>
+                        </select>
+                    </div>
+                </div>
+
                 <div class="form-actions">
                     <a href="${pageContext.request.contextPath}/admin/shipper" class="btn btn-secondary">Hủy</a>
                     <button type="submit" class="btn btn-primary">

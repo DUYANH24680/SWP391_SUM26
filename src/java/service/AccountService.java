@@ -77,7 +77,7 @@ public class AccountService {
             // ---- 4. Hash password + Insert ----
             String hashed = AccountService.hashPassword(password);
             int newId = dao.register(fullname.trim(), username.trim(), hashed,
-                                      email.trim().toLowerCase(), phone, 3);
+                                      email.trim().toLowerCase(), phone, 3, null);
 
             if (newId <= 0) {
                 return new RegisterResult("Đăng ký thất bại. Vui lòng thử lại sau.", null);
@@ -201,8 +201,20 @@ public class AccountService {
         try {
             Account account = dao.findByUsernameOrEmail(username);
             
-            // Kiểm tra (Logic)
-            if (account != null && account.getPasswordHash().equals(password)) {
+            if (account == null) {
+                return null;
+            }
+            
+            String storedHash = account.getPasswordHash();
+            
+            // Thử so sánh plain text trước (cho tài khoản cũ)
+            if (storedHash != null && storedHash.equals(password)) {
+                return account;
+            }
+            
+            // Thử so sánh SHA-256 hash (cho tài khoản mới)
+            String hashedPassword = hashPassword(password);
+            if (storedHash != null && storedHash.equals(hashedPassword)) {
                 return account;
             }
             

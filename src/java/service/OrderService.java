@@ -134,7 +134,12 @@ public class OrderService {
                 return SellerOrderActionResult.failure("Hành động không hợp lệ.");
             }
 
-            boolean ok = orderDAO.updateOrderStatus(orderId, newStatus);
+            boolean ok;
+            if ("cancel".equals(action)) {
+                ok = orderDAO.updateOrderStatus(orderId, newStatus, "Cửa hàng từ chối nhận đơn.");
+            } else {
+                ok = orderDAO.updateOrderStatus(orderId, newStatus);
+            }
             if (!ok) {
                 return SellerOrderActionResult.failure("Cập nhật trạng thái đơn hàng thất bại.");
             }
@@ -293,7 +298,14 @@ public class OrderService {
             }
 
             int returnOrderId = orders.isEmpty() ? 0 : orders.get(0).getId();
-            return new PlaceOrderResult(true, returnOrderId, orderCount, shopCount);
+            
+            // Collect all order IDs
+            List<Integer> allOrderIds = new java.util.ArrayList<>();
+            for (Order o : orders) {
+                allOrderIds.add(o.getId());
+            }
+            
+            return new PlaceOrderResult(true, returnOrderId, orderCount, shopCount, allOrderIds);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -568,7 +580,14 @@ public class OrderService {
             shopCount = uniqueShopIds.size();
 
             int returnOrderId = orders.isEmpty() ? 0 : orders.get(0).getId();
-            return new model.PlaceOrderResult(true, returnOrderId, orderCount, shopCount);
+
+            // Collect all order IDs for notification
+            List<Integer> allOrderIds = new java.util.ArrayList<>();
+            for (Order o : orders) {
+                allOrderIds.add(o.getId());
+            }
+
+            return new model.PlaceOrderResult(true, returnOrderId, orderCount, shopCount, allOrderIds);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -646,11 +665,20 @@ public class OrderService {
             if (order.getStatus() != 1) {
                 return CancelOrderResult.failure("Chỉ có thể hủy đơn hàng ở trạng thái Chờ xác nhận.");
             }
-            boolean ok = dao.updateOrderStatus(orderId, 5);
+            boolean ok = dao.updateOrderStatus(orderId, 5, "Khách hàng chủ động hủy.");
             if (!ok) {
                 return CancelOrderResult.failure("Hủy đơn hàng thất bại.");
             }
             return CancelOrderResult.success();
+        } finally {
+            dao.close();
+        }
+    }
+
+    public int cancelLateUnconfirmedOrders(int thresholdHours) {
+        OrderDAO dao = new OrderDAO();
+        try {
+            return dao.cancelLateUnconfirmedOrders(thresholdHours);
         } finally {
             dao.close();
         }

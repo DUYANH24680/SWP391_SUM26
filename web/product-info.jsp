@@ -995,16 +995,34 @@
     </div>
 
     <script>
+        // ===== PRICE CONFIG =====
+        const salePrice = <%= (long) salePrice %>;
+        const nf = new Intl.NumberFormat('vi');
+
+        // ===== UPDATE TOTAL PRICE =====
+        function updateTotalPrice() {
+            const input = document.getElementById('quantityInput');
+            const qty = parseInt(input.value) || 1;
+            const total = qty * salePrice;
+            document.getElementById('totalPrice').textContent = nf.format(Math.round(total)) + ' đ';
+        }
+
         // ===== QUANTITY CONTROL =====
         function decreaseQuantity() {
             const input = document.getElementById('quantityInput');
             const val = parseInt(input.value);
-            if (val > 1) input.value = val - 1;
+            if (val > 1) {
+                input.value = val - 1;
+                updateTotalPrice();
+            }
         }
         function increaseQuantity() {
             const input = document.getElementById('quantityInput');
             const val = parseInt(input.value);
-            if (val < 999) input.value = val + 1;
+            if (val < 999) {
+                input.value = val + 1;
+                updateTotalPrice();
+            }
         }
 
         // ===== ADD TO CART =====

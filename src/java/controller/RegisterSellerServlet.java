@@ -6,7 +6,9 @@ import jakarta.servlet.http.*;
 import java.io.IOException;
 
 import dao.ShopRequestDAO;
+import dao.AccountDAO;
 import model.Account;
+import service.NotificationService;
 
 /**
  * Allow logged-in customers to apply for a seller account.
@@ -17,6 +19,8 @@ import model.Account;
 public class RegisterSellerServlet extends HttpServlet {
 
     private final ShopRequestDAO dao = new ShopRequestDAO();
+    private final AccountDAO accountDao = new AccountDAO();
+    private final NotificationService notifService = new NotificationService();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -91,6 +95,12 @@ public class RegisterSellerServlet extends HttpServlet {
         if (newId <= 0) {
             forwardWithError(req, resp, "Gửi yêu cầu thất bại. Vui lòng thử lại sau.", shopName, description, address);
             return;
+        }
+
+        // Notify all admins about new seller request
+        var admins = accountDao.getAllAdmins();
+        for (Account admin : admins) {
+            notifService.notifyNewSellerRequest(admin.getId(), user.getFullname(), shopName.trim());
         }
 
         // ---- Success ----

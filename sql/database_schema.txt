@@ -1,7 +1,7 @@
 -- ============================================================
 --   DATABASE SCHEMA - SWP391 PROJECT
 --   SQL Server syntax
---   Tong so bang: 24
+--   Tong so bang: 29
 -- ============================================================
 
 
@@ -446,6 +446,102 @@ CREATE TABLE SellerActions (
     CONSTRAINT FK_SellerActions_Shop        FOREIGN KEY (shop_id)      REFERENCES Shops(id),
     CONSTRAINT FK_SellerActions_Seller      FOREIGN KEY (seller_id)    REFERENCES Accounts(id),
     CONSTRAINT FK_SellerActions_PerformedBy FOREIGN KEY (performed_by) REFERENCES Accounts(id)
+);
+
+
+-- ------------------------------------------------------------
+-- 25. ShipperDetails
+-- ------------------------------------------------------------
+CREATE TABLE ShipperDetails (
+    id              INT            IDENTITY(1,1) PRIMARY KEY,
+    account_id      INT            NOT NULL UNIQUE,
+    shipper_code    NVARCHAR(20)   NOT NULL UNIQUE,
+    birthdate       DATE           NOT NULL,
+    cccd            VARCHAR(15)    NOT NULL UNIQUE,
+    vehicle_type    NVARCHAR(50)   NOT NULL,
+    delivery_area   NVARCHAR(255)  NOT NULL,
+    created_at      DATETIME       NOT NULL DEFAULT GETDATE(),
+    updated_at      DATETIME       NULL,
+
+    CONSTRAINT FK_ShipperDetails_Accounts FOREIGN KEY (account_id) REFERENCES Accounts(id)
+);
+
+
+-- ------------------------------------------------------------
+-- 26. StaffDetails
+-- ------------------------------------------------------------
+CREATE TABLE StaffDetails (
+    id              INT            IDENTITY(1,1) PRIMARY KEY,
+    account_id      INT            NOT NULL UNIQUE,
+    staff_code      NVARCHAR(20)  NOT NULL UNIQUE,
+    cccd            VARCHAR(15)    NOT NULL UNIQUE,
+    managed_area    NVARCHAR(255)  NOT NULL,
+    created_at      DATETIME       NOT NULL DEFAULT GETDATE(),
+    updated_at      DATETIME       NULL,
+
+    CONSTRAINT FK_StaffDetails_Accounts FOREIGN KEY (account_id) REFERENCES Accounts(id)
+);
+
+
+-- ------------------------------------------------------------
+-- 27. Notifications
+-- ------------------------------------------------------------
+CREATE TABLE Notifications (
+    id          INT            IDENTITY(1,1) PRIMARY KEY,
+    user_id     INT            NOT NULL,
+    title       NVARCHAR(255) NOT NULL,
+    content     NVARCHAR(MAX) NOT NULL,
+    type        NVARCHAR(50)  NOT NULL,
+    link        NVARCHAR(500)  NULL,
+    is_read     BIT            NOT NULL DEFAULT 0,
+    created_at  DATETIME       NOT NULL DEFAULT GETDATE(),
+
+    CONSTRAINT FK_Notifications_Accounts FOREIGN KEY (user_id) REFERENCES Accounts(id)
+);
+
+
+-- ------------------------------------------------------------
+-- 28. DeliveryOrders
+-- ------------------------------------------------------------
+CREATE TABLE DeliveryOrders (
+    delivery_id      INT            IDENTITY(1,1) PRIMARY KEY,
+    order_id        INT            NOT NULL,
+    shipper_id      INT            NULL,
+    assigned_by     INT            NOT NULL,
+    assigned_date   DATETIME       NOT NULL DEFAULT GETDATE(),
+    accepted_date   DATETIME       NULL,
+    pickup_time     DATETIME       NULL,
+    delivery_time   DATETIME       NULL,
+    status          INT            NOT NULL DEFAULT 1,
+    -- 1=Cho nhan | 2=Da nhan | 3=Dang lay hang | 4=Dang giao | 5=Da giao | 6=Giao that bai
+    note            NVARCHAR(500) NULL,
+    created_at      DATETIME       NOT NULL DEFAULT GETDATE(),
+    updated_at      DATETIME       NULL,
+
+    CONSTRAINT FK_DeliveryOrders_Orders    FOREIGN KEY (order_id)    REFERENCES Orders(id),
+    CONSTRAINT FK_DeliveryOrders_Shipper   FOREIGN KEY (shipper_id)  REFERENCES Accounts(id),
+    CONSTRAINT FK_DeliveryOrders_AssignedBy FOREIGN KEY (assigned_by) REFERENCES Accounts(id)
+);
+
+
+-- ------------------------------------------------------------
+-- 29. OrderTracking
+-- ------------------------------------------------------------
+CREATE TABLE OrderTracking (
+    tracking_id      INT            IDENTITY(1,1) PRIMARY KEY,
+    order_id         INT            NOT NULL,
+    delivery_id      INT            NULL,
+    status           NVARCHAR(50)  NOT NULL,
+    -- 'pending' | 'confirmed' | 'preparing' | 'shipping' | 'delivered' | 'cancelled'
+    -- 'delivery_assigned' | 'delivery_accepted' | 'delivery_picking_up'
+    -- 'delivery_delivering' | 'delivery_completed' | 'delivery_failed'
+    description      NVARCHAR(MAX) NULL,
+    updated_by       INT            NULL,
+    created_at       DATETIME       NOT NULL DEFAULT GETDATE(),
+
+    CONSTRAINT FK_OrderTracking_Orders  FOREIGN KEY (order_id)   REFERENCES Orders(id),
+    CONSTRAINT FK_OrderTracking_Delivery FOREIGN KEY (delivery_id) REFERENCES DeliveryOrders(delivery_id),
+    CONSTRAINT FK_OrderTracking_UpdatedBy FOREIGN KEY (updated_by) REFERENCES Accounts(id)
 );
 
 

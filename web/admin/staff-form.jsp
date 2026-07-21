@@ -19,6 +19,14 @@
     String valPhone = request.getAttribute("val_phone") != null ? (String) request.getAttribute("val_phone") : (staff != null ? staff.getPhone() : "");
     String valAddress = request.getAttribute("val_address") != null ? (String) request.getAttribute("val_address") : (staff != null ? staff.getAddress() : "");
     String valGender = request.getAttribute("val_gender") != null ? (String) request.getAttribute("val_gender") : (staff != null && staff.getGender() != null ? String.valueOf(staff.getGender()) : "");
+    
+    // Staff details
+    Object staffDetailsObj = request.getAttribute("staffDetails");
+    model.StaffDetails staffDetails = staffDetailsObj instanceof model.StaffDetails ? (model.StaffDetails) staffDetailsObj : null;
+    
+    String valStaffCode = request.getAttribute("val_staff_code") != null ? (String) request.getAttribute("val_staff_code") : (staffDetails != null ? staffDetails.getStaffCode() : "");
+    String valCccd = request.getAttribute("val_cccd") != null ? (String) request.getAttribute("val_cccd") : (staffDetails != null ? staffDetails.getCccd() : "");
+    String valManagedArea = request.getAttribute("val_managed_area") != null ? (String) request.getAttribute("val_managed_area") : (staffDetails != null ? staffDetails.getManagedArea() : "");
 %>
 <!DOCTYPE html>
 <html lang="vi">
@@ -82,10 +90,8 @@
             <i class="fas fa-shield-halved"></i> Admin Panel
         </a>
         <div class="nav-links">
-            <a href="${pageContext.request.contextPath}/admin/orders">Monitor Đơn Hàng</a>
-            <a href="${pageContext.request.contextPath}/admin/staff" class="active">Nhân Viên</a>
-            <a href="${pageContext.request.contextPath}/admin/shipper">Shipper</a>
-            <a href="${pageContext.request.contextPath}/category">Danh Mục</a>
+            <a href="${pageContext.request.contextPath}/admin/staff" class="active">Quản Lý Nhân Viên</a>
+            <a href="${pageContext.request.contextPath}/admin/shipper">Quản Lý Shipper</a>
         </div>
         <div class="nav-right">
             <span class="nav-username"><%= user.getFullname() %></span>
@@ -156,7 +162,45 @@
                         </label>
                     </div>
                 </div>
-                
+
+                <hr style="border: none; border-top: 1px solid var(--gray-200); margin: 1.5rem 0;">
+                <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--gray-800); margin-bottom: 1rem;">
+                    <i class="fas fa-id-badge" style="color: var(--green); margin-right: 0.5rem;"></i>
+                    Thông Tin Nhân Viên
+                </h3>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Mã Nhân Viên <span class="required">*</span></label>
+                        <input type="text" name="staff_code" class="form-input" value="<%= valStaffCode %>" required
+                               placeholder="VD: NV001" maxlength="20"
+                               pattern="[A-Za-z0-9]{3,20}" title="Mã nhân viên từ 3-20 ký tự, chỉ gồm chữ và số">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Số CCCD <span class="required">*</span></label>
+                        <input type="text" name="cccd" class="form-input" value="<%= valCccd %>" required
+                               placeholder="Nhập 12 số CCCD" maxlength="15"
+                               pattern="\d{12}" title="CCCD phải gồm 12 chữ số">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Khu Vực Quản Lý Shipper <span class="required">*</span></label>
+                    <select name="managed_area" class="form-input" required>
+                        <option value="">-- Chọn khu vực --</option>
+                        <option value="TP. Hồ Chí Minh" <%= "TP. Hồ Chí Minh".equals(valManagedArea) ? "selected" : "" %>>TP. Hồ Chí Minh</option>
+                        <option value="Hà Nội" <%= "Hà Nội".equals(valManagedArea) ? "selected" : "" %>>Hà Nội</option>
+                        <option value="Đà Nẵng" <%= "Đà Nẵng".equals(valManagedArea) ? "selected" : "" %>>Đà Nẵng</option>
+                        <option value="Cần Thơ" <%= "Cần Thơ".equals(valManagedArea) ? "selected" : "" %>>Cần Thơ</option>
+                        <option value="Hải Phòng" <%= "Hải Phòng".equals(valManagedArea) ? "selected" : "" %>>Hải Phòng</option>
+                        <option value="Nha Trang" <%= "Nha Trang".equals(valManagedArea) ? "selected" : "" %>>Nha Trang</option>
+                        <option value="Huế" <%= "Huế".equals(valManagedArea) ? "selected" : "" %>>Huế</option>
+                        <option value="Quảng Ninh" <%= "Quảng Ninh".equals(valManagedArea) ? "selected" : "" %>>Quảng Ninh</option>
+                        <option value="Bình Dương" <%= "Bình Dương".equals(valManagedArea) ? "selected" : "" %>>Bình Dương</option>
+                        <option value="Toàn quốc" <%= "Toàn quốc".equals(valManagedArea) ? "selected" : "" %>>Toàn quốc</option>
+                    </select>
+                </div>
+
                 <div class="form-actions">
                     <a href="${pageContext.request.contextPath}/admin/staff" class="btn btn-secondary">Hủy</a>
                     <button type="submit" class="btn btn-primary">

@@ -8,16 +8,22 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import model.*;
 import service.CheckoutService;
+import service.NotificationService;
+import dao.AccountDAO;
+import dao.OrderDAO;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @WebServlet("/checkout")
 public class CheckoutServlet extends HttpServlet {
 
     private CheckoutService checkoutService;
+    private NotificationService notifService = new NotificationService();
+    private OrderDAO orderDao = new OrderDAO();
 
     @Override
     public void init() throws ServletException {
@@ -167,6 +173,27 @@ public class CheckoutServlet extends HttpServlet {
             );
 
             if (result.isSuccess()) {
+                // Notify each seller about new orders
+                List<Integer> orderIds = result.getOrderIds();
+                if (orderIds != null) {
+                    for (int orderId : orderIds) {
+                        try {
+                            int sellerId = orderDao.getSellerIdByOrderId(orderId);
+                            if (sellerId > 0) {
+                                notifService.notifyNewOrder(orderId, sellerId);
+                            }
+                        } catch (Exception e) {
+                            System.err.println("[CheckoutServlet] notifyNewOrder error: " + e.getMessage());
+                        }
+                    }
+                    // Notify customer that order was placed successfully
+                    try {
+                        notifService.notifyOrderPlaced(user.getId(), orderIds);
+                    } catch (Exception e) {
+                        System.err.println("[CheckoutServlet] notifyOrderPlaced error: " + e.getMessage());
+                    }
+                }
+                
                 String message;
                 if (result.getOrderCount() > 1) {
                     message = String.format(
