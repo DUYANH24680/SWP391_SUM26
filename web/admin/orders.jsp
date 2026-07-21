@@ -435,35 +435,9 @@
 </head>
 <body>
 
-    <!-- Topnav -->
-    <nav class="topnav">
-        <a href="<%= request.getContextPath() %>/home.jsp" class="nav-logo">
-            <i class="fa-solid fa-apple-whole"></i> Sena Shop
-        </a>
-        <div class="nav-links">
-            <a href="<%= request.getContextPath() %>/home.jsp">Trang Chủ</a>
-            <a href="<%= request.getContextPath() %>/products">Sản Phẩm</a>
-            <a href="<%= request.getContextPath() %>/admin/customers">
-                <i class="fa-solid fa-users"></i> Khách Hàng
-            </a>
-            <a href="<%= request.getContextPath() %>/admin/orders" class="active">
-                <i class="fa-solid fa-chart-line"></i> Monitor Đơn Hàng
-            </a>
-                            <a href="<%= request.getContextPath() %>/admin/seller-requests">
-                <i class="fa-solid fa-store"></i> Duyệt Seller
-            </a>
-        </div>
-        <div class="nav-right">
-            <span class="nav-username">Admin: <%= user.getFullname() != null ? user.getFullname() : user.getUsername() %></span>
-            <% String navAvatar = user.getAvatar();
-               if (navAvatar == null || navAvatar.trim().isEmpty()) {
-                   String fn = user.getFullname() != null ? user.getFullname() : user.getUsername();
-                   navAvatar = "https://ui-avatars.com/api/?name=" + java.net.URLEncoder.encode(fn, "UTF-8") + "&background=4caf50&color=fff&size=80&bold=true&rounded=true";
-               }
-            %>
-            <img class="nav-avatar" src="<%= navAvatar %>" alt="avatar">
-        </div>
-    </nav>
+    <jsp:include page="/admin/admin-topnav.jsp">
+        <jsp:param name="activePage" value="orders" />
+    </jsp:include>
 
     <div class="layout">
 

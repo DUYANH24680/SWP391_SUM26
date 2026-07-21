@@ -1984,7 +1984,9 @@
                             <a href="inventory-export">Xuất Kho</a>
                             <a href="inventory-import">Nhập Kho</a>
                         <% } %>
-                        <a href="products">Sản Phẩm</a>
+                        <% if (Account != null && ("admin".equalsIgnoreCase(Account.getRoleName()) || "seller".equalsIgnoreCase(Account.getRoleName()))) { %>
+                            <a href="products">Sản Phẩm</a>
+                        <% } %>
                         <a href="danh-muc">Danh Mục</a>
                         <% if (Account == null || "customer".equalsIgnoreCase(Account.getRoleName())) { %>
                             <a href="vouchers" style="color:#ef4444;font-weight:600;"><i class="fa-solid fa-ticket"></i> Voucher</a>
@@ -2003,9 +2005,7 @@
                             <i class="fa-solid fa-basket-shopping"></i>
                             <span class="cart-badge"><%= cartCount %></span>
                         </a>
-                        <button class="nav-icon-btn" title="Thông báo">
-                            <i class="fa-regular fa-bell"></i>
-                        </button>
+                        <jsp:include page="/notification-icon.jsp" />
 
                         <% if (Account !=null) { %>
                             <!-- Avatar with dropdown -->
@@ -2031,6 +2031,34 @@
                                             </a>
                                             <a class="dropdown-item" href="<%= request.getContextPath() %>/submit-report">
                                                 <i class="fa-solid fa-flag"></i> Báo Cáo Seller
+                                            </a>
+                                            <div class="dropdown-divider"></div>
+                                            <% } %>
+                                            
+                                            <% if ("admin".equalsIgnoreCase(Account.getRoleName())) { %>
+                                            <a class="dropdown-item" href="<%= request.getContextPath() %>/admin/orders">
+                                                <i class="fa-solid fa-chart-line"></i> Admin Dashboard
+                                            </a>
+                                            <div class="dropdown-divider"></div>
+                                            <% } %>
+                                            
+                                            <% if ("seller".equalsIgnoreCase(Account.getRoleName())) { %>
+                                            <a class="dropdown-item" href="<%= request.getContextPath() %>/seller/dashboard">
+                                                <i class="fa-solid fa-shop"></i> Kênh Người Bán
+                                            </a>
+                                            <div class="dropdown-divider"></div>
+                                            <% } %>
+                                            
+                                            <% if ("staff".equalsIgnoreCase(Account.getRoleName())) { %>
+                                            <a class="dropdown-item" href="<%= request.getContextPath() %>/staff/delivery">
+                                                <i class="fa-solid fa-clipboard-list"></i> Staff Dashboard
+                                            </a>
+                                            <div class="dropdown-divider"></div>
+                                            <% } %>
+                                            
+                                            <% if ("shipper".equalsIgnoreCase(Account.getRoleName())) { %>
+                                            <a class="dropdown-item" href="<%= request.getContextPath() %>/shipper/delivery">
+                                                <i class="fa-solid fa-truck"></i> Shipper Dashboard
                                             </a>
                                             <div class="dropdown-divider"></div>
                                             <% } %>
@@ -2410,41 +2438,25 @@
                     </div>
 
                     <div class="bestsellers-grid">
+                        <% 
+                            List<Product> topSellingProducts = dao.getTopSellingProducts(5);
+                            int rank = 1;
+                            for (Product p : topSellingProducts) { 
+                                String rankClass = rank <= 3 ? "rank-" + rank : "rank-n";
+                                String unit = p.getUnit() != null && !p.getUnit().trim().isEmpty() ? p.getUnit() : "sp";
+                                double price = p.getSalePrice() > 0 ? p.getSalePrice() : p.getOriginalPrice();
+                                String imgUrl = p.getImage() != null && !p.getImage().isEmpty() ? ImageUrlUtil.resolve(p.getImage(), request.getContextPath()) : request.getContextPath() + "/assets/images/default-product.png";
+                        %>
                         <div class="bestseller-card">
-                            <div class="rank-badge rank-1">1</div>
-                            <div class="bs-emoji">🥭</div>
-                            <div class="bs-name">Xoai Cat Hoa Loc</div>
-                            <div class="bs-sold">Bán: 1.240 kg</div>
-                            <div class="bs-price">65.000 d/kg</div>
+                            <div class="rank-badge <%= rankClass %>"><%= rank++ %></div>
+                            <div class="bs-emoji" style="display:flex; justify-content:center; align-items:center; margin: 10px 0;">
+                                <img src="<%= imgUrl %>" alt="<%= p.getTitle() %>" style="width: 48px; height: 48px; object-fit: contain; border-radius: 4px;" />
+                            </div>
+                            <div class="bs-name"><%= p.getTitle() %></div>
+                            <div class="bs-sold">Bán: <%= p.getSoldQuantity() %> <%= unit %></div>
+                            <div class="bs-price"><%= String.format("%,.0f", price).replace(",", ".") %> d/<%= unit %></div>
                         </div>
-                        <div class="bestseller-card">
-                            <div class="rank-badge rank-2">2</div>
-                            <div class="bs-emoji">🍎</div>
-                            <div class="bs-name">Tao My Fuji</div>
-                            <div class="bs-sold">Bán: 980 kg</div>
-                            <div class="bs-price">99.000 d/kg</div>
-                        </div>
-                        <div class="bestseller-card">
-                            <div class="rank-badge rank-3">3</div>
-                            <div class="bs-emoji">🍊</div>
-                            <div class="bs-name">Cam Huu Co Da Lat</div>
-                            <div class="bs-sold">Bán: 756 kg</div>
-                            <div class="bs-price">45.000 d/kg</div>
-                        </div>
-                        <div class="bestseller-card">
-                            <div class="rank-badge rank-n">4</div>
-                            <div class="bs-emoji">🍇</div>
-                            <div class="bs-name">Nho Uc Khong Hat</div>
-                            <div class="bs-sold">Bán: 612 kg</div>
-                            <div class="bs-price">150.000 d/kg</div>
-                        </div>
-                        <div class="bestseller-card">
-                            <div class="rank-badge rank-n">5</div>
-                            <div class="bs-emoji">🍑</div>
-                            <div class="bs-name">Dao My Vang</div>
-                            <div class="bs-sold">Bán: 430 kg</div>
-                            <div class="bs-price">135.000 d/kg</div>
-                        </div>
+                        <% } %>
                     </div>
 
 

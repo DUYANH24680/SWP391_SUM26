@@ -88,19 +88,10 @@
     </style>
 </head>
 <body>
-    <nav class="topnav">
-        <a href="${pageContext.request.contextPath}/admin/orders" class="nav-logo">
-            <i class="fas fa-shield-halved"></i> Admin Panel
-        </a>
-        <div class="nav-links">
-            <a href="${pageContext.request.contextPath}/admin/staff" class="active">Quản Lý Nhân Viên</a>
-            <a href="${pageContext.request.contextPath}/admin/shipper">Quản Lý Shipper</a>
-        </div>
-        <div class="nav-right">
-            <span class="nav-username"><%= user.getFullname() %></span>
-            <a href="${pageContext.request.contextPath}/logout" class="btn btn-sm" style="background: #fee2e2; color: #991b1b; text-decoration: none;">Đăng Xuất</a>
-        </div>
-    </nav>
+    <jsp:include page="/admin/admin-topnav.jsp">
+        <jsp:param name="activePage" value="staff" />
+    </jsp:include>
+
     
     <div class="layout">
         <% if (message != null) { %>

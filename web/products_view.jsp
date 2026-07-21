@@ -461,9 +461,11 @@
                 <div class="card-title">
                     <i class="fa-brands fa-opencart"></i> Danh Sach San Pham
                 </div>
-                <a href="add-product" class="btn btn-green btn-sm">
-                    <i class="fa-solid fa-plus"></i> Them San Pham
-                </a>
+                <c:if test="${sessionScope.role == 'admin' || sessionScope.role == 'seller'}">
+                    <a href="add-product" class="btn btn-green btn-sm">
+                        <i class="fa-solid fa-plus"></i> Them San Pham
+                    </a>
+                </c:if>
             </div>
 
             <!-- Search bar -->

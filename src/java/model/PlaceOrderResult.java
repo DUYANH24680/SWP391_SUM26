@@ -1,10 +1,13 @@
 package model;
 
+import java.util.List;
+
 public class PlaceOrderResult {
     private boolean success;
     private Object message; // int (orderId) or String (error)
     private int orderCount;
     private int shopCount;
+    private List<Integer> orderIds; // all created order IDs
 
     public PlaceOrderResult(boolean success, int orderId) {
         this.success = success;
@@ -22,6 +25,15 @@ public class PlaceOrderResult {
         this.message = orderId;
         this.orderCount = orderCount;
         this.shopCount = shopCount;
+    }
+
+    // Full constructor with order IDs list
+    public PlaceOrderResult(boolean success, int orderId, int orderCount, int shopCount, List<Integer> orderIds) {
+        this.success = success;
+        this.message = orderId;
+        this.orderCount = orderCount;
+        this.shopCount = shopCount;
+        this.orderIds = orderIds;
     }
 
     public static PlaceOrderResult failure(String error) {
@@ -56,5 +68,9 @@ public class PlaceOrderResult {
 
     public int getShopCount() {
         return shopCount;
+    }
+
+    public List<Integer> getOrderIds() {
+        return orderIds;
     }
 }

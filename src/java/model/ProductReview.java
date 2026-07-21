@@ -14,6 +14,9 @@ public class ProductReview {
     private String username;
     private String fullname;
     private String avatar;
+    
+    // DuyAnhNgo- Admin/Seller reply
+    private String reply;
 
     public ProductReview() {}
 
@@ -45,4 +48,7 @@ public class ProductReview {
     public void setFullname(String fullname) { this.fullname = fullname; }
     public String getAvatar() { return avatar; }
     public void setAvatar(String avatar) { this.avatar = avatar; }
+
+    public String getReply() { return reply; }
+    public void setReply(String reply) { this.reply = reply; }
 }

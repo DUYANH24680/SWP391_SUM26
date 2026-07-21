@@ -1,4 +1,4 @@
-﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="model.Account" %>
 <%@ page import="model.Product" %>
 <%@ page import="model.Shop" %>
@@ -744,7 +744,9 @@
         <div class="sidebar-nav">
             <a href="profile"><i class="fa-regular fa-user"></i> Ho So</a>
             <a href="products"><i class="fa-brands fa-opencart"></i> San Pham</a>
-            <a href="add-product"><i class="fa-solid fa-plus"></i> Them San Pham</a>
+            <% if ("admin".equals(role) || "seller".equals(role)) { %>
+                <a href="add-product"><i class="fa-solid fa-plus"></i> Them San Pham</a>
+            <% } %>
             <a href="<%= "seller".equals(role) ? "seller/orders" : "my-orders" %>"><i class="fa-solid fa-basket-shopping"></i> Don Hang</a>
             <a href="wishlist" class="active" style="color: #ef4444;"><i class="fa-regular fa-heart"></i> Yeu Thich</a>
             <a href="logout" class="logout" style="margin-top:0.5rem;">
@@ -967,9 +969,44 @@
                         <div class="action-buttons">
                             <% if (product.isActive() && product.getStockQuantity() > 0) { %>
 
+                                <!-- Quantity selector -->
+                                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                                    <span class="section-label" style="margin-bottom: 0;">
+                                        <i class="fa-solid fa-hashtag" style="color: var(--green);"></i>
+                                        So luong:
+                                    </span>
+                                    <div style="display: flex; align-items: center; border: 1.5px solid var(--gray-200); border-radius: var(--radius-sm); overflow: hidden;">
+                                        <button type="button" onclick="changeQuantity(-1)" style="
+                                            width: 36px; height: 36px; border: none; background: var(--gray-100);
+                                            cursor: pointer; font-size: 1rem; color: var(--gray-600);
+                                            display: flex; align-items: center; justify-content: center;
+                                        ">
+                                            <i class="fa-solid fa-minus"></i>
+                                        </button>
+                                        <input type="number" id="quantityInput" name="quantity" value="1" min="1" max="<%= product.getStockQuantity() %>"
+                                               onchange="updateTotalPrice()" oninput="updateTotalPrice()"
+                                               style="width: 60px; height: 36px; border: none; text-align: center; font-size: 0.9rem; font-weight: 600; font-family: 'Inter', sans-serif;">
+                                        <button type="button" onclick="changeQuantity(1)" style="
+                                            width: 36px; height: 36px; border: none; background: var(--gray-100);
+                                            cursor: pointer; font-size: 1rem; color: var(--gray-600);
+                                            display: flex; align-items: center; justify-content: center;
+                                        ">
+                                            <i class="fa-solid fa-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Total price display -->
+                                <div id="totalPriceContainer" style="margin-bottom: 1rem; padding: 0.75rem 1rem; background: var(--gray-50); border-radius: var(--radius-sm); border: 1px solid var(--gray-200);">
+                                    <div style="font-size: 0.78rem; color: var(--gray-600); margin-bottom: 0.25rem;">Tong tien:</div>
+                                    <div style="font-size: 1.25rem; font-weight: 800; color: #dc2626;" id="totalPriceDisplay">
+                                        <%= nf.format((long) salePrice) %> d
+                                    </div>
+                                </div>
+
                                 <form action="add-to-cart" method="POST" id="addToCartForm" style="display:inline;">
                                     <input type="hidden" name="productId" value="<%= product.getId() %>">
-                                    <input type="hidden" name="quantity" id="quantityInput" value="1">
+                                    <input type="hidden" name="quantity" id="quantityInputHidden" value="1">
                                     <button type="submit" class="btn btn-green" id="addToCartBtn">
                                         <i class="fa-solid fa-basket-shopping"></i>
                                         Them Vao Gio Hang
@@ -1046,6 +1083,11 @@
 <div id="toast" class="toast"></div>
 
 <script>
+    // ---- Price and quantity config ----
+    var salePrice = <%= salePrice %>;
+    var maxStock = <%= product.getStockQuantity() %>;
+    var nf = new Intl.NumberFormat('vi');
+
     // ---- Hien thi thong bao ----
     function showToast(message, isError) {
         var toast = document.getElementById('toast');
@@ -1057,19 +1099,37 @@
         }, 3000);
     }
 
-    // ---- Set size truoc khi submit ----
+    // ---- Change quantity ----
+    function changeQuantity(delta) {
+        var input = document.getElementById('quantityInput');
+        var current = parseInt(input.value) || 1;
+        var newVal = current + delta;
+        if (newVal < 1) newVal = 1;
+        if (newVal > maxStock) newVal = maxStock;
+        input.value = newVal;
+        updateTotalPrice();
+    }
+
+    // ---- Update total price display ----
+    function updateTotalPrice() {
+        var input = document.getElementById('quantityInput');
+        var qty = parseInt(input.value) || 1;
+        if (qty < 1) qty = 1;
+        if (qty > maxStock) qty = maxStock;
+
+        var total = qty * salePrice;
+        var display = document.getElementById('totalPriceDisplay');
+        if (display) {
+            display.textContent = nf.format(Math.round(total)) + ' d';
+        }
+    }
+
+    // ---- Sync hidden input before submit ----
     var addToCartForm = document.getElementById('addToCartForm');
     if (addToCartForm) {
         addToCartForm.addEventListener('submit', function(e) {
-            var sizeInputs = document.getElementsByName('selectedSize');
-            if (sizeInputs.length > 0) {
-                for (var i = 0; i < sizeInputs.length; i++) {
-                    if (sizeInputs[i].checked) {
-                        document.getElementById('selectedSizeInput').value = sizeInputs[i].value;
-                        break;
-                    }
-                }
-            }
+            var qty = document.getElementById('quantityInput').value;
+            document.getElementById('quantityInputHidden').value = qty;
         });
     }
 

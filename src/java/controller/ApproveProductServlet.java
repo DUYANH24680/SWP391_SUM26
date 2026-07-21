@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import model.Account;
 import model.Product;
+import service.NotificationService;
 
 import java.io.IOException;
 import java.util.List;
@@ -18,6 +19,9 @@ import java.util.List;
  */
 @WebServlet(name = "ApproveProductServlet", urlPatterns = {"/admin/approve-products"})
 public class ApproveProductServlet extends HttpServlet {
+
+    private final ProductDAO productDao = new ProductDAO();
+    private final NotificationService notifService = new NotificationService();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -74,8 +78,14 @@ public class ApproveProductServlet extends HttpServlet {
         try {
             int productId = Integer.parseInt(productIdParam.trim());
 
+            // Get product info first for notification
+            Product product = productDao.getProductById(productId);
+
             ProductDAO dao = new ProductDAO();
             boolean success;
+            String productTitle = product != null ? product.getTitle() : "Sản phẩm #" + productId;
+            int sellerId = product != null ? product.getSellerId() : -1;
+
             try {
                 if ("remove".equalsIgnoreCase(action)) {
                     // ---- Remove inappropriate product ----
@@ -92,6 +102,9 @@ public class ApproveProductServlet extends HttpServlet {
                     }
                     success = dao.removeInappropriateProduct(productId, reason.trim());
                     if (success) {
+                        if (sellerId > 0) {
+                            notifService.notifyProductApproval(sellerId, productTitle, false, reason.trim());
+                        }
                         session.setAttribute("message", "Sản phẩm đã được gỡ bỏ thành công. Lý do: " + reason.trim());
                     } else {
                         session.setAttribute("error", "Sản phẩm không tìm thấy hoặc đã bị gỡ trước đó.");
@@ -100,6 +113,9 @@ public class ApproveProductServlet extends HttpServlet {
                     // ---- Default: Approve product ----
                     success = dao.approveProduct(productId);
                     if (success) {
+                        if (sellerId > 0) {
+                            notifService.notifyProductApproval(sellerId, productTitle, true, null);
+                        }
                         session.setAttribute("message", "Sản phẩm đã được duyệt thành công.");
                     } else {
                         session.setAttribute("error", "Sản phẩm không tìm thấy hoặc đã được duyệt trước đó.");

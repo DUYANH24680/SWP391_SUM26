@@ -89,6 +89,7 @@
             <a href="${pageContext.request.contextPath}/shipper/my-deliveries" class="active">Đơn Của Tôi</a>
         </div>
         <div class="nav-right">
+            <jsp:include page="/notification-icon.jsp" />
             <a href="${pageContext.request.contextPath}/logout" class="btn btn-sm" style="background: #fee2e2; color: #991b1b; text-decoration: none;">Đăng Xuất</a>
         </div>
     </nav>

@@ -307,6 +307,13 @@ public class AccountDAO extends Utils.DbContext {
     }
     
     /**
+     * Get all admin accounts.
+     */
+    public List<Account> getAllAdmins() {
+        return getAccountsByRole("admin");
+    }
+    
+    /**
      * Get all shipper accounts.
      */
     public List<Account> getAllShippers() {

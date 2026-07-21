@@ -7,7 +7,7 @@
 <%@ page import="java.util.List" %>
 <%@ page import="java.util.Locale" %>
 <%
-    Account user = (Account) session.getAttribute("user");
+    Account user = (Account) session.getAttribute("Account");
     if (user == null) {
         response.sendRedirect(request.getContextPath() + "/login.jsp");
         return;
@@ -389,54 +389,12 @@
 </head>
 <body>
 
-    <!-- Topnav -->
-    <nav class="topnav">
-        <a href="<%= request.getContextPath() %>/home.jsp" class="nav-logo">
-            <i class="fa-solid fa-apple-whole"></i> Sena Shop
-        </a>
-        <div class="nav-links">
-            <a href="<%= request.getContextPath() %>/home.jsp">Trang Chủ</a>
-            <a href="<%= request.getContextPath() %>/products">Sản Phẩm</a>
-        </div>
-        <div class="nav-right">
-            <% if (shop != null) { %>
-                <span style="background:#dcfce7; color:#166534; padding:0.25rem 0.75rem; border-radius:100px; font-size:0.75rem; font-weight:700;">
-                    <%= shop.getName() %>
-                </span>
-            <% } %>
-            <img class="nav-avatar" src="<%= avatarUrl %>" alt="avatar">
-        </div>
-    </nav>
+    <jsp:include page="/sidebar.jsp">
+        <jsp:param name="activePage" value="revenue" />
+    </jsp:include>
 
-    <!-- Layout Container -->
-    <div class="layout">
-
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="sidebar-nav">
-                <a href="<%= request.getContextPath() %>/seller/dashboard">
-                    <i class="fa-solid fa-gauge"></i> Dashboard
-                </a>
-                <a href="<%= request.getContextPath() %>/seller/revenue" class="active">
-                    <i class="fa-solid fa-chart-line"></i> Doanh Thu
-                </a>
-                <a href="<%= request.getContextPath() %>/profile">
-                    <i class="fa-regular fa-user"></i> Hồ Sơ
-                </a>
-                <a href="<%= request.getContextPath() %>/products">
-                    <i class="fa-brands fa-opencart"></i> Sản Phẩm
-                </a>
-                <a href="<%= request.getContextPath() %>/seller/orders">
-                    <i class="fa-solid fa-basket-shopping"></i> Đơn Hàng
-                </a>
-                <a href="<%= request.getContextPath() %>/logout" class="logout" style="margin-top:0.5rem;">
-                    <i class="fa-solid fa-right-from-bracket"></i> Đăng Xuất
-                </a>
-            </div>
-        </aside>
-
-        <!-- Main Content -->
-        <main class="main">
+    <!-- Main Content -->
+    <main class="sena-main">
 
             <% if (error != null) { %>
                 <div class="alert alert-danger">
@@ -570,13 +528,11 @@
                         <% if (dateTo != null && !dateTo.isEmpty()) { %> đến <%= dateTo %> <% } %>
                         <% if (statusParam != null && !statusParam.isEmpty()) { %>
                             — trạng thái: <strong><%
-                                switch (statusParam) {
-                                    case "1": out.print("Chờ xác nhận"); break;
-                                    case "2": out.print("Đã xác nhận"); break;
-                                    case "3": out.print("Đang giao hàng"); break;
-                                    case "4": out.print("Đã giao"); break;
-                                    case "5": out.print("Đã hủy"); break;
-                                }
+                                if ("1".equals(statusParam)) out.print("Chờ xác nhận");
+                                else if ("2".equals(statusParam)) out.print("Đã xác nhận");
+                                else if ("3".equals(statusParam)) out.print("Đang giao hàng");
+                                else if ("4".equals(statusParam)) out.print("Đã giao");
+                                else if ("5".equals(statusParam)) out.print("Đã hủy");
                             %></strong><% } %>
                     </span>
                     <span class="filter-summary-rev">

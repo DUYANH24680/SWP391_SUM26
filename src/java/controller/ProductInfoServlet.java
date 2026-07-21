@@ -104,12 +104,19 @@ public class ProductInfoServlet extends HttpServlet {
                     req.setAttribute("reviews", reviews);
                     req.setAttribute("ratingStats", ratingStats);
 
-                    // DuyAnhNgo- Bước 5b: Kiểm tra customer đã mua sản phẩm này chưa
-                    // canReview = true nếu user đã đăng nhập VÀ đã có đơn hàng giao thành công chứa sản phẩm này
+                    // DuyAnhNgo- Bước 5b: Kiểm tra quyền đánh giá sản phẩm
                     boolean canReview = false;
                     if (session != null && session.getAttribute("user") != null) {
                         model.Account curUser = (model.Account) session.getAttribute("user");
-                        canReview = reviewDAO.hasPurchasedProduct(curUser.getId(), productId);
+                        String userRole = (String) session.getAttribute("role");
+                        
+                        // DuyAnhNgo- Quyền Admin: Tự do bình luận không bị hạn chế (không cần mua hàng)
+                        if ("admin".equals(userRole)) {
+                            canReview = true;
+                        } else {
+                            // DuyAnhNgo- Người dùng thường: Phải có đơn hàng đã giao thành công mới được bình luận
+                            canReview = reviewDAO.hasPurchasedProduct(curUser.getId(), productId);
+                        }
                     }
                     req.setAttribute("canReview", canReview);
                 } finally {
