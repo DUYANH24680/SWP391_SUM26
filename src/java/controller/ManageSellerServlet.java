@@ -228,6 +228,8 @@ public class ManageSellerServlet extends HttpServlet {
                 case "lift_suspend": {
                     logAction.setActionType("temp_suspend_end");
                     actionDAO.insert(logAction);
+                    // Expire all active temp_suspend records so hasActiveSuspension() returns false immediately
+                    actionDAO.clearActiveSuspensions(shopId);
                     shopDAO.endSuspension(shopId);
                     accountDAO.updateAccountStatus(shop.getOwnerId(), 1);
                     success = true;
