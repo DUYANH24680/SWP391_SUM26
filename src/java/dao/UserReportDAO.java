@@ -100,6 +100,24 @@ public class UserReportDAO extends DbContext {
     }
 
     /**
+     * Lấy danh sách báo cáo do một khách hàng gửi.
+     */
+    public List<UserReport> getByReporterId(int reporterId) {
+        List<UserReport> list = new ArrayList<>();
+        String sql = buildSelectSql() + " WHERE r.reporter_id = ? ORDER BY r.created_at DESC";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            ps.setInt(1, reporterId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) list.add(mapRow(rs));
+            }
+        } catch (SQLException e) {
+            System.err.println("[UserReportDAO] getByReporterId error: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    /**
      * Get pending report count for a shop.
      */
     public int countPendingByShopId(int shopId) {

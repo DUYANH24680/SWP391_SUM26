@@ -116,19 +116,20 @@ public class ManageSellerServlet extends HttpServlet {
         List<Shop> shops;
         if (keyword != null && !keyword.trim().isEmpty()) {
             shops = shopDAO.searchSellers(keyword.trim());
+        } else if ("active".equals(filter)) {
+            shops = shopDAO.getAllShopsWithOwner().stream()
+                    .filter(s -> s.isActive() && !actionDAO.hasActiveSuspension(s.getId()))
+                    .collect(Collectors.toList());
         } else if ("blocked".equals(filter)) {
             shops = shopDAO.getAllShopsWithOwner().stream()
                     .filter(Shop::isBlocked).collect(Collectors.toList());
         } else if ("suspended".equals(filter)) {
-            shops = shopDAO.getAllShopsWithOwner();
-            shops = shops.stream()
+            shops = shopDAO.getAllShopsWithOwner().stream()
                     .filter(s -> actionDAO.hasActiveSuspension(s.getId()))
                     .collect(Collectors.toList());
         } else {
-            shops = shopDAO.getAllSellers();
-            if (!"all".equals(filter)) {
-                shops = shopDAO.getAllShopsWithOwner();
-            }
+            // "all" filter: return all shops including active, suspended, and blocked
+            shops = shopDAO.getAllShopsWithOwner();
         }
 
         // Attach stats per shop
