@@ -145,6 +145,13 @@ public class SellerDashboardService extends DbContext {
      * Get filtered orders for a shop based on status and date range.
      */
     public List<Order> getFilteredOrders(int shopId, String statusParam, String dateFrom, String dateTo) {
+        return getFilteredOrders(shopId, statusParam, dateFrom, dateTo, null);
+    }
+
+    /**
+     * Get filtered orders for a shop based on status, date range, and specific product.
+     */
+    public List<Order> getFilteredOrders(int shopId, String statusParam, String dateFrom, String dateTo, Integer productId) {
         StringBuilder sql = new StringBuilder(
             "SELECT DISTINCT o.id, o.customer_id, o.voucher_id, o.recipient_name, o.recipient_phone, o.address, o.payment_method, "
           + "o.status, o.payment_status, o.total_cost, o.discount_amount, o.shipping_fee, o.final_cost, o.note, o.order_date, o.cancelled_at, "
@@ -172,6 +179,10 @@ public class SellerDashboardService extends DbContext {
         if (dateTo != null && !dateTo.trim().isEmpty()) {
             sql.append("AND CAST(o.order_date AS DATE) <= ? ");
             params.add(dateTo);
+        }
+        if (productId != null && productId > 0) {
+            sql.append("AND od.product_id = ? ");
+            params.add(productId);
         }
 
         sql.append("ORDER BY o.order_date DESC");
@@ -210,6 +221,55 @@ public class SellerDashboardService extends DbContext {
             e.printStackTrace();
         }
         return result;
+    }
+
+    /**
+     * Get total revenue for a specific product matching filter conditions.
+     */
+    public double getFilteredProductRevenue(int shopId, String statusParam, String dateFrom, String dateTo, Integer productId) {
+        StringBuilder sql = new StringBuilder(
+            "SELECT ISNULL(SUM(od.total_price), 0) "
+          + "FROM Orders o "
+          + "JOIN OrderDetails od ON o.id = od.order_id "
+          + "JOIN Products p ON od.product_id = p.id "
+          + "WHERE p.shop_id = ? ");
+        java.util.List<Object> params = new java.util.ArrayList<>();
+        params.add(shopId);
+
+        if (statusParam != null && !statusParam.isEmpty()) {
+            try {
+                int st = Integer.parseInt(statusParam);
+                sql.append("AND o.status = ? ");
+                params.add(st);
+            } catch (NumberFormatException ignored) {}
+        } else {
+            sql.append("AND o.status = 4 ");
+        }
+
+        if (dateFrom != null && !dateFrom.trim().isEmpty()) {
+            sql.append("AND CAST(o.order_date AS DATE) >= ? ");
+            params.add(dateFrom);
+        }
+        if (dateTo != null && !dateTo.trim().isEmpty()) {
+            sql.append("AND CAST(o.order_date AS DATE) <= ? ");
+            params.add(dateTo);
+        }
+        if (productId != null && productId > 0) {
+            sql.append("AND od.product_id = ? ");
+            params.add(productId);
+        }
+
+        try (PreparedStatement ps = getConnection().prepareStatement(sql.toString())) {
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getDouble(1);
+            }
+        } catch (Exception e) {
+            System.err.println("[SellerDashboardService] getFilteredProductRevenue error: " + e.getMessage());
+        }
+        return 0;
     }
 
     public SellerDashboardData getDashboardData(int sellerId) {
@@ -254,7 +314,7 @@ public class SellerDashboardService extends DbContext {
                 data.setTodayRevenue(getTodayRevenue(shop.getId()));
                 data.setMonthRevenue(getMonthRevenue(shop.getId()));
                 data.setTodayOrderCount(getTodayOrderCount(shop.getId()));
-                data.setAvgOrderValue(getAverageOrderValue(shop.getId()));
+                data.setAvgOrderValue(getAverageOrderValue(shop.getId())); // gtri tb sp
                 data.setRevenueByDay(getRevenueByDay(shop.getId(), 14));
                 data.setOrders(orders);
             }
