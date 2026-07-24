@@ -358,4 +358,8 @@ public class DeliveryService {
             dao.close();
         }
     }
+
+    public void close() {
+        // No resources to close at service level
+    }
 }

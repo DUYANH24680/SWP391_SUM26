@@ -41,20 +41,19 @@ public class SubmitReportServlet extends HttpServlet {
         int shopId = -1;
         try { shopId = Integer.parseInt(shopIdStr); } catch (Exception ignored) {}
 
-        if (shopId <= 0) {
-            session.setAttribute("error", "Không tìm thấy cửa hàng.");
-            resp.sendRedirect(req.getContextPath() + "/home.jsp");
-            return;
+        if (shopId > 0) {
+            var shop = shopDAO.getShopById(shopId);
+            if (shop != null) {
+                req.setAttribute("shop", shop);
+            }
         }
 
-        var shop = shopDAO.getShopById(shopId);
-        if (shop == null) {
-            session.setAttribute("error", "Cửa hàng không tồn tại.");
-            resp.sendRedirect(req.getContextPath() + "/home.jsp");
-            return;
-        }
+        var shops = shopDAO.getAllSellers();
+        req.setAttribute("shops", shops);
 
-        req.setAttribute("shop", shop);
+        var myReports = reportDAO.getByReporterId(user.getId());
+        req.setAttribute("myReports", myReports);
+
         req.getRequestDispatcher("/report-seller.jsp").forward(req, resp);
     }
 
@@ -101,10 +100,10 @@ public class SubmitReportServlet extends HttpServlet {
             if (isAjax) {
                 resp.setContentType("application/json");
                 resp.setCharacterEncoding("UTF-8");
-                resp.getWriter().write("{\"success\":false, \"message\":\"Không tìm thấy cửa hàng.\"}");
+                resp.getWriter().write("{\"success\":false, \"message\":\"Vui lòng chọn cửa hàng cần báo cáo.\"}");
             } else {
-                session.setAttribute("error", "Không tìm thấy cửa hàng.");
-                resp.sendRedirect(req.getContextPath() + "/home.jsp");
+                session.setAttribute("error", "Vui lòng chọn cửa hàng cần báo cáo.");
+                resp.sendRedirect(req.getContextPath() + "/submit-report");
             }
             return;
         }
@@ -118,7 +117,7 @@ public class SubmitReportServlet extends HttpServlet {
                 resp.getWriter().write("{\"success\":false, \"message\":\"Vui lòng chọn loại vi phạm và nhập mô tả ít nhất 10 ký tự.\"}");
             } else {
                 session.setAttribute("error", "Vui lòng chọn loại vi phạm và nhập mô tả ít nhất 10 ký tự.");
-                resp.sendRedirect(req.getContextPath() + "/submit-report?shopId=" + shopId);
+                resp.sendRedirect(req.getContextPath() + "/submit-report" + (shopId > 0 ? "?shopId=" + shopId : ""));
             }
             return;
         }
@@ -136,7 +135,7 @@ public class SubmitReportServlet extends HttpServlet {
                 resp.getWriter().write("{\"success\":false, \"message\":\"Bạn đã gửi báo cáo cho cửa hàng này rồi. Vui lòng đợi admin xử lý.\"}");
             } else {
                 session.setAttribute("error", "Bạn đã gửi báo cáo cho cửa hàng này rồi. Vui lòng đợi admin xử lý.");
-                resp.sendRedirect(req.getContextPath() + "/home.jsp");
+                resp.sendRedirect(req.getContextPath() + "/submit-report" + (shopId > 0 ? "?shopId=" + shopId : ""));
             }
             return;
         }
@@ -161,7 +160,7 @@ public class SubmitReportServlet extends HttpServlet {
                 resp.getWriter().write("{\"success\":true, \"message\":\"Cảm ơn bạn! Báo cáo của bạn đã được gửi. Admin sẽ xem xét trong thời gian sớm nhất.\"}");
             } else {
                 session.setAttribute("message", "Cảm ơn bạn! Báo cáo của bạn đã được gửi. Admin sẽ xem xét trong thời gian sớm nhất.");
-                resp.sendRedirect(req.getContextPath() + "/home.jsp");
+                resp.sendRedirect(req.getContextPath() + "/submit-report");
             }
         } else {
             if (isAjax) {
@@ -170,7 +169,7 @@ public class SubmitReportServlet extends HttpServlet {
                 resp.getWriter().write("{\"success\":false, \"message\":\"Gửi báo cáo thất bại. Vui lòng thử lại.\"}");
             } else {
                 session.setAttribute("error", "Gửi báo cáo thất bại. Vui lòng thử lại.");
-                resp.sendRedirect(req.getContextPath() + "/submit-report?shopId=" + shopId);
+                resp.sendRedirect(req.getContextPath() + "/submit-report" + (shopId > 0 ? "?shopId=" + shopId : ""));
             }
         }
     }

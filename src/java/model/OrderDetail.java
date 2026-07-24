@@ -13,6 +13,7 @@ public class OrderDetail {
     private String productImage;
     private String productUnit;
     private String shopName;
+    private int shopId;
 
     public OrderDetail() {
     }
@@ -104,6 +105,14 @@ public class OrderDetail {
 
     public void setShopName(String shopName) {
         this.shopName = shopName;
+    }
+
+    public int getShopId() {
+        return shopId;
+    }
+
+    public void setShopId(int shopId) {
+        this.shopId = shopId;
     }
 }
 

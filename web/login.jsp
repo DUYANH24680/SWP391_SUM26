@@ -24,7 +24,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sena Shop - Đăng Nhập & Đăng Ký</title>
+    <title>SenaFruit - Đăng Nhập & Đăng Ký</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
@@ -374,9 +374,9 @@
     <!-- Sign Up Form -->
     <div class="form-container sign-up-container">
         <form action="register" method="post" name="registerForm" id="registerForm">
-            <h1 class="brand"><i class="fa-solid fa-apple-whole"></i> Sena Shop</h1>
+            <h1 class="brand"><i class="fa-solid fa-apple-whole"></i> SenaFruit</h1>
             <h1>Tạo Tài Khoản</h1>
-            <span>Nhập thông tin bên dưới để tham gia Sena Shop</span>
+            <span>Nhập thông tin bên dưới để tham gia SenaFruit</span>
 
             <% if (registerError != null) { %>
                 <div class="error-msg">
@@ -421,7 +421,7 @@
     <!-- Sign In Form -->
     <div class="form-container sign-in-container">
         <form action="login" method="post">
-            <h1 class="brand"><i class="fa-solid fa-apple-whole"></i> Sena Shop</h1>
+            <h1 class="brand"><i class="fa-solid fa-apple-whole"></i> SenaFruit</h1>
             <h1>Đăng Nhập</h1>
             <span>Sử dụng tài khoản thành viên của bạn</span>
             
@@ -464,7 +464,7 @@
             </div>
             <div class="overlay-panel overlay-right">
                 <h1>Chào bạn mới!</h1>
-                <p>Nhập thông tin cá nhân của bạn và bắt đầu hành trình mua sắm trái cây tươi ngon cùng Sena Shop.</p>
+                <p>Nhập thông tin cá nhân của bạn và bắt đầu hành trình mua sắm trái cây tươi ngon cùng SenaFruit.</p>
                 <button class="ghost" id="signUp">Tạo Tài Khoản</button>
             </div>
         </div>

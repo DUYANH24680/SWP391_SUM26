@@ -189,7 +189,7 @@ public class NotificationService {
         Notification n = new Notification(
             customerId,
             "Đơn hàng #" + orderId + " đã giao thành công!",
-            "Đơn hàng #" + orderId + " đã được giao thành công. Cảm ơn bạn đã mua sắm tại Sena Shop!",
+            "Đơn hàng #" + orderId + " đã được giao thành công. Cảm ơn bạn đã mua sắm tại SenaFruit!",
             Notification.TYPE_ORDER_STATUS,
             String.valueOf(orderId)
         );
@@ -279,7 +279,7 @@ public class NotificationService {
             if (shopName != null && !shopName.trim().isEmpty()) {
                 content = "Shop " + shopName + " vừa phát hành voucher [" + voucherCode + "] - " + discountInfo + ". Sử dụng ngay khi đặt hàng!";
             } else {
-                content = "Sena Shop vừa phát hành voucher [" + voucherCode + "] - " + discountInfo + ". Sử dụng ngay khi đặt hàng!";
+                content = "SenaFruit vừa phát hành voucher [" + voucherCode + "] - " + discountInfo + ". Sử dụng ngay khi đặt hàng!";
             }
 
             for (model.Account customer : customers) {

@@ -286,15 +286,14 @@ public class DeliveryDAO extends DbContext {
      * Get delivery order by order ID.
      */
     public DeliveryOrder getDeliveryByOrderId(int orderId) {
-        String sql = "SELECT d.*, "
+        String sql = "SELECT d.id, d.order_id, d.shipper_id, d.assigned_by, "
+                   + "d.status, d.note, d.created_at, d.updated_at, "
                    + "s.fullname AS shipper_name, s.phone AS shipper_phone, "
-                   + "a.fullname AS assigned_by_name, "
                    + "o.status AS order_status, o.final_cost, "
                    + "o.recipient_name, o.recipient_phone, o.address AS delivery_address "
                    + "FROM DeliveryOrders d "
                    + "LEFT JOIN Accounts s ON d.shipper_id = s.id "
-                   + "JOIN Accounts a ON d.assigned_by = a.id "
-                   + "JOIN Orders o ON d.order_id = o.id "
+                   + "LEFT JOIN Orders o ON d.order_id = o.id "
                    + "WHERE d.order_id = ?";
         
         try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
@@ -324,22 +323,21 @@ public class DeliveryDAO extends DbContext {
     public List<DeliveryOrder> getDeliveriesByShipperId(int shipperId, Integer status) {
         List<DeliveryOrder> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
-            "SELECT d.*, "
+            "SELECT d.id, d.order_id, d.shipper_id, d.assigned_by, "
+          + "d.status, d.note, d.created_at, d.updated_at, "
           + "s.fullname AS shipper_name, s.phone AS shipper_phone, "
-          + "a.fullname AS assigned_by_name, "
           + "o.status AS order_status, o.final_cost, "
           + "o.recipient_name, o.recipient_phone, o.address AS delivery_address "
           + "FROM DeliveryOrders d "
           + "LEFT JOIN Accounts s ON d.shipper_id = s.id "
-          + "JOIN Accounts a ON d.assigned_by = a.id "
-          + "JOIN Orders o ON d.order_id = o.id "
+          + "LEFT JOIN Orders o ON d.order_id = o.id "
           + "WHERE d.shipper_id = ? "
         );
         
         if (status != null) {
             sql.append("AND d.status = ? ");
         }
-        sql.append("ORDER BY d.assigned_date DESC");
+        sql.append("ORDER BY d.created_at DESC");
         
         try (PreparedStatement ps = getConnection().prepareStatement(sql.toString())) {
             ps.setInt(1, shipperId);
@@ -372,7 +370,7 @@ public class DeliveryDAO extends DbContext {
                    + "LEFT JOIN Accounts s ON d.shipper_id = s.id "
                    + "JOIN Accounts a ON d.assigned_by = a.id "
                    + "JOIN Orders o ON d.order_id = o.id "
-                   + "ORDER BY d.assigned_date DESC";
+                   + "ORDER BY d.created_at DESC";
         
         try (PreparedStatement ps = getConnection().prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
@@ -427,7 +425,7 @@ public class DeliveryDAO extends DbContext {
                    + "JOIN Accounts a ON d.assigned_by = a.id "
                    + "JOIN Orders o ON d.order_id = o.id "
                    + "WHERE d.shipper_id = ? AND d.status IN (?, ?) "
-                   + "ORDER BY d.assigned_date DESC";
+                   + "ORDER BY d.created_at DESC";
         
         try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
             ps.setInt(1, shipperId);
@@ -460,7 +458,7 @@ public class DeliveryDAO extends DbContext {
                    + "JOIN Accounts a ON d.assigned_by = a.id "
                    + "JOIN Orders o ON d.order_id = o.id "
                    + "WHERE d.shipper_id = ? AND d.status NOT IN (?, ?) "
-                   + "ORDER BY d.assigned_date ASC";
+                   + "ORDER BY d.created_at ASC";
         
         try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
             ps.setInt(1, shipperId);
@@ -550,31 +548,51 @@ public class DeliveryDAO extends DbContext {
     
     private DeliveryOrder mapDeliveryRow(ResultSet rs) throws SQLException {
         DeliveryOrder d = new DeliveryOrder();
-        d.setDeliveryId(rs.getInt("delivery_id"));
+        d.setDeliveryId(rs.getInt("id"));
         d.setOrderId(rs.getInt("order_id"));
         int shipperId = rs.getInt("shipper_id");
         d.setShipperId(rs.wasNull() ? null : shipperId);
         d.setAssignedBy(rs.getInt("assigned_by"));
-        d.setAssignedDate(rs.getTimestamp("assigned_date"));
-        d.setAcceptedDate(rs.getTimestamp("accepted_date"));
-        d.setPickupTime(rs.getTimestamp("pickup_time"));
-        d.setDeliveryTime(rs.getTimestamp("delivery_time"));
+        
+        // Only set these if they exist in the result set
+        try {
+            d.setAcceptedDate(rs.getTimestamp("accepted_date"));
+        } catch (SQLException e) {
+            // Column doesn't exist, skip
+        }
+        
+        try {
+            d.setPickupTime(rs.getTimestamp("pickup_time"));
+        } catch (SQLException e) {
+            // Column doesn't exist, skip
+        }
+        
+        try {
+            d.setDeliveryTime(rs.getTimestamp("delivery_time"));
+        } catch (SQLException e) {
+            // Column doesn't exist, skip
+        }
+        
         d.setStatus(rs.getInt("status"));
         d.setNote(rs.getString("note"));
         d.setCreatedAt(rs.getTimestamp("created_at"));
+        d.setAssignedDate(rs.getTimestamp("created_at"));
         d.setUpdatedAt(rs.getTimestamp("updated_at"));
         
         // Joined fields
         d.setShipperName(rs.getString("shipper_name"));
         d.setShipperPhone(rs.getString("shipper_phone"));
-        d.setAssignedByName(rs.getString("assigned_by_name"));
         
-        int orderStatus = rs.getInt("order_status");
-        d.setOrderStatusLabel(getOrderStatusLabel(orderStatus));
-        d.setOrderTotal(rs.getDouble("final_cost"));
-        d.setRecipientName(rs.getString("recipient_name"));
-        d.setRecipientPhone(rs.getString("recipient_phone"));
-        d.setDeliveryAddress(rs.getString("delivery_address"));
+        try {
+            int orderStatus = rs.getInt("order_status");
+            d.setOrderStatusLabel(getOrderStatusLabel(orderStatus));
+            d.setOrderTotal(rs.getDouble("final_cost"));
+            d.setRecipientName(rs.getString("recipient_name"));
+            d.setRecipientPhone(rs.getString("recipient_phone"));
+            d.setDeliveryAddress(rs.getString("delivery_address"));
+        } catch (SQLException e) {
+            // Order data might not be available
+        }
         
         return d;
     }

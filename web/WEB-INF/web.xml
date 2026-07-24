@@ -5,7 +5,7 @@
                              https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
          version="6.0">
 
-    <display-name>Sena Shop - Fruit Store</display-name>
+    <display-name>SenaFruit - Fruit Store</display-name>
 
     <!-- Upload external path: thu muc luu anh nam ngoai build/ (tranh bi xoa khi rebuild) -->
     <context-param>

@@ -534,6 +534,7 @@ public class OrderDAO extends DbContext {
                     od.setProductImage(rs.getString("product_image"));
                     od.setProductUnit(rs.getString("product_unit"));
                     od.setShopName(rs.getString("shop_name"));
+                    od.setShopId(rs.getInt("shop_id"));
                     list.add(od);
                 }
             }

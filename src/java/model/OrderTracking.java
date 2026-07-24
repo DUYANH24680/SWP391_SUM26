@@ -8,6 +8,19 @@ import java.sql.Timestamp;
  */
 public class OrderTracking {
     
+    // Status constants
+    public static class Status {
+        public static final String ORDER_PLACED = "ORDER_PLACED";
+        public static final String ORDER_CONFIRMED = "ORDER_CONFIRMED";
+        public static final String ORDER_CANCELLED = "ORDER_CANCELLED";
+        public static final String DELIVERY_ASSIGNED = "DELIVERY_ASSIGNED";
+        public static final String DELIVERY_ACCEPTED = "DELIVERY_ACCEPTED";
+        public static final String DELIVERY_PICKING_UP = "DELIVERY_PICKING_UP";
+        public static final String DELIVERY_DELIVERING = "DELIVERY_DELIVERING";
+        public static final String DELIVERY_COMPLETED = "DELIVERY_COMPLETED";
+        public static final String DELIVERY_FAILED = "DELIVERY_FAILED";
+    }
+    
     private int trackingId;
     private int orderId;
     private Integer deliveryId;
@@ -98,19 +111,4 @@ public class OrderTracking {
         this.updatedByName = updatedByName;
     }
     
-    // Common status constants for easy reference
-    public static class Status {
-        public static final String PENDING = "pending";
-        public static final String CONFIRMED = "confirmed";
-        public static final String PREPARING = "preparing";
-        public static final String SHIPPING = "shipping";
-        public static final String DELIVERED = "delivered";
-        public static final String CANCELLED = "cancelled";
-        public static final String DELIVERY_ASSIGNED = "delivery_assigned";
-        public static final String DELIVERY_ACCEPTED = "delivery_accepted";
-        public static final String DELIVERY_PICKING_UP = "delivery_picking_up";
-        public static final String DELIVERY_DELIVERING = "delivery_delivering";
-        public static final String DELIVERY_COMPLETED = "delivery_completed";
-        public static final String DELIVERY_FAILED = "delivery_failed";
-    }
 }

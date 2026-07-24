@@ -30,7 +30,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Yeu Thich | Sena Shop</title>
+    <title>Yêu Thích | SenaFruit</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
@@ -468,10 +468,10 @@
 
 <nav class="topnav">
     <a href="home.jsp" class="nav-logo">
-        <i class="fa-solid fa-apple-whole"></i> Sena Shop
+        <i class="fa-solid fa-apple-whole"></i> SenaFruit
     </a>
     <div class="nav-right">
-        <a href="wishlist" class="nav-icon-btn" title="Yeu Thich" style="background: #fff5f5; color: var(--red);">
+        <a href="wishlist" class="nav-icon-btn" title="Yêu Thích" style="background: #fff5f5; color: var(--red);">
             <i class="fa-solid fa-heart"></i>
             <% Integer wlCount = (Integer) session.getAttribute("wishlistCount"); %>
             <% if (wlCount != null && wlCount > 0) { %>
@@ -484,10 +484,10 @@
 
 <div class="page-wrap">
     <div class="breadcrumb">
-        <a href="home.jsp">Trang Chu</a> / Yeu Thich
+        <a href="home.jsp">Trang Chủ</a> / Yêu Thích
     </div>
 
-    <h1 class="page-title">San Pham Yeu Thich</h1>
+    <h1 class="page-title">Sản Phẩm Yêu Thích</h1>
 
     <% if (message != null) { %>
     <div class="alert alert-success">
@@ -510,7 +510,7 @@
                 <h2>Wishlist Dang Trong</h2>
                 <p>Hay them san pham yeu thich de luu lai va chuyen vao gio hang sau.</p>
                 <a href="home.jsp" class="btn btn-green" style="display:inline-flex; margin-top: 0.5rem;">
-                    <i class="fa-solid fa-basket-shopping"></i> Kham Pha San Pham
+                    <i class="fa-solid fa-basket-shopping"></i> Kham Pha Sản Phẩm
                 </a>
             </div>
         <% } else { %>
@@ -638,7 +638,7 @@
                 </div>
                 <div class="right-actions">
                     <a href="home.jsp" class="btn btn-secondary">
-                        <i class="fa-solid fa-arrow-left"></i> Tiep Tuc Mua Sam
+                        <i class="fa-solid fa-arrow-left"></i> Tiep Tuc Mua Sắm
                     </a>
                     <form id="moveToCartForm" action="move-wishlist-to-cart-redirect" method="POST" style="display:inline;">
                         <input type="hidden" id="selectedProductIds" name="productIds" value="">

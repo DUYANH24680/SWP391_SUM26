@@ -2,6 +2,7 @@
 <%@ page import="model.Account" %>
 <%@ page import="model.Shop" %>
 <%@ page import="model.Order" %>
+<%@ page import="model.Product" %>
 <%@ page import="java.text.NumberFormat" %>
 <%@ page import="java.text.SimpleDateFormat" %>
 <%@ page import="java.util.List" %>
@@ -36,9 +37,13 @@
     List<Order> filteredOrders = (List<Order>) request.getAttribute("filteredOrders");
     Double filteredRevenue = (Double) request.getAttribute("filteredRevenue");
 
+    List<Product> shopProducts = (List<Product>) request.getAttribute("shopProducts");
+    Product selectedProduct = (Product) request.getAttribute("selectedProduct");
+
     String dateFrom = (String) request.getAttribute("dateFrom");
     String dateTo = (String) request.getAttribute("dateTo");
     String statusParam = (String) request.getAttribute("statusParam");
+    String productIdParam = (String) request.getAttribute("productIdParam");
 
     String error = (String) session.getAttribute("error");
     if (error == null) {
@@ -83,7 +88,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Doanh Thu | Sena Shop</title>
+    <title>Doanh Thu | SenaFruit</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -491,6 +496,21 @@
                 <form method="get" action="<%= request.getContextPath() %>/seller/revenue" style="display:contents;">
                     <div class="filter-bar">
                         <div class="filter-group">
+                            <label class="filter-label"><i class="fa-solid fa-apple-whole"></i> Mặt hàng</label>
+                            <select name="productId" class="filter-select">
+                                <option value="">-- Tất cả mặt hàng --</option>
+                                <% if (shopProducts != null) {
+                                    for (Product p : shopProducts) {
+                                        boolean isSelected = (productIdParam != null && productIdParam.equals(String.valueOf(p.getId())));
+                                %>
+                                    <option value="<%= p.getId() %>" <%= isSelected ? "selected" : "" %>>
+                                        <%= p.getTitle() %>
+                                    </option>
+                                <%  }
+                                } %>
+                            </select>
+                        </div>
+                        <div class="filter-group">
                             <label class="filter-label"><i class="fa-solid fa-calendar"></i> Từ ngày</label>
                             <input type="date" name="dateFrom" class="filter-input" value="<%= dateFrom != null ? dateFrom : "" %>" max="<%= java.time.LocalDate.now() %>">
                         </div>
@@ -520,14 +540,15 @@
                     </div>
                 </form>
 
-                <% if (dateFrom != null || dateTo != null || (statusParam != null && !statusParam.isEmpty())) { %>
+                <% if (dateFrom != null || dateTo != null || (statusParam != null && !statusParam.isEmpty()) || (productIdParam != null && !productIdParam.isEmpty())) { %>
                 <div class="filter-summary">
                     <span class="filter-summary-text">
                         Kết quả lọc: <%= filteredOrders != null ? filteredOrders.size() : 0 %> đơn hàng
+                        <% if (selectedProduct != null) { %> — Mặt hàng: <strong><%= selectedProduct.getTitle() %></strong> <% } %>
                         <% if (dateFrom != null && !dateFrom.isEmpty()) { %> từ <%= dateFrom %> <% } %>
                         <% if (dateTo != null && !dateTo.isEmpty()) { %> đến <%= dateTo %> <% } %>
                         <% if (statusParam != null && !statusParam.isEmpty()) { %>
-                            — trạng thái: <strong><%
+                            — Trạng thái: <strong><%
                                 if ("1".equals(statusParam)) out.print("Chờ xác nhận");
                                 else if ("2".equals(statusParam)) out.print("Đã xác nhận");
                                 else if ("3".equals(statusParam)) out.print("Đang giao hàng");
@@ -634,9 +655,9 @@
     <!-- Footer -->
     <footer class="footer">
         <a href="<%= request.getContextPath() %>/home.jsp" class="footer-logo">
-            <i class="fa-solid fa-apple-whole"></i> Sena Shop
+            <i class="fa-solid fa-apple-whole"></i> SenaFruit
         </a>
-        <span class="footer-copy">&copy; 2024 Sena Shop. Trái cây tươi ngon mỗi ngày.</span>
+        <span class="footer-copy">&copy; 2024 SenaFruit. Trái cây tươi ngon mỗi ngày.</span>
     </footer>
 
     <script>

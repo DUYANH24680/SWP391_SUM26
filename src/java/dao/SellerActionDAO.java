@@ -126,6 +126,22 @@ public class SellerActionDAO extends DbContext {
     }
 
     /**
+     * Expire (clear) all active temp_suspend records for a shop
+     * so hasActiveSuspension() returns false immediately after lift_suspend.
+     */
+    public void clearActiveSuspensions(int shopId) {
+        String sql = "UPDATE SellerActions SET suspend_until = GETDATE() "
+                   + "WHERE shop_id = ? AND action_type = 'temp_suspend' AND suspend_until > GETDATE()";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            ps.setInt(1, shopId);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("[SellerActionDAO] clearActiveSuspensions error: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
      * Get latest action for a shop.
      */
     public SellerAction getLatestByShopId(int shopId) {
