@@ -379,8 +379,8 @@
             line-height: 1.3;
         }
         .product-rating { display: flex; align-items: center; gap: 0.35rem; }
-        .stars { display: flex; gap: 1px; }
         .stars i { font-size: 0.72rem; color: var(--yellow); }
+        .stars.good i:not(.empty) { color: var(--green); }
         .stars i.empty { color: var(--gray-200); }
         .rating-count { font-size: 0.73rem; color: var(--gray-400); }
 
@@ -588,12 +588,22 @@
                         <div class="product-info">
                             <div class="product-name"><%= p.getTitle() %></div>
                             <div class="product-rating">
-                                <div class="stars">
-                                    <i class="fa-solid fa-star"></i>
-                                    <i class="fa-solid fa-star"></i>
-                                    <i class="fa-solid fa-star"></i>
-                                    <i class="fa-solid fa-star"></i>
-                                    <i class="fa-solid fa-star"></i>
+                                <% double avg = p.getAverageRating(); %>
+                                <div class="stars <%= avg >= 4.0 ? "good" : "" %>">
+                                    <%
+                                        int fullStars = (int) avg;
+                                        boolean hasHalfStar = (avg - fullStars) >= 0.5;
+                                        for (int i = 1; i <= 5; i++) {
+                                            if (i <= fullStars) {
+                                    %>
+                                        <i class="fa-solid fa-star"></i>
+                                    <%      } else if (i == fullStars + 1 && hasHalfStar) { %>
+                                        <i class="fa-solid fa-star-half-stroke half"></i>
+                                    <%      } else { %>
+                                        <i class="fa-regular fa-star empty"></i>
+                                    <%      }
+                                        }
+                                    %>
                                 </div>
                                 <span class="rating-count"><%= String.format("%.1f", p.getAverageRating()) %> (<%= p.getSoldQuantity() %>)</span>
                             </div>

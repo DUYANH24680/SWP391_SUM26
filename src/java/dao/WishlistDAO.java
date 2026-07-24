@@ -186,7 +186,8 @@ public class WishlistDAO extends DbContext {
     public List<WishlistItem> getItemsByWishlistId(Connection parentConn, int wishlistId) {
         String sql = "SELECT wi.id, wi.wishlist_id, wi.product_id, wi.created_at, "
                    + "p.shop_id AS product_shop_id, p.title AS product_title, p.image AS product_image, "
-                   + "p.unit AS product_unit, p.stock_quantity, p.sale_price, p.original_price, p.status AS product_status, p.isDelete AS product_deleted "
+                   + "p.unit AS product_unit, p.stock_quantity, p.sale_price, p.original_price, p.status AS product_status, p.isDelete AS product_deleted, "
+                   + "p.average_rating AS product_average_rating "
                    + "FROM WishlistItems wi WITH(NOLOCK) "
                    + "LEFT JOIN Products p WITH(NOLOCK) ON wi.product_id = p.id "
                    + "WHERE wi.wishlist_id = ? ORDER BY wi.created_at DESC";
@@ -211,7 +212,8 @@ public class WishlistDAO extends DbContext {
     public List<WishlistItem> getItemsByWishlistId(int wishlistId) {
         String sql = "SELECT wi.id, wi.wishlist_id, wi.product_id, wi.created_at, "
                    + "p.shop_id AS product_shop_id, p.title AS product_title, p.image AS product_image, "
-                   + "p.unit AS product_unit, p.stock_quantity, p.sale_price, p.original_price, p.status AS product_status, p.isDelete AS product_deleted "
+                   + "p.unit AS product_unit, p.stock_quantity, p.sale_price, p.original_price, p.status AS product_status, p.isDelete AS product_deleted, "
+                   + "p.average_rating AS product_average_rating "
                    + "FROM WishlistItems wi WITH(NOLOCK) "
                    + "LEFT JOIN Products p WITH(NOLOCK) ON wi.product_id = p.id "
                    + "WHERE wi.wishlist_id = ? ORDER BY wi.created_at DESC";
@@ -244,6 +246,7 @@ public class WishlistDAO extends DbContext {
         it.setStockQuantity(rs.getInt("stock_quantity"));
         double sale = rs.getDouble("sale_price");
         if (sale > 0) it.setUnitPrice(sale); else it.setUnitPrice(rs.getDouble("original_price"));
+        it.setAverageRating(rs.getDouble("product_average_rating"));
         return it;
     }
 

@@ -470,22 +470,70 @@
 
             <!-- Search bar -->
             <form method="get" action="products" class="search-bar">
-                <div class="search-form">
-                    <div class="search-input-wrap">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                        <input type="text" name="search" class="search-input"
-                               placeholder="Tim kiem san pham..."
-                               value="${searchKeyword != null ? searchKeyword : ''}">
-                    </div>
-                    <button type="submit" class="btn btn-green btn-sm">
-                        <i class="fa-solid fa-search"></i> Tim
-                    </button>
-                    <c:if test="${searchKeyword != null}">
-                        <a href="products" class="btn btn-outline btn-sm">
-                            <i class="fa-solid fa-xmark"></i> Xoa
-                        </a>
-                    </c:if>
-                </div>
+                <!-- Search bar -->
+<form method="get" action="products" class="search-bar">
+
+    <div class="search-form"
+         style="display:flex;align-items:center;gap:10px;max-width:none;">
+
+        <!-- Tìm kiếm -->
+        <div class="search-input-wrap" style="width:350px;">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text"
+                   name="search"
+                   class="search-input"
+                   placeholder="Tìm kiếm sản phẩm..."
+                   value="${param.search}">
+        </div>
+
+        <!-- Giá từ -->
+        <!-- Dropdown sắp xếp -->
+<select name="sort"
+        class="search-input"
+        style="width:180px;padding-left:12px;">
+
+    <option value="">Sắp xếp giá</option>
+
+    <option value="asc"
+        <c:if test="${param.sort == 'asc'}">selected</c:if>>
+        Giá tăng dần
+    </option>
+
+    <option value="desc"
+        <c:if test="${param.sort == 'desc'}">selected</c:if>>
+        Giá giảm dần
+    </option>
+
+</select>
+        <!-- Nút tìm -->
+        <button type="submit" class="btn btn-green btn-sm">
+            <i class="fa-solid fa-search"></i> Tìm
+        </button>
+
+        <!-- Reset -->
+        <c:if test="${not empty param.search || not empty param.minPrice || not empty param.maxPrice}">
+            <a href="products" class="btn btn-outline btn-sm">
+                <i class="fa-solid fa-xmark"></i> Xóa
+            </a>
+        </c:if>
+
+    </div>
+
+    <span style="font-size:0.82rem;color:var(--gray-400);margin-left:auto;">
+        <c:choose>
+            <c:when test="${totalProductCount > 0}">
+                <span style="font-weight:600;color:var(--green);">
+                    ${products.size()}
+                </span>
+                / ${totalProductCount} sản phẩm
+            </c:when>
+            <c:otherwise>
+                0 sản phẩm
+            </c:otherwise>
+        </c:choose>
+    </span>
+
+</form>
                 <span style="font-size:0.82rem;color:var(--gray-400);margin-left:auto;">
                     <c:choose>
                         <c:when test="${totalProductCount > 0}">
@@ -513,7 +561,9 @@
                             <th>Gia</th>
                             <th>Trang Thai</th>
                             <th>Ngay Tao</th>
-                            <th>Hanh Dong</th>
+                            <c:if test="${sessionScope.role == 'admin' || sessionScope.role == 'seller'}">
+                                <th>Hanh Dong</th>
+                            </c:if>
                         </tr>
                     </thead>
                     <tbody>
@@ -599,9 +649,14 @@
                                     <!-- Trang thai -->
                                     <td>
                                         <c:choose>
-                                            <c:when test="${p.isActive()}">
+                                            <c:when test="${p.status == 1}">
                                                 <span class="badge badge-green">
                                                     <i class="fa-solid fa-circle" style="font-size:0.45rem;"></i> Active
+                                                </span>
+                                            </c:when>
+                                            <c:when test="${p.status == 0}">
+                                                <span class="badge badge-yellow" style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;">
+                                                    <i class="fa-solid fa-clock" style="font-size:0.65rem;"></i> Chờ duyệt
                                                 </span>
                                             </c:when>
                                             <c:otherwise>
@@ -620,28 +675,30 @@
                                     </td>
 
                                     <!-- Hanh dong -->
+                                    <c:if test="${sessionScope.role == 'admin' || sessionScope.role == 'seller'}">
                                     <td>
                                         <a href="${pageContext.request.contextPath}/products?id=${p.id}" class="btn-detail">
                                             <i class="fa-regular fa-eye"></i> Chi Tiet
                                         </a>
-                                        <c:if test="${role == 'seller'}">
+                                        <c:if test="${sessionScope.role == 'admin' || (sessionScope.role == 'seller' && p.shopId == sessionScope.shopId)}">
                                             <a href="${pageContext.request.contextPath}/edit-product?id=${p.id}"
                                                class="btn-detail" style="border-color:#f59e0b;color:#92400e;">
                                                 <i class="fa-solid fa-pen-to-square"></i> Sua
                                             </a>
+                                            <a href="${pageContext.request.contextPath}/delete-product?id=${p.id}"
+                                               class="btn-delete"
+                                               onclick="return confirm('Ban co chắc muon xoa san pham \u2018${p.title}\u2019 khong?')">
+                                                <i class="fa-solid fa-trash"></i> Xoa
+                                            </a>
                                         </c:if>
-                                        <a href="${pageContext.request.contextPath}/delete-product?id=${p.id}"
-                                           class="btn-delete"
-                                           onclick="return confirm('Ban co chắc muon xoa san pham \u2018${p.title}\u2019 khong?')">
-                                            <i class="fa-solid fa-trash"></i> Xoa
-                                        </a>
                                     </td>
+                                    </c:if>
                                 </tr>
                             </c:forEach>
                         </c:when>
                         <c:otherwise>
                             <tr>
-                                <td colspan="10">
+                                <td colspan="${sessionScope.role == 'admin' || sessionScope.role == 'seller' ? 11 : 10}">
                                     <div class="empty-state">
                                         <i class="fa-regular fa-face-frown"></i>
                                         <c:choose>

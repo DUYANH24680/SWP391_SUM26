@@ -504,7 +504,7 @@
                     <thead>
                         <tr>
                             <th>Ảnh</th>
-                            <th>ID / Sản phẩm</th>
+                            <th>Sản phẩm</th>
                             <th>Cửa hàng</th>
                             <th>Giá gốc</th>
                             <th>Giá bán</th>
@@ -534,7 +534,7 @@
                             <!-- ID / Tên sản phẩm -->
                             <td>
                                 <div class="product-title" title="<%= p.getTitle() %>"><%= p.getTitle() %></div>
-                                <div class="product-id">#<%= p.getId() %></div>
+<!--                                <div class="product-id">#<%= p.getId() %></div>-->
                             </td>
 
                             <!-- Cửa hàng -->

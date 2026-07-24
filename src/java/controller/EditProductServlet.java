@@ -12,10 +12,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.Part;
 import model.Category;
-import model.Product;
 import model.Shop;
 import Utils.FileUploadUtil;
-
+import model.Product;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.text.ParseException;
@@ -58,37 +57,43 @@ public class EditProductServlet extends HttpServlet {
             return;
         }
 
-        int ownerId = 1;
-        if (session != null && session.getAttribute("userId") != null) {
-            try {
-                ownerId = (Integer) session.getAttribute("userId");
-            } catch (Exception ignored) {}
-        }
+        String role = (session != null) ? (String) session.getAttribute("role") : null;
+        Integer userIdObj = (session != null) ? (Integer) session.getAttribute("userId") : null;
+        int userId = (userIdObj != null) ? userIdObj : 0;
 
-        ShopDAO shopDAO = new ShopDAO();
-        Shop shop = null;
-        try {
-            shop = shopDAO.getShopByOwnerId(ownerId);
-        } catch (Exception e) {
-            System.out.println("[EditProductServlet] Shop lookup failed: " + e.getMessage());
-        } finally {
-            shopDAO.close();
-        }
-
-        if (shop == null) {
+        if (userId == 0 || (!"seller".equals(role) && !"admin".equals(role))) {
             if (session != null) {
-                session.setAttribute("error", "Khong tim thay cua hang cua ban.");
+                session.setAttribute("error", "Ban khong co quyen thuc hien chuc nang nay.");
             }
             resp.sendRedirect(req.getContextPath() + "/products");
             return;
         }
 
-        int shopId = shop.getId();
-
         ProductDAO productDAO = new ProductDAO();
-        Product product;
+        Product product = null;
         try {
-            product = productDAO.getProductByIdForEdit(productId, shopId);
+            if ("admin".equals(role)) {
+                product = productDAO.getProductById(productId);
+            } else {
+                ShopDAO shopDAO = new ShopDAO();
+                Shop shop = null;
+                try {
+                    shop = shopDAO.getShopByOwnerId(userId);
+                } catch (Exception e) {
+                    System.out.println("[EditProductServlet] Shop lookup failed: " + e.getMessage());
+                } finally {
+                    shopDAO.close();
+                }
+
+                if (shop == null) {
+                    if (session != null) {
+                        session.setAttribute("error", "Khong tim thay cua hang cua ban.");
+                    }
+                    resp.sendRedirect(req.getContextPath() + "/products");
+                    return;
+                }
+                product = productDAO.getProductByIdForEdit(productId, shop.getId());
+            }
         } finally {
             productDAO.close();
         }
@@ -157,37 +162,43 @@ public class EditProductServlet extends HttpServlet {
             return;
         }
 
-        int ownerId = 1;
-        if (session != null && session.getAttribute("userId") != null) {
-            try {
-                ownerId = (Integer) session.getAttribute("userId");
-            } catch (Exception ignored) {}
-        }
+        String role = (session != null) ? (String) session.getAttribute("role") : null;
+        Integer userIdObj = (session != null) ? (Integer) session.getAttribute("userId") : null;
+        int userId = (userIdObj != null) ? userIdObj : 0;
 
-        ShopDAO shopDAO = new ShopDAO();
-        Shop shop = null;
-        try {
-            shop = shopDAO.getShopByOwnerId(ownerId);
-            if (shop == null) {
-                shop = new Shop();
-                shop.setId(1);
-                System.out.println("[EditProductServlet] Shop not found, using default shopId=1");
+        if (userId == 0 || (!"seller".equals(role) && !"admin".equals(role))) {
+            if (session != null) {
+                session.setAttribute("error", "Ban khong co quyen thuc hien chuc nang nay.");
             }
-        } catch (Exception e) {
-            System.out.println("[EditProductServlet] Shop lookup failed: " + e.getMessage());
-            shop = new Shop();
-            shop.setId(1);
-        } finally {
-            shopDAO.close();
+            resp.sendRedirect(req.getContextPath() + "/products");
+            return;
         }
 
-        int shopId = shop.getId();
-
-        // Ownership check
         ProductDAO checkDAO = new ProductDAO();
         Product existing = null;
         try {
-            existing = checkDAO.getProductByIdForEdit(productId, shopId);
+            if ("admin".equals(role)) {
+                existing = checkDAO.getProductById(productId);
+            } else {
+                ShopDAO shopDAO = new ShopDAO();
+                Shop shop = null;
+                try {
+                    shop = shopDAO.getShopByOwnerId(userId);
+                } catch (Exception e) {
+                    System.out.println("[EditProductServlet] Shop lookup failed: " + e.getMessage());
+                } finally {
+                    shopDAO.close();
+                }
+
+                if (shop == null) {
+                    if (session != null) {
+                        session.setAttribute("error", "Khong tim thay cua hang cua ban.");
+                    }
+                    resp.sendRedirect(req.getContextPath() + "/products");
+                    return;
+                }
+                existing = checkDAO.getProductByIdForEdit(productId, shop.getId());
+            }
         } finally {
             checkDAO.close();
         }
@@ -199,7 +210,7 @@ public class EditProductServlet extends HttpServlet {
             resp.sendRedirect(req.getContextPath() + "/products");
             return;
         }
-
+        int shopId = existing.getShopId();
         // Parse parameters
         String title = req.getParameter("title");
         String description = req.getParameter("description");

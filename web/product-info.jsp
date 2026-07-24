@@ -472,6 +472,9 @@
             margin: 0.4rem 0 0.8rem 0;
             letter-spacing: 1px;
         }
+        .comment-stars.good {
+            color: var(--green);
+        }
         .comment-text {
             font-size: 1rem;
             color: var(--gray-700);
@@ -537,6 +540,10 @@
         .rating-input i.active { 
             color: #f59e0b; 
             text-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
+        }
+        .rating-input i.active.good {
+            color: var(--green);
+            text-shadow: 0 0 10px rgba(76, 175, 80, 0.3);
         }
         
         .comment-textarea {
@@ -785,8 +792,8 @@
             <!-- DuyAnhNgo- Phần hiển thị Tổng quan Điểm đánh giá (Ví dụ: 3.5 Sao, Dựa trên 2 đánh giá) -->
             <div class="reviews-summary">
                 <div class="summary-score">
-                    <h2><%= String.format(java.util.Locale.US, "%.1f", avgRev > 0 ? avgRev : 5.0) %></h2>
-                    <div style="color:#f59e0b; font-size:1.1rem; margin-top:0.3rem;">
+                    <h2 style="color: <%= avgRev >= 4.0 ? "var(--green)" : "#f59e0b" %>;"><%= String.format(java.util.Locale.US, "%.1f", avgRev > 0 ? avgRev : 5.0) %></h2>
+                    <div style="color:<%= avgRev >= 4.0 ? "var(--green)" : "#f59e0b" %>; font-size:1.1rem; margin-top:0.3rem;">
                         <% for (int i = 1; i <= 5; i++) { 
                             if (i <= Math.round(avgRev)) { %>
                                 <i class="fa-solid fa-star"></i>
@@ -799,8 +806,8 @@
                 </div>
                 <!-- DuyAnhNgo- Vẽ các thanh tiến trình biểu diễn tỷ lệ % của từng loại sao (Từ 5 sao đến 1 sao) -->
                 <div class="summary-stars">
-                    <div class="star-row"><span>5 Sao</span> <div class="star-bar"><div class="star-fill" style="width: <%= pct5 %>%;"></div></div> <span><%= s5 %></span></div>
-                    <div class="star-row"><span>4 Sao</span> <div class="star-bar"><div class="star-fill" style="width: <%= pct4 %>%;"></div></div> <span><%= s4 %></span></div>
+                    <div class="star-row"><span>5 Sao</span> <div class="star-bar"><div class="star-fill" style="width: <%= pct5 %>%; background: linear-gradient(90deg, #4caf50 0%, #388e3c 100%);"></div></div> <span><%= s5 %></span></div>
+                    <div class="star-row"><span>4 Sao</span> <div class="star-bar"><div class="star-fill" style="width: <%= pct4 %>%; background: linear-gradient(90deg, #4caf50 0%, #388e3c 100%);"></div></div> <span><%= s4 %></span></div>
                     <div class="star-row"><span>3 Sao</span> <div class="star-bar"><div class="star-fill" style="width: <%= pct3 %>%;"></div></div> <span><%= s3 %></span></div>
                     <div class="star-row"><span>2 Sao</span> <div class="star-bar"><div class="star-fill" style="width: <%= pct2 %>%;"></div></div> <span><%= s2 %></span></div>
                     <div class="star-row"><span>1 Sao</span> <div class="star-bar"><div class="star-fill" style="width: <%= pct1 %>%;"></div></div> <span><%= s1 %></span></div>
@@ -822,7 +829,7 @@
                         <div class="comment-user">
                             <span><%= name %> <span class="comment-date"><%= sdf.format(rev.getCreatedAt()) %></span></span>
                         </div>
-                        <div class="comment-stars">
+                        <div class="comment-stars <%= rev.getRating() >= 4 ? "good" : "" %>">
                             <% for (int i = 1; i <= 5; i++) { 
                                 if (i <= rev.getRating()) { %>
                                     <i class="fa-solid fa-star"></i>
@@ -911,7 +918,7 @@
                                 <div class="rating-input" id="ratingInput-<%= rev.getId() %>" style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.25rem;">
                                     <span style="font-size:0.9rem;font-weight:600;color:var(--gray-800);margin-right:0.75rem;">Đánh giá sao:</span>
                                     <% for (int i = 1; i <= 5; i++) { %>
-                                        <i class="fa-solid fa-star <%= i <= rev.getRating() ? "active" : "" %>" data-val="<%= i %>" onclick="setEditRating(<%= rev.getId() %>, <%= i %>)" style="cursor: pointer; font-size: 1.25rem; transition: color 0.2s; color: <%= i <= rev.getRating() ? "#f59e0b" : "var(--gray-200)" %>;"></i>
+                                        <i class="fa-solid fa-star <%= i <= rev.getRating() ? "active" : "" %>" data-val="<%= i %>" onclick="setEditRating(<%= rev.getId() %>, <%= i %>)" style="cursor: pointer; font-size: 1.25rem; transition: color 0.2s; color: <%= i <= rev.getRating() ? (rev.getRating() >= 4 ? "var(--green)" : "#f59e0b") : "var(--gray-200)" %>;"></i>
                                     <% } %>
                                 </div>
                                 <textarea name="comment" class="comment-textarea" style="min-height: 100px; padding: 0.75rem; border: 1.5px solid var(--gray-200); border-radius: var(--radius-sm); font-size: 0.95rem; line-height: 1.5; color: var(--gray-800); width: 100%; margin-bottom: 1rem; transition: border-color 0.2s; outline: none;" placeholder="Chia sẻ trải nghiệm của bạn..." onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor='var(--gray-200)'"><%= rev.getComment() != null ? rev.getComment() : "" %></textarea>
@@ -966,11 +973,11 @@
                         <%-- DuyAnhNgo- Bảng chọn số sao (1-5) --%>
                         <div class="rating-input" id="ratingInput">
                             <span style="font-size:0.9rem;color:var(--gray-600);margin-right:0.5rem;">Đánh giá sao:</span>
-                            <i class="fa-solid fa-star active" data-val="1"></i>
-                            <i class="fa-solid fa-star active" data-val="2"></i>
-                            <i class="fa-solid fa-star active" data-val="3"></i>
-                            <i class="fa-solid fa-star active" data-val="4"></i>
-                            <i class="fa-solid fa-star active" data-val="5"></i>
+                            <i class="fa-solid fa-star active good" data-val="1"></i>
+                            <i class="fa-solid fa-star active good" data-val="2"></i>
+                            <i class="fa-solid fa-star active good" data-val="3"></i>
+                            <i class="fa-solid fa-star active good" data-val="4"></i>
+                            <i class="fa-solid fa-star active good" data-val="5"></i>
                         </div>
                         <textarea name="comment" class="comment-textarea" placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm này... (Không bắt buộc)"></textarea>
                         <button type="submit" class="btn btn-green btn-submit-review">Gửi Đánh Giá</button>
@@ -1092,7 +1099,7 @@
                         <div class="comment-avatar">${initial}</div>
                         <div class="comment-content">
                             <div class="comment-user">${CURRENT_USER_NAME} <span class="comment-date">${dateStr}</span></div>
-                            <div class="comment-stars">${starsHtml}</div>
+                            <div class="comment-stars ${rating >= 4 ? 'good' : ''}">${starsHtml}</div>
                             <div class="comment-text">${commentText}</div>
                         </div>
                     `;
@@ -1101,7 +1108,10 @@
                     form.reset();
                     document.getElementById('ratingValue').value = 5;
                     const stars = document.querySelectorAll('#ratingInput i');
-                    stars.forEach(s => s.classList.add('active'));
+                    stars.forEach(s => {
+                        s.classList.add('active');
+                        s.classList.add('good');
+                    });
                     
                     alert("Cảm ơn bạn đã gửi đánh giá!");
                 } else {
@@ -1120,13 +1130,19 @@
         if (stars && ratingValue) {
             stars.forEach(star => {
                 star.addEventListener('click', function() {
-                    const val = this.getAttribute('data-val');
+                    const val = parseInt(this.getAttribute('data-val'));
                     ratingValue.value = val;
                     stars.forEach(s => {
-                        if (parseInt(s.getAttribute('data-val')) <= parseInt(val)) {
+                        if (parseInt(s.getAttribute('data-val')) <= val) {
                             s.classList.add('active');
+                            if (val >= 4) {
+                                s.classList.add('good');
+                            } else {
+                                s.classList.remove('good');
+                            }
                         } else {
                             s.classList.remove('active');
+                            s.classList.remove('good');
                         }
                     });
                 });
@@ -1141,7 +1157,7 @@
                 const sVal = parseInt(star.getAttribute('data-val'));
                 if (sVal <= val) {
                     star.classList.add('active');
-                    star.style.color = '#f59e0b';
+                    star.style.color = (val >= 4) ? 'var(--green)' : '#f59e0b';
                 } else {
                     star.classList.remove('active');
                     star.style.color = 'var(--gray-200)';

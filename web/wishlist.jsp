@@ -1,4 +1,4 @@
-﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="model.Wishlist" %>
 <%@ page import="model.WishlistItem" %>
 <%@ page import="Utils.ImageUrlUtil" %>
@@ -234,13 +234,13 @@
 
         /* WISHLIST ITEM */
         .wishlist-item {
-            display: grid;
-            grid-template-columns: 50px 100px 1fr 140px 200px;
-            gap: 1rem;
-            align-items: center;
-            padding: 1.1rem 1.5rem;
-            border-bottom: 1px solid var(--gray-100);
-        }
+    display: grid;
+    grid-template-columns: 50px 100px 1fr 140px 140px 80px;
+    gap: 1rem;
+    align-items: center;
+    padding: 1.1rem 1.5rem;
+    border-bottom: 1px solid var(--gray-100);
+}
 
         .wishlist-item:last-child { border-bottom: none; }
 
@@ -278,6 +278,41 @@
         }
 
         .item-title:hover { color: var(--green); }
+
+        /* ===== RATING COLUMN ===== */
+        .item-rating {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 0 0.25rem;
+        }
+
+        .rating-stars {
+            color: #f59e0b;
+            font-size: 0.95rem;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+            white-space: nowrap;
+        }
+
+        .rating-stars .empty {
+            color: #dcdcdc;
+        }
+
+        .rating-score {
+            font-size: 0.8rem;
+            color: var(--gray-600);
+            font-weight: 600;
+        }
+
+        .rating-no-reviews {
+            color: var(--gray-400);
+            font-size: 0.8rem;
+            font-style: italic;
+            white-space: nowrap;
+        }
 
         .item-meta { color: var(--gray-400); font-size: 0.875rem; }
 
@@ -414,15 +449,16 @@
         /* RESPONSIVE */
         @media (max-width: 900px) {
             .wishlist-item {
-                grid-template-columns: 40px 80px 1fr 140px;
+                grid-template-columns: 40px 80px 1fr 120px 110px 50px;
+                gap: 0.75rem;
             }
-            .item-actions { flex-direction: column; align-items: flex-end; gap: 0.4rem; }
+            .item-actions { flex-direction: column; align-items: center; gap: 0.4rem; }
         }
 
         @media (max-width: 640px) {
             .page-wrap { padding: 1rem; }
-            .wishlist-item { padding: 1rem; grid-template-columns: 40px 80px 1fr; }
-            .item-price { display: none; }
+            .wishlist-item { padding: 1rem; grid-template-columns: 40px 70px 1fr 50px; }
+            .item-rating, .item-price { display: none; }
             .bottom-bar { flex-direction: column; align-items: stretch; }
             .bottom-bar .right-actions { margin-left: 0; }
         }
@@ -529,6 +565,7 @@
                 </div>
 
                
+                <!-- Details -->
                 <div class="item-details">
                     <a href="info?id=<%= item.getProductId() %>" class="item-title">
                         <%= item.getTitle() != null ? item.getTitle() : "San pham" %>
@@ -553,6 +590,27 @@
                             </span>
                         <% } %>
                     </div>
+                </div>
+
+                <!-- Rating Column -->
+                <div class="item-rating">
+                    <% double avgRating = item.getAverageRating(); %>
+                    <% if (avgRating > 0) { %>
+                        <div class="rating-stars">
+                            <% for (int i = 1; i <= 5; i++) {
+                                if (i <= (int) Math.floor(avgRating)) { %>
+                                    <i class="fa-solid fa-star"></i>
+                                <% } else if (i == (int) Math.ceil(avgRating) && avgRating % 1 >= 0.3) { %>
+                                    <i class="fa-solid fa-star-half-stroke"></i>
+                                <% } else { %>
+                                    <i class="fa-regular fa-star empty"></i>
+                                <% }
+                            } %>
+                        </div>
+                        <span class="rating-score"><%= String.format(java.util.Locale.US, "%.1f", avgRating) %></span>
+                    <% } else { %>
+                        <span class="rating-no-reviews">Chưa có đánh giá</span>
+                    <% } %>
                 </div>
 
             

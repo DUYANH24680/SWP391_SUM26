@@ -15,6 +15,7 @@ public class WishlistItem {
     private String unit;
     private int stockQuantity;
     private double unitPrice;
+    private double averageRating;
 
     public WishlistItem() {
     }
@@ -97,6 +98,14 @@ public class WishlistItem {
 
     public void setUnitPrice(double unitPrice) {
         this.unitPrice = unitPrice;
+    }
+
+    public double getAverageRating() {
+        return averageRating;
+    }
+
+    public void setAverageRating(double averageRating) {
+        this.averageRating = averageRating;
     }
 }
 

@@ -714,49 +714,12 @@
 </head>
 <body>
 
-<!-- TOPNAV -->
-<nav class="topnav">
-    <a href="home.jsp" class="nav-logo">
-        <i class="fa-solid fa-apple-whole"></i> Sena Shop
-    </a>
-    <div class="nav-links">
-        <a href="home.jsp">Trang Chu</a>
-        <a href="products">San Pham</a>
-    </div>
-    <div class="nav-right">
-        <a href="wishlist" class="nav-icon-btn" title="Yeu Thich">
-            <i class="fa-solid fa-heart"></i>
-            <span class="wishlist-badge"><%= wishlistCount %></span>
-        </a>
-        <a href="cart" class="nav-icon-btn" title="Gio hang">
-            <i class="fa-solid fa-basket-shopping"></i>
-            <span class="cart-badge"><%= cartCount %></span>
-        </a>
-        <img class="nav-avatar" src="<%= avatarUrl %>" alt="avatar">
-    </div>
-</nav>
-
-<!-- LAYOUT -->
-<div class="layout">
-
-    <!-- SIDEBAR -->
-    <aside class="sidebar">
-        <div class="sidebar-nav">
-            <a href="profile"><i class="fa-regular fa-user"></i> Ho So</a>
-            <a href="products"><i class="fa-brands fa-opencart"></i> San Pham</a>
-            <% if ("admin".equals(role) || "seller".equals(role)) { %>
-                <a href="add-product"><i class="fa-solid fa-plus"></i> Them San Pham</a>
-            <% } %>
-            <a href="<%= "seller".equals(role) ? "seller/orders" : "my-orders" %>"><i class="fa-solid fa-basket-shopping"></i> Don Hang</a>
-            <a href="wishlist" class="active" style="color: #ef4444;"><i class="fa-regular fa-heart"></i> Yeu Thich</a>
-            <a href="logout" class="logout" style="margin-top:0.5rem;">
-                <i class="fa-solid fa-right-from-bracket"></i> Dang Xuat
-            </a>
-        </div>
-    </aside>
+<jsp:include page="/sidebar.jsp">
+    <jsp:param name="activePage" value="products"/>
+</jsp:include>
 
     <!-- MAIN -->
-    <main class="main">
+    <main class="sena-main">
 
         <!-- Breadcrumb -->
         <div class="breadcrumb">
@@ -955,7 +918,7 @@
                                             Dia chi chua cap nhat
                                         <% } %>
                                     </div>
-                                                                        <% if ("customer".equalsIgnoreCase(user.getRoleName())) { %>
+                                    <% if ("customer".equalsIgnoreCase(role) || (Account != null && "customer".equalsIgnoreCase(Account.getRoleName()))) { %>
                                     <a href="<%= request.getContextPath() %>/submit-report?shopId=<%= shopInfo.getId() %>"
                                        class="report-shop-btn" title="Báo cáo cửa hàng này">
                                         <i class="fa-solid fa-flag"></i> Báo cáo

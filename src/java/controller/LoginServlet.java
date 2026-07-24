@@ -39,6 +39,21 @@ public class LoginServlet extends HttpServlet {
             session.setAttribute("userId", account.getId());
             session.setAttribute("role", account.getRoleName());
 
+            if ("seller".equalsIgnoreCase(account.getRoleName())) {
+                dao.ShopDAO shopDAO = new dao.ShopDAO();
+                try {
+                    model.Shop shop = shopDAO.getShopByOwnerId(account.getId());
+                    if (shop != null) {
+                        session.setAttribute("shopId", shop.getId());
+                        session.setAttribute("shop", shop);
+                    }
+                } catch (Exception e) {
+                    System.err.println("[LoginServlet] Error loading shopId: " + e.getMessage());
+                } finally {
+                    shopDAO.close();
+                }
+            }
+
             // Load cart tu database vao session
             CartService cartService = new CartService();
             try {

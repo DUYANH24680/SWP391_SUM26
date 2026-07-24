@@ -560,7 +560,7 @@
                                     <th>Khách hàng</th>
                                     <th>Ngày đặt</th>
                                     <th>Trạng thái</th>
-                                    <th>Thanh toán</th>
+                                    <!-- <th>Thanh toán</th> -->
                                     <th>Tổng tiền</th>
                                     <th>Voucher</th>
                                 </tr>
@@ -613,7 +613,7 @@
                                     </td>
                                     <td class="order-date"><%= orderDateStr %></td>
                                     <td><span class="badge <%= statusClass %>"><%= statusLabel %></span></td>
-                                    <td><span class="payment-badge <%= paymentClass %>"><i class="fa-solid fa-circle" style="font-size:0.4rem;"></i> <%= paymentLabel %></span></td>
+                                    <!-- <td><span class="payment-badge <%= paymentClass %>"><i class="fa-solid fa-circle" style="font-size:0.4rem;"></i> <%= paymentLabel %></span></td> -->
                                     <td class="order-total"><%= nf.format((long)o.getFinalCost()) %> đ</td>
                                     <td style="font-size:0.78rem;color:var(--gray-400);"><%= o.getVoucherCode() != null ? o.getVoucherCode() : "—" %></td>
                                 </tr>

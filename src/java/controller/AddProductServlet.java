@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.Part;
+import model.Account;
 import model.Category;
 import model.Product;
 import model.ProductVariant;
@@ -34,20 +35,39 @@ import java.util.List;
 )
 public class AddProductServlet extends HttpServlet {
 
+    private int getOwnerIdFromSession(HttpSession session) {
+        int ownerId = 1;
+        if (session != null) {
+            if (session.getAttribute("userId") != null) {
+                try {
+                    ownerId = (Integer) session.getAttribute("userId");
+                } catch (Exception ignored) {}
+            } else if (session.getAttribute("Account") != null) {
+                try {
+                    Account acc = (Account) session.getAttribute("Account");
+                    if (acc != null && acc.getId() > 0) {
+                        ownerId = acc.getId();
+                    }
+                } catch (Exception ignored) {}
+            } else if (session.getAttribute("user") != null) {
+                try {
+                    Account acc = (Account) session.getAttribute("user");
+                    if (acc != null && acc.getId() > 0) {
+                        ownerId = acc.getId();
+                    }
+                } catch (Exception ignored) {}
+            }
+        }
+        return ownerId;
+    }
+
     // ===== GET: hien thi form them san pham =====
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         HttpSession session = req.getSession(false);
 
-        // TODO: bo phan quyen, chi test
-        int ownerId = 1; // mac dinh cho test
-
-        if (session != null && session.getAttribute("userId") != null) {
-            try {
-                ownerId = (Integer) session.getAttribute("userId");
-            } catch (Exception ignored) {}
-        }
+        int ownerId = getOwnerIdFromSession(session);
 
         ShopDAO shopDAO = new ShopDAO();
         int shopId = 1;
@@ -86,14 +106,7 @@ public class AddProductServlet extends HttpServlet {
             throws ServletException, IOException {
         HttpSession session = req.getSession(false);
 
-        // TODO: bo phan quyen, chi test
-        int ownerId = 1;
-
-        if (session != null && session.getAttribute("userId") != null) {
-            try {
-                ownerId = (Integer) session.getAttribute("userId");
-            } catch (Exception ignored) {}
-        }
+        int ownerId = getOwnerIdFromSession(session);
 
         ShopDAO shopDAO = new ShopDAO();
         Shop shop = null;
@@ -102,17 +115,20 @@ public class AddProductServlet extends HttpServlet {
             if (shop == null) {
                 shop = new Shop();
                 shop.setId(1);
+                shop.setOwnerId(ownerId);
                 System.out.println("[AddProductServlet] Shop not found, using default shopId=1");
             }
         } catch (Exception e) {
             System.out.println("[AddProductServlet] Shop lookup failed: " + e.getMessage());
             shop = new Shop();
             shop.setId(1);
+            shop.setOwnerId(ownerId);
         } finally {
             shopDAO.close();
         }
 
         int shopId = shop.getId();
+        int sellerId = (shop.getOwnerId() > 0) ? shop.getOwnerId() : ownerId;
 
         // Parse parameters
         String title = req.getParameter("title");
@@ -231,6 +247,7 @@ public class AddProductServlet extends HttpServlet {
         product.setSalePrice(salePrice);
         product.setCategoryId(categoryId);
         product.setShopId(shopId);
+        product.setSellerId(sellerId);
         product.setExpiredDate(expiredDate);
         product.setStatus(0);
 
@@ -238,7 +255,8 @@ public class AddProductServlet extends HttpServlet {
         try {
             boolean success = productDAO.addProduct(product, imageUrls);
             if (success) {
-                // Parse & insert variants
+                /*
+                // Parse & insert variants (AN / COMMENT)
                 List<ProductVariant> variants = parseVariants(req);
                 if (!variants.isEmpty()) {
                     ProductVariantDAO variantDAO = new ProductVariantDAO();
@@ -248,6 +266,7 @@ public class AddProductServlet extends HttpServlet {
                         variantDAO.close();
                     }
                 }
+                */
 
                 if (session != null) {
                     session.setAttribute("message", "San pham da duoc tao thanh cong va dang cho duyet!");
@@ -264,7 +283,8 @@ public class AddProductServlet extends HttpServlet {
         }
     }
 
-    // ===== Parse variant parameters =====
+    /*
+    // ===== Parse variant parameters (AN / COMMENT) =====
     private List<ProductVariant> parseVariants(HttpServletRequest req) {
         List<ProductVariant> variants = new ArrayList<>();
         String[] weights  = req.getParameterValues("variantWeight");
@@ -307,6 +327,7 @@ public class AddProductServlet extends HttpServlet {
         System.out.println("[AddProductServlet] parseVariants() parsed " + variants.size() + " valid variants");
         return variants;
     }
+    */
 }
 
 

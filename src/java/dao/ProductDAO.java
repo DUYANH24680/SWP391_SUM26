@@ -1,6 +1,7 @@
 package dao;
 
 import model.Product;
+import model.Shop;
 import Utils.DbContext;
 import java.sql.*;
 import java.util.ArrayList;
@@ -199,7 +200,7 @@ public class ProductDAO extends DbContext {
                    + "s.shop_name "
                    + "FROM Products p "
                    + "LEFT JOIN Shops s ON p.shop_id = s.id "
-                   + "WHERE p.shop_id = ? AND p.isDelete = 0 AND p.status = 1 "
+                   + "WHERE p.shop_id = ? AND p.isDelete = 0 "
                    + "ORDER BY p.created_at DESC";
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -289,6 +290,28 @@ public class ProductDAO extends DbContext {
         try {
             conn = getConnection();
             conn.setAutoCommit(false);
+
+            if (product.getSellerId() <= 0) {
+                int resolvedSellerId = 0;
+                if (product.getShopId() > 0) {
+                    ShopDAO shopDAO = new ShopDAO();
+                    try {
+                        Shop shop = shopDAO.getShopById(product.getShopId());
+                        if (shop != null && shop.getOwnerId() > 0) {
+                            resolvedSellerId = shop.getOwnerId();
+                        }
+                    } catch (Exception e) {
+                        System.err.println("[ProductDAO] Failed to lookup shop ownerId: " + e.getMessage());
+                    } finally {
+                        shopDAO.close();
+                    }
+                }
+                if (resolvedSellerId <= 0) {
+                    resolvedSellerId = 1;
+                }
+                product.setSellerId(resolvedSellerId);
+                System.out.println("[ProductDAO] Auto-resolved sellerId to: " + resolvedSellerId);
+            }
 
             psProduct = conn.prepareStatement(sqlProduct, Statement.RETURN_GENERATED_KEYS);
             psProduct.setString(1, product.getTitle());

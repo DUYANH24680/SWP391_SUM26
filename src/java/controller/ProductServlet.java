@@ -53,7 +53,25 @@ public class ProductServlet extends HttpServlet {
         String role = (session != null) ? (String) session.getAttribute("role") : null;
         // DuyAnhNgo- Lấy từ khóa tìm kiếm (biến "search") nằm trên thanh URL (nếu có). VD: /products?search=tao
         String keyword = req.getParameter("search");
+        String sort = req.getParameter("sort");
+        String minPriceStr = req.getParameter("minPrice");
+        String maxPriceStr = req.getParameter("maxPrice");
+        
 
+        Double minPrice = null;
+        Double maxPrice = null;
+
+        try {
+            if (minPriceStr != null && !minPriceStr.isBlank()) {
+                minPrice = Double.parseDouble(minPriceStr);
+            }
+
+            if (maxPriceStr != null && !maxPriceStr.isBlank()) {
+                maxPrice = Double.parseDouble(maxPriceStr);
+            }
+        } catch (NumberFormatException e) {
+            // bỏ qua nếu nhập sai
+        }
         System.out.println("[ProductServlet] === NEW REQUEST ===");
         System.out.println("[ProductServlet] role=" + role
                          + ", userId=" + (session != null ? session.getAttribute("userId") : "null")
@@ -64,8 +82,37 @@ public class ProductServlet extends HttpServlet {
 
         try {
             // DuyAnhNgo- Gọi hàm loadProducts() (bên dưới hàm này sẽ gián tiếp gọi ProductDAO.searchProducts) để chọc xuống DB lấy danh sách sản phẩm theo từ khóa
-            List<Product> products = loadProducts(role, session, keyword);
-            int totalCount = getTotalCount(role, session);
+            List<Product> products = loadProducts(role, session, keyword, sort);
+            
+            // Lọc theo giá
+            if (minPrice != null || maxPrice != null) {
+                final Double finalMin = minPrice;
+                final Double finalMax = maxPrice;
+                products = products.stream().filter(p -> {
+                    double price = p.getSalePrice();
+                    if (finalMin != null && price < finalMin) return false;
+                    if (finalMax != null && price > finalMax) return false;
+                    return true;
+                }).collect(java.util.stream.Collectors.toList());
+            }
+
+            // Đảm bảo list có thể sửa đổi được trước khi sort
+            products = new java.util.ArrayList<>(products);
+            if ("asc".equalsIgnoreCase(sort)) {
+    products.sort((p1, p2) ->
+        Double.compare(p1.getSalePrice(), p2.getSalePrice()));
+} else if ("desc".equalsIgnoreCase(sort)) {
+    products.sort((p1, p2) ->
+        Double.compare(p2.getSalePrice(), p1.getSalePrice()));
+}
+            // Sắp xếp theo giá
+            if ("asc".equalsIgnoreCase(sort)) {
+                products.sort((p1, p2) -> Double.compare(p1.getSalePrice(), p2.getSalePrice()));
+            } else if ("desc".equalsIgnoreCase(sort)) {
+                products.sort((p1, p2) -> Double.compare(p2.getSalePrice(), p1.getSalePrice()));
+            }
+
+            int totalCount = products.size(); // Cập nhật lại số lượng sau khi lọc
 
             req.setAttribute("products", products);
             req.setAttribute("totalProductCount", totalCount);
@@ -185,12 +232,17 @@ public class ProductServlet extends HttpServlet {
     // -----------------------------------------------------------------
     // Lay danh sach san pham theo role
     // -----------------------------------------------------------------
-    private List<Product> loadProducts(String role, HttpSession session, String keyword) throws Exception {
-        if (ROLE_SELLER.equals(role)) {
-            return loadSellerProducts(session, keyword);
-        }
-        return loadUserProducts(keyword);
+    private List<Product> loadProducts(String role,
+                                   HttpSession session,
+                                   String keyword,
+                                   String sort) throws Exception {
+
+    if (ROLE_SELLER.equals(role)) {
+        return loadSellerProducts(session, keyword);
     }
+
+    return loadUserProducts(keyword);
+}
 
     // -----------------------------------------------------------------
     // Seller: chi thay san pham cua shop minh
@@ -222,6 +274,11 @@ public class ProductServlet extends HttpServlet {
 
             if (shop == null) {
                 throw new IllegalStateException("Khong tim thay thong tin cua hang. Lien he admin.");
+            }
+
+            if (session != null) {
+                session.setAttribute("shopId", shop.getId());
+                session.setAttribute("shop", shop);
             }
 
             // Buoc 3: lay san pham

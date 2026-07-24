@@ -1,4 +1,4 @@
-﻿<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ page contentType="text/html;charset=UTF-8" %>
 <%
     if (session.getAttribute("Account") != null) {
         response.sendRedirect("home.jsp");
@@ -156,11 +156,26 @@
             background-color: #FFFFFF;
             display: flex;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
             flex-direction: column;
-            padding: 0 50px;
+            padding: 30px 40px;
             height: 100%;
             text-align: center;
+            overflow-y: auto;
+        }
+
+        form::-webkit-scrollbar {
+            width: 6px;
+        }
+        form::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        form::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        form::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
         }
 
         .input-group {

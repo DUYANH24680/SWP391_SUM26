@@ -886,6 +886,10 @@
                         color: var(--yellow);
                     }
 
+                    .stars-static.good i:not(.empty) {
+                        color: var(--green, #4caf50);
+                    }
+
                     .stars-static i.empty {
                         color: var(--gray-200);
                     }
@@ -1095,8 +1099,8 @@
                         color: var(--yellow);
                     }
 
-                    .stars i.half {
-                        color: var(--yellow);
+                    .stars.good i:not(.empty) {
+                        color: var(--green, #4caf50);
                     }
 
                     .stars i.empty {
@@ -2241,7 +2245,7 @@
                                     %>
                                     <div class="rating-row rating-filter-item" data-rating="<%= r %>" style="cursor:pointer;">
                                         <div class="check-box <%= isSel ? "checked" : "" %>"></div>
-                                        <div class="stars-static">
+                                        <div class="stars-static <%= r >= 4.0 ? "good" : "" %>">
                                             <% for (int i = 1; i <= 5; i++) { %>
                                                 <i class="<%= i <= r ? "fa-solid fa-star" : "fa-regular fa-star empty" %>"></i>
                                             <% } %>
@@ -2328,9 +2332,9 @@
                                         <div class="product-category"><%= p.getShopName() != null ? p.getShopName() : "Chung" %></div>
                                         <div class="product-name"><%= p.getTitle() %></div>
                                         <div class="product-rating">
-                                            <div class="stars">
+                                            <% double avg = p.getAverageRating(); %>
+                                            <div class="stars <%= avg >= 4.0 ? "good" : "" %>">
                                                 <%
-                                                    double avg = p.getAverageRating();
                                                     int fullStars = (int) avg;
                                                     boolean hasHalfStar = (avg - fullStars) >= 0.5;
                                                     for (int i = 1; i <= 5; i++) {
