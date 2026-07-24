@@ -22,9 +22,9 @@
                             <head>
                                 <meta charset="UTF-8">
                                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                                <title>Danh Mục Sản Phẩm | Sena Shop</title>
+                                <title>Danh Mục Sản Phẩm | SenaFruit</title>
                                 <meta name="description"
-                                    content="Khám phá tất cả danh mục sản phẩm tươi ngon tại Sena Shop – trái cây, rau củ, thực phẩm nhập khẩu và nhiều hơn nữa.">
+                                    content="Khám phá tất cả danh mục sản phẩm tươi ngon tại SenaFruit – trái cây, rau củ, thực phẩm nhập khẩu và nhiều hơn nữa.">
                                 <link
                                     href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
                                     rel="stylesheet">
@@ -638,7 +638,7 @@
                                 <!-- ===== TOPNAV ===== -->
                                 <nav class="topnav">
                                     <a href="home.jsp" class="nav-logo">
-                                        <i class="fa-solid fa-apple-whole"></i> Sena Shop
+                                        <i class="fa-solid fa-apple-whole"></i> SenaFruit
                                     </a>
                                     <div class="nav-links">
                                         <a href="home.jsp">Trang Chủ</a>

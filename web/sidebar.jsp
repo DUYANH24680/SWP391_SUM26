@@ -17,17 +17,17 @@
 <% Account sidebarUser=(Account) session.getAttribute("Account"); String sidebarRole=(String)
     session.getAttribute("role"); String activePage=request.getParameter("activePage"); if
     (activePage==null) activePage="" ; String sidebarFullname="" ; String sidebarAvatarUrl="" ; String
-    sidebarRoleLabel="Thanh Vien" ; if (sidebarUser !=null) { sidebarFullname=sidebarUser.getFullname()
+    sidebarRoleLabel="Thành Viên" ; if (sidebarUser !=null) { sidebarFullname=sidebarUser.getFullname()
     !=null ? sidebarUser.getFullname() : sidebarUser.getUsername(); if (sidebarFullname==null)
     sidebarFullname="User" ; sidebarAvatarUrl=sidebarUser.getAvatar(); if (sidebarAvatarUrl==null ||
     sidebarAvatarUrl.trim().isEmpty()) { sidebarAvatarUrl="https://ui-avatars.com/api/?name=" +
     java.net.URLEncoder.encode(sidebarFullname, "UTF-8" )
     + "&background=4caf50&color=fff&size=80&bold=true&rounded=true" ; } if
-    ("admin".equalsIgnoreCase(sidebarRole)) sidebarRoleLabel="Quan Tri Vien" ; else if
-    ("seller".equalsIgnoreCase(sidebarRole)) sidebarRoleLabel="Nguoi Ban Hang" ; else if
+    ("admin".equalsIgnoreCase(sidebarRole)) sidebarRoleLabel="Quản Trị Vien" ; else if
+    ("seller".equalsIgnoreCase(sidebarRole)) sidebarRoleLabel="Người Bán Hàng" ; else if
     ("delivery".equalsIgnoreCase(sidebarRole)) sidebarRoleLabel="Shipper" ; else if
     ("staff".equalsIgnoreCase(sidebarRole)) sidebarRoleLabel="Nhan Vien" ; else
-    sidebarRoleLabel="Thanh Vien" ; } Shop sidebarShop=(Shop) session.getAttribute("shop"); if
+    sidebarRoleLabel="Thành Viên" ; } Shop sidebarShop=(Shop) session.getAttribute("shop"); if
     (sidebarShop==null) sidebarShop=(Shop) request.getAttribute("shop"); String shopBadge=(sidebarShop
     !=null) ? sidebarShop.getShopName() : null; String ctx=request.getContextPath(); boolean
     isSeller="seller" .equalsIgnoreCase(sidebarRole); boolean isAdmin="admin"
@@ -330,36 +330,44 @@ Dung chung cho tat ca trang co sidebar (customer + seller + admin)
     }
 
     .sena-nav-item.sena-logout:hover {
-        background: var(--red-light);
-        color: #c53030;
-        transform: translateX(3px);
+        background: var(--green-light);
+        color: var(--green-dark);
+        font-weight: 700;
     }
 
-    /* Divider */
     .sena-nav-divider {
         height: 1px;
         background: var(--gray-100);
-        margin: 0.35rem 0.75rem;
+        margin: 0.5rem 0;
     }
 
-    /* ==================== MAIN CONTENT AREA ==================== */
+    .sena-logout {
+        color: var(--red) !important;
+    }
+
+    .sena-logout:hover {
+        background: var(--red-light) !important;
+        color: var(--red) !important;
+    }
+
+    /* MAIN CONTAINER - Embed wrappers should put content inside <main class="sena-main"> */
     .sena-main {
         flex: 1;
-        display: flex;
-        flex-direction: column;
-        gap: 1.5rem;
+        padding: 1.75rem 2rem;
         min-width: 0;
+        overflow-y: auto;
     }
 
-    /* ==================== ALERTS ==================== */
+    /* GLOBAL ALERTS IN SENA STYLE */
     .sena-alert {
         display: flex;
         align-items: center;
         gap: 0.75rem;
-        padding: 0.9rem 1.2rem;
+        padding: 0.85rem 1.25rem;
         border-radius: var(--radius-sm);
         font-size: 0.875rem;
         font-weight: 500;
+        margin-bottom: 1.25rem;
     }
 
     .sena-alert-success {
@@ -376,53 +384,15 @@ Dung chung cho tat ca trang co sidebar (customer + seller + admin)
 
     .sena-alert-warning {
         background: #fef9c3;
-        border: 1px solid #fde68a;
-        color: #92400e;
+        border: 1px solid #fef08a;
+        color: #854d0e;
     }
 
-    /* ==================== RESPONSIVE ==================== */
+    /* RESPONSIVE */
     @media (max-width: 900px) {
         .sena-layout {
             flex-direction: column;
             margin: 1rem auto;
-        }
-
-        .sena-sidebar {
-            width: 100%;
-            position: static;
-            top: auto;
-        }
-
-        .sena-sb-nav {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-            gap: 0.2rem;
-        }
-
-        .sena-nav-section,
-        .sena-nav-divider {
-            display: none;
-        }
-
-        .sena-nav-item {
-            flex-direction: column;
-            gap: 0.2rem;
-            padding: 0.6rem 0.4rem;
-            font-size: 0.72rem;
-            text-align: center;
-        }
-
-        .sena-nav-item i:first-child {
-            width: auto;
-            font-size: 1rem;
-        }
-
-        .sena-sb-user {
-            display: none;
-        }
-
-        .sena-nav-links {
-            display: none;
         }
     }
 </style>
@@ -430,11 +400,11 @@ Dung chung cho tat ca trang co sidebar (customer + seller + admin)
 <!-- ==================== TOPNAV ==================== -->
 <nav class="sena-topnav">
     <a href="<%= ctx %>/home.jsp" class="sena-nav-logo">
-        <i class="fa-solid fa-apple-whole"></i> Sena Shop
+        <i class="fa-solid fa-apple-whole"></i> SenaFruit
     </a>
     <div class="sena-nav-links">
-        <a href="<%= ctx %>/home.jsp">Trang Chu</a>
-        <a href="<%= ctx %>/products">San Pham</a>
+        <a href="<%= ctx %>/home.jsp">Trang Chủ</a>
+        <a href="<%= ctx %>/products">Sản Phẩm</a>
     </div>
     <div class="sena-nav-right">
         <% if (shopBadge !=null) { %>
@@ -473,7 +443,7 @@ Dung chung cho tat ca trang co sidebar (customer + seller + admin)
 
             <% if (isSeller) { %>
             <!-- ===== SELLER MENU ===== -->
-            <div class="sena-nav-section">Quan ly Shop</div>
+            <div class="sena-nav-section">Quản Lý Shop</div>
 
             <a href="<%= ctx %>/seller/dashboard" class="sena-nav-item <%="dashboard".equals(activePage) ? "active" : "" %>">
                 <i class="fa-solid fa-gauge-high"></i> Dashboard
@@ -482,120 +452,120 @@ Dung chung cho tat ca trang co sidebar (customer + seller + admin)
                 <i class="fa-solid fa-chart-line"></i> Doanh Thu
             </a>
             <a href="<%= ctx %>/seller/orders" class="sena-nav-item <%="orders".equals(activePage) ? "active" : "" %>">
-                <i class="fa-solid fa-basket-shopping"></i> Don Hang
+                <i class="fa-solid fa-basket-shopping"></i> Đơn Hàng
             </a>
             <a href="<%= ctx %>/products" class="sena-nav-item <%="products".equals(activePage) ? "active" : "" %>">
-                <i class="fa-brands fa-opencart"></i> San Pham
+                <i class="fa-brands fa-opencart"></i> Sản Phẩm
             </a>
             <a href="<%= ctx %>/category" class="sena-nav-item <%="category".equals(activePage) ? "active" : "" %>">
-                <i class="fa-solid fa-layer-group"></i> Danh Muc
+                <i class="fa-solid fa-layer-group"></i> Danh Mục
             </a>
 
             <button class="sena-nav-item <%= " inventory".equals(activePage) ? "active" : "" %>"
                     onclick="document.getElementById('sena-inv-menu-seller').style.display =
                                                         document.getElementById('sena-inv-menu-seller').style.display === 'none' ?
                                                         'flex' : 'none'">
-                <i class="fa-solid fa-warehouse"></i> Kho <i class="fa-solid fa-chevron-down"
+                <i class="fa-solid fa-warehouse"></i> Quản Lý Kho <i class="fa-solid fa-chevron-down"
                                                              style="margin-left:auto; font-size:0.7rem;"></i>
             </button>
             <div id="sena-inv-menu-seller"
                  style="display:none; flex-direction:column; gap:2px; padding-left:1.5rem;">
                 <a href="<%= ctx %>/inventory-import" class="sena-nav-item"
                    style="padding:0.4rem 0.8rem; font-size:0.8rem;">
-                    <i class="fa-solid fa-arrow-down"></i> Nhap Kho
+                    <i class="fa-solid fa-arrow-down"></i> Nhập Kho
                 </a>
                 <a href="<%= ctx %>/inventory-export" class="sena-nav-item"
                    style="padding:0.4rem 0.8rem; font-size:0.8rem;">
-                    <i class="fa-solid fa-arrow-up"></i> Xuat Kho
+                    <i class="fa-solid fa-arrow-up"></i> Xuất Kho
                 </a>
             </div>
             <div class="sena-nav-divider"></div>
-            <div class="sena-nav-section">Tai Khoan</div>
+            <div class="sena-nav-section">Tài Khoản</div>
 
             <a href="<%= ctx %>/profile" class="sena-nav-item <%= " profile".equals(activePage)
                                         ? "active" : "" %>">
-                <i class="fa-regular fa-user"></i> Ho So
+                <i class="fa-regular fa-user"></i> Hồ Sơ
             </a>
             <a href="<%= ctx %>/address" class="sena-nav-item <%= " address".equals(activePage)
                                         ? "active" : "" %>">
-                <i class="fa-solid fa-map-location-dot"></i> So Dia Chi
+                <i class="fa-solid fa-map-location-dot"></i> Sổ Địa Chỉ
             </a>
 
             <div class="sena-nav-divider"></div>
             <a href="<%= ctx %>/logout" class="sena-nav-item sena-logout">
-                <i class="fa-solid fa-right-from-bracket"></i> Dang Xuat
+                <i class="fa-solid fa-right-from-bracket"></i> Đăng Xuất
             </a>
 
             <% } else if (isAdmin) { %>
             <!-- ===== ADMIN MENU ===== -->
-            <div class="sena-nav-section">Quan Tri</div>
+            <div class="sena-nav-section">Quản Trị</div>
 
             <a href="<%= ctx %>/admin/orders" class="sena-nav-item <%="orders".equals(activePage) ? "active" : "" %>">
-                <i class="fa-solid fa-basket-shopping"></i> Don Hang
+                <i class="fa-solid fa-basket-shopping"></i> Đơn Hàng
             </a>
             <a href="<%= ctx %>/products" class="sena-nav-item <%="products".equals(activePage) ? "active" : "" %>">
-                <i class="fa-brands fa-opencart"></i> San Pham
+                <i class="fa-brands fa-opencart"></i> Sản Phẩm
             </a>
             <a href="<%= ctx %>/category" class="sena-nav-item <%="category".equals(activePage) ? "active" : "" %>">
-                <i class="fa-solid fa-layer-group"></i> Danh Muc
+                <i class="fa-solid fa-layer-group"></i> Danh Mục
             </a>
             <a href="<%= ctx %>/admin/staff"
                class="sena-nav-item <%= "staff".equals(activePage) ? "active" : "" %>">
-                <i class="fa-solid fa-user-tie"></i> Quan Ly Nhan Vien
+                <i class="fa-solid fa-user-tie"></i> Quản Lý Nhân Viên
             </a>
 
             <a href="<%= ctx %>/admin/shipper"
                class="sena-nav-item <%= "shipper".equals(activePage) ? "active" : "" %>">
-                <i class="fa-solid fa-truck-fast"></i> Quan Ly Shipper
+                <i class="fa-solid fa-truck-fast"></i> Quản Lý Shipper
             </a>
             <div class="sena-nav-divider"></div>
-            <div class="sena-nav-section">Tai Khoan</div>
+            <div class="sena-nav-section">Tài Khoản</div>
 
             <a href="<%= ctx %>/profile" class="sena-nav-item <%="profile".equals(activePage) ? "active" : "" %>">
-                <i class="fa-regular fa-user"></i> Ho So
+                <i class="fa-regular fa-user"></i> Hồ Sơ
             </a>
             <a href="<%= ctx %>/address" class="sena-nav-item <%="address".equals(activePage) ? "active" : "" %>">
-                <i class="fa-solid fa-map-location-dot"></i> So Dia Chi
+                <i class="fa-solid fa-map-location-dot"></i> Sổ Địa Chỉ
             </a>
             <a href="<%= ctx %>/profile?tab=security" class="sena-nav-item <%="security".equals(activePage) ? "active" : "" %>">
-                <i class="fa-solid fa-shield-halved"></i> Bao Mat
+                <i class="fa-solid fa-shield-halved"></i> Bảo Mật
             </a>
 
             <div class="sena-nav-divider"></div>
             <a href="<%= ctx %>/logout" class="sena-nav-item sena-logout">
-                <i class="fa-solid fa-right-from-bracket"></i> Dang Xuat
+                <i class="fa-solid fa-right-from-bracket"></i> Đăng Xuất
             </a>
 
             <% } else { %>
             <!-- ===== CUSTOMER MENU ===== -->
-            <div class="sena-nav-section">Mua Sam</div>
+            <div class="sena-nav-section">Mua Sắm</div>
 
             <a href="<%= ctx %>/customer-dashboard" class="sena-nav-item <%="customer-dashboard".equals(activePage) ? "active" : "" %>">
                 <i class="fa-solid fa-gauge-high"></i> Dashboard
             </a>
             <a href="<%= ctx %>/my-orders" class="sena-nav-item <%="orders".equals(activePage) ? "active" : "" %>">
-                <i class="fa-solid fa-basket-shopping"></i> Don Hang
+                <i class="fa-solid fa-basket-shopping"></i> Đơn Hàng
             </a>
             <a href="<%= ctx %>/wishlist" class="sena-nav-item <%="wishlist".equals(activePage) ? "active" : "" %>">
-                <i class="fa-solid fa-heart"></i> Yeu Thich
+                <i class="fa-solid fa-heart"></i> Yêu Thích
             </a>
 
             <div class="sena-nav-divider"></div>
-            <div class="sena-nav-section">Tai Khoan</div>
+            <div class="sena-nav-section">Tài Khoản</div>
 
             <a href="<%= ctx %>/profile" class="sena-nav-item <%="profile".equals(activePage) ? "active" : "" %>">
-                <i class="fa-regular fa-user"></i> Ho So
+                <i class="fa-regular fa-user"></i> Hồ Sơ
             </a>
             <a href="<%= ctx %>/address" class="sena-nav-item <%="address".equals(activePage) ? "active" : "" %>">
-                <i class="fa-solid fa-map-location-dot"></i> So Dia Chi
+                <i class="fa-solid fa-map-location-dot"></i> Sổ Địa Chỉ
             </a>
             <a href="<%= ctx %>/profile?tab=security" class="sena-nav-item <%="security".equals(activePage) ? "active" : "" %>">
-                <i class="fa-solid fa-shield-halved"></i> Bao Mat
+                <i class="fa-solid fa-shield-halved"></i> Bảo Mật
             </a>
 
             <div class="sena-nav-divider"></div>
             <a href="<%= ctx %>/logout" class="sena-nav-item sena-logout">
-                <i class="fa-solid fa-right-from-bracket"></i> Dang Xuat
+                <i class="fa-solid fa-right-from-bracket"></i> Đăng Xuất
             </a>
 
             <% } %>

@@ -576,14 +576,14 @@
     <div class="modal-container">
         <!-- Breadcrumb -->
         <div class="breadcrumb">
-            <a href="home.jsp"><i class="fa-solid fa-box"></i> San Pham</a>
+            <a href="home.jsp"><i class="fa-solid fa-box"></i> Sản Phẩm</a>
             <i class="fa-solid fa-chevron-right" style="font-size:0.6rem;"></i>
             <span><%= product.getTitle() %></span>
         </div>
 
         <div class="card-header">
             <i class="fa-solid fa-circle-info" style="color:var(--green);font-size:1.2rem;"></i>
-            <div class="card-title">Chi Tiet San Pham</div>
+            <div class="card-title">Chi Tiet Sản Phẩm</div>
         </div>
 
         <div class="detail-grid">
@@ -726,7 +726,7 @@
                 <div class="action-buttons" style="margin-top: 1.5rem;">
                     <!-- Nút gọi hàm JS addToCart() để nạp dữ liệu vào form ẩn rồi submit -->
                     <button class="btn btn-green" onclick="addToCart()">
-                        <i class="fa-solid fa-basket-shopping"></i> Them Vao Gio Hang
+                        <i class="fa-solid fa-basket-shopping"></i> Them Vao Giỏ Hàng
                     </button>
                     <!-- Nút gọi hàm JS buyNow() -->
                     <button class="btn btn-orange" onclick="buyNow()" style="background: #ff6b35; color: #fff; border: none;">

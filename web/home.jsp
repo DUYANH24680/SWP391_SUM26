@@ -99,7 +99,7 @@
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Sena Shop - Trái Cây Tươi Ngon Mỗi Ngày</title>
+                <title>SenaFruit - Trái Cây Tươi Ngon Mỗi Ngày</title>
                 <link
                     href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
                     rel="stylesheet">
@@ -1974,7 +1974,7 @@
                 <!-- ====================================================== TOPNAV -->
                 <nav class="topnav">
                     <a href="home.jsp" class="nav-logo">
-                        <i class="fa-solid fa-apple-whole"></i> Sena Shop
+                        <i class="fa-solid fa-apple-whole"></i> SenaFruit
                     </a>
 
                     <jsp:include page="search-product.jsp" />
@@ -2366,7 +2366,7 @@
                                                     <input type="hidden" name="productId" value="<%= p.getId() %>">
                                                     <input type="hidden" name="quantity" value="1">
                                                     <button type="submit" class="btn-add-cart">
-                                                        <i class="fa-solid fa-cart-plus"></i> Gio Hang
+                                                        <i class="fa-solid fa-cart-plus"></i> Giỏ Hàng
                                                     </button>
                                                 </form>
                                                 <form action="buy-now" method="POST" style="flex:1;">
@@ -2385,7 +2385,7 @@
                                             </div>
                                             <div class="btn-actions">
                                                 <button class="btn-add-cart" disabled style="opacity:0.5;cursor:not-allowed;">
-                                                    <i class="fa-solid fa-cart-plus"></i> Gio Hang
+                                                    <i class="fa-solid fa-cart-plus"></i> Giỏ Hàng
                                                 </button>
                                                 <button class="btn-buy-now" disabled style="opacity:0.5;cursor:not-allowed;">
                                                     <i class="fa-solid fa-bolt"></i> Mua Ngay
@@ -2466,7 +2466,7 @@
                 <footer>
                     <div class="footer-top" style="max-width:1280px;margin:0 auto;">
                         <div class="footer-brand">
-                            <a href="#" class="footer-logo"><i class="fa-solid fa-apple-whole"></i> Sena Shop</a>
+                            <a href="#" class="footer-logo"><i class="fa-solid fa-apple-whole"></i> SenaFruit</a>
                             <p class="footer-desc">Chuyên cung cấp trái cây tươi ngon, chất lượng cao từ các vườn trồng
                                 uy tín trong nước và quốc tế. Giao hàng tận nơi, uy tín hàng đầu.</p>
                             <div class="footer-socials">
@@ -2477,13 +2477,13 @@
                             </div>
                         </div>
                         <div class="footer-col">
-                            <h4>San Pham</h4>
+                            <h4>Sản Phẩm</h4>
                             <ul>
                                 <li><a href="#">Trái Cây Nhập Khẩu</a></li>
                                 <li><a href="#">Trái Cây Nội Địa</a></li>
                                 <li><a href="#">Trái Cây Hữu Cơ</a></li>
                                 <li><a href="#">Trái Cây Cao Cấp</a></li>
-                                <li><a href="#">San Pham Hot</a></li>
+                                <li><a href="#">Sản Phẩm Hot</a></li>
                             </ul>
                         </div>
                         <div class="footer-col">
@@ -2507,7 +2507,7 @@
                         </div>
                     </div>
                     <div class="footer-bottom" style="max-width:1280px;margin:0 auto;">
-                        <span>&copy; 2024 Sena Shop. Trái cây tươi ngon mỗi ngày.</span>
+                        <span>&copy; 2024 SenaFruit. Trái cây tươi ngon mỗi ngày.</span>
                         <div class="footer-bottom-links">
                             <a href="#">Privacy</a>
                             <a href="#">Terms</a>

@@ -1,8 +1,11 @@
 package model;
 
+/**
+ * CancelOrderResult - Result object for order cancellation operations.
+ */
 public class CancelOrderResult {
-    private final boolean success;
-    private final String error;
+    private boolean success;
+    private String error;
 
     private CancelOrderResult(boolean success, String error) {
         this.success = success;
@@ -17,6 +20,11 @@ public class CancelOrderResult {
         return new CancelOrderResult(false, error);
     }
 
-    public boolean isSuccess() { return success; }
-    public String getError() { return error; }
+    public boolean isSuccess() {
+        return success;
+    }
+
+    public String getError() {
+        return error;
+    }
 }

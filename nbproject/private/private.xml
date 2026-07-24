@@ -62,7 +62,6 @@
             <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/controller/CheckWishlistServlet.java</file>
             <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/controller/EditShipperServlet.java</file>
             <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/controller/StaffOrdersWaitingServlet.java</file>
-            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/controller/SubmitReportServlet1.java</file>
             <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/controller/VoucherPageServlet.java</file>
             <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/controller/RegisterServlet.java</file>
             <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/controller/RevenueServlet.java</file>
@@ -76,6 +75,9 @@
             <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/controller/SellerOrdersServlet.java</file>
             <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/controller/StaffActionServlet.java</file>
             <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/listener/OrderAutoCancelListener.java</file>
+            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/controller/SellerOrderDetailServlet.java</file>
+            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/model/OrderTracking.java</file>
+            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/service/DeliveryService.java</file>
         </group>
     </open-files>
 </project-private>

@@ -687,6 +687,8 @@ public class OrderService {
             dao.close();
         }
     }
+
+    public void close() {
+        // No resources to close at service level
+    }
 }
-
-

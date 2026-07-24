@@ -79,7 +79,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Xác nhận đặt hàng | Sena Shop</title>
+    <title>Xác nhận đặt hàng | SenaFruit</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
@@ -577,7 +577,7 @@
 
     <nav class="topnav">
         <a href="home.jsp" class="nav-logo">
-            <i class="fa-solid fa-apple-whole"></i> Sena Shop
+            <i class="fa-solid fa-apple-whole"></i> SenaFruit
         </a>
     </nav>
 
@@ -668,30 +668,12 @@
                             <i class="fa-regular fa-credit-card"></i> Phương Thức Thanh Toán
                         </div>
 
-                        <label class="payment-option active">
+                        <label class="payment-option active" style="margin-bottom: 0;">
                             <input type="radio" name="paymentMethod" value="COD" checked>
                             <i class="fa-solid fa-hand-holding-dollar"></i>
                             <div>
                                 <strong style="display:block; font-size:0.875rem;">Thanh toán khi nhận hàng (COD)</strong>
                                 <span style="font-size:0.75rem; color:var(--gray-600);">Thanh toán bằng tiền mặt khi shipper giao hàng tới nơi.</span>
-                            </div>
-                        </label>
-
-                        <label class="payment-option" style="opacity: 0.6; cursor: not-allowed;" onclick="alert('Thanh toán ví điện tử MoMo đang được tích hợp.'); return false;">
-                            <input type="radio" name="paymentMethod" value="Momo" disabled>
-                            <i class="fa-solid fa-wallet" style="color:var(--gray-400);"></i>
-                            <div>
-                                <strong style="display:block; font-size:0.875rem; color:var(--gray-600);">Thanh toán qua ví MoMo (Bảo trì)</strong>
-                                <span style="font-size:0.75rem; color:var(--gray-400);">Sử dụng ví MoMo để quét mã thanh toán trực tuyến.</span>
-                            </div>
-                        </label>
-
-                        <label class="payment-option" style="opacity: 0.6; cursor: not-allowed;" onclick="alert('Thanh toán VNPay đang được tích hợp.'); return false;">
-                            <input type="radio" name="paymentMethod" value="VNPay" disabled>
-                            <i class="fa-solid fa-credit-card" style="color:var(--gray-400);"></i>
-                            <div>
-                                <strong style="display:block; font-size:0.875rem; color:var(--gray-600);">Thanh toán qua VNPay (Bảo trì)</strong>
-                                <span style="font-size:0.75rem; color:var(--gray-400);">Liên kết thẻ ngân hàng ATM/Visa/MasterCard qua cổng VNPay.</span>
                             </div>
                         </label>
                     </div>
@@ -834,7 +816,7 @@
     </div>
 
     <footer class="footer">
-        &copy; 2026 Sena Shop. Hệ thống mua bán trái cây tươi ngon - chất lượng cao.
+        &copy; 2026 SenaFruit. Hệ thống mua bán trái cây tươi ngon - chất lượng cao.
     </footer>
 
     <script>

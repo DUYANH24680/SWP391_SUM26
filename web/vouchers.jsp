@@ -22,7 +22,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Kho Voucher - Sena Shop</title>
+    <title>Kho Voucher - SenaFruit</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -119,7 +119,7 @@
 
     <!-- TOPNAV -->
     <nav class="topnav">
-        <a href="home.jsp" class="nav-logo"><i class="fa-solid fa-apple-whole"></i> Sena Shop</a>
+        <a href="home.jsp" class="nav-logo"><i class="fa-solid fa-apple-whole"></i> SenaFruit</a>
         <div class="nav-links">
             <% if (Account != null && "seller".equalsIgnoreCase(Account.getRoleName())) { %>
                 <a href="inventory-export">Xuất Kho</a>
@@ -148,7 +148,7 @@
     <div class="container">
         <div class="page-title">
             <h1>Kho Voucher Khuyến Mãi</h1>
-            <p>Thu thập các mã giảm giá và mã miễn phí vận chuyển để tiết kiệm hơn khi mua sắm tại Sena Shop!</p>
+            <p>Thu thập các mã giảm giá và mã miễn phí vận chuyển để tiết kiệm hơn khi mua sắm tại SenaFruit!</p>
         </div>
 
         <% if (vouchers == null || vouchers.isEmpty()) { %>
