@@ -22,15 +22,12 @@ public class DeliveryDAO extends DbContext {
      * Creates delivery order and initial tracking record.
      */
     public boolean assignShipper(int orderId, int shipperId, int assignedBy, String note) {
-        String sqlDelivery = "INSERT INTO DeliveryOrders (order_id, shipper_id, assigned_by, status, note) "
-                           + "VALUES (?, ?, ?, ?, ?)";
-        String sqlTracking = "INSERT INTO OrderTracking (order_id, status, description, updated_by) "
+        String sqlDelivery = "INSERT INTO DeliveryOrders (order_id, shipper_id, status, note) "
                            + "VALUES (?, ?, ?, ?)";
         String sqlOrderStatus = "UPDATE Orders SET status = 3 WHERE id = ?"; // 3 = Shipping
         
         Connection conn = null;
         PreparedStatement psDelivery = null;
-        PreparedStatement psTracking = null;
         PreparedStatement psOrderStatus = null;
         
         try {
@@ -41,9 +38,8 @@ public class DeliveryDAO extends DbContext {
             psDelivery = conn.prepareStatement(sqlDelivery);
             psDelivery.setInt(1, orderId);
             psDelivery.setInt(2, shipperId);
-            psDelivery.setInt(3, assignedBy);
-            psDelivery.setInt(4, DeliveryOrder.STATUS_ASSIGNED);
-            psDelivery.setString(5, note);
+            psDelivery.setInt(3, DeliveryOrder.STATUS_ASSIGNED);
+            psDelivery.setString(4, note);
             int deliveryRows = psDelivery.executeUpdate();
             
             if (deliveryRows == 0) {
@@ -51,13 +47,20 @@ public class DeliveryDAO extends DbContext {
                 return false;
             }
             
-            // Insert tracking record
-            psTracking = conn.prepareStatement(sqlTracking);
-            psTracking.setInt(1, orderId);
-            psTracking.setString(2, OrderTracking.Status.DELIVERY_ASSIGNED);
-            psTracking.setString(3, "Đơn hàng đã được giao cho shipper. Mã đơn: " + orderId);
-            psTracking.setInt(4, assignedBy);
-            psTracking.executeUpdate();
+            // Try inserting tracking record if OrderTracking table exists
+            try {
+                String sqlTracking = "INSERT INTO OrderTracking (order_id, status, description, updated_by) "
+                                   + "VALUES (?, ?, ?, ?)";
+                try (PreparedStatement psTracking = conn.prepareStatement(sqlTracking)) {
+                    psTracking.setInt(1, orderId);
+                    psTracking.setString(2, OrderTracking.Status.DELIVERY_ASSIGNED);
+                    psTracking.setString(3, "Đơn hàng đã được giao cho shipper. Mã đơn: " + orderId);
+                    psTracking.setInt(4, assignedBy);
+                    psTracking.executeUpdate();
+                }
+            } catch (SQLException ex) {
+                System.err.println("[DeliveryDAO] OrderTracking table optional insert warning: " + ex.getMessage());
+            }
             
             // Update order status
             psOrderStatus = conn.prepareStatement(sqlOrderStatus);
@@ -75,7 +78,7 @@ public class DeliveryDAO extends DbContext {
             }
             throw new RuntimeException("DeliveryDAO.assignShipper error: " + e.getMessage(), e);
         } finally {
-            closeResources(psDelivery, psTracking, psOrderStatus, conn);
+            closeResources(psDelivery, null, psOrderStatus, conn);
         }
     }
     
@@ -83,14 +86,11 @@ public class DeliveryDAO extends DbContext {
      * Accept delivery by shipper.
      */
     public boolean acceptDelivery(int deliveryId, int shipperId) {
-        String sqlDelivery = "UPDATE DeliveryOrders SET status = ?, accepted_date = GETDATE() "
-                           + "WHERE delivery_id = ? AND shipper_id = ? AND status = ?";
-        String sqlTracking = "INSERT INTO OrderTracking (order_id, delivery_id, status, description, updated_by) "
-                           + "SELECT order_id, ?, ?, ?, ? FROM DeliveryOrders WHERE delivery_id = ?";
+        String sqlDelivery = "UPDATE DeliveryOrders SET status = ? "
+                           + "WHERE id = ? AND shipper_id = ? AND status = ?";
         
         Connection conn = null;
         PreparedStatement psDelivery = null;
-        PreparedStatement psTracking = null;
         ResultSet rs = null;
         
         try {
@@ -99,7 +99,7 @@ public class DeliveryDAO extends DbContext {
             
             // Get order_id before update
             int orderId = 0;
-            psDelivery = conn.prepareStatement("SELECT order_id FROM DeliveryOrders WHERE delivery_id = ?");
+            psDelivery = conn.prepareStatement("SELECT order_id FROM DeliveryOrders WHERE id = ?");
             psDelivery.setInt(1, deliveryId);
             rs = psDelivery.executeQuery();
             if (rs.next()) {
@@ -121,14 +121,21 @@ public class DeliveryDAO extends DbContext {
                 return false;
             }
             
-            // Insert tracking record
-            psTracking = conn.prepareStatement(sqlTracking);
-            psTracking.setInt(1, deliveryId);
-            psTracking.setString(2, OrderTracking.Status.DELIVERY_ACCEPTED);
-            psTracking.setString(3, "Shipper đã chấp nhận giao hàng. Mã giao hàng: " + deliveryId);
-            psTracking.setInt(4, shipperId);
-            psTracking.setInt(5, deliveryId);
-            psTracking.executeUpdate();
+            // Try insert tracking record
+            try {
+                String sqlTracking = "INSERT INTO OrderTracking (order_id, delivery_id, status, description, updated_by) "
+                                   + "SELECT order_id, ?, ?, ?, ? FROM DeliveryOrders WHERE id = ?";
+                try (PreparedStatement psTracking = conn.prepareStatement(sqlTracking)) {
+                    psTracking.setInt(1, deliveryId);
+                    psTracking.setString(2, OrderTracking.Status.DELIVERY_ACCEPTED);
+                    psTracking.setString(3, "Shipper đã chấp nhận giao hàng. Mã giao hàng: " + deliveryId);
+                    psTracking.setInt(4, shipperId);
+                    psTracking.setInt(5, deliveryId);
+                    psTracking.executeUpdate();
+                }
+            } catch (SQLException ex) {
+                System.err.println("[DeliveryDAO] OrderTracking optional insert warning: " + ex.getMessage());
+            }
             
             conn.commit();
             System.out.println("[DeliveryDAO] acceptDelivery success: deliveryId=" + deliveryId);
@@ -141,7 +148,7 @@ public class DeliveryDAO extends DbContext {
             }
             throw new RuntimeException("DeliveryDAO.acceptDelivery error: " + e.getMessage(), e);
         } finally {
-            closeResources(psDelivery, psTracking, null, conn);
+            closeResources(psDelivery, null, null, conn);
         }
     }
     
@@ -150,28 +157,17 @@ public class DeliveryDAO extends DbContext {
      * Status values: 3=PickingUp, 4=Delivering, 5=Delivered, 6=Failed
      */
     public boolean updateStatus(int deliveryId, int shipperId, int newStatus, String note, String trackingStatus) {
-        StringBuilder sqlDelivery = new StringBuilder("UPDATE DeliveryOrders SET status = ?, updated_at = GETDATE()");
-        
-        if (newStatus == DeliveryOrder.STATUS_PICKING_UP) {
-            sqlDelivery.append(", pickup_time = GETDATE()");
-        } else if (newStatus == DeliveryOrder.STATUS_DELIVERED || newStatus == DeliveryOrder.STATUS_FAILED) {
-            sqlDelivery.append(", delivery_time = GETDATE()");
-        }
+        StringBuilder sqlDelivery = new StringBuilder("UPDATE DeliveryOrders SET status = ?");
         if (note != null && !note.trim().isEmpty()) {
             sqlDelivery.append(", note = ?");
         }
-        
-        sqlDelivery.append(" WHERE delivery_id = ? AND shipper_id = ?");
-        
-        String sqlTracking = "INSERT INTO OrderTracking (order_id, delivery_id, status, description, updated_by) "
-                           + "SELECT order_id, ?, ?, ?, ? FROM DeliveryOrders WHERE delivery_id = ?";
+        sqlDelivery.append(" WHERE id = ? AND shipper_id = ?");
         
         String sqlOrderStatus = "UPDATE Orders SET status = ? WHERE id = "
-                              + "(SELECT order_id FROM DeliveryOrders WHERE delivery_id = ?)";
+                              + "(SELECT order_id FROM DeliveryOrders WHERE id = ?)";
         
         Connection conn = null;
         PreparedStatement psDelivery = null;
-        PreparedStatement psTracking = null;
         PreparedStatement psOrderStatus = null;
         
         try {
@@ -197,25 +193,21 @@ public class DeliveryDAO extends DbContext {
                 return false;
             }
             
-            // Get order_id for tracking
-            int orderId = 0;
-            PreparedStatement psGetOrder = conn.prepareStatement("SELECT order_id FROM DeliveryOrders WHERE delivery_id = ?");
-            psGetOrder.setInt(1, deliveryId);
-            ResultSet rs = psGetOrder.executeQuery();
-            if (rs.next()) {
-                orderId = rs.getInt("order_id");
+            // Try insert tracking record
+            try {
+                String sqlTracking = "INSERT INTO OrderTracking (order_id, delivery_id, status, description, updated_by) "
+                                   + "SELECT order_id, ?, ?, ?, ? FROM DeliveryOrders WHERE id = ?";
+                try (PreparedStatement psTracking = conn.prepareStatement(sqlTracking)) {
+                    psTracking.setInt(1, deliveryId);
+                    psTracking.setString(2, trackingStatus);
+                    psTracking.setString(3, note != null ? note : getDefaultTrackingDescription(newStatus, deliveryId));
+                    psTracking.setInt(4, shipperId);
+                    psTracking.setInt(5, deliveryId);
+                    psTracking.executeUpdate();
+                }
+            } catch (SQLException ex) {
+                System.err.println("[DeliveryDAO] OrderTracking optional insert warning: " + ex.getMessage());
             }
-            rs.close();
-            psGetOrder.close();
-            
-            // Insert tracking record
-            psTracking = conn.prepareStatement(sqlTracking);
-            psTracking.setInt(1, deliveryId);
-            psTracking.setString(2, trackingStatus);
-            psTracking.setString(3, note != null ? note : getDefaultTrackingDescription(newStatus, deliveryId));
-            psTracking.setInt(4, shipperId);
-            psTracking.setInt(5, deliveryId);
-            psTracking.executeUpdate();
             
             // Update order status if delivered or failed
             if (newStatus == DeliveryOrder.STATUS_DELIVERED) {
@@ -241,7 +233,7 @@ public class DeliveryDAO extends DbContext {
             }
             throw new RuntimeException("DeliveryDAO.updateStatus error: " + e.getMessage(), e);
         } finally {
-            closeResources(psDelivery, psTracking, psOrderStatus, conn);
+            closeResources(psDelivery, null, psOrderStatus, conn);
         }
     }
     
@@ -257,16 +249,14 @@ public class DeliveryDAO extends DbContext {
      * Get delivery order by ID.
      */
     public DeliveryOrder getDeliveryById(int deliveryId) {
-        String sql = "SELECT d.*, "
+        String sql = "SELECT d.id, d.order_id, d.shipper_id, d.status, d.note, "
                    + "s.fullname AS shipper_name, s.phone AS shipper_phone, "
-                   + "a.fullname AS assigned_by_name, "
                    + "o.status AS order_status, o.final_cost, "
                    + "o.recipient_name, o.recipient_phone, o.address AS delivery_address "
                    + "FROM DeliveryOrders d "
                    + "LEFT JOIN Accounts s ON d.shipper_id = s.id "
-                   + "JOIN Accounts a ON d.assigned_by = a.id "
-                   + "JOIN Orders o ON d.order_id = o.id "
-                   + "WHERE d.delivery_id = ?";
+                   + "LEFT JOIN Orders o ON d.order_id = o.id "
+                   + "WHERE d.id = ?";
         
         try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
             ps.setInt(1, deliveryId);
@@ -286,8 +276,7 @@ public class DeliveryDAO extends DbContext {
      * Get delivery order by order ID.
      */
     public DeliveryOrder getDeliveryByOrderId(int orderId) {
-        String sql = "SELECT d.id, d.order_id, d.shipper_id, d.assigned_by, "
-                   + "d.status, d.note, d.created_at, d.updated_at, "
+        String sql = "SELECT d.id, d.order_id, d.shipper_id, d.status, d.note, "
                    + "s.fullname AS shipper_name, s.phone AS shipper_phone, "
                    + "o.status AS order_status, o.final_cost, "
                    + "o.recipient_name, o.recipient_phone, o.address AS delivery_address "
@@ -323,8 +312,7 @@ public class DeliveryDAO extends DbContext {
     public List<DeliveryOrder> getDeliveriesByShipperId(int shipperId, Integer status) {
         List<DeliveryOrder> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
-            "SELECT d.id, d.order_id, d.shipper_id, d.assigned_by, "
-          + "d.status, d.note, d.created_at, d.updated_at, "
+            "SELECT d.id, d.order_id, d.shipper_id, d.status, d.note, "
           + "s.fullname AS shipper_name, s.phone AS shipper_phone, "
           + "o.status AS order_status, o.final_cost, "
           + "o.recipient_name, o.recipient_phone, o.address AS delivery_address "
@@ -337,7 +325,7 @@ public class DeliveryDAO extends DbContext {
         if (status != null) {
             sql.append("AND d.status = ? ");
         }
-        sql.append("ORDER BY d.created_at DESC");
+        sql.append("ORDER BY d.id DESC");
         
         try (PreparedStatement ps = getConnection().prepareStatement(sql.toString())) {
             ps.setInt(1, shipperId);
@@ -361,19 +349,17 @@ public class DeliveryDAO extends DbContext {
      */
     public List<DeliveryOrder> getAllDeliveries() {
         List<DeliveryOrder> list = new ArrayList<>();
-        String sql = "SELECT d.*, "
+        String sql = "SELECT d.id, d.order_id, d.shipper_id, d.status, d.note, "
                    + "s.fullname AS shipper_name, s.phone AS shipper_phone, "
-                   + "a.fullname AS assigned_by_name, "
                    + "o.status AS order_status, o.final_cost, "
                    + "o.recipient_name, o.recipient_phone, o.address AS delivery_address "
                    + "FROM DeliveryOrders d "
                    + "LEFT JOIN Accounts s ON d.shipper_id = s.id "
-                   + "JOIN Accounts a ON d.assigned_by = a.id "
-                   + "JOIN Orders o ON d.order_id = o.id "
-                   + "ORDER BY d.created_at DESC";
+                   + "LEFT JOIN Orders o ON d.order_id = o.id "
+                   + "ORDER BY d.id DESC";
         
         try (PreparedStatement ps = getConnection().prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 list.add(mapDeliveryRow(rs));
             }
@@ -397,7 +383,7 @@ public class DeliveryDAO extends DbContext {
                    + "ORDER BY o.order_date ASC";
         
         try (PreparedStatement ps = getConnection().prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 Order o = mapOrderRow(rs);
                 o.setCustomerName(rs.getString("customer_name"));
@@ -415,17 +401,15 @@ public class DeliveryDAO extends DbContext {
      */
     public List<DeliveryOrder> getDeliveryHistory(int shipperId) {
         List<DeliveryOrder> list = new ArrayList<>();
-        String sql = "SELECT d.*, "
+        String sql = "SELECT d.id, d.order_id, d.shipper_id, d.status, d.note, "
                    + "s.fullname AS shipper_name, s.phone AS shipper_phone, "
-                   + "a.fullname AS assigned_by_name, "
                    + "o.status AS order_status, o.final_cost, "
                    + "o.recipient_name, o.recipient_phone, o.address AS delivery_address "
                    + "FROM DeliveryOrders d "
                    + "LEFT JOIN Accounts s ON d.shipper_id = s.id "
-                   + "JOIN Accounts a ON d.assigned_by = a.id "
-                   + "JOIN Orders o ON d.order_id = o.id "
+                   + "LEFT JOIN Orders o ON d.order_id = o.id "
                    + "WHERE d.shipper_id = ? AND d.status IN (?, ?) "
-                   + "ORDER BY d.created_at DESC";
+                   + "ORDER BY d.id DESC";
         
         try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
             ps.setInt(1, shipperId);
@@ -448,17 +432,15 @@ public class DeliveryDAO extends DbContext {
      */
     public List<DeliveryOrder> getPendingDeliveries(int shipperId) {
         List<DeliveryOrder> list = new ArrayList<>();
-        String sql = "SELECT d.*, "
+        String sql = "SELECT d.id, d.order_id, d.shipper_id, d.status, d.note, "
                    + "s.fullname AS shipper_name, s.phone AS shipper_phone, "
-                   + "a.fullname AS assigned_by_name, "
                    + "o.status AS order_status, o.final_cost, "
                    + "o.recipient_name, o.recipient_phone, o.address AS delivery_address "
                    + "FROM DeliveryOrders d "
                    + "LEFT JOIN Accounts s ON d.shipper_id = s.id "
-                   + "JOIN Accounts a ON d.assigned_by = a.id "
-                   + "JOIN Orders o ON d.order_id = o.id "
+                   + "LEFT JOIN Orders o ON d.order_id = o.id "
                    + "WHERE d.shipper_id = ? AND d.status NOT IN (?, ?) "
-                   + "ORDER BY d.created_at ASC";
+                   + "ORDER BY d.id ASC";
         
         try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
             ps.setInt(1, shipperId);
