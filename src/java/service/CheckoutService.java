@@ -307,52 +307,38 @@ public class CheckoutService {
                 double shopSubtotal = entry.getValue();
                 String voucherCode = shopVoucherCodes != null ? shopVoucherCodes.get(shopId) : null;
 
-                if (voucherCode == null || voucherCode.trim().isEmpty()) {
-                    // No voucher for this shop
-                    shopDiscountMap.put(shopId, 0.0);
-                    continue;
+                double discount = 0.0;
+                if (voucherCode != null && !voucherCode.trim().isEmpty()) {
+                    Voucher shopVoucher = voucherDAO.findByCode(voucherCode.trim());
+                    if (shopVoucher == null) {
+                        shopVoucherErrorsMap.put(shopId, "Mã '" + voucherCode + "' không tồn tại.");
+                    } else if (shopVoucher.getShopId() == null || shopVoucher.getShopId() != shopId) {
+                        shopVoucherErrorsMap.put(shopId, "Mã này không áp dụng cho cửa hàng này.");
+                    } else if (!shopVoucher.isStatus()) {
+                        shopVoucherErrorsMap.put(shopId, "Mã giảm giá đã bị khóa.");
+                    } else if (shopVoucher.getUsedCount() >= shopVoucher.getQuantity()) {
+                        shopVoucherErrorsMap.put(shopId, "Mã đã hết lượt sử dụng.");
+                    } else if (shopVoucher.getStartDate() != null && new java.util.Date().before(shopVoucher.getStartDate())) {
+                        shopVoucherErrorsMap.put(shopId, "Mã chưa đến hạn sử dụng.");
+                    } else if (shopVoucher.getEndDate() != null && new java.util.Date().after(shopVoucher.getEndDate())) {
+                        shopVoucherErrorsMap.put(shopId, "Mã đã hết hạn sử dụng.");
+                    } else if (shopSubtotal < shopVoucher.getMinimumOrder()) {
+                        shopVoucherErrorsMap.put(shopId, "Đơn tối thiểu " + String.format("%,.0f", shopVoucher.getMinimumOrder()) + " đ để dùng mã này.");
+                    } else {
+                        discount = shopVoucher.calculateDiscount(shopSubtotal);
+                        shopVoucherIdMap.put(shopId, shopVoucher.getId());
+                    }
                 }
 
-                Voucher shopVoucher = voucherDAO.findByCode(voucherCode.trim());
-                if (shopVoucher == null) {
-                    shopVoucherErrorsMap.put(shopId, "Mã '" + voucherCode + "' không tồn tại.");
-                    shopDiscountMap.put(shopId, 0.0);
-                    continue;
+                // Apply extra 5% discount for shop orders > 500k
+                if (shopSubtotal > 500000) {
+                    discount += shopSubtotal * 0.05;
                 }
-                if (shopVoucher.getShopId() == null || shopVoucher.getShopId() != shopId) {
-                    shopVoucherErrorsMap.put(shopId, "Mã này không áp dụng cho cửa hàng này.");
-                    shopDiscountMap.put(shopId, 0.0);
-                    continue;
-                }
-                if (!shopVoucher.isStatus()) {
-                    shopVoucherErrorsMap.put(shopId, "Mã giảm giá đã bị khóa.");
-                    shopDiscountMap.put(shopId, 0.0);
-                    continue;
-                }
-                if (shopVoucher.getUsedCount() >= shopVoucher.getQuantity()) {
-                    shopVoucherErrorsMap.put(shopId, "Mã đã hết lượt sử dụng.");
-                    shopDiscountMap.put(shopId, 0.0);
-                    continue;
-                }
-                if (shopVoucher.getStartDate() != null && new java.util.Date().before(shopVoucher.getStartDate())) {
-                    shopVoucherErrorsMap.put(shopId, "Mã chưa đến hạn sử dụng.");
-                    shopDiscountMap.put(shopId, 0.0);
-                    continue;
-                }
-                if (shopVoucher.getEndDate() != null && new java.util.Date().after(shopVoucher.getEndDate())) {
-                    shopVoucherErrorsMap.put(shopId, "Mã đã hết hạn sử dụng.");
-                    shopDiscountMap.put(shopId, 0.0);
-                    continue;
-                }
-                if (shopSubtotal < shopVoucher.getMinimumOrder()) {
-                    shopVoucherErrorsMap.put(shopId, "Đơn tối thiểu " + String.format("%,.0f", shopVoucher.getMinimumOrder()) + " đ để dùng mã này.");
-                    shopDiscountMap.put(shopId, 0.0);
-                    continue;
+                if (discount > shopSubtotal) {
+                    discount = shopSubtotal;
                 }
 
-                double discount = shopVoucher.calculateDiscount(shopSubtotal);
                 shopDiscountMap.put(shopId, discount);
-                shopVoucherIdMap.put(shopId, shopVoucher.getId());
                 totalShopDiscount += discount;
             }
 

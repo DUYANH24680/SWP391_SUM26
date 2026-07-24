@@ -69,6 +69,13 @@
             <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/controller/StaffListServlet.java</file>
             <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/web/my-orders.jsp</file>
             <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/controller/CartServlet.java</file>
+            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/model/UserReport.java</file>
+            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/controller/AddressServlet.java</file>
+            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/controller/OrderRedirectServlet.java</file>
+            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/dao/OrderDAO.java</file>
+            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/controller/SellerOrdersServlet.java</file>
+            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/controller/StaffActionServlet.java</file>
+            <file>file:/D:/OneDrive/Desktop/SUM26/SWP/VietAnh/SWP391_SUM26/src/java/listener/OrderAutoCancelListener.java</file>
         </group>
     </open-files>
 </project-private>

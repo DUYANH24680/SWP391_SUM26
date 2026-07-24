@@ -34,10 +34,12 @@
 
     double totalCost = 0;
     double shippingFee = 0;
+    double totalShopDiscount = 0.0;
     
     // Calculate totalCost and shippingFee per shop
     java.util.Map<Integer, Double> shopSubtotalMap = new java.util.HashMap<>();
     java.util.Map<Integer, Double> shopShippingMap = new java.util.HashMap<>();
+    java.util.Map<Integer, Double> shopAutoDiscountMap = new java.util.HashMap<>();
     
     for (java.util.Map.Entry<Integer, List<CartItem>> entry : itemsByShop.entrySet()) {
         int shopId = entry.getKey();
@@ -51,9 +53,17 @@
         double ship = subtotal >= 200000 ? 0.0 : 20000.0;
         shopShippingMap.put(shopId, ship);
         shippingFee += ship;
+
+        if (subtotal > 500000) {
+            double autoDiscount = subtotal * 0.05;
+            shopAutoDiscountMap.put(shopId, autoDiscount);
+            totalShopDiscount += autoDiscount;
+        } else {
+            shopAutoDiscountMap.put(shopId, 0.0);
+        }
     }
 
-    double finalCost = totalCost + shippingFee;
+    double finalCost = totalCost - totalShopDiscount + shippingFee;
 
     java.text.NumberFormat nf = java.text.NumberFormat.getNumberInstance(java.util.Locale.forLanguageTag("vi"));
 
@@ -767,19 +777,30 @@
                                 <strong id="totalCostValue"><%= nf.format((long) totalCost) %> đ</strong>
                             </div>
                             <!-- Tổng shop discount -->
-                            <div class="bill-row discount" id="totalShopDiscountRow" style="display:none;">
+                            <div class="bill-row discount" id="totalShopDiscountRow" style="<%= totalShopDiscount > 0 ? "display:flex;" : "display:none;" %>">
                                 <span>Tổng giảm Shop:</span>
-                                <strong id="totalShopDiscountValue">-0 đ</strong>
+                                <strong id="totalShopDiscountValue">-<%= nf.format((long) totalShopDiscount) %> đ</strong>
                             </div>
                             <div class="bill-row discount" id="platformDiscountRow" style="display:none;">
                                 <span>Giảm Sàn:</span>
                                 <strong id="platformDiscountValue">-0 đ</strong>
                             </div>
                             <!-- Per-shop discount breakdown -->
-                            <div id="perShopDiscountContainer"></div>
-                            <div class="bill-row discount" id="totalDiscountRow" style="display:none;">
+                            <div id="perShopDiscountContainer">
+                                <% if (totalShopDiscount > 0) {
+                                     for (java.util.Map.Entry<Integer, Double> entry : shopAutoDiscountMap.entrySet()) {
+                                         if (entry.getValue() > 0) { %>
+                                            <div class="bill-row discount" style="display:flex;">
+                                                <span style="font-size:0.78rem; color:var(--gray-600); padding-left:0.5rem;">◦ Shop #<%= entry.getKey() %>:</span>
+                                                <strong>-<%= nf.format(entry.getValue().longValue()) %> đ</strong>
+                                            </div>
+                                         <% }
+                                     }
+                                } %>
+                            </div>
+                            <div class="bill-row discount" id="totalDiscountRow" style="<%= totalShopDiscount > 0 ? "display:flex;" : "display:none;" %>">
                                 <span>Tổng giảm:</span>
-                                <strong id="totalDiscountValue">-0 đ</strong>
+                                <strong id="totalDiscountValue">-<%= nf.format((long) totalShopDiscount) %> đ</strong>
                             </div>
                             <div class="bill-row">
                                 <span>Phí vận chuyển:</span>
@@ -848,7 +869,18 @@
         var appliedShopVouchers = {};   // shopId -> voucherId
         var appliedPlatformVoucherId = null;
         var lastShopSubtotals = null;
-        var lastShopDiscounts = {};     // shopId -> discount amount
+        var lastShopDiscounts = {
+            <%
+            boolean firstD = true;
+            for (java.util.Map.Entry<Integer, Double> entry : shopAutoDiscountMap.entrySet()) {
+                if (entry.getValue() > 0) {
+                    if (!firstD) out.print(",");
+                    out.print("\"" + entry.getKey() + "\": " + entry.getValue());
+                    firstD = false;
+                }
+            }
+            %>
+        };     // shopId -> discount amount
 
         // ======= VOUCHER DROPDOWN DATA =======
         // Shop vouchers: shopId -> array of voucher objects
@@ -1270,14 +1302,56 @@
         }
 
         function clearVoucherDisplay() {
-            document.getElementById("totalShopDiscountRow").style.display = "none";
+            var initialShopDiscount = <%= totalShopDiscount %>;
+            var initialShipping = <%= shippingFee %>;
+            var initialTotal = <%= totalCost %>;
+
+            if (initialShopDiscount > 0) {
+                document.getElementById("totalShopDiscountRow").style.display = "flex";
+                document.getElementById("totalShopDiscountValue").innerText = "-" + formatCurrency(initialShopDiscount);
+                
+                var container = document.getElementById("perShopDiscountContainer");
+                container.innerHTML = "";
+                <%
+                for (java.util.Map.Entry<Integer, Double> entry : shopAutoDiscountMap.entrySet()) {
+                    if (entry.getValue() > 0) {
+                %>
+                var div = document.createElement("div");
+                div.className = "bill-row discount";
+                div.style.display = "flex";
+                div.innerHTML = '<span style="font-size:0.78rem; color:var(--gray-600); padding-left:0.5rem;">◦ Shop #<%= entry.getKey() %>:</span><strong>-' + formatCurrency(<%= entry.getValue() %>) + '</strong>';
+                container.appendChild(div);
+                <%
+                    }
+                }
+                %>
+                
+                document.getElementById("totalDiscountRow").style.display = "flex";
+                document.getElementById("totalDiscountValue").innerText = "-" + formatCurrency(initialShopDiscount);
+                document.getElementById("finalCostValue").innerText = formatCurrency(initialTotal - initialShopDiscount + initialShipping);
+            } else {
+                document.getElementById("totalShopDiscountRow").style.display = "none";
+                document.getElementById("perShopDiscountContainer").innerHTML = "";
+                document.getElementById("totalDiscountRow").style.display = "none";
+                document.getElementById("finalCostValue").innerText = formatCurrency(initialTotal + initialShipping);
+            }
+
             document.getElementById("platformDiscountRow").style.display = "none";
-            document.getElementById("totalDiscountRow").style.display = "none";
-            document.getElementById("perShopDiscountContainer").innerHTML = "";
-            document.getElementById("finalCostValue").innerText = formatCurrency(originalTotal + originalShipping);
             appliedShopVouchers = {};
             appliedPlatformVoucherId = null;
-            lastShopDiscounts = {};
+            
+            lastShopDiscounts = {
+                <%
+                boolean firstD2 = true;
+                for (java.util.Map.Entry<Integer, Double> entry : shopAutoDiscountMap.entrySet()) {
+                    if (entry.getValue() > 0) {
+                        if (!firstD2) out.print(",");
+                        out.print("\"" + entry.getKey() + "\": " + entry.getValue());
+                        firstD2 = false;
+                    }
+                }
+                %>
+            };
 
             // Clear per-shop messages
             var msgDivs = document.querySelectorAll("[id^='shopVoucherMsg_']");
