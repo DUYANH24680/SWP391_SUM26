@@ -48,7 +48,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đơn Hàng Của Tôi | Sena Shop</title>
+    <title>Đơn Hàng Của Tôi | SenaFruit</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
@@ -485,7 +485,7 @@
                         for (Order o : orders) {
                             List<OrderDetail> details = detailsMap.get(o.getId());
                 %>
-                    <div class="order-card" data-status="<%= o.getStatus() %>">
+                    <div class="order-card" data-status="<%= o.getStatus() %>" onclick="window.location.href='<%= request.getContextPath() %>/order-detail?id=<%= o.getId() %>'" style="cursor: pointer;">
                         <!-- Order Header -->
                         <div class="order-header">
                             <div class="order-date-id">
@@ -520,7 +520,7 @@
                                     <div class="item-price" style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem;">
                                         <div><%= nf.format((long) od.getUnitPrice()) %> đ</div>
                                         <% if (o.getStatus() == 4) { %>
-                                        <button style="padding: 0.2rem 0.6rem; font-size: 0.8rem; border-radius: 4px; border: 1px solid #ef4444; color: #ef4444; background: transparent; cursor: pointer; font-family: 'Inter', sans-serif;" onclick="openReportModal('<%= od.getProductId() %>', '<%= od.getProductTitle().replace("'", "\\'") %>')" onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background='transparent'">
+                                        <button style="padding: 0.2rem 0.6rem; font-size: 0.8rem; border-radius: 4px; border: 1px solid #ef4444; color: #ef4444; background: transparent; cursor: pointer; font-family: 'Inter', sans-serif;" onclick="event.stopPropagation(); openReportModal('<%= od.getProductId() %>', '<%= od.getProductTitle().replace("'", "\\'") %>')" onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background='transparent'">
                                             <i class="fa-solid fa-triangle-exclamation"></i> Báo Cáo
                                         </button>
                                         <% } %>
@@ -534,7 +534,7 @@
 
                         <!-- Shipping info -->
                         <div class="order-shipping-info">
-                            <div><i class="fa-solid fa-Account-tag" style="width:14px;color:var(--green);"></i> <strong>Người nhận:</strong> <%= o.getRecipientName() %> - <%= o.getRecipientPhone() %></div>
+                            <div><i class="fa-solid fa-user-tag" style="width:14px;color:var(--green);"></i> <strong>Người nhận:</strong> <%= o.getRecipientName() %> - <%= o.getRecipientPhone() %></div>
                             <div style="margin-top:0.2rem;"><i class="fa-solid fa-map-pin" style="width:14px;color:var(--green);"></i> <strong>Địa chỉ giao:</strong> <%= o.getAddress() %></div>
                             <% if (o.getNote() != null && !o.getNote().isEmpty()) { %>
                                 <div style="margin-top:0.2rem;"><i class="fa-solid fa-comment-dots" style="width:14px;color:var(--green);"></i> <strong>Ghi chú:</strong> <%= o.getNote() %></div>
@@ -561,7 +561,7 @@
 
                                 <div class="order-actions" style="display: flex; gap: 0.5rem;">
                                     <% if (o.getStatus() == 1) { %>
-                                        <form method="post" action="my-orders" onsubmit="return confirm('Bạn có chắc chắn muốn hủy đơn hàng này không?');" style="margin: 0;">
+                                        <form method="post" action="my-orders" onclick="event.stopPropagation();" onsubmit="return confirm('Bạn có chắc chắn muốn hủy đơn hàng này không?');" style="margin: 0;">
                                             <input type="hidden" name="action" value="cancel">
                                             <input type="hidden" name="orderId" value="<%= o.getId() %>">
                                             <button type="submit" class="btn btn-danger-outline">
@@ -570,7 +570,7 @@
                                         </form>
                                     <% } %>
                                     <% if (o.getStatus() == 4) { %>
-                                        <form method="post" action="cart" style="margin: 0;">
+                                        <form method="post" action="cart" onclick="event.stopPropagation();" style="margin: 0;">
                                             <input type="hidden" name="action" value="reorder">
                                             <input type="hidden" name="orderId" value="<%= o.getId() %>">
                                             <button type="submit" class="btn btn-green">

@@ -88,7 +88,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Doanh Thu | Sena Shop</title>
+    <title>Doanh Thu | SenaFruit</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -655,9 +655,9 @@
     <!-- Footer -->
     <footer class="footer">
         <a href="<%= request.getContextPath() %>/home.jsp" class="footer-logo">
-            <i class="fa-solid fa-apple-whole"></i> Sena Shop
+            <i class="fa-solid fa-apple-whole"></i> SenaFruit
         </a>
-        <span class="footer-copy">&copy; 2024 Sena Shop. Trái cây tươi ngon mỗi ngày.</span>
+        <span class="footer-copy">&copy; 2024 SenaFruit. Trái cây tươi ngon mỗi ngày.</span>
     </footer>
 
     <script>

@@ -374,20 +374,24 @@ public class OrderService {
             String voucherCode = shopVoucherCodes != null ? shopVoucherCodes.get(shopId) : null;
             double shopSubtotal = shopTotalCostMap.get(shopId);
 
-            if (voucherCode == null || voucherCode.trim().isEmpty()) {
-                shopDiscountMap.put(shopId, 0.0);
-                continue;
+            double discount = 0.0;
+            if (voucherCode != null && !voucherCode.trim().isEmpty()) {
+                Voucher voucher = voucherDAO.findByCode(voucherCode.trim());
+                if (voucher != null && voucher.isValid(shopSubtotal)) {
+                    discount = voucher.calculateDiscount(shopSubtotal);
+                    shopVoucherIdMap.put(shopId, voucher.getId());
+                }
             }
 
-            Voucher voucher = voucherDAO.findByCode(voucherCode.trim());
-            if (voucher == null || !voucher.isValid(shopSubtotal)) {
-                shopDiscountMap.put(shopId, 0.0);
-                continue;
+            // Apply extra 5% discount for shop orders > 500k
+            if (shopSubtotal > 500000) {
+                discount += shopSubtotal * 0.05;
+            }
+            if (discount > shopSubtotal) {
+                discount = shopSubtotal;
             }
 
-            double discount = voucher.calculateDiscount(shopSubtotal);
             shopDiscountMap.put(shopId, discount);
-            shopVoucherIdMap.put(shopId, voucher.getId());
             totalShopDiscount += discount;
         }
 
@@ -683,6 +687,8 @@ public class OrderService {
             dao.close();
         }
     }
+
+    public void close() {
+        // No resources to close at service level
+    }
 }
-
-

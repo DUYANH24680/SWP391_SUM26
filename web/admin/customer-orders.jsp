@@ -23,7 +23,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>L?ch S? –on H‡ng | <%= customer != null ? customer.getFullname() : "" %> | Sena Shop</title>
+    <title>L?ch S? √êon H√†ng | <%= customer != null ? customer.getFullname() : "" %> | SenaFruit</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
@@ -318,7 +318,7 @@
     <div class="layout">
         <!-- Back link -->
         <a href="<%= request.getContextPath() %>/admin/customers" class="back-link">
-            <i class="fa-solid fa-arrow-left"></i> Quay l?i danh s·ch kh·ch h‡ng
+            <i class="fa-solid fa-arrow-left"></i> Quay l?i danh s√°ch kh√°ch h√†ng
         </a>
 
         <% if (customer != null) { %>
@@ -333,28 +333,28 @@
                 %>
                 <img src="<%= cAvatar %>" alt="avatar" class="customer-avatar">
                 <div class="customer-info-text">
-                    <h2><%= customer.getFullname() != null ? customer.getFullname() : "Chua cÛ tÍn" %></h2>
+                    <h2><%= customer.getFullname() != null ? customer.getFullname() : "Chua c√≥ t√™n" %></h2>
                     <p>
                         <i class="fa-solid fa-user"></i> @<%= customer.getUsername() %>
                         &nbsp;|&nbsp;
-                        <i class="fa-solid fa-envelope"></i> <%= customer.getEmail() != null ? customer.getEmail() : "ó" %>
+                        <i class="fa-solid fa-envelope"></i> <%= customer.getEmail() != null ? customer.getEmail() : "‚Äî" %>
                         &nbsp;|&nbsp;
-                        <i class="fa-solid fa-phone"></i> <%= customer.getPhone() != null ? customer.getPhone() : "ó" %>
+                        <i class="fa-solid fa-phone"></i> <%= customer.getPhone() != null ? customer.getPhone() : "‚Äî" %>
                     </p>
                     <p>
-                        <i class="fa-solid fa-calendar"></i> Tham gia: <%= customer.getCreatedAt() != null ? sdf.format(customer.getCreatedAt()) : "ó" %>
+                        <i class="fa-solid fa-calendar"></i> Tham gia: <%= customer.getCreatedAt() != null ? sdf.format(customer.getCreatedAt()) : "‚Äî" %>
                     </p>
                 </div>
                 <div class="customer-meta">
                     <div class="meta-item">
                         <div class="meta-value"><%= orders != null ? orders.size() : 0 %></div>
-                        <div class="meta-label">–on h‡ng</div>
+                        <div class="meta-label">√êon h√†ng</div>
                     </div>
                     <div class="meta-item">
                         <div class="meta-value" style="color: <%= customer.getStatus() == 1 ? "var(--green-dark)" : "#dc2626" %>;">
                             <%= customer.getStatus() == 1 ? "Active" : "Blocked" %>
                         </div>
-                        <div class="meta-label">Tr?ng th·i</div>
+                        <div class="meta-label">Tr?ng th√°i</div>
                     </div>
                 </div>
             </div>
@@ -363,11 +363,11 @@
         <!-- Tab filter -->
         <div class="tabs-card">
             <button class="tab-btn active" onclick="filterOrders('all')">T?t c?</button>
-            <button class="tab-btn" onclick="filterOrders('1')">Ch? x·c nh?n</button>
-            <button class="tab-btn" onclick="filterOrders('2')">–„ x·c nh?n</button>
-            <button class="tab-btn" onclick="filterOrders('3')">–ang giao</button>
-            <button class="tab-btn" onclick="filterOrders('4')">–„ giao</button>
-            <button class="tab-btn" onclick="filterOrders('5')">–„ h?y</button>
+            <button class="tab-btn" onclick="filterOrders('1')">Ch? x√°c nh?n</button>
+            <button class="tab-btn" onclick="filterOrders('2')">√ê√£ x√°c nh?n</button>
+            <button class="tab-btn" onclick="filterOrders('3')">√êang giao</button>
+            <button class="tab-btn" onclick="filterOrders('4')">√ê√£ giao</button>
+            <button class="tab-btn" onclick="filterOrders('5')">√ê√£ h?y</button>
         </div>
 
         <!-- Orders -->
@@ -379,8 +379,8 @@
                 <div class="order-header">
                     <div class="order-date-id">
                         <i class="fa-regular fa-calendar"></i>
-                        <strong><%= o.getOrderDate() != null ? sdf.format(o.getOrderDate()) : "ó" %></strong>
-                        <span class="order-id">M„ don: #<%= o.getId() %></span>
+                        <strong><%= o.getOrderDate() != null ? sdf.format(o.getOrderDate()) : "‚Äî" %></strong>
+                        <span class="order-id">M√£ don: #<%= o.getId() %></span>
                         <% if (o.getPaymentMethod() != null) { %>
                             &nbsp;&nbsp;|&nbsp;&nbsp;
                             <i class="fa-regular fa-credit-card"></i> <%= o.getPaymentMethod() %>
@@ -402,23 +402,23 @@
                             <i class="fa-solid fa-user-tag" style="color:var(--green);"></i>
                             <strong>Ngu?i nh?n:</strong> <%= o.getRecipientName() %>
                             &nbsp;&nbsp;
-                            <i class="fa-solid fa-phone" style="color:var(--green);"></i> <%= o.getRecipientPhone() != null ? o.getRecipientPhone() : "ó" %>
+                            <i class="fa-solid fa-phone" style="color:var(--green);"></i> <%= o.getRecipientPhone() != null ? o.getRecipientPhone() : "‚Äî" %>
                             &nbsp;&nbsp;
                             <i class="fa-solid fa-map-pin" style="color:var(--green);"></i>
-                            <%= o.getAddress() != null ? o.getAddress() : "ó" %>
+                            <%= o.getAddress() != null ? o.getAddress() : "‚Äî" %>
                         </div>
                     <% } %>
                     <% if (o.getNote() != null && !o.getNote().isEmpty()) { %>
                         <div style="font-size:0.82rem; color:var(--gray-600); margin-bottom:0.75rem; font-style:italic;">
                             <i class="fa-solid fa-comment" style="color:var(--green);"></i>
-                            Ghi ch˙: <%= o.getNote() %>
+                            Ghi ch√∫: <%= o.getNote() %>
                         </div>
                     <% } %>
                 </div>
 
                 <div class="order-footer">
                     <div class="order-cost-details">
-                        Ti?n h‡ng: <%= nf.format((long) o.getTotalCost()) %> d
+                        Ti?n h√†ng: <%= nf.format((long) o.getTotalCost()) %> d
                         <% if (o.getDiscountAmount() > 0) { %> | Gi?m: -<%= nf.format((long) o.getDiscountAmount()) %> d<% } %>
                         | Ship: +<%= nf.format((long) o.getShippingFee()) %> d
                     </div>
@@ -433,7 +433,7 @@
         %>
             <div class="empty-state">
                 <i class="fa-solid fa-receipt"></i>
-                <p>Kh·ch h‡ng n‡y chua cÛ don h‡ng n‡o.</p>
+                <p>Kh√°ch h√†ng n√†y chua c√≥ don h√†ng n√†o.</p>
             </div>
         <% } %>
     </div>

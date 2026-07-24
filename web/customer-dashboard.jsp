@@ -52,7 +52,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard | Sena Shop</title>
+    <title>Dashboard | SenaFruit</title>
     <style>
         /* Layout vars already provided by sidebar.jsp */
 
@@ -620,7 +620,7 @@
                             for (Order o : displayOrders) {
                                 List<OrderDetail> details = detailsMap.get(o.getId());
                     %>
-                        <div class="order-card">
+                        <div class="order-card" onclick="window.location.href='<%= request.getContextPath() %>/order-detail?id=<%= o.getId() %>'" style="cursor: pointer;">
                             <div class="order-header">
                                 <div>
                                     Ngày đặt: <strong><%= o.getOrderDate() != null ? new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(o.getOrderDate()) : "N/A" %></strong>

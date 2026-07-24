@@ -7,7 +7,8 @@ dist/
 nbproject/private/
 
 nbproject/project.properties
-
+sql/
+.env
 # Build output
 build/
 *.html

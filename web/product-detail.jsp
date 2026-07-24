@@ -110,7 +110,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= product.getTitle() %> | Sena Shop</title>
+    <title><%= product.getTitle() %> | SenaFruit</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
@@ -717,14 +717,14 @@
 <!-- TOPNAV -->
 <nav class="topnav">
     <a href="home.jsp" class="nav-logo">
-        <i class="fa-solid fa-apple-whole"></i> Sena Shop
+        <i class="fa-solid fa-apple-whole"></i> SenaFruit
     </a>
     <div class="nav-links">
-        <a href="home.jsp">Trang Chu</a>
-        <a href="products">San Pham</a>
+        <a href="home.jsp">Trang Chủ</a>
+        <a href="products">Sản Phẩm</a>
     </div>
     <div class="nav-right">
-        <a href="wishlist" class="nav-icon-btn" title="Yeu Thich">
+        <a href="wishlist" class="nav-icon-btn" title="Yêu Thích">
             <i class="fa-solid fa-heart"></i>
             <span class="wishlist-badge"><%= wishlistCount %></span>
         </a>
@@ -742,15 +742,15 @@
     <!-- SIDEBAR -->
     <aside class="sidebar">
         <div class="sidebar-nav">
-            <a href="profile"><i class="fa-regular fa-user"></i> Ho So</a>
-            <a href="products"><i class="fa-brands fa-opencart"></i> San Pham</a>
+            <a href="profile"><i class="fa-regular fa-user"></i> Hồ Sơ</a>
+            <a href="products"><i class="fa-brands fa-opencart"></i> Sản Phẩm</a>
             <% if ("admin".equals(role) || "seller".equals(role)) { %>
-                <a href="add-product"><i class="fa-solid fa-plus"></i> Them San Pham</a>
+                <a href="add-product"><i class="fa-solid fa-plus"></i> Them Sản Phẩm</a>
             <% } %>
-            <a href="<%= "seller".equals(role) ? "seller/orders" : "my-orders" %>"><i class="fa-solid fa-basket-shopping"></i> Don Hang</a>
-            <a href="wishlist" class="active" style="color: #ef4444;"><i class="fa-regular fa-heart"></i> Yeu Thich</a>
+            <a href="<%= "seller".equals(role) ? "seller/orders" : "my-orders" %>"><i class="fa-solid fa-basket-shopping"></i> Đơn Hàng</a>
+            <a href="wishlist" class="active" style="color: #ef4444;"><i class="fa-regular fa-heart"></i> Yêu Thích</a>
             <a href="logout" class="logout" style="margin-top:0.5rem;">
-                <i class="fa-solid fa-right-from-bracket"></i> Dang Xuat
+                <i class="fa-solid fa-right-from-bracket"></i> Đăng Xuất
             </a>
         </div>
     </aside>
@@ -760,7 +760,7 @@
 
         <!-- Breadcrumb -->
         <div class="breadcrumb">
-            <a href="products"><i class="fa-solid fa-box"></i> San Pham</a>
+            <a href="products"><i class="fa-solid fa-box"></i> Sản Phẩm</a>
             <i class="fa-solid fa-chevron-right" style="font-size:0.6rem;color:var(--gray-400);"></i>
             <span><%= product.getTitle() %></span>
         </div>
@@ -783,7 +783,7 @@
         <div class="card">
             <div class="card-header">
                 <i class="fa-solid fa-circle-info" style="color:var(--green);font-size:1rem;"></i>
-                <div class="card-title">Chi Tiet San Pham</div>
+                <div class="card-title">Chi Tiet Sản Phẩm</div>
             </div>
             <div class="card-body">
 
@@ -1009,7 +1009,7 @@
                                     <input type="hidden" name="quantity" id="quantityInputHidden" value="1">
                                     <button type="submit" class="btn btn-green" id="addToCartBtn">
                                         <i class="fa-solid fa-basket-shopping"></i>
-                                        Them Vao Gio Hang
+                                        Them Vao Giỏ Hàng
                                     </button>
                                 </form>
                             <% } else if (product.getStockQuantity() <= 0) { %>
@@ -1027,7 +1027,7 @@
                                         class="btn btn-wishlist <%= inWishlist ? "in-wishlist" : "" %>"
                                         onclick="toggleWishlist(<%= product.getId() %>, this)">
                                     <i class="fa-<%= inWishlist ? "solid" : "regular" %> fa-heart"></i>
-                                    <span id="wishlistLabel"><%= inWishlist ? "Da Yeu Thich" : "Yeu Thich" %></span>
+                                    <span id="wishlistLabel"><%= inWishlist ? "Da Yêu Thích" : "Yêu Thích" %></span>
                                 </button>
                             <% } %>
 
@@ -1055,7 +1055,7 @@
         <div class="card">
             <div class="card-header">
                 <i class="fa-solid fa-align-left" style="color:var(--green);font-size:1rem;"></i>
-                <div class="card-title">Mo Ta San Pham</div>
+                <div class="card-title">Mo Ta Sản Phẩm</div>
             </div>
             <div class="card-body">
                 <% if (product.getDescription() != null && !product.getDescription().trim().isEmpty()) { %>
@@ -1075,8 +1075,8 @@
 
 <!-- FOOTER -->
 <footer class="footer">
-    <a href="home.jsp" class="footer-logo"><i class="fa-solid fa-apple-whole"></i> Sena Shop</a>
-    <span class="footer-copy">&copy; 2024 Sena Shop. Trai cay tuoi ngon moi ngay.</span>
+    <a href="home.jsp" class="footer-logo"><i class="fa-solid fa-apple-whole"></i> SenaFruit</a>
+    <span class="footer-copy">&copy; 2024 SenaFruit. Trái cây tươi ngon mỗi ngày.</span>
 </footer>
 
 <!-- TOAST -->
@@ -1158,12 +1158,12 @@
             if (btn.classList.contains('in-wishlist')) {
                 btn.classList.remove('in-wishlist');
                 icon.className = 'fa-regular fa-heart';
-                if (label) label.textContent = 'Yeu Thich';
+                if (label) label.textContent = 'Yêu Thích';
                 showToast('Da xoa san pham khoi wishlist.');
             } else {
                 btn.classList.add('in-wishlist');
                 icon.className = 'fa-solid fa-heart';
-                if (label) label.textContent = 'Da Yeu Thich';
+                if (label) label.textContent = 'Da Yêu Thích';
                 showToast('Da them san pham vao wishlist!');
             }
         })

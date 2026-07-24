@@ -97,7 +97,7 @@
 
 <nav class="admin-topnav">
     <a href="<%= ctx %>/home.jsp" class="admin-nav-logo">
-        <i class="fa-solid fa-apple-whole"></i> Sena Shop
+        <i class="fa-solid fa-apple-whole"></i> SenaFruit
     </a>
     <div class="admin-nav-links">
         <a href="<%= ctx %>/home.jsp" class="<%= "home".equals(activePage) ? "active" : "" %>">

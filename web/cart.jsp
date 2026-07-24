@@ -36,7 +36,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gio Hang | Sena Shop</title>
+    <title>Giỏ Hàng | SenaFruit</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
@@ -667,10 +667,10 @@
 <!-- TOPNAV -->
 <nav class="topnav">
     <a href="home.jsp" class="nav-logo">
-        <i class="fa-solid fa-apple-whole"></i> Sena Shop
+        <i class="fa-solid fa-apple-whole"></i> SenaFruit
     </a>
     <div class="nav-right">
-        <a href="wishlist" class="nav-icon-btn" title="Yeu Thich">
+        <a href="wishlist" class="nav-icon-btn" title="Yêu Thích">
             <i class="fa-regular fa-heart"></i>
             <% Integer wlCount = (Integer) session.getAttribute("wishlistCount"); %>
             <% if (wlCount != null && wlCount > 0) { %>
@@ -690,10 +690,10 @@
 
 <div class="page-wrap">
     <div class="breadcrumb">
-        <a href="home.jsp">Trang Chu</a> / Gio Hang
+        <a href="home.jsp">Trang Chủ</a> / Giỏ Hàng
     </div>
 
-    <h1 class="page-title">Gio Hang Cua Ban</h1>
+    <h1 class="page-title">Giỏ Hàng Cua Ban</h1>
 
     <% if (message != null) { %>
     <div class="alert alert-success">
@@ -713,10 +713,10 @@
         <% if (cart.isEmpty()) { %>
             <div class="empty-cart">
                 <div class="empty-cart-icon"><i class="fa-solid fa-cart-shopping"></i></div>
-                <h2>Gio Hang Dang Trong</h2>
+                <h2>Giỏ Hàng Dang Trong</h2>
                 <p>Hay chon san pham ban yeu thich va them vao gio hang.</p>
                 <a href="home.jsp" class="btn btn-green">
-                    <i class="fa-solid fa-basket-shopping"></i> Tiep Tuc Mua Sam
+                    <i class="fa-solid fa-basket-shopping"></i> Tiep Tuc Mua Sắm
                 </a>
             </div>
         <% } else { %>
@@ -741,7 +741,7 @@
                     <thead>
                         <tr>
                             <th style="width: 50px;"></th>
-                            <th>San Pham</th>
+                            <th>Sản Phẩm</th>
                             <th>Anh</th>
                             <th>Don Gia</th>
                             <th>So Luong</th>
@@ -860,10 +860,10 @@
 
                     <div class="cart-actions">
                         <a href="home.jsp" class="btn btn-secondary">
-                            <i class="fa-solid fa-arrow-left"></i> Tiep Tuc Mua Sam
+                            <i class="fa-solid fa-arrow-left"></i> Tiep Tuc Mua Sắm
                         </a>
                         <button type="button" class="btn btn-danger" onclick="confirmClearCart()">
-                            <i class="fa-solid fa-trash"></i> Xoa Gio Hang
+                            <i class="fa-solid fa-trash"></i> Xoa Giỏ Hàng
                         </button>
                         <button type="submit" class="btn btn-orange" id="checkoutBtn">
                             <i class="fa-solid fa-credit-card"></i> Mua Hang

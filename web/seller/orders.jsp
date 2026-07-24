@@ -445,7 +445,7 @@
                             for (Order o : orders) {
                                 List<OrderDetail> details = detailsMap.get(o.getId());
                     %>
-                        <div class="order-card" data-status="<%= o.getStatus() %>">
+                        <div class="order-card" data-status="<%= o.getStatus() %>" onclick="window.location.href='<%= request.getContextPath() %>/seller/order-detail?id=<%= o.getId() %>'" style="cursor: pointer;">
                             <!-- Order Header -->
                             <div class="order-header">
                                 <div class="order-date-id">
@@ -518,7 +518,7 @@
                                     <div class="order-actions">
                                         <% if (o.getStatus() == 1) { %>
                                             <!-- Action for Pending orders -->
-                                            <form method="post" action="orders" style="display:inline-block;" onsubmit="return confirm('Bạn có chắc chắn muốn XÁC NHẬN đơn hàng này không?');">
+                                            <form method="post" action="orders" style="display:inline-block;" onclick="event.stopPropagation();" onsubmit="return confirm('Bạn có chắc chắn muốn XÁC NHẬN đơn hàng này không?');">
                                                 <input type="hidden" name="action" value="confirm">
                                                 <input type="hidden" name="orderId" value="<%= o.getId() %>">
                                                 <button type="submit" class="btn btn-green">
@@ -526,7 +526,7 @@
                                                 </button>
                                             </form>
 
-                                            <form method="post" action="orders" style="display:inline-block;" onsubmit="return confirm('Bạn có chắc chắn muốn TỪ CHỐI đơn hàng này không?');">
+                                            <form method="post" action="orders" style="display:inline-block;" onclick="event.stopPropagation();" onsubmit="return confirm('Bạn có chắc chắn muốn TỪ CHỐI đơn hàng này không?');">
                                                 <input type="hidden" name="action" value="cancel">
                                                 <input type="hidden" name="orderId" value="<%= o.getId() %>">
                                                 <button type="submit" class="btn btn-danger-outline">

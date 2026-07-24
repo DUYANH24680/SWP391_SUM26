@@ -87,10 +87,24 @@
         }
     }
 
+    double totalShopDiscount = 0.0;
+    java.util.Map<Integer, Double> shopAutoDiscountMap = new java.util.HashMap<>();
+    for (java.util.Map.Entry<Integer, Double> entry : shopSubtotalMap.entrySet()) {
+        int shopId = entry.getKey();
+        double subtotal = entry.getValue();
+        if (subtotal > 500000) {
+            double autoDiscount = subtotal * 0.05;
+            shopAutoDiscountMap.put(shopId, autoDiscount);
+            totalShopDiscount += autoDiscount;
+        } else {
+            shopAutoDiscountMap.put(shopId, 0.0);
+        }
+    }
+
     List<DeliveryAddress> addresses = (List<DeliveryAddress>) request.getAttribute("addresses");
     List<Voucher> vouchers = (List<Voucher>) request.getAttribute("vouchers");
 
-    double finalCost = totalCost + shippingFee;
+    double finalCost = totalCost - totalShopDiscount + shippingFee;
 
     java.text.NumberFormat nf = java.text.NumberFormat.getNumberInstance(java.util.Locale.forLanguageTag("vi"));
 %>
@@ -99,7 +113,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Xác nhận đặt hàng | Sena Shop</title>
+    <title>Xác nhận đặt hàng | SenaFruit</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
@@ -601,7 +615,7 @@
     <!-- Topnav -->
     <nav class="topnav">
         <a href="home.jsp" class="nav-logo">
-            <i class="fa-solid fa-apple-whole"></i> Sena Shop
+            <i class="fa-solid fa-apple-whole"></i> SenaFruit
         </a>
     </nav>
 
@@ -703,30 +717,12 @@
                             <i class="fa-regular fa-credit-card"></i> Phương Thức Thanh Toán
                         </div>
 
-                        <label class="payment-option active">
+                        <label class="payment-option active" style="margin-bottom: 0;">
                             <input type="radio" name="paymentMethod" value="COD" checked>
                             <i class="fa-solid fa-hand-holding-dollar"></i>
                             <div>
                                 <strong style="display:block; font-size:0.875rem;">Thanh toán khi nhận hàng (COD)</strong>
                                 <span style="font-size:0.75rem; color:var(--gray-600);">Thanh toán bằng tiền mặt khi shipper giao hàng tới nơi.</span>
-                            </div>
-                        </label>
-
-                        <label class="payment-option" style="opacity: 0.6; cursor: not-allowed;" onclick="alert('Thanh toán ví điện tử MoMo đang được tích hợp.'); return false;">
-                            <input type="radio" name="paymentMethod" value="Momo" disabled>
-                            <i class="fa-solid fa-wallet" style="color:var(--gray-400);"></i>
-                            <div>
-                                <strong style="display:block; font-size:0.875rem; color:var(--gray-600);">Thanh toán qua ví MoMo (Bảo trì)</strong>
-                                <span style="font-size:0.75rem; color:var(--gray-400);">Sử dụng ví MoMo để quét mã thanh toán trực tuyến.</span>
-                            </div>
-                        </label>
-
-                        <label class="payment-option" style="opacity: 0.6; cursor: not-allowed;" onclick="alert('Thanh toán VNPay đang được tích hợp.'); return false;">
-                            <input type="radio" name="paymentMethod" value="VNPay" disabled>
-                            <i class="fa-solid fa-credit-card" style="color:var(--gray-400);"></i>
-                            <div>
-                                <strong style="display:block; font-size:0.875rem; color:var(--gray-600);">Thanh toán qua VNPay (Bảo trì)</strong>
-                                <span style="font-size:0.75rem; color:var(--gray-400);">Liên kết thẻ ngân hàng ATM/Visa/MasterCard qua cổng VNPay.</span>
                             </div>
                         </label>
                     </div>
@@ -817,19 +813,30 @@
                                 <strong id="totalCostValue"><%= nf.format((long) totalCost) %> đ</strong>
                             </div>
                             <!-- Tổng shop discount -->
-                            <div class="bill-row discount" id="totalShopDiscountRow" style="display:none;">
+                            <div class="bill-row discount" id="totalShopDiscountRow" style="<%= totalShopDiscount > 0 ? "display:flex;" : "display:none;" %>">
                                 <span>Tổng giảm Shop:</span>
-                                <strong id="totalShopDiscountValue">-0 đ</strong>
+                                <strong id="totalShopDiscountValue">-<%= nf.format((long) totalShopDiscount) %> đ</strong>
                             </div>
                             <!-- Per-shop discount breakdown -->
-                            <div id="perShopDiscountContainer"></div>
+                            <div id="perShopDiscountContainer">
+                                <% if (totalShopDiscount > 0) {
+                                     for (java.util.Map.Entry<Integer, Double> entry : shopAutoDiscountMap.entrySet()) {
+                                         if (entry.getValue() > 0) { %>
+                                            <div class="bill-row discount" style="display:flex;">
+                                                <span style="font-size:0.78rem; color:var(--gray-600); padding-left:0.5rem;">◦ Shop #<%= entry.getKey() %>:</span>
+                                                <strong>-<%= nf.format(entry.getValue().longValue()) %> đ</strong>
+                                            </div>
+                                         <% }
+                                     }
+                                } %>
+                            </div>
                             <div class="bill-row discount" id="platformDiscountRow" style="display:none;">
                                 <span>Giảm Sàn:</span>
                                 <strong id="platformDiscountValue">-0 đ</strong>
                             </div>
-                            <div class="bill-row discount" id="totalDiscountRow" style="display:none;">
+                            <div class="bill-row discount" id="totalDiscountRow" style="<%= totalShopDiscount > 0 ? "display:flex;" : "display:none;" %>">
                                 <span>Tổng giảm:</span>
-                                <strong id="totalDiscountValue">-0 đ</strong>
+                                <strong id="totalDiscountValue">-<%= nf.format((long) totalShopDiscount) %> đ</strong>
                             </div>
                             <div class="bill-row">
                                 <span>Phí vận chuyển:</span>
@@ -867,7 +874,7 @@
 
     <!-- Footer -->
     <footer class="footer">
-        &copy; 2026 Sena Shop. Hệ thống mua bán trái cây tươi ngon - chất lượng cao.
+        &copy; 2026 SenaFruit. Hệ thống mua bán trái cây tươi ngon - chất lượng cao.
     </footer>
 
     <script>
@@ -903,7 +910,18 @@
         var originalShipping = <%= shippingFee %>;
         var appliedShopVouchers = {};   // shopId -> voucherId
         var appliedPlatformVoucherId = null;
-        var lastShopDiscounts = {};
+        var lastShopDiscounts = {
+            <%
+            boolean firstD = true;
+            for (java.util.Map.Entry<Integer, Double> entry : shopAutoDiscountMap.entrySet()) {
+                if (entry.getValue() > 0) {
+                    if (!firstD) out.print(",");
+                    out.print("\"" + entry.getKey() + "\": " + entry.getValue());
+                    firstD = false;
+                }
+            }
+            %>
+        };
 
         // ======= VOUCHER DROPDOWN DATA =======
         var shopVouchersMap = {};
@@ -1140,14 +1158,56 @@
         }
 
         function clearVoucherDisplay() {
-            document.getElementById("totalShopDiscountRow").style.display = "none";
+            var initialShopDiscount = <%= totalShopDiscount %>;
+            var initialShipping = <%= shippingFee %>;
+            var initialTotal = <%= totalCost %>;
+
+            if (initialShopDiscount > 0) {
+                document.getElementById("totalShopDiscountRow").style.display = "flex";
+                document.getElementById("totalShopDiscountValue").innerText = "-" + formatCurrency(initialShopDiscount);
+                
+                var container = document.getElementById("perShopDiscountContainer");
+                container.innerHTML = "";
+                <%
+                for (java.util.Map.Entry<Integer, Double> entry : shopAutoDiscountMap.entrySet()) {
+                    if (entry.getValue() > 0) {
+                %>
+                var div = document.createElement("div");
+                div.className = "bill-row discount";
+                div.style.display = "flex";
+                div.innerHTML = '<span style="font-size:0.78rem; color:var(--gray-600); padding-left:0.5rem;">◦ Shop #<%= entry.getKey() %>:</span><strong>-' + formatCurrency(<%= entry.getValue() %>) + '</strong>';
+                container.appendChild(div);
+                <%
+                    }
+                }
+                %>
+                
+                document.getElementById("totalDiscountRow").style.display = "flex";
+                document.getElementById("totalDiscountValue").innerText = "-" + formatCurrency(initialShopDiscount);
+                document.getElementById("finalCostValue").innerText = formatCurrency(initialTotal - initialShopDiscount + initialShipping);
+            } else {
+                document.getElementById("totalShopDiscountRow").style.display = "none";
+                document.getElementById("perShopDiscountContainer").innerHTML = "";
+                document.getElementById("totalDiscountRow").style.display = "none";
+                document.getElementById("finalCostValue").innerText = formatCurrency(initialTotal + initialShipping);
+            }
+
             document.getElementById("platformDiscountRow").style.display = "none";
-            document.getElementById("totalDiscountRow").style.display = "none";
-            document.getElementById("perShopDiscountContainer").innerHTML = "";
-            document.getElementById("finalCostValue").innerText = formatCurrency(originalTotal + originalShipping);
             appliedShopVouchers = {};
             appliedPlatformVoucherId = null;
-            lastShopDiscounts = {};
+            
+            lastShopDiscounts = {
+                <%
+                boolean firstD2 = true;
+                for (java.util.Map.Entry<Integer, Double> entry : shopAutoDiscountMap.entrySet()) {
+                    if (entry.getValue() > 0) {
+                        if (!firstD2) out.print(",");
+                        out.print("\"" + entry.getKey() + "\": " + entry.getValue());
+                        firstD2 = false;
+                    }
+                }
+                %>
+            };
 
             var msgDivs = document.querySelectorAll("[id^='shopVoucherMsg_']");
             msgDivs.forEach(function(div) { div.className = "voucher-msg"; div.innerText = ""; });

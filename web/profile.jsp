@@ -52,7 +52,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hồ Sơ Cá Nhân | Sena Shop</title>
+    <title>Hồ Sơ Cá Nhân | SenaFruit</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
@@ -549,7 +549,7 @@
                     </div>
                     <div class="hero-actions">
                         <button class="btn btn-green btn-sm" onclick="openEdit()">
-                            <i class="fa-solid fa-pencil"></i> Chinh Sua Ho So
+                            <i class="fa-solid fa-pencil"></i> Chinh Sua Hồ Sơ
                         </button>
                     </div>
                 </div>
@@ -596,7 +596,7 @@
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">
-                        <i class="fa-solid fa-shield-halved"></i> Bảo Mật Tai Khoan
+                        <i class="fa-solid fa-shield-halved"></i> Bảo Mật Tài Khoản
                     </div>
                 </div>
                 <div class="card-body">
@@ -635,7 +635,7 @@
                     <% if (!createdAtStr.isEmpty()) { %>
                     <div class="security-join">
                         <i class="fa-regular fa-calendar"></i>
-                        Tham gia Sena Shop tu ngay <strong style="margin-left:0.2rem;"><%= createdAtStr %></strong>
+                        Tham gia SenaFruit tu ngay <strong style="margin-left:0.2rem;"><%= createdAtStr %></strong>
                     </div>
                     <% } %>
                 </div>
@@ -652,7 +652,7 @@
 <div class="modal-overlay" id="editModal">
     <div class="modal-box">
         <div class="modal-header">
-            <div class="modal-title"><i class="fa-regular fa-pen-to-square"></i> Chinh Sua Ho So</div>
+            <div class="modal-title"><i class="fa-regular fa-pen-to-square"></i> Chinh Sua Hồ Sơ</div>
             <button class="modal-close" onclick="closeEdit()"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <form id="profileForm" action="profile" method="POST" enctype="multipart/form-data" onsubmit="return validateProfileForm(event)">

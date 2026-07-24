@@ -28,7 +28,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đăng Ký Cửa Hàng | Sena Shop</title>
+    <title>Đăng Ký Cửa Hàng | SenaFruit</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
@@ -263,7 +263,7 @@
     <!-- Topnav -->
     <nav class="topnav">
         <a href="<%= request.getContextPath() %>/home.jsp" class="nav-logo">
-            <i class="fa-solid fa-apple-whole"></i> Sena Shop
+            <i class="fa-solid fa-apple-whole"></i> SenaFruit
         </a>
         <div class="nav-links">
             <a href="<%= request.getContextPath() %>/home.jsp">
@@ -355,7 +355,7 @@
             <div class="card">
                 <div class="card-header">
                     <h1><i class="fa-solid fa-store"></i> Đăng Ký Cửa Hàng</h1>
-                    <p>Mở cửa hàng trái cây của riêng bạn trên Sena Shop</p>
+                    <p>Mở cửa hàng trái cây của riêng bạn trên SenaFruit</p>
                 </div>
                 <div class="card-body">
                     <div class="info-box">

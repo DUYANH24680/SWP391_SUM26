@@ -27,7 +27,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Danh Sách Sản Phẩm | Sena Shop</title>
+    <title>Danh Sách Sản Phẩm | SenaFruit</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
@@ -459,11 +459,11 @@
         <div class="card">
             <div class="card-header">
                 <div class="card-title">
-                    <i class="fa-brands fa-opencart"></i> Danh Sach San Pham
+                    <i class="fa-brands fa-opencart"></i> Danh Sach Sản Phẩm
                 </div>
                 <c:if test="${sessionScope.role == 'admin' || sessionScope.role == 'seller'}">
                     <a href="add-product" class="btn btn-green btn-sm">
-                        <i class="fa-solid fa-plus"></i> Them San Pham
+                        <i class="fa-solid fa-plus"></i> Them Sản Phẩm
                     </a>
                 </c:if>
             </div>
@@ -505,7 +505,7 @@
                         <tr>
                             <th>ID</th>
                             <th>Hinh Anh</th>
-                            <th>Ten San Pham</th>
+                            <th>Ten Sản Phẩm</th>
                             <th>Cua Hang</th>
                             <th>Don Vi</th>
                             <th>So Luong</th>
@@ -676,8 +676,8 @@
 
 <!-- ====== FOOTER ====== -->
 <footer class="footer">
-    <a href="home.jsp" class="footer-logo"><i class="fa-solid fa-apple-whole"></i> Sena Shop</a>
-    <span class="footer-copy">&copy; 2024 Sena Shop. Trai cay tuoi ngon moi ngay.</span>
+    <a href="home.jsp" class="footer-logo"><i class="fa-solid fa-apple-whole"></i> SenaFruit</a>
+    <span class="footer-copy">&copy; 2024 SenaFruit. Trái cây tươi ngon mỗi ngày.</span>
 </footer>
 
 <script>

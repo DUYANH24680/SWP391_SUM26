@@ -29,7 +29,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Báo Cáo Cửa Hàng | Sena Shop</title>
+    <title>Báo Cáo Cửa Hàng | SenaFruit</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
@@ -315,7 +315,7 @@
     <!-- TOPNAV -->
     <header class="topnav">
         <a href="<%= request.getContextPath() %>/home.jsp" class="nav-logo">
-            <i class="fa-solid fa-leaf"></i> Sena Shop
+            <i class="fa-solid fa-leaf"></i> SenaFruit
         </a>
         <a href="<%= request.getContextPath() %>/home.jsp" class="nav-back">
             <i class="fa-solid fa-arrow-left"></i> Quay lại trang chủ
