@@ -66,6 +66,10 @@ public class AddProductServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         HttpSession session = req.getSession(false);
+        if (session == null || !"seller".equalsIgnoreCase((String) session.getAttribute("role"))) {
+            resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Access Denied");
+            return;
+        }
 
         int ownerId = getOwnerIdFromSession(session);
 
@@ -105,6 +109,10 @@ public class AddProductServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         HttpSession session = req.getSession(false);
+        if (session == null || !"seller".equalsIgnoreCase((String) session.getAttribute("role"))) {
+            resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Access Denied");
+            return;
+        }
 
         int ownerId = getOwnerIdFromSession(session);
 
@@ -255,19 +263,6 @@ public class AddProductServlet extends HttpServlet {
         try {
             boolean success = productDAO.addProduct(product, imageUrls);
             if (success) {
-                /*
-                // Parse & insert variants (AN / COMMENT)
-                List<ProductVariant> variants = parseVariants(req);
-                if (!variants.isEmpty()) {
-                    ProductVariantDAO variantDAO = new ProductVariantDAO();
-                    try {
-                        variantDAO.insertVariants(product.getId(), variants);
-                    } finally {
-                        variantDAO.close();
-                    }
-                }
-                */
-
                 if (session != null) {
                     session.setAttribute("message", "San pham da duoc tao thanh cong va dang cho duyet!");
                 }
@@ -283,51 +278,6 @@ public class AddProductServlet extends HttpServlet {
         }
     }
 
-    /*
-    // ===== Parse variant parameters (AN / COMMENT) =====
-    private List<ProductVariant> parseVariants(HttpServletRequest req) {
-        List<ProductVariant> variants = new ArrayList<>();
-        String[] weights  = req.getParameterValues("variantWeight");
-        String[] units    = req.getParameterValues("variantUnit");
-        String[] prices   = req.getParameterValues("variantPrice");
-        String[] stocks   = req.getParameterValues("variantStock");
-
-        if (weights == null) {
-            return variants;
-        }
-
-        for (int i = 0; i < weights.length; i++) {
-            String weight = weights[i];
-            if (weight == null || weight.trim().isEmpty()) {
-                continue; // skip empty rows
-            }
-
-            ProductVariant v = new ProductVariant();
-
-            String w = weight.trim();
-            String u = (units != null && units.length > i && units[i] != null) ? units[i].trim() : "";
-            v.setWeightValue(w);
-            v.setWeightUnit(u);
-
-            if (prices != null && prices.length > i && prices[i] != null && !prices[i].trim().isEmpty()) {
-                try {
-                    v.setPrice(Double.parseDouble(prices[i].trim()));
-                } catch (NumberFormatException ignored) {}
-            }
-
-            if (stocks != null && stocks.length > i && stocks[i] != null && !stocks[i].trim().isEmpty()) {
-                try {
-                    v.setStockQuantity(Integer.parseInt(stocks[i].trim()));
-                } catch (NumberFormatException ignored) {}
-            }
-
-            variants.add(v);
-        }
-
-        System.out.println("[AddProductServlet] parseVariants() parsed " + variants.size() + " valid variants");
-        return variants;
-    }
-    */
 }
 
 

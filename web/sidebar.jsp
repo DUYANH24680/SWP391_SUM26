@@ -503,9 +503,6 @@ Dung chung cho tat ca trang co sidebar (customer + seller + admin)
             <a href="<%= ctx %>/admin/orders" class="sena-nav-item <%="orders".equals(activePage) ? "active" : "" %>">
                 <i class="fa-solid fa-basket-shopping"></i> Đơn Hàng
             </a>
-            <a href="<%= ctx %>/products" class="sena-nav-item <%="products".equals(activePage) ? "active" : "" %>">
-                <i class="fa-brands fa-opencart"></i> Sản Phẩm
-            </a>
             <a href="<%= ctx %>/category" class="sena-nav-item <%="category".equals(activePage) ? "active" : "" %>">
                 <i class="fa-solid fa-layer-group"></i> Danh Mục
             </a>

@@ -533,6 +533,16 @@
                                                 flex-direction: column;
                                                 gap: 0.8rem;
                                             }
+                                            
+                                            .batch-card[data-status="valid"] {
+                                                background: #f0fdf4;
+                                                border: 1px solid #bbf7d0;
+                                            }
+                                            
+                                            .batch-card[data-status="expired"] {
+                                                background: #fef2f2;
+                                                border: 1px solid #fecaca;
+                                            }
 
                                             .batch-header {
                                                 display: flex;
@@ -586,6 +596,7 @@
                                                 color: var(--gray-800);
                                             }
 
+                                            /* Trạng thái: Hết hạn (Màu đỏ) */
                                             .status-expired {
                                                 color: #dc2626;
                                                 font-weight: 600;
@@ -596,13 +607,18 @@
                                                 font-weight: 600;
                                             }
 
+                                            /* Trạng thái: Còn hạn (Màu xanh lá) */
+                                            .status-valid {
+                                                color: var(--green);
+                                                font-weight: 600;
+                                            }
+
                                             .batch-action {
                                                 margin-top: auto;
                                             }
 
                                             .btn-export-card {
                                                 width: 100%;
-                                                background: var(--red);
                                                 color: #fff;
                                                 border: none;
                                                 padding: 0.6rem;
@@ -616,8 +632,18 @@
                                                 justify-content: center;
                                                 gap: 0.4rem;
                                             }
+                                            
+                                            .batch-card[data-status="valid"] .btn-export-card {
+                                                background: var(--green);
+                                            }
+                                            .batch-card[data-status="valid"] .btn-export-card:hover {
+                                                background: var(--green-dark, #16a34a);
+                                            }
 
-                                            .btn-export-card:hover {
+                                            .batch-card[data-status="expired"] .btn-export-card {
+                                                background: var(--red);
+                                            }
+                                            .batch-card[data-status="expired"] .btn-export-card:hover {
                                                 background: var(--red-dark);
                                             }
 
@@ -742,6 +768,12 @@
                                                                     <p style="font-size: 0.85rem; color: var(--gray-400); margin: 0;">Chọn các sản phẩm bên dưới để ghi nhận xuất kho</p>
                                                                 </div>
                                                             </div>
+                                                            <!-- Nút Lọc theo Hạn Sử Dụng -->
+                                                            <div class="filter-buttons" style="margin-bottom: 1.5rem; display: flex; gap: 0.5rem;">
+                                                                <button type="button" class="btn btn-outline active" onclick="filterBatches('all')" id="btn-filter-all">Tất cả</button>
+                                                                <button type="button" class="btn btn-outline" style="color: var(--green); border-color: var(--green);" onclick="filterBatches('valid')" id="btn-filter-valid">Còn hạn</button>
+                                                                <button type="button" class="btn btn-outline" style="color: var(--red); border-color: var(--red);" onclick="filterBatches('expired')" id="btn-filter-expired">Hết hạn</button>
+                                                            </div>
                                                             <div class="product-grid">
                                                                 <% if (batches !=null && !batches.isEmpty()) { for
                                                                     (java.util.Map<String, Object> batch : batches) { 
@@ -753,14 +785,21 @@
                                                                     ; String statusLabel="" ; String expStrForInput = "";
                                                                     if (expDate !=null) {
                                                                     expStrForInput = sdfSql.format(expDate);
-                                                                    expStr=sdfExp.format(expDate); long
-                                                                    diffMs=expDate.getTime() - now.getTime(); long
-                                                                    diffDays=diffMs / (1000L * 60 * 60 * 24); if (diffMs
-                                                                    < 0) { statusClass="status-expired" ;
-                                                                    statusLabel="Đã hết hạn" ; } else if (diffDays <=7)
-                                                                    { statusClass="status-expiring" ;
-                                                                    statusLabel="Sắp hết hạn" ; } } String
-                                                                    unit=batch.get("unit") !=null ? (String) batch.get("unit") : "" ; String
+                                                                    expStr=sdfExp.format(expDate); 
+                                                                    long diffMs=expDate.getTime() - now.getTime(); 
+                                                                    if (diffMs < 0) { 
+                                                                        statusClass="status-expired" ;
+                                                                        statusLabel="Đã hết hạn" ; 
+                                                                    } else { 
+                                                                        statusClass="status-valid" ;
+                                                                        statusLabel="Còn hạn" ; 
+                                                                    } 
+                                                                } else {
+                                                                    statusClass="status-valid";
+                                                                    statusLabel="Còn hạn";
+                                                                }
+                                                                
+                                                                String unit=batch.get("unit") !=null ? (String) batch.get("unit") : "" ; String
                                                                     safeTitle=batch.get("title") !=null ?
                                                                     ((String) batch.get("title")).replace("\"", "&quot;"
                                                                     ).replace("'", "\\'" ) : "" ; String
@@ -768,7 +807,7 @@
                                                                     ImageUrlUtil.resolve((String) batch.get("image"),
                                                                     request.getContextPath()) : "" ; %>
                                                                     <!-- Batch Card -->
-                                                                    <div class="batch-card">
+                                                                    <div class="batch-card" data-status="<%= statusClass.contains("expired") ? "expired" : "valid" %>">
                                                                         <div class="batch-header">
                                                                             <% if (!imgUrl.isEmpty()) { %>
                                                                                 <img src="<%= imgUrl %>"
@@ -809,9 +848,8 @@
                                                                                         </div>
                                                                         </div>
                                                                         <div class="batch-action">
-                                                                            <button type="button"
-                                                                                class="btn-export-card"
-                                                                                onclick="openExportModal(<%= productId %>, '<%= safeTitle %>', <%= stock %>, '<%= unit %>', '<%= expStrForInput %>')">
+                                                                            <button type="button" class="btn-export-card"
+                                                                                onclick="openExportModal(<%= productId %>, '<%= safeTitle %>', <%= stock %>, '<%= unit %>', '<%= expStrForInput %>', '<%= statusClass.contains("expired") ? "expired" : "valid" %>')">
                                                                                 <i class="fa-solid fa-arrow-right-from-bracket"
                                                                                     style="font-size:0.8rem;"></i>
                                                                                 Xuất kho lô này
@@ -915,7 +953,14 @@
                                                 var stockErrorText = document.getElementById('stockErrorText');
                                                 var btnSubmit = document.getElementById('btnSubmit');
 
-                                                window.openExportModal = function (productId, title, stock, unit, expiredDateStr) {
+                                                // Hàm mở Modal Xuất Kho (Hiển thị popup)
+                                                window.openExportModal = function (productId, title, stock, unit, expiredDateStr, status) {
+                                                    // Kiểm tra cảnh báo nếu người dùng ấn xuất lô hàng còn hạn
+                                                    if (status === 'valid') {
+                                                        if (!confirm('Bạn có chắc muốn xuất kho sản phẩm còn hạn không?')) {
+                                                            return; // Hủy mở modal nếu chọn Cancel
+                                                        }
+                                                    }
                                                     modalProductId.value = productId;
                                                     modalExpiredDate.value = expiredDateStr;
                                                     modalMaxStock.value = stock;
@@ -927,8 +972,27 @@
                                                     exportModal.classList.add('active');
                                                 };
 
+                                                // Hàm đóng Modal Xuất Kho
                                                 window.closeExportModal = function () {
                                                     exportModal.classList.remove('active');
+                                                };
+
+                                                // Hàm lọc danh sách lô hàng theo trạng thái HSD
+                                                window.filterBatches = function (status) {
+                                                    // Xóa class active của tất cả các nút lọc
+                                                    document.querySelectorAll('.filter-buttons .btn').forEach(btn => btn.classList.remove('active'));
+                                                    // Thêm class active cho nút lọc đang được chọn
+                                                    document.getElementById('btn-filter-' + status).classList.add('active');
+
+                                                    // Duyệt qua tất cả các thẻ sản phẩm và ẩn/hiện dựa trên data-status
+                                                    var cards = document.querySelectorAll('.batch-card');
+                                                    cards.forEach(card => {
+                                                        if (status === 'all' || card.getAttribute('data-status') === status) {
+                                                            card.style.display = 'flex';
+                                                        } else {
+                                                            card.style.display = 'none';
+                                                        }
+                                                    });
                                                 };
 
                                                 window.validateModalStock = function () {

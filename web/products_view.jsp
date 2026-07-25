@@ -412,7 +412,7 @@
         }
     </style>
 </head>
-<body><c:if test="${sessionScope.role == 'customer' || empty sessionScope.role || (sessionScope.role != 'seller' && sessionScope.role != 'admin')}">
+<body><c:if test="${sessionScope.role != 'seller'}">
     <style>
         .sena-sidebar { display: none !important; }
         .sena-layout { max-width: 1400px !important; margin: 1.5rem auto !important; padding: 0 1.5rem !important; }
@@ -470,7 +470,7 @@
                 <div class="card-title">
                     <i class="fa-brands fa-opencart"></i> Danh Sach Sản Phẩm
                 </div>
-                <c:if test="${sessionScope.role == 'admin' || sessionScope.role == 'seller'}">
+                <c:if test="${sessionScope.role == 'seller'}">
                     <a href="add-product" class="btn btn-green btn-sm">
                         <i class="fa-solid fa-plus"></i> Them Sản Phẩm
                     </a>
@@ -676,7 +676,7 @@
                                         <a href="${pageContext.request.contextPath}/products?id=${p.id}" class="btn-detail">
                                             <i class="fa-regular fa-eye"></i> Chi Tiet
                                         </a>
-                                        <c:if test="${sessionScope.role == 'admin' || (sessionScope.role == 'seller' && p.shopId == sessionScope.shopId)}">
+                                        <c:if test="${sessionScope.role == 'seller' && p.shopId == sessionScope.shopId}">
                                             <a href="${pageContext.request.contextPath}/edit-product?id=${p.id}"
                                                class="btn-detail" style="border-color:#f59e0b;color:#92400e;">
                                                 <i class="fa-solid fa-pen-to-square"></i> Sua

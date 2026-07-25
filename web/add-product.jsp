@@ -725,62 +725,12 @@
 
                         <body>
 
-                            <!-- ====== TOPNAV ====== -->
-                            <nav class="topnav">
-                                <a href="home.jsp" class="nav-logo">
-                                    <i class="fa-solid fa-apple-whole"></i> Sena Shop
-                                </a>
-                                <div class="nav-links">
-                                    <a href="home.jsp">Trang Chủ</a>
-                                    <a href="products">Sản Phẩm</a>
-                                </div>
-                                <div class="nav-right">
-                                    <button class="nav-icon-btn" title="Giỏ hàng"><i
-                                            class="fa-solid fa-basket-shopping"></i></button>
-                                    <img class="nav-avatar" src="<%= avatarUrl %>" alt="avatar">
-                                </div>
-                            </nav>
+                            <jsp:include page="/sidebar.jsp">
+                                <jsp:param name="activePage" value="add-product"/>
+                            </jsp:include>
 
-                            <!-- ====== LAYOUT ====== -->
-                            <div class="layout">
-
-                                <!-- SIDEBAR -->
-                                <aside class="sidebar">
-                                    <div class="sidebar-nav">
-                                        <% if ("customer".equalsIgnoreCase(role)) { %>
-                                            <a href="customer-dashboard"><i class="fa-solid fa-gauge"></i> Dashboard</a>
-                                            <% } else if ("seller".equalsIgnoreCase(role)) { %>
-                                                <a href="seller/dashboard"><i class="fa-solid fa-gauge"></i>
-                                                    Dashboard</a>
-                                                <% } %>
-                                                    <a href="profile"><i class="fa-regular fa-user"></i> Hồ Sơ</a>
-                                                    <a href="products"><i class="fa-brands fa-opencart"></i> Sản
-                                                        Phẩm</a>
-                                                    <a href="#" class="active"><i class="fa-solid fa-plus"></i> Thêm Sản
-                                                        Phẩm</a>
-                                                    <% if ("customer".equalsIgnoreCase(role)) { %>
-                                                        <a href="my-orders"><i class="fa-solid fa-basket-shopping"></i>
-                                                            Đơn Hàng</a>
-                                                        <% } else if ("seller".equalsIgnoreCase(role)) { %>
-                                                            <a href="seller/orders"><i
-                                                                    class="fa-solid fa-basket-shopping"></i> Đơn
-                                                                Hàng</a>
-                                                            <% } else if ("admin".equalsIgnoreCase(role)) { %>
-                                                                <a href="admin/orders"><i
-                                                                        class="fa-solid fa-basket-shopping"></i> Đơn
-                                                                    Hàng</a>
-                                                                <% } %>
-                                                                    <a href="#"><i class="fa-regular fa-heart"></i> Yêu
-                                                                        Thích</a>
-                                                                    <a href="logout" class="logout"
-                                                                        style="margin-top:0.5rem;"><i
-                                                                            class="fa-solid fa-right-from-bracket"></i>
-                                                                        Đăng Xuất</a>
-                                    </div>
-                                </aside>
-
-                                <!-- MAIN -->
-                                <main class="main">
+                            <!-- MAIN -->
+                            <main class="sena-main">
 
                                     <!-- Breadcrumb -->
                                     <div class="breadcrumb">
@@ -917,57 +867,7 @@
                                                             </div>
                                                         </div>
 
-                                                        <%-- Variants theo trong luong (DA AN/COMMENT) --%>
-                                                            <%-- <div class="card">
-                                                                <div class="card-header">
-                                                                    <i class="fa-solid fa-scale-balanced"
-                                                                        style="color:var(--green);font-size:1rem;"></i>
-                                                                    <div class="card-title">Variants theo Trọng Lượng
-                                                                    </div>
-                                                                </div>
-                                                                <div class="card-body">
-                                                                    <div class="section-label">
-                                                                        <i class="fa-solid fa-plus"
-                                                                            style="font-size:0.5rem;color:var(--green);"></i>
-                                                                        Khai bao cac tuy chon trong luong (khong bat
-                                                                        buoc)
-                                                                    </div>
 
-                                                                    <div class="variant-table-wrap">
-                                                                        <table class="variant-table" id="variantTable">
-                                                                            <thead>
-                                                                                <tr>
-                                                                                    <th class="col-weight">Trọng lượng
-                                                                                    </th>
-                                                                                    <th class="col-unit">Đơn vị</th>
-                                                                                    <th class="col-price">Giá bán (VNĐ)
-                                                                                    </th>
-                                                                                    <th class="col-stock">Stock</th>
-                                                                                    <th class="col-action"></th>
-                                                                                </tr>
-                                                                            </thead>
-                                                                            <tbody id="variantTableBody">
-                                                                                <!-- Dynamic rows inserted by JS -->
-                                                                            </tbody>
-                                                                        </table>
-                                                                    </div>
-
-                                                                    <button type="button" class="btn-add-variant"
-                                                                        id="btnAddVariant">
-                                                                        <i class="fa-solid fa-plus"></i> Thêm Variant
-                                                                    </button>
-
-                                                                    <div class="variant-hint">
-                                                                        <i class="fa-solid fa-circle-info"></i>
-                                                                        Bo trong tat ca neu san pham khong co tuy chon
-                                                                        trong
-                                                                        luong. Gia salePrice ben duoi se duoc su dung
-                                                                        lam
-                                                                        gia mac dinh.
-                                                                    </div>
-                                                                </div>
-                            </div>
-                            --%>
 
                             <!-- Hinh anh -->
                             <div class="card">
@@ -1038,55 +938,7 @@
                                 <span class="footer-copy">&copy; 2024 Sena Shop. Trái cây tươi ngon mỗi ngày.</span>
                             </footer>
 
-                            <%-- <script>
-                                (function () {
-                                const tableBody = document.getElementById('variantTableBody');
-                                const btnAdd = document.getElementById('btnAddVariant');
-                                if (!tableBody || !btnAdd) return;
 
-                                function buildRow(weightVal, unitVal, priceVal, stockVal) {
-                                const tr = document.createElement('tr');
-
-                                const tdWeight = document.createElement('td');
-                                tdWeight.innerHTML = '<input type="number" name="variantWeight" '
-                                            + ' placeholder="VD: 500" min="1" step="1"
-                                    value="' + (weightVal || '') + '">';
-
-                                const tdUnit = document.createElement('td');
-                                tdUnit.innerHTML = '<select name="variantUnit" class="form-control">'
-                                    + '<option value="kg"' + (unitVal === ' kg' ? ' selected' : '' ) + '>kg</option>'
-                                        + '<option value="g"' + (unitVal==='g' ? ' selected' : '' ) + '>g</option>'
-                                        + '<option value="ml"' + (unitVal==='ml' ? ' selected' : '' ) + '>ml</option>'
-                                        + '<option value="l"' + (unitVal==='l' ? ' selected' : '' ) + '>l</option>'
-                                        + '</select>' ; const tdPrice=document.createElement('td');
-                                        tdPrice.innerHTML='<input type="number" name="variantPrice" '
-                                        + 'placeholder="VD: 120000" min="0" step="1000" value="' + (priceVal || '' )
-                                        + '">' ; const tdStock=document.createElement('td');
-                                        tdStock.innerHTML='<input type="number" name="variantStock" '
-                                        + 'placeholder="VD: 50" min="0" value="' + (stockVal || '' ) + '">' ; const
-                                        tdAction=document.createElement('td'); tdAction.className='col-action' ;
-                                        tdAction.innerHTML='<button type="button" class="btn-remove-variant" '
-                                        + 'onclick="this.closest(\' tr\').remove()" title="Xoa variant">'
-                                        + '<i class="fa-solid fa-trash-can"></i></button>';
-
-                                        tr.appendChild(tdWeight);
-                                        tr.appendChild(tdUnit);
-                                        tr.appendChild(tdPrice);
-                                        tr.appendChild(tdStock);
-                                        tr.appendChild(tdAction);
-
-                                        return tr;
-                                        }
-
-                                        btnAdd.addEventListener('click', function () {
-                                        tableBody.appendChild(buildRow());
-                                        });
-
-                                        // Optional: start with one empty row so the user sees the table
-                                        tableBody.appendChild(buildRow());
-                                        })();
-                                        </script>
-                                        --%>
 
                         </body>
 
