@@ -312,7 +312,7 @@ public class DeliveryDAO extends DbContext {
     public List<DeliveryOrder> getDeliveriesByShipperId(int shipperId, Integer status) {
         List<DeliveryOrder> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
-            "SELECT d.id, d.order_id, d.shipper_id, d.status, d.note, "
+            "SELECT d.order_id, d.shipper_id, d.status, d.note, "
           + "s.fullname AS shipper_name, s.phone AS shipper_phone, "
           + "o.status AS order_status, o.final_cost, "
           + "o.recipient_name, o.recipient_phone, o.address AS delivery_address "
@@ -325,7 +325,7 @@ public class DeliveryDAO extends DbContext {
         if (status != null) {
             sql.append("AND d.status = ? ");
         }
-        sql.append("ORDER BY d.id DESC");
+        sql.append("ORDER BY d.order_id DESC");
         
         try (PreparedStatement ps = getConnection().prepareStatement(sql.toString())) {
             ps.setInt(1, shipperId);
@@ -349,14 +349,14 @@ public class DeliveryDAO extends DbContext {
      */
     public List<DeliveryOrder> getAllDeliveries() {
         List<DeliveryOrder> list = new ArrayList<>();
-        String sql = "SELECT d.id, d.order_id, d.shipper_id, d.status, d.note, "
+        String sql = "SELECT d.order_id, d.shipper_id, d.status, d.note, "
                    + "s.fullname AS shipper_name, s.phone AS shipper_phone, "
                    + "o.status AS order_status, o.final_cost, "
                    + "o.recipient_name, o.recipient_phone, o.address AS delivery_address "
                    + "FROM DeliveryOrders d "
                    + "LEFT JOIN Accounts s ON d.shipper_id = s.id "
                    + "LEFT JOIN Orders o ON d.order_id = o.id "
-                   + "ORDER BY d.id DESC";
+                   + "ORDER BY d.order_id DESC";
         
         try (PreparedStatement ps = getConnection().prepareStatement(sql);
               ResultSet rs = ps.executeQuery()) {
@@ -401,7 +401,7 @@ public class DeliveryDAO extends DbContext {
      */
     public List<DeliveryOrder> getDeliveryHistory(int shipperId) {
         List<DeliveryOrder> list = new ArrayList<>();
-        String sql = "SELECT d.id, d.order_id, d.shipper_id, d.status, d.note, "
+        String sql = "SELECT d.order_id, d.shipper_id, d.status, d.note, "
                    + "s.fullname AS shipper_name, s.phone AS shipper_phone, "
                    + "o.status AS order_status, o.final_cost, "
                    + "o.recipient_name, o.recipient_phone, o.address AS delivery_address "
@@ -409,7 +409,7 @@ public class DeliveryDAO extends DbContext {
                    + "LEFT JOIN Accounts s ON d.shipper_id = s.id "
                    + "LEFT JOIN Orders o ON d.order_id = o.id "
                    + "WHERE d.shipper_id = ? AND d.status IN (?, ?) "
-                   + "ORDER BY d.id DESC";
+                   + "ORDER BY d.order_id DESC";
         
         try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
             ps.setInt(1, shipperId);
@@ -432,7 +432,7 @@ public class DeliveryDAO extends DbContext {
      */
     public List<DeliveryOrder> getPendingDeliveries(int shipperId) {
         List<DeliveryOrder> list = new ArrayList<>();
-        String sql = "SELECT d.id, d.order_id, d.shipper_id, d.status, d.note, "
+        String sql = "SELECT d.order_id, d.shipper_id, d.status, d.note, "
                    + "s.fullname AS shipper_name, s.phone AS shipper_phone, "
                    + "o.status AS order_status, o.final_cost, "
                    + "o.recipient_name, o.recipient_phone, o.address AS delivery_address "
@@ -440,7 +440,7 @@ public class DeliveryDAO extends DbContext {
                    + "LEFT JOIN Accounts s ON d.shipper_id = s.id "
                    + "LEFT JOIN Orders o ON d.order_id = o.id "
                    + "WHERE d.shipper_id = ? AND d.status NOT IN (?, ?) "
-                   + "ORDER BY d.id ASC";
+                   + "ORDER BY d.order_id ASC";
         
         try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
             ps.setInt(1, shipperId);
@@ -530,13 +530,26 @@ public class DeliveryDAO extends DbContext {
     
     private DeliveryOrder mapDeliveryRow(ResultSet rs) throws SQLException {
         DeliveryOrder d = new DeliveryOrder();
-        d.setDeliveryId(rs.getInt("id"));
+        try {
+            d.setDeliveryId(rs.getInt("id"));
+        } catch (SQLException e) {
+            try {
+                d.setDeliveryId(rs.getInt("delivery_id"));
+            } catch (SQLException ex) {
+                d.setDeliveryId(rs.getInt("order_id"));
+            }
+        }
         d.setOrderId(rs.getInt("order_id"));
         int shipperId = rs.getInt("shipper_id");
         d.setShipperId(rs.wasNull() ? null : shipperId);
-        d.setAssignedBy(rs.getInt("assigned_by"));
         
-        // Only set these if they exist in the result set
+        try {
+            int assignedBy = rs.getInt("assigned_by");
+            d.setAssignedBy(rs.wasNull() ? 0 : assignedBy);
+        } catch (SQLException e) {
+            // Column doesn't exist in SELECT, skip
+        }
+        
         try {
             d.setAcceptedDate(rs.getTimestamp("accepted_date"));
         } catch (SQLException e) {
@@ -555,15 +568,45 @@ public class DeliveryDAO extends DbContext {
             // Column doesn't exist, skip
         }
         
-        d.setStatus(rs.getInt("status"));
-        d.setNote(rs.getString("note"));
-        d.setCreatedAt(rs.getTimestamp("created_at"));
-        d.setAssignedDate(rs.getTimestamp("created_at"));
-        d.setUpdatedAt(rs.getTimestamp("updated_at"));
+        try {
+            d.setStatus(rs.getInt("status"));
+        } catch (SQLException e) {
+            // default
+        }
+        
+        try {
+            d.setNote(rs.getString("note"));
+        } catch (SQLException e) {
+            // default
+        }
+        
+        try {
+            Timestamp ca = rs.getTimestamp("created_at");
+            d.setCreatedAt(ca);
+            d.setAssignedDate(ca);
+        } catch (SQLException e) {
+            try {
+                Timestamp aa = rs.getTimestamp("assigned_at");
+                d.setCreatedAt(aa);
+                d.setAssignedDate(aa);
+            } catch (SQLException ex) {
+                // skip
+            }
+        }
+        
+        try {
+            d.setUpdatedAt(rs.getTimestamp("updated_at"));
+        } catch (SQLException e) {
+            // Column doesn't exist, skip
+        }
         
         // Joined fields
-        d.setShipperName(rs.getString("shipper_name"));
-        d.setShipperPhone(rs.getString("shipper_phone"));
+        try {
+            d.setShipperName(rs.getString("shipper_name"));
+            d.setShipperPhone(rs.getString("shipper_phone"));
+        } catch (SQLException e) {
+            // Column doesn't exist, skip
+        }
         
         try {
             int orderStatus = rs.getInt("order_status");

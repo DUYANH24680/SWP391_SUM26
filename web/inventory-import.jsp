@@ -1,3 +1,21 @@
+<%-- 
+  DuyAnhNgo- CÁCH HOẠT ĐỘNG VÀ ĐIỀU HƯỚNG MÀN HÌNH NHẬP KHO (INVENTORY IMPORT JSP):
+  
+  1. CÁCH HOẠT ĐỘNG CỦA CODE:
+     - Đọc thông tin người dùng từ Session ("Account", "userId", "role").
+     - Nhận danh sách sản phẩm `products` từ Servlet (request.getAttribute("products")).
+     - Hiển thị form cho Seller chọn sản phẩm, nhập số lượng, ghi chú và ngày hết hạn.
+  
+  2. ĐIỀU ĐI ĐÂU (SUBMIT FORM):
+     - Khi nhấn nút "Xác Nhận Nhập Kho", form gửi request POST tới URL: `${pageContext.request.contextPath}/inventory-import` (xử lý tại InventoryImportServlet).
+     - Servlet xử lý xong sẽ redirect quay lại chính trang `/inventory-import` để hiển thị kết quả thành công/thất bại qua thông báo Flash Message.
+  
+  3. HIỂN THỊ TRONG JSP NÀO:
+     - Đây chính là trang giao diện: web/inventory-import.jsp
+  
+  4. IMPORT EXPORT Ở ĐÂU TRONG DAO NÀO:
+     - Dữ liệu form khi gửi đi sẽ gọi ProductDAO.importStock() (trong ProductDAO.java) và InventoryTransactionDAO.addImport() (trong InventoryTransactionDAO.java).
+--%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="model.Account" %>
 <%@ page import="model.Product" %>
@@ -387,6 +405,39 @@
             .topnav { padding: 0 1rem; }
             .nav-links { display: none; }
         }
+
+        /* ======= NEW LAYOUT CSS ======= */
+        .import-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+        .h-100 { height: 100%; display: flex; flex-direction: column; }
+        .flex-1 { flex: 1; }
+        
+        .card {
+            background: var(--white);
+            border-radius: var(--radius);
+            border: 1px solid var(--gray-200);
+            box-shadow: var(--shadow); /* Stronger shadow */
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+        .card:hover {
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        }
+        .card-header {
+            padding: 1.25rem 1.5rem;
+            background: linear-gradient(to right, #f8fafb, #ffffff);
+        }
+        .card-title {
+            font-size: 1.1rem;
+            color: var(--green-dark);
+        }
+        
+        @media (max-width: 900px) {
+            .import-layout { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
@@ -427,104 +478,96 @@
 
         <!-- Form -->
         <form action="inventory-import" method="POST" id="importForm">
-            <!-- Chon san pham -->
-            <div class="card">
-                <div class="card-header">
-                    <i class="fa-solid fa-boxes-packing" style="color:var(--green);font-size:1rem;"></i>
-                    <div class="card-title">Chọn Sản Phẩm Nhập Kho</div>
-                </div>
-                <div class="card-body">
-                    <div class="section-label">
-                        <i class="fa-solid fa-asterisk" style="font-size:0.5rem;color:var(--green);"></i>
-                        Thong tin san pham
+            
+            <div class="import-layout">
+                <!-- Chon san pham -->
+                <div class="card h-100">
+                    <div class="card-header">
+                        <i class="fa-solid fa-boxes-packing" style="color:var(--green);font-size:1.1rem;"></i>
+                        <div class="card-title">1. Chọn Sản Phẩm</div>
                     </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Sản phẩm <span class="required">*</span></label>
-                        <select name="productId" id="productSelect" class="form-control" required onchange="onProductChange()">
-                            <option value="">-- Chọn sản phẩm --</option>
-                            <% for (Product p : products) { %>
-                            <option value="<%= p.getId() %>"
-                                    data-stock="<%= p.getStockQuantity() %>"
-                                    data-unit="<%= p.getUnit() != null ? p.getUnit() : "" %>"
-                                    data-title="<%= p.getTitle() != null ? p.getTitle() : "" %>"
-                                    data-image="<%= p.getImage() != null ? ImageUrlUtil.resolve(p.getImage(), request.getContextPath()) : "" %>">
-                                <%= p.getTitle() %> (Tồn kho: <%= p.getStockQuantity() %><%= p.getUnit() != null ? " " + p.getUnit() : "" %>)
-                            </option>
-                            <% } %>
-                        </select>
-                        <span class="form-hint">Chỉ hiển thị sản phẩm thuộc cửa hàng của bạn.</span>
-                    </div>
-
-                    <!-- Product summary -->
-                    <div id="productSummary" class="product-summary" style="display:none;">
-                        <img id="summaryImg" class="product-summary-img" src="" alt="product">
-                        <div id="summaryImgPlaceholder" class="product-summary-img-placeholder" style="display:none;">
-                            <i class="fa-solid fa-image"></i>
+                    <div class="card-body flex-1">
+                        <div class="form-group" style="margin-bottom: 1.5rem;">
+                            <label class="form-label">Sản phẩm <span class="required">*</span></label>
+                            <select name="productId" id="productSelect" class="form-control" required onchange="onProductChange()">
+                                <option value="">-- Chọn sản phẩm --</option>
+                                <% for (Product p : products) { %>
+                                <option value="<%= p.getId() %>"
+                                        data-stock="<%= p.getStockQuantity() %>"
+                                        data-unit="<%= p.getUnit() != null ? p.getUnit() : "" %>"
+                                        data-title="<%= p.getTitle() != null ? p.getTitle() : "" %>"
+                                        data-image="<%= p.getImage() != null ? ImageUrlUtil.resolve(p.getImage(), request.getContextPath()) : "" %>">
+                                    <%= p.getTitle() %> (Tồn: <%= p.getStockQuantity() %><%= p.getUnit() != null ? " " + p.getUnit() : "" %>)
+                                </option>
+                                <% } %>
+                            </select>
                         </div>
-                        <div class="product-summary-info">
-                            <div class="product-summary-name" id="summaryName"></div>
-                            <div class="product-summary-meta">
-                                <span>Đơn vị: <strong id="summaryUnit"></strong></span>
-                                <span>Tồn kho hiện tại: <strong id="summaryStock"></strong></span>
-                                <span id="summaryBadge"></span>
+
+                        <!-- Product summary -->
+                        <div id="productSummary" class="product-summary" style="display:none; background: linear-gradient(135deg, #f8fafb 0%, #eef1ee 100%); border: 1px solid var(--gray-200); padding: 1.25rem; border-radius: var(--radius-sm); margin-bottom: 1.5rem; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">
+                            <img id="summaryImg" class="product-summary-img" style="width: 70px; height: 70px; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);" src="" alt="product">
+                            <div id="summaryImgPlaceholder" class="product-summary-img-placeholder" style="display:none; width: 70px; height: 70px; border-radius: 12px;">
+                                <i class="fa-solid fa-image" style="font-size: 1.8rem;"></i>
+                            </div>
+                            <div class="product-summary-info" style="margin-left: 1rem;">
+                                <div class="product-summary-name" id="summaryName" style="font-size: 1.1rem; color: var(--green-dark);"></div>
+                                <div class="product-summary-meta" style="margin-top: 0.5rem; gap: 0.5rem; flex-direction: column;">
+                                    <span>Tồn kho hiện tại: <strong id="summaryStock" style="font-size: 1.05rem; color: var(--gray-800);"></strong></span>
+                                    <span id="summaryBadge" style="width: fit-content;"></span>
+                                </div>
                             </div>
                         </div>
                     </div>
-
-                    <!-- Stock preview -->
-                    <div id="stockPreview" class="stock-preview" style="display:none;">
-                        <i class="fa-solid fa-arrow-right-arrow-left"></i>
-                        <div class="stock-preview-text" id="stockPreviewText"></div>
-                    </div>
                 </div>
-            </div>
 
-            <!-- Thong tin nhap kho -->
-            <div class="card">
-                <div class="card-header">
-                    <i class="fa-solid fa-warehouse" style="color:var(--green);font-size:1rem;"></i>
-                    <div class="card-title">Thông Tin Nhập Kho</div>
-                </div>
-                <div class="card-body">
-                    <div class="section-label">
-                        <i class="fa-solid fa-asterisk" style="font-size:0.5rem;color:var(--green);"></i>
-                        So luong & ghi chu
+                <!-- Thong tin nhap kho -->
+                <div class="card h-100">
+                    <div class="card-header">
+                        <i class="fa-solid fa-warehouse" style="color:var(--green);font-size:1.1rem;"></i>
+                        <div class="card-title">2. Thông Tin Nhập</div>
                     </div>
-                    <div class="form-grid">
+                    <div class="card-body flex-1" style="display: flex; flex-direction: column; justify-content: space-between;">
+                        
+                        <div class="form-grid" style="grid-template-columns: 1fr;">
+                            <div class="form-group">
+                                <label class="form-label">Số lượng nhập thêm <span class="required">*</span></label>
+                                <input type="number" name="quantity" id="quantityInput" class="form-control" style="font-size: 1.2rem; font-weight: 600; color: var(--green-dark);"
+                                       placeholder="VD: 50" min="1" step="1" required oninput="updateStockPreview()">
+                            </div>
 
-                        <div class="form-group">
-                            <label class="form-label">Số lượng nhập <span class="required">*</span></label>
-                            <input type="number" name="quantity" id="quantityInput" class="form-control"
-                                   placeholder="VD: 50" min="1" step="1" required oninput="updateStockPreview()">
-                            <span class="form-hint">Số lượng phải lớn hơn 0.</span>
+                            <div class="form-group">
+                                <label class="form-label">Ngày hết hạn lô hàng này</label>
+                                <input type="date" name="expiredDate" id="expiredDateInput" class="form-control">
+                                <span class="form-hint" style="color: var(--gray-600);"><i class="fa-solid fa-circle-info"></i> Để trống nếu sản phẩm không có HSD. Hệ thống sẽ tự tạo 1 lô hàng mới dựa trên HSD này.</span>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Ghi chú nguồn hàng</label>
+                                <input type="text" name="note" id="noteInput" class="form-control"
+                                       placeholder="VD: Lô hàng nhập mới từ NCC A">
+                            </div>
                         </div>
 
-                        <div class="form-group">
-                            <label class="form-label">Ghi chú</label>
-                            <input type="text" name="note" id="noteInput" class="form-control"
-                                   placeholder="VD: Nhập bổ sung từ nhà cung cấp A">
-                            <span class="form-hint">Không bắt buộc. Giúp bạn ghi nhận nguồn hàng.</span>
+                        <!-- Stock preview -->
+                        <div id="stockPreview" class="stock-preview" style="display:none; margin-top: 1.5rem; background: var(--green-light); border: 1px dashed var(--green); padding: 1rem; border-radius: var(--radius-sm);">
+                            <i class="fa-solid fa-arrow-right-arrow-left" style="color: var(--green-dark); font-size: 1.2rem;"></i>
+                            <div class="stock-preview-text" id="stockPreviewText" style="color: var(--green-dark); font-size: 0.95rem;"></div>
                         </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Ngày hết hạn lô hàng</label>
-                            <input type="date" name="expiredDate" id="expiredDateInput" class="form-control">
-                            <span class="form-hint">Không bắt buộc. Mỗi lần nhập kho có thể có hạn sử dụng riêng.</span>
-                        </div>
-
+                        
                     </div>
                 </div>
             </div>
 
             <!-- Actions -->
-            <div class="form-actions">
-                <a href="products" class="btn btn-outline">
-                    <i class="fa-solid fa-arrow-left"></i> Quay Lại
-                </a>
-                <button type="submit" class="btn btn-green" id="btnSubmit">
-                    <i class="fa-solid fa-floppy-disk"></i> Xác Nhận Nhập Kho
-                </button>
+            <div class="card" style="margin-top: 1.5rem; background: var(--white); box-shadow: 0 -4px 12px rgba(0,0,0,0.05); border: none;">
+                <div class="form-actions" style="border: none; background: transparent; padding: 1.25rem 1.5rem;">
+                    <a href="products" class="btn btn-outline" style="border-radius: 8px;">
+                        <i class="fa-solid fa-arrow-left"></i> Hủy
+                    </a>
+                    <button type="submit" class="btn btn-green" id="btnSubmit" style="border-radius: 8px; padding: 0.8rem 2rem; font-size: 1rem;">
+                        <i class="fa-solid fa-floppy-disk"></i> Chốt Nhập Kho
+                    </button>
+                </div>
             </div>
         </form>
 

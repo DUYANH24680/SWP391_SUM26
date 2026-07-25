@@ -413,3 +413,20 @@ CREATE TABLE [Blogs] (
 );
 GO
  
+
+CREATE TABLE [InventoryTransactions] (
+    [id] INT IDENTITY(1,1) NOT NULL,
+    [product_id] INT NOT NULL,
+    [account_id] INT NOT NULL,
+    [quantity] INT NOT NULL,
+    [previous_stock] INT NOT NULL,
+    [new_stock] INT NOT NULL,
+    [note] NVARCHAR(500) NULL,
+    [transaction_type] VARCHAR(20) NOT NULL,
+    [expired_date] DATETIME NULL,
+    [created_at] DATETIME DEFAULT GETDATE(),
+    PRIMARY KEY ([id]),
+    FOREIGN KEY ([product_id]) REFERENCES [Products] ([id]),
+    FOREIGN KEY ([account_id]) REFERENCES [Accounts] ([id])
+);
+GO

@@ -407,12 +407,21 @@
         @media (max-width: 600px) {
             .topnav { padding: 0 1rem; }
             .nav-links { display: none; }
-            .product-table thead th:nth-child(n+6),
+        .product-table thead th:nth-child(n+6),
             .product-table tbody td:nth-child(n+6) { display: none; }
         }
     </style>
 </head>
-<body>
+<body><c:if test="${sessionScope.role == 'customer' || empty sessionScope.role || (sessionScope.role != 'seller' && sessionScope.role != 'admin')}">
+    <style>
+        .sena-sidebar { display: none !important; }
+        .sena-layout { max-width: 1400px !important; margin: 1.5rem auto !important; padding: 0 1.5rem !important; }
+        .sena-main { width: 100% !important; flex: 1 !important; }
+        .card { width: 100% !important; border-radius: var(--radius); }
+        .table-wrap { overflow-x: auto; width: 100%; }
+        .product-table { width: 100% !important; table-layout: auto !important; }
+    </style>
+</c:if>
 
 <jsp:include page="/sidebar.jsp">
     <jsp:param name="activePage" value="products"/>
@@ -470,8 +479,6 @@
 
             <!-- Search bar -->
             <form method="get" action="products" class="search-bar">
-                <!-- Search bar -->
-<form method="get" action="products" class="search-bar">
 
     <div class="search-form"
          style="display:flex;align-items:center;gap:10px;max-width:none;">
@@ -534,17 +541,6 @@
     </span>
 
 </form>
-                <span style="font-size:0.82rem;color:var(--gray-400);margin-left:auto;">
-                    <c:choose>
-                        <c:when test="${totalProductCount > 0}">
-                            <span style="font-weight:600;color:var(--green);">${products.size()}</span> / ${totalProductCount} san pham
-                        </c:when>
-                        <c:when test="${empty products && empty error && empty shopNotApproved}">
-                            0 san pham
-                        </c:when>
-                    </c:choose>
-                </span>
-            </form>
 
             <!-- Table -->
             <div class="table-wrap">

@@ -8,19 +8,24 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * DAO cho bang InventoryTransactions.
- * Ho tro cac thao tac CRUD tren lich su nhap/xuat kho.
+ * DuyAnhNgo- DAO QUẢN LÝ THAO TÁC GHI LỊCH SỬ XUẤT NHẬP KHO (INVENTORY TRANSACTIONS):
+ * 
+ * 1. CÁCH HOẠT ĐỘNG CỦA CODE:
+ *    - Lớp này kế thừa DbContext để làm việc với DB SQL Server.
+ *    - Cung cấp các phương thức lưu nhật ký (log) mỗi khi có hoạt động xuất hoặc nhập kho xảy ra.
+ *    - Hỗ trợ truyền Connection ngoài để thực thi chung trong 1 Transaction (setAutoCommit(false)) đảm bảo tính toàn vẹn dữ liệu.
+ * 
+ * 2. ĐIỀU ĐI ĐÂU (LUỒNG GỌI / CHUYỂN DỮ LIỆU):
+ *    - Được gọi gián tiếp từ ProductDAO (hoặc Servlet) khi tiến hành nhập kho/xuất kho.
+ *    - Dữ liệu lưu vào bảng InventoryTransactions trong DB, kết quả sẽ được hiển thị lịch sử ở các trang quản lý kho của Seller.
+ * 
+ * 3. IMPORT EXPORT Ở ĐÂU TRONG DAO NÀO:
+ *    - Nhập kho (Import): Phương thức addImport(InventoryTransaction tx, Connection conn) và addImport(InventoryTransaction tx).
+ *    - Xuất kho (Export): Phương thức addExport(InventoryTransaction tx, Connection conn) và addExport(InventoryTransaction tx).
  */
 public class InventoryTransactionDAO extends DbContext {
 
-    /**
-     * Chen mot giao dich kho moi dung transaction cua caller.
-     * Dung khi caller da setAutoCommit(false) va muon dam bao atomic voi cac thao tac khac.
-     *
-     * @param tx   giao dich kho
-     * @param conn connection dang duoc caller quan ly transaction (khong dong sau khi goi)
-     * @return true neu insert thanh cong
-     */
+    // DuyAnhNgo- Hàm thêm lịch sử NHẬP KHO (Import) dùng chung Transaction
     public boolean addImport(InventoryTransaction tx, Connection conn) throws SQLException {
         String sql = "INSERT INTO InventoryTransactions "
                    + "(product_id, account_id, quantity, previous_stock, new_stock, note, transaction_type, expired_date) "
@@ -62,13 +67,7 @@ public class InventoryTransactionDAO extends DbContext {
         }
     }
 
-    /**
-     * Chen mot giao dich xuat kho moi dung transaction cua caller.
-     *
-     * @param tx   giao dich kho
-     * @param conn connection dang duoc caller quan ly transaction
-     * @return true neu insert thanh cong
-     */
+    // DuyAnhNgo- Hàm thêm lịch sử XUẤT KHO (Export) dùng chung Transaction
     public boolean addExport(InventoryTransaction tx, Connection conn) throws SQLException {
         String sql = "INSERT INTO InventoryTransactions "
                    + "(product_id, account_id, quantity, previous_stock, new_stock, note, transaction_type, expired_date) "
@@ -146,5 +145,67 @@ public class InventoryTransactionDAO extends DbContext {
         tx.setExpiredDate(rs.getTimestamp("expired_date"));
         tx.setCreatedAt(rs.getTimestamp("created_at"));
         return tx;
+    }
+
+    // DuyAnhNgo- Lay danh sach lo hang (batch) con ton kho cho mot shop
+    // ========================================================================
+    // CÁCH HOẠT ĐỘNG CỦA CÂU QUERY GOM LÔ HÀNG (BATCHING):
+    // Hệ thống không tạo bảng phụ cho các lô hàng. Thay vào đó, gom nhóm tự động
+    // bằng cách gộp (UNION ALL) 2 nguồn dữ liệu:
+    // 
+    // NGUỒN 1: TỒN KHO GỐC TỪ BẢNG Products
+    // Lấy tồn kho hiện tại (stock_quantity) TRỪ ĐI tất cả các biến động đã được
+    // ghi trong lịch sử giao dịch (InventoryTransactions) của sản phẩm đó.
+    // Kết quả thu được chính là số tồn kho ban đầu (chưa có lịch sử giao dịch) 
+    // kèm theo hạn sử dụng gốc của nó.
+    //
+    // NGUỒN 2: CÁC LÔ NHẬP/XUẤT MỚI TỪ BẢNG InventoryTransactions
+    // Quét toàn bộ lịch sử. Nếu là 'IMPORT' thì cộng (+), 'EXPORT' thì trừ (-).
+    // Gắn với hạn sử dụng (expired_date) của chính lần giao dịch đó.
+    //
+    // Cuối cùng, SUM(quantity) theo từng sản phẩm và từng ngày hết hạn,
+    // lọc bỏ các lô đã hết hàng (HAVING SUM > 0).
+    // ========================================================================
+    public List<java.util.Map<String, Object>> getInventoryBatches(int shopId) {
+        String sql = "SELECT product_id, expired_date, title, image, unit, SUM(quantity) AS remaining_quantity "
+                   + "FROM ( "
+                   + "    -- NGUỒN 1: TỒN KHO GỐC \n"
+                   + "    SELECT id AS product_id, expired_date, title, image, unit, "
+                   + "           (stock_quantity - COALESCE((SELECT SUM(CASE WHEN transaction_type = 'IMPORT' THEN quantity ELSE -quantity END) FROM InventoryTransactions WHERE product_id = p.id), 0)) AS quantity "
+                   + "    FROM Products p WHERE shop_id = ? AND isDelete = 0 "
+                   + "    UNION ALL "
+                   + "    -- NGUỒN 2: CÁC GIAO DỊCH MỚI CÓ GHI HSD \n"
+                   + "    SELECT t.product_id, t.expired_date, p.title, p.image, p.unit, "
+                   + "           CASE WHEN t.transaction_type = 'IMPORT' THEN t.quantity ELSE -t.quantity END AS quantity "
+                   + "    FROM InventoryTransactions t "
+                   + "    JOIN Products p ON t.product_id = p.id "
+                   + "    WHERE p.shop_id = ? AND p.isDelete = 0 "
+                   + ") AS SubQuery "
+                   + "GROUP BY product_id, expired_date, title, image, unit "
+                   + "HAVING SUM(quantity) > 0 "
+                   + "ORDER BY expired_date ASC";
+
+        List<java.util.Map<String, Object>> list = new java.util.ArrayList<>();
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, shopId);
+            ps.setInt(2, shopId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    java.util.Map<String, Object> map = new java.util.HashMap<>();
+                    map.put("productId", rs.getInt("product_id"));
+                    map.put("expiredDate", rs.getTimestamp("expired_date"));
+                    map.put("title", rs.getString("title"));
+                    map.put("image", rs.getString("image"));
+                    map.put("unit", rs.getString("unit"));
+                    map.put("quantity", rs.getInt("remaining_quantity"));
+                    list.add(map);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[InventoryTransactionDAO] getInventoryBatches() error: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return list;
     }
 }

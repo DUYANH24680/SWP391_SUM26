@@ -499,19 +499,11 @@ public class ProductDAO extends DbContext {
         }
     }
 
-    /**
-     * Thuc hien nhap kho: lock san pham, kiem tra ownership, cap nhat stock,
-     * ghi log trong 1 transaction. Tat ca thao tac deu nam trong transaction.
-     *
-     * @param productId  id san pham
-     * @param shopId     id cua hang (dung de kiem tra ownership)
-     * @param accountId  id tai khoan thuc hien nhap
-     * @param quantity   so luong nhap (> 0)
-     * @param note       ghi chu (co the null)
-     * @return int[2] = {previousStock, newStock} neu thanh cong;
-     *         null neu san pham khong ton tai hoac khong thuoc shop
-     * @throws SQLException
-     */
+    // DuyAnhNgo- Hàm Xử Lý NHẬP KHO (IMPORT STOCK):
+    // 1. Khởi tạo Transaction (setAutoCommit(false)).
+    // 2. Kiểm tra tồn tại sản phẩm và xác nhận quyền sở hữu Shop (Shop ownership check).
+    // 3. Tăng tồn kho (stock_quantity = stock_quantity + quantity).
+    // 4. Ghi nhận giao dịch vào bảng InventoryTransactions.
     public int[] importStock(int productId, int shopId, int accountId, int quantity, String note, Timestamp expiredDate) throws SQLException {
         String txType = "IMPORT";
         String sqlLock = "SELECT stock_quantity, shop_id FROM Products WHERE id = ? AND isDelete = 0";
@@ -602,26 +594,18 @@ public class ProductDAO extends DbContext {
         }
     }
 
-    /**
-     * Thuc hien xuat kho: lock san pham, kiem tra du stock, cap nhat stock,
-     * ghi log trong 1 transaction.
-     *
-     * @param productId  id san pham
-     * @param shopId     id cua hang (dung de kiem tra ownership)
-     * @param accountId  id tai khoan thuc hien xuat
-     * @param quantity   so luong xuat (> 0)
-     * @param note       ghi chu (co the null)
-     * @return int[2] = {previousStock, newStock} neu thanh cong;
-     *         null neu san pham khong ton tai, khong thuoc shop, hoac khong du stock
-     * @throws SQLException
-     */
-    public int[] exportStock(int productId, int shopId, int accountId, int quantity, String note) throws SQLException {
+    // DuyAnhNgo- Hàm Xử Lý XUẤT KHO (EXPORT STOCK):
+    // 1. Khởi tạo Transaction (setAutoCommit(false)).
+    // 2. Kiểm tra tồn tại sản phẩm, Shop ownership và kiểm tra tồn kho khả dụng (previousStock >= quantity).
+    // 3. Trừ tồn kho (stock_quantity = previousStock - quantity).
+    // 4. Ghi nhận giao dịch xuất kho vào bảng InventoryTransactions.
+    public int[] exportStock(int productId, int shopId, int accountId, int quantity, String note, java.sql.Timestamp expiredDate) throws SQLException {
         String txType = "EXPORT";
         String sqlLock = "SELECT stock_quantity, shop_id FROM Products WHERE id = ? AND isDelete = 0";
         String sqlUpdate = "UPDATE Products SET stock_quantity = ? WHERE id = ? AND isDelete = 0";
         String sqlLog = "INSERT INTO InventoryTransactions "
-                      + "(product_id, account_id, quantity, previous_stock, new_stock, note, transaction_type) "
-                      + "VALUES (?, ?, ?, ?, ?, ?, ?)";
+                      + "(product_id, account_id, quantity, previous_stock, new_stock, note, transaction_type, expired_date) "
+                      + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
         Connection conn = null;
         PreparedStatement psLock = null;
@@ -645,6 +629,8 @@ public class ProductDAO extends DbContext {
             rs.close();
             rs = null;
 
+            // DuyAnhNgo - CHẶN CỬA HÀNG KHÁC XUẤT KHO:
+            // Chỉ cho phép xuất kho nếu ID cửa hàng đang đăng nhập khớp với ID cửa hàng sở hữu sản phẩm này.
             if (actualShopId != shopId) {
                 conn.rollback();
                 return null;
@@ -665,7 +651,7 @@ public class ProductDAO extends DbContext {
                 conn.rollback();
                 return null;
             }
-
+            // Ghi log xuat kho voi expired_date cua lo hang
             psLog = conn.prepareStatement(sqlLog);
             psLog.setInt(1, productId);
             psLog.setInt(2, accountId);
@@ -678,8 +664,12 @@ public class ProductDAO extends DbContext {
                 psLog.setNull(6, Types.NVARCHAR);
             }
             psLog.setString(7, txType);
+            if (expiredDate != null) {
+                psLog.setTimestamp(8, expiredDate);
+            } else {
+                psLog.setNull(8, Types.TIMESTAMP);
+            }
             psLog.executeUpdate();
-
             conn.commit();
             System.out.println("[ProductDAO] exportStock(productId=" + productId + ", shopId=" + shopId
                 + ", qty=" + quantity + ", prev=" + previousStock + ", new=" + newStock + ") success");

@@ -17,15 +17,32 @@ import java.sql.Timestamp;
 import java.util.List;
 
 /**
- * Servlet xu ly nhap kho (Inventory Import).
- * GET: hien thi form chon san pham de nhap kho.
- * POST: xu ly ghi nhan so luong nhap vao, cap nhat stock san pham,
- *       dong thoi ghi log vao bang InventoryTransactions.
+ * DuyAnhNgo- CÁCH HOẠT ĐỘNG VÀ ĐIỀU HƯỚNG XỬ LÝ NHẬP KHO (INVENTORY IMPORT):
+ * 
+ * 1. CÁCH HOẠT ĐỘNG CỦA CODE:
+ *    - Phương thức doGet(): Kiểm tra phiên làm việc (Session) của Seller. Sử dụng ShopDAO để lấy shopId theo userId, 
+ *      sau đó dùng ProductDAO.getProductsByShopId(shopId) lấy danh sách các sản phẩm thuộc cửa hàng để truyền sang JSP.
+ *    - Phương thức doPost(): Lấy các tham số từ form nhập kho (productId, quantity, note, expiredDate). Kiếm tra dữ liệu 
+ *      đầu vào (quantity > 0). Gọi ProductDAO.importStock() để thực hiện tăng số lượng tồn kho và tự động ghi log vào bảng 
+ *      InventoryTransactions trong cùng 1 Database Transaction.
+ * 
+ * 2. ĐIỀU ĐI ĐÂU (FORWARD / REDIRECT):
+ *    - doGet(): req.getRequestDispatcher("/inventory-import.jsp").forward(req, resp); -> Chuyển hướng nội bộ sang JSP.
+ *    - doPost(): resp.sendRedirect(req.getContextPath() + "/inventory-import"); -> Sau khi hoàn tất (hoặc lỗi), chuyển hướng 
+ *      trình duyệt quay lại URL /inventory-import để load lại dữ liệu mới và hiển thị thông báo qua Session message/error.
+ * 
+ * 3. HIỂN THỊ TRONG JSP NÀO:
+ *    - Giao diện form chọn sản phẩm & nhập số lượng được hiển thị tại JSP: web/inventory-import.jsp
+ * 
+ * 4. IMPORT EXPORT Ở ĐÂU TRONG DAO NÀO:
+ *    - Xử lý tăng tồn kho sản phẩm & ghi nhận giao dịch nhập kho tại DAO: 
+ *      + ProductDAO.java -> phương thức importStock(productId, shopId, ownerId, quantity, note, expiredDate)
+ *      + InventoryTransactionDAO.java -> phương thức addImport(tx, conn) (Ghi chép lịch sử giao dịch vào DB)
  */
 @WebServlet(name = "InventoryImportServlet", urlPatterns = {"/inventory-import"})
 public class InventoryImportServlet extends HttpServlet {
 
-    // ===== GET: hien thi form nhap kho =====
+    // DuyAnhNgo- GET: Hiển thị form nhập kho, lấy danh sách sản phẩm thuộc shop chuyển tới inventory-import.jsp
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
@@ -80,7 +97,7 @@ public class InventoryImportServlet extends HttpServlet {
         req.getRequestDispatcher("/inventory-import.jsp").forward(req, resp);
     }
 
-    // ===== POST: xu ly nhap kho =====
+    // DuyAnhNgo- POST: Xử lý dữ liệu form gửi lên, gọi ProductDAO.importStock() để nhập kho và redirect về /inventory-import
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
