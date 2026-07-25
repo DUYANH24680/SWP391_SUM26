@@ -104,6 +104,15 @@
     boolean hasDiscount = salePrice > 0 && salePrice < originalPrice;
     int discountPercent = (int) Math.round(product.getDiscountPercent());
     java.text.NumberFormat nf = java.text.NumberFormat.getNumberInstance(java.util.Locale.forLanguageTag("vi"));
+
+    // ---- Product Images List ----
+    List<String> productImages = (List<String>) request.getAttribute("productImages");
+    if (productImages == null) {
+        productImages = new java.util.ArrayList<>();
+    }
+    if (productImages.isEmpty() && product.getImage() != null && !product.getImage().trim().isEmpty()) {
+        productImages.add(product.getImage());
+    }
 %>
 <!DOCTYPE html>
 <html lang="vi">
@@ -387,8 +396,14 @@
             gap: 1.5rem;
         }
 
-        /* Product image */
+        /* Product image & gallery */
+        .product-gallery {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
         .product-image-wrap {
+            position: relative;
             border-radius: var(--radius);
             overflow: hidden;
             background: var(--gray-50);
@@ -397,6 +412,94 @@
             display: flex;
             align-items: center;
             justify-content: center;
+        }
+
+        .product-image-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: opacity 0.2s ease-in-out;
+        }
+
+        .product-image-placeholder {
+            font-size: 5rem;
+            text-align: center;
+        }
+
+        /* Navigation buttons (< and >) */
+        .gallery-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(4px);
+            border: 1px solid var(--gray-200);
+            color: var(--gray-800);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 0.95rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            transition: all 0.2s ease;
+            z-index: 10;
+        }
+        .gallery-nav:hover {
+            background: #ffffff;
+            color: var(--green-dark);
+            transform: translateY(-50%) scale(1.1);
+            box-shadow: 0 6px 14px rgba(0,0,0,0.2);
+        }
+        .gallery-prev { left: 10px; }
+        .gallery-next { right: 10px; }
+
+        /* Counter badge (e.g. 1 / 3) */
+        .gallery-counter {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.6);
+            color: #fff;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.25rem 0.65rem;
+            border-radius: 100px;
+            letter-spacing: 0.5px;
+            z-index: 5;
+        }
+
+        /* Thumbnail row */
+        .product-thumbnails {
+            display: flex;
+            gap: 0.5rem;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+        .thumb-item {
+            width: 64px;
+            height: 64px;
+            border-radius: var(--radius-sm);
+            border: 2px solid var(--gray-200);
+            overflow: hidden;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+            background: #fff;
+        }
+        .thumb-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .thumb-item:hover {
+            border-color: var(--green-mid);
+        }
+        .thumb-item.active {
+            border-color: var(--green);
+            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.3);
         }
 
         .product-image-wrap img {
@@ -752,19 +855,41 @@
 
                 <div class="detail-grid">
 
-                    <!-- LEFT: Product image -->
-                    <div>
-                        <% if (product.getImage() != null && !product.getImage().trim().isEmpty()) { %>
-                        <div class="product-image-wrap">
-                            <img src="<%= ImageUrlUtil.resolve(product.getImage(), request.getContextPath()) %>"
-                                 alt="<%= product.getTitle() %>"
-                                 onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
-                            <div class="product-image-placeholder" style="display:none;">🍎</div>
+                    <!-- LEFT: Product image gallery -->
+                    <div class="product-gallery">
+                        <div class="product-image-wrap" id="mainImageWrap">
+                            <% if (!productImages.isEmpty()) { %>
+                                <img id="mainProductImg" src="<%= ImageUrlUtil.resolve(productImages.get(0), request.getContextPath()) %>" alt="<%= product.getTitle() %>" onerror="this.style.display='none'; document.getElementById('mainImagePlaceholder').style.display='flex';">
+                                <div id="mainImagePlaceholder" class="product-image-placeholder" style="display:none;">🍎</div>
+                            <% } else { %>
+                                <div class="product-image-placeholder">🍎</div>
+                            <% } %>
+
+                            <% if (productImages.size() > 1) { %>
+                                <button type="button" class="gallery-nav gallery-prev" onclick="changeProductImage(-1)" title="Ảnh trước">
+                                    <i class="fa-solid fa-chevron-left"></i>
+                                </button>
+                                <button type="button" class="gallery-nav gallery-next" onclick="changeProductImage(1)" title="Ảnh tiếp theo">
+                                    <i class="fa-solid fa-chevron-right"></i>
+                                </button>
+
+                                <div class="gallery-counter">
+                                    <span id="currentImgIdx">1</span> / <%= productImages.size() %>
+                                </div>
+                            <% } %>
                         </div>
-                        <% } else { %>
-                        <div class="product-image-wrap">
-                            <div class="product-image-placeholder">🍎</div>
-                        </div>
+
+                        <% if (productImages.size() > 1) { %>
+                            <div class="product-thumbnails">
+                                <% for (int i = 0; i < productImages.size(); i++) { 
+                                    String imgPath = productImages.get(i);
+                                    String resolvedUrl = ImageUrlUtil.resolve(imgPath, request.getContextPath());
+                                %>
+                                    <div class="thumb-item <%= i == 0 ? "active" : "" %>" onclick="selectProductImage(<%= i %>)">
+                                        <img src="<%= resolvedUrl %>" alt="thumb <%= i + 1 %>">
+                                    </div>
+                                <% } %>
+                            </div>
                         <% } %>
                     </div>
 
@@ -1134,6 +1259,59 @@
             showToast('Loi khi cap nhat wishlist. Vui long thu lai.', true);
         });
     }
+
+    // ===== PRODUCT GALLERY SLIDER =====
+        <% if (productImages.size() > 1) { %>
+        var productGalleryImages = [
+            <% for (int i = 0; i < productImages.size(); i++) { %>
+                "<%= ImageUrlUtil.resolve(productImages.get(i), request.getContextPath()) %>"<%= i < productImages.size() - 1 ? "," : "" %>
+            <% } %>
+        ];
+        var currentGalleryIdx = 0;
+
+        function showGalleryImg(index) {
+            if (!productGalleryImages || productGalleryImages.length === 0) return;
+            if (index < 0) index = productGalleryImages.length - 1;
+            if (index >= productGalleryImages.length) index = 0;
+
+            currentGalleryIdx = index;
+
+            var mainImg = document.getElementById('mainProductImg');
+            var placeholder = document.getElementById('mainImagePlaceholder');
+            if (mainImg) {
+                mainImg.style.opacity = '0.3';
+                setTimeout(function() {
+                    mainImg.src = productGalleryImages[currentGalleryIdx];
+                    mainImg.style.display = 'block';
+                    if (placeholder) placeholder.style.display = 'none';
+                    mainImg.style.opacity = '1';
+                }, 80);
+            }
+
+            var counterSpan = document.getElementById('currentImgIdx');
+            if (counterSpan) counterSpan.textContent = (currentGalleryIdx + 1);
+
+            var thumbs = document.querySelectorAll('.thumb-item');
+            thumbs.forEach(function(t, idx) {
+                if (idx === currentGalleryIdx) {
+                    t.classList.add('active');
+                } else {
+                    t.classList.remove('active');
+                }
+            });
+        }
+
+        function changeProductImage(direction) {
+            showGalleryImg(currentGalleryIdx + direction);
+        }
+
+        function selectProductImage(index) {
+            showGalleryImg(index);
+        }
+        <% } else { %>
+        function changeProductImage(direction) {}
+        function selectProductImage(index) {}
+        <% } %>
 </script>
 
 </body>
