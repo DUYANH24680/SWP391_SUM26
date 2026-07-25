@@ -297,7 +297,8 @@ public class ProductServlet extends HttpServlet {
                 return filterByShopId(dao.searchProducts(keyword.trim()), shopId);
             }
             System.out.println("[ProductServlet.fetchProductsForShop] loading all for shopId=" + shopId);
-            return dao.getProductsByShopId(shopId);
+            // Seller dashboard: lay tat ca san pham (ke ca cho duyet) de nguoi ban quan ly
+            return dao.getAllProductsByShopId(shopId);
         } finally {
             dao.close();
         }
