@@ -88,6 +88,20 @@ public class ProductInfoServlet extends HttpServlet {
                 }
             }
 
+            // Load product images (anh chinh + anh phụ)
+            List<String> imageUrls = productDAO.getProductImageUrls(productId);
+            if (imageUrls == null || imageUrls.isEmpty()) {
+                imageUrls = new java.util.ArrayList<>();
+                if (product.getImage() != null && !product.getImage().trim().isEmpty()) {
+                    imageUrls.add(product.getImage());
+                }
+            } else {
+                if (product.getImage() != null && !product.getImage().trim().isEmpty() && !imageUrls.contains(product.getImage())) {
+                    imageUrls.add(0, product.getImage());
+                }
+            }
+            req.setAttribute("productImages", imageUrls);
+
             req.setAttribute("product", product);
             req.setAttribute("categoryName", categoryName);
             if (shopInfo != null) {

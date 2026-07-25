@@ -190,8 +190,8 @@ public class ProductDAO extends DbContext {
     }
 
     /**
-     * Lay danh sach san pham thuoc mot shop, bao gom ca san pham cho duyet (status = 0).
-     * Su dung de hien thi danh sach san pham cua nguoi ban.
+     * Lay danh sach san pham thuoc mot shop, chi lay san pham da duoc duyet (status = 1).
+     * Su dung de hien thi danh sach san pham cua nguoi ban tren trang shop-products.
      */
     public List<Product> getProductsByShopId(int shopId) {
         String sql = "SELECT p.id, p.category_id, p.seller_id, p.shop_id, p.title, p.image, p.description, p.unit, "
@@ -200,7 +200,7 @@ public class ProductDAO extends DbContext {
                    + "s.shop_name "
                    + "FROM Products p "
                    + "LEFT JOIN Shops s ON p.shop_id = s.id "
-                   + "WHERE p.shop_id = ? AND p.isDelete = 0 "
+                   + "WHERE p.shop_id = ? AND p.isDelete = 0 AND p.status = 1 "
                    + "ORDER BY p.created_at DESC";
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -217,6 +217,37 @@ public class ProductDAO extends DbContext {
             System.err.println("[ProductDAO] getProductsByShopId(" + shopId + ") error: " + e.getMessage());
             e.printStackTrace();
             throw new RuntimeException("ProductDAO.getProductsByShopId error: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Lay danh sach TAT CA san pham thuoc mot shop (ke ca san pham cho duyet, status = 0).
+     * Chi danh rieng cho Seller dashboard de nguoi ban quan ly san pham cua minh.
+     */
+    public List<Product> getAllProductsByShopId(int shopId) {
+        String sql = "SELECT p.id, p.category_id, p.seller_id, p.shop_id, p.title, p.image, p.description, p.unit, "
+                   + "p.stock_quantity, p.sold_quantity, p.original_price, p.sale_price, p.expired_date, "
+                   + "p.average_rating, p.is_featured, p.status, p.isDelete, p.created_at, "
+                   + "s.shop_name "
+                   + "FROM Products p "
+                   + "LEFT JOIN Shops s ON p.shop_id = s.id "
+                   + "WHERE p.shop_id = ? AND p.isDelete = 0 "
+                   + "ORDER BY p.created_at DESC";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, shopId);
+            try (ResultSet rs = ps.executeQuery()) {
+                List<Product> list = new ArrayList<>();
+                while (rs.next()) {
+                    list.add(mapRow(rs));
+                }
+                System.out.println("[ProductDAO] getAllProductsByShopId(" + shopId + ") returned " + list.size() + " products");
+                return list;
+            }
+        } catch (SQLException e) {
+            System.err.println("[ProductDAO] getAllProductsByShopId(" + shopId + ") error: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("ProductDAO.getAllProductsByShopId error: " + e.getMessage(), e);
         }
     }
 

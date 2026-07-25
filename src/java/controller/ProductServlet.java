@@ -216,6 +216,20 @@ public class ProductServlet extends HttpServlet {
                 }
             }
 
+            // Load product images (anh chinh + anh phụ)
+            List<String> imageUrls = productDAO.getProductImageUrls(productId);
+            if (imageUrls == null || imageUrls.isEmpty()) {
+                imageUrls = new java.util.ArrayList<>();
+                if (product.getImage() != null && !product.getImage().trim().isEmpty()) {
+                    imageUrls.add(product.getImage());
+                }
+            } else {
+                if (product.getImage() != null && !product.getImage().trim().isEmpty() && !imageUrls.contains(product.getImage())) {
+                    imageUrls.add(0, product.getImage());
+                }
+            }
+            req.setAttribute("productImages", imageUrls);
+
             req.setAttribute("product", product);
             req.setAttribute("categoryName", categoryName);
             if (shopInfo != null) {
@@ -297,7 +311,8 @@ public class ProductServlet extends HttpServlet {
                 return filterByShopId(dao.searchProducts(keyword.trim()), shopId);
             }
             System.out.println("[ProductServlet.fetchProductsForShop] loading all for shopId=" + shopId);
-            return dao.getProductsByShopId(shopId);
+            // Seller dashboard: lay tat ca san pham (ke ca cho duyet) de nguoi ban quan ly
+            return dao.getAllProductsByShopId(shopId);
         } finally {
             dao.close();
         }
