@@ -4,6 +4,7 @@ import dao.OrderDAO;
 import dao.ProductDAO;
 import dao.VoucherDAO;
 import dao.ShopDAO;
+import dao.DeliveryDAO;
 import model.Order;
 import model.OrderDetail;
 import model.Product;
@@ -649,7 +650,15 @@ public class OrderService {
             List<Order> paginatedOrders = orders.subList(start, end);
 
             Map<Integer, List<OrderDetail>> detailsMap = getOrderDetailsMap(paginatedOrders);
-            return new MyOrdersPageData(paginatedOrders, detailsMap, page, totalPages, activeStatus);
+            
+            List<Integer> orderIds = new java.util.ArrayList<>();
+            for (Order o : paginatedOrders) {
+                orderIds.add(o.getId());
+            }
+            DeliveryDAO deliveryDAO = new DeliveryDAO();
+            Map<Integer, String> deliveryNotesMap = deliveryDAO.getDeliveryNotesForOrders(orderIds);
+            
+            return new MyOrdersPageData(paginatedOrders, detailsMap, deliveryNotesMap, page, totalPages, activeStatus);
         } finally {
             orderDAO.close();
         }

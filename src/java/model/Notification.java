@@ -119,19 +119,37 @@ public class Notification implements Serializable {
      * Use this instead of getLink() for actual page navigation.
      */
     public String getLinkUrl() {
-        if (link == null || link.trim().isEmpty()) return "#";
+        String cleanLink = link != null ? link.replaceAll("[^0-9]", "") : "";
+        if (cleanLink.isEmpty()) {
+            if (title != null) {
+                java.util.regex.Matcher m = java.util.regex.Pattern.compile("#(\\d+)").matcher(title);
+                if (m.find()) cleanLink = m.group(1);
+            }
+            if (cleanLink.isEmpty() && content != null) {
+                java.util.regex.Matcher m = java.util.regex.Pattern.compile("#(\\d+)").matcher(content);
+                if (m.find()) cleanLink = m.group(1);
+            }
+        }
+        boolean hasLink = !cleanLink.isEmpty();
+        String t = type != null ? type.toLowerCase() : "";
 
-        switch (type) {
+        switch (t) {
             case TYPE_ORDER_STATUS:
+                return hasLink ? "/my-orders?orderId=" + cleanLink : "/my-orders";
             case TYPE_NEW_ORDER:
+                return hasLink ? "/seller/orders?orderId=" + cleanLink : "/seller/orders";
+            case TYPE_STAFF_ASSIGN:
+                return "/staff/orders-waiting";
             case TYPE_DELIVERY:
-                return "/my-orders";
+                return hasLink ? "/shipper/delivery-detail?id=" + cleanLink : "/shipper/my-deliveries";
             case TYPE_PRODUCT_APPROVAL:
                 return "/seller/products";
             case TYPE_SELLER_REQUEST:
                 return "/admin/seller-requests";
+            case TYPE_VOUCHER:
+                return "/vouchers";
             default:
-                return "#";
+                return hasLink ? "/my-orders?orderId=" + cleanLink : "#";
         }
     }
 

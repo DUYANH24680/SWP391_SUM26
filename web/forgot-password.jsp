@@ -193,7 +193,7 @@
 
         <div class="link-section">
             <a href="login.jsp">Quay lại đăng nhập</a> |
-            <a href="index.html">Về trang chủ</a>
+            <a href="home.jsp">Về trang chủ</a>
         </div>
     </div>
 </body>

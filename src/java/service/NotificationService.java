@@ -128,6 +128,24 @@ public class NotificationService {
 
     /**
      * Notify shipper when assigned to deliver an order.
+     * @param shipperId  ID of the shipper
+     * @param orderId    ID of the order
+     * @param deliveryId ID of the delivery record (used for navigation link)
+     * @param orderAddress delivery address
+     */
+    public void notifyDeliveryAssignment(int shipperId, int orderId, int deliveryId, String orderAddress) {
+        Notification n = new Notification(
+            shipperId,
+            "Bạn được giao đơn hàng #" + orderId,
+            "Bạn có đơn hàng mới cần giao đến: " + orderAddress,
+            Notification.TYPE_DELIVERY,
+            String.valueOf(deliveryId)
+        );
+        create(n);
+    }
+
+    /**
+     * Notify shipper when assigned to deliver an order (legacy overload, uses orderId as link).
      */
     public void notifyDeliveryAssignment(int shipperId, int orderId, String orderAddress) {
         Notification n = new Notification(

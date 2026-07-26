@@ -25,6 +25,8 @@
     Integer totalPages = (Integer) request.getAttribute("totalPages");
     if (currentPage == null) currentPage = 1;
     if (totalPages == null) totalPages = 1;
+    
+    Map<Integer, String> deliveryNotesMap = (Map<Integer, String>) request.getAttribute("deliveryNotesMap");
 %>
 <%
     String avatarUrl = Account.getAvatar();
@@ -37,6 +39,7 @@
 
     List<Order> orders = (List<Order>) request.getAttribute("orders");
     Map<Integer, List<OrderDetail>> detailsMap = (Map<Integer, List<OrderDetail>>) request.getAttribute("detailsMap");
+    Integer targetOrderId = (Integer) request.getAttribute("targetOrderId");
     String message = (String) session.getAttribute("message");
     String error = (String) session.getAttribute("error");
     session.removeAttribute("message");
@@ -388,8 +391,18 @@
             color: var(--gray-400);
             box-shadow: var(--shadow-sm);
         }
-        .empty-state i { font-size: 3.5rem; color: var(--gray-200); margin-bottom: 1rem; display: block; }
-        .empty-state p { font-size: 0.95rem; margin-bottom: 1.25rem; color: var(--gray-600); }
+        .empty-state i { font-size: 3rem; margin-bottom: 1rem; color: var(--gray-300); }
+        .empty-state p { font-size: 1rem; font-weight: 500; color: var(--gray-600); }
+        
+        .order-card.target-highlight {
+            border: 2px solid var(--green) !important;
+            box-shadow: 0 0 20px rgba(76, 175, 80, 0.4) !important;
+            animation: highlightPulse 2s ease-in-out infinite alternate;
+        }
+        @keyframes highlightPulse {
+            from { box-shadow: 0 0 10px rgba(76, 175, 80, 0.3); }
+            to { box-shadow: 0 0 22px rgba(76, 175, 80, 0.7); }
+        }
 
         /* ======= RESPONSIVE ======= */
         @media (max-width: 900px) {
@@ -485,12 +498,11 @@
                         for (Order o : orders) {
                             List<OrderDetail> details = detailsMap.get(o.getId());
                 %>
-                    <div class="order-card" data-status="<%= o.getStatus() %>">
+                    <div class="order-card <%= (targetOrderId != null && targetOrderId.equals(o.getId())) ? "target-highlight" : "" %>" id="order-<%= o.getId() %>" data-status="<%= o.getStatus() %>">
                         <!-- Order Header -->
                         <div class="order-header">
                             <div class="order-date-id">
-                                Ngày đặt: <strong><%= new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(o.getOrderDate()) %></strong>
-                                <span class="order-id"></span>
+                                Mã đơn: <strong>#<%= o.getId() %></strong> | Ngày đặt: <strong><%= new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(o.getOrderDate()) %></strong>
                             </div>
                             <span class="badge <%= o.getStatusClass() %>"><%= o.getStatusLabel() %></span>
                         </div>
@@ -537,7 +549,13 @@
                             <div><i class="fa-solid fa-Account-tag" style="width:14px;color:var(--green);"></i> <strong>Người nhận:</strong> <%= o.getRecipientName() %> - <%= o.getRecipientPhone() %></div>
                             <div style="margin-top:0.2rem;"><i class="fa-solid fa-map-pin" style="width:14px;color:var(--green);"></i> <strong>Địa chỉ giao:</strong> <%= o.getAddress() %></div>
                             <% if (o.getNote() != null && !o.getNote().isEmpty()) { %>
-                                <div style="margin-top:0.2rem;"><i class="fa-solid fa-comment-dots" style="width:14px;color:var(--green);"></i> <strong>Ghi chú:</strong> <%= o.getNote() %></div>
+                                <div style="margin-top:0.2rem;"><i class="fa-solid fa-comment-dots" style="width:14px;color:var(--green);"></i> <strong>Ghi chú từ bạn:</strong> <%= o.getNote() %></div>
+                            <% } %>
+                            <% 
+                                String shipperNote = deliveryNotesMap != null ? deliveryNotesMap.get(o.getId()) : null;
+                                if (shipperNote != null && !shipperNote.trim().isEmpty()) { 
+                            %>
+                                <div style="margin-top:0.2rem; color: #2563eb;"><i class="fa-solid fa-truck-ramp-box" style="width:14px;color:#2563eb;"></i> <strong>Ghi chú từ Shipper:</strong> <%= shipperNote %></div>
                             <% } %>
                             <% if (o.getStatus() == 5 && o.getCancelReason() != null && !o.getCancelReason().isEmpty()) { %>
                                 <div style="margin-top:0.2rem; color: #dc2626;"><i class="fa-solid fa-circle-xmark" style="width:14px;color:#dc2626;"></i> <strong>Lý do hủy:</strong> <%= o.getCancelReason() %></div>
@@ -660,6 +678,18 @@
             }
             window.location.href = url;
         }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            var targetId = '<%= targetOrderId != null ? targetOrderId : "" %>';
+            if (targetId) {
+                var el = document.getElementById('order-' + targetId);
+                if (el) {
+                    setTimeout(function() {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 200);
+                }
+            }
+        });
     </script>
     <jsp:include page="report-modal.jsp" />
 </body>

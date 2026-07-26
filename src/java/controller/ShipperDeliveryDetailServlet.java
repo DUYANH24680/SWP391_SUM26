@@ -46,8 +46,14 @@ public class ShipperDeliveryDetailServlet extends HttpServlet {
         }
         
         try {
-            int deliveryId = Integer.parseInt(deliveryIdParam.trim());
-            DeliveryOrder delivery = deliveryService.getDeliveryById(deliveryId);
+            int id = Integer.parseInt(deliveryIdParam.trim());
+            DeliveryOrder delivery = deliveryService.getDeliveryById(id);
+            
+            // Fallback: the stored link might be an orderId (old notifications)
+            // Try to look up by orderId if delivery not found by deliveryId
+            if (delivery == null) {
+                delivery = deliveryService.getDeliveryByOrderId(id);
+            }
             
             if (delivery == null) {
                 session.setAttribute("error", "Giao hàng không tồn tại.");

@@ -28,6 +28,7 @@
     Map<Integer, List<OrderDetail>> detailsMap = (Map<Integer, List<OrderDetail>>) request.getAttribute("detailsMap");
     Boolean shopNotApproved = (Boolean) request.getAttribute("shopNotApproved");
     String shopNotApprovedMsg = (String) request.getAttribute("shopNotApprovedMsg");
+    Integer targetOrderId = (Integer) request.getAttribute("targetOrderId");
 
     String message = (String) session.getAttribute("message");
     String error = (String) session.getAttribute("error");
@@ -390,6 +391,16 @@
         .empty-state i { font-size: 3.5rem; color: var(--gray-200); margin-bottom: 1rem; display: block; }
         .empty-state p { font-size: 0.95rem; margin-bottom: 1.25rem; color: var(--gray-600); }
 
+        .order-card.target-highlight {
+            border: 2px solid var(--green) !important;
+            box-shadow: 0 0 20px rgba(76, 175, 80, 0.4) !important;
+            animation: highlightPulse 2s ease-in-out infinite alternate;
+        }
+        @keyframes highlightPulse {
+            from { box-shadow: 0 0 10px rgba(76, 175, 80, 0.3); }
+            to { box-shadow: 0 0 22px rgba(76, 175, 80, 0.7); }
+        }
+
         /* ======= RESPONSIVE ======= */
         @media (max-width: 900px) {
             .layout { flex-direction: column; }
@@ -445,14 +456,15 @@
                             for (Order o : orders) {
                                 List<OrderDetail> details = detailsMap.get(o.getId());
                     %>
-                        <div class="order-card" data-status="<%= o.getStatus() %>">
+                        <div class="order-card <%= (targetOrderId != null && targetOrderId.equals(o.getId())) ? "target-highlight" : "" %>" id="order-<%= o.getId() %>" data-status="<%= o.getStatus() %>">
                             <!-- Order Header -->
                             <div class="order-header">
                                 <div class="order-date-id">
+                                    Mã đơn: <strong>#<%= o.getId() %></strong>
+                                    <span style="color:var(--gray-400); margin:0 0.5rem;">|</span>
                                     Khách hàng: <strong><%= o.getCustomerName() != null ? o.getCustomerName() : "Khách vãng lai" %></strong>
                                     <span style="color:var(--gray-400); margin:0 0.5rem;">|</span>
                                     Đặt ngày: <strong><%= new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(o.getOrderDate()) %></strong>
-                                    <span class="order-id"></span>
                                 </div>
                                 <span class="badge <%= o.getStatusClass() %>"><%= o.getStatusLabel() %></span>
                             </div>
@@ -595,6 +607,18 @@
                 }
             }
         }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            var targetId = '<%= targetOrderId != null ? targetOrderId : "" %>';
+            if (targetId) {
+                var el = document.getElementById('order-' + targetId);
+                if (el) {
+                    setTimeout(function() {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 200);
+                }
+            }
+        });
     </script>
 </body>
 </html>

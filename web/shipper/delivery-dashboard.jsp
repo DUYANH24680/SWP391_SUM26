@@ -166,6 +166,12 @@
                         <i class="fas fa-user"></i>
                         <%= d.getRecipientName() %> - <%= d.getRecipientPhone() %>
                     </div>
+                    <% if (d.getCustomerNote() != null && !d.getCustomerNote().trim().isEmpty()) { %>
+                    <div class="delivery-address" style="color: #15803d; font-weight: 500;">
+                        <i class="fas fa-comment-dots"></i>
+                        Ghi chú từ khách: <%= d.getCustomerNote() %>
+                    </div>
+                    <% } %>
                     <div class="delivery-footer">
                         <span style="font-weight: 600; color: var(--green-dark);">
                             <%= java.text.NumberFormat.getNumberInstance(new java.util.Locale("vi")).format(d.getOrderTotal()) %>đ

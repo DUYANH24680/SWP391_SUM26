@@ -10,6 +10,7 @@ import model.Account;
 import service.DeliveryService;
 import service.NotificationService;
 import model.Order;
+import model.DeliveryOrder;
 import java.io.IOException;
 import java.util.List;
 
@@ -137,9 +138,19 @@ public class StaffAssignDeliveryServlet extends HttpServlet {
                 return;
             }
             
-            // Notify shipper about each assigned order
+            // Notify shipper about each assigned order (with deliveryId for direct link)
             for (int orderId : orderIds) {
-                notifService.notifyDeliveryAssignment(shipperId, orderId, "Đơn hàng #" + orderId);
+                try {
+                    DeliveryOrder assigned = deliveryService.getDeliveryByOrderId(orderId);
+                    if (assigned != null) {
+                        notifService.notifyDeliveryAssignment(shipperId, orderId, assigned.getDeliveryId(), "Đơn hàng #" + orderId);
+                    } else {
+                        notifService.notifyDeliveryAssignment(shipperId, orderId, "Đơn hàng #" + orderId);
+                    }
+                } catch (Exception ex) {
+                    // fallback to legacy method if lookup fails
+                    notifService.notifyDeliveryAssignment(shipperId, orderId, "Đơn hàng #" + orderId);
+                }
             }
             
             if (orderIds.length == 1) {

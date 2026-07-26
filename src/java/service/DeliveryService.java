@@ -268,6 +268,59 @@ public class DeliveryService {
             dao.close();
         }
     }
+
+    /**
+     * Get deliveries assigned to shippers but not accepted within the timeout.
+     */
+    public List<DeliveryOrder> getStaleAssignedDeliveries() {
+        DeliveryDAO dao = new DeliveryDAO();
+        try {
+            return dao.getStaleAssignedDeliveries(60);
+        } finally {
+            dao.close();
+        }
+    }
+
+    /**
+     * Reassign a delivery order from one shipper to another.
+     */
+    public String reassignDelivery(int deliveryId, int newShipperId, int staffId, String note) {
+        if (deliveryId <= 0) {
+            return "ID giao hàng không hợp lệ.";
+        }
+        if (newShipperId <= 0) {
+            return "Vui lòng chọn shipper mới.";
+        }
+
+        DeliveryDAO dao = new DeliveryDAO();
+        try {
+            DeliveryOrder delivery = dao.getDeliveryById(deliveryId);
+            if (delivery == null) {
+                return "Giao hàng không tồn tại.";
+            }
+            if (delivery.getStatus() != DeliveryOrder.STATUS_ASSIGNED) {
+                return "Chỉ có thể chuyển giao các đơn đang ở trạng thái 'Chờ nhận'.";
+            }
+            if (delivery.getAssignedDate() == null) {
+                return "Không xác định được thời gian giao đơn.";
+            }
+            long diffMinutes = (System.currentTimeMillis() - delivery.getAssignedDate().getTime()) / 60000;
+            if (diffMinutes < 60) {
+                return "Chỉ có thể chuyển giao sau 60 phút shipper không nhận.";
+            }
+            if (delivery.getShipperId() != null && delivery.getShipperId() == newShipperId) {
+                return "Vui lòng chọn shipper khác.";
+            }
+
+            boolean success = dao.reassignShipper(deliveryId, newShipperId, staffId, note);
+            if (!success) {
+                return "Chuyển shipper thất bại. Vui lòng thử lại.";
+            }
+            return null;
+        } finally {
+            dao.close();
+        }
+    }
     
     /**
      * Get all deliveries assigned to a shipper.

@@ -61,7 +61,7 @@
         .card { background: var(--white); border-radius: var(--radius); border: 1px solid var(--gray-200); box-shadow: var(--shadow-sm); overflow: hidden; }
         .table { width: 100%; border-collapse: collapse; }
         .table th { background: var(--gray-50); padding: 0.9rem 1rem; text-align: left; font-size: 0.8rem; font-weight: 600; color: var(--gray-600); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--gray-200); }
-        .table th:first-child { width: 50px; text-align: center; }
+        .table th:first-child { min-width: 120px; text-align: center; white-space: nowrap; }
         .table td { padding: 0.9rem 1rem; font-size: 0.875rem; border-bottom: 1px solid var(--gray-100); vertical-align: middle; }
         .table td:first-child { text-align: center; }
         .table tr:last-child td { border-bottom: none; }
@@ -78,6 +78,61 @@
         .btn-outline { background: transparent; border: 2px solid var(--gray-200); color: var(--gray-600); }
         .btn-outline:hover { border-color: var(--green); color: var(--green); }
         .empty-state { text-align: center; padding: 3rem; color: var(--gray-400); }
+        
+        /* Filter Bar */
+        .filter-bar {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+        .filter-bar .filter-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--gray-600);
+            margin-right: 0.25rem;
+            white-space: nowrap;
+        }
+        .filter-btn {
+            padding: 0.45rem 1rem;
+            border-radius: 100px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border: 2px solid var(--gray-200);
+            background: var(--white);
+            color: var(--gray-600);
+            cursor: pointer;
+            transition: all 0.18s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .filter-btn:hover {
+            border-color: var(--green);
+            color: var(--green-dark);
+            background: var(--green-light);
+        }
+        .filter-btn.active {
+            background: var(--green);
+            border-color: var(--green);
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(76,175,80,0.25);
+        }
+        .filter-count {
+            background: rgba(255,255,255,0.3);
+            border-radius: 100px;
+            padding: 0 6px;
+            font-size: 0.7rem;
+            min-width: 18px;
+            text-align: center;
+        }
+        .filter-btn:not(.active) .filter-count {
+            background: var(--gray-100);
+            color: var(--gray-600);
+        }
+        .no-filter-result { display: none; text-align: center; padding: 2.5rem; color: var(--gray-400); }
+        .no-filter-result i { font-size: 2.5rem; margin-bottom: 0.75rem; }
         
         /* Modal */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
@@ -142,6 +197,31 @@
             </button>
         </div>
         
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+            <span class="filter-label"><i class="fas fa-filter"></i> Lọc:</span>
+            <button class="filter-btn active" id="filter-all" onclick="applyFilter('all', this)">
+                <i class="fas fa-list"></i> Tất Cả
+                <span class="filter-count" id="count-all">0</span>
+            </button>
+            <button class="filter-btn" id="filter-newest" onclick="applyFilter('newest', this)">
+                <i class="fas fa-arrow-down-short-wide"></i> Mới Nhất
+                <span class="filter-count" id="count-newest">0</span>
+            </button>
+            <button class="filter-btn" id="filter-today" onclick="applyFilter('today', this)">
+                <i class="fas fa-calendar-day"></i> Hôm Nay
+                <span class="filter-count" id="count-today">0</span>
+            </button>
+            <button class="filter-btn" id="filter-week" onclick="applyFilter('week', this)">
+                <i class="fas fa-calendar-week"></i> Tuần Này
+                <span class="filter-count" id="count-week">0</span>
+            </button>
+            <button class="filter-btn" id="filter-month" onclick="applyFilter('month', this)">
+                <i class="fas fa-calendar-alt"></i> Tháng Này
+                <span class="filter-count" id="count-month">0</span>
+            </button>
+        </div>
+        
         <div class="card">
             <% if (waitingOrders == null || waitingOrders.isEmpty()) { %>
             <div class="empty-state">
@@ -149,12 +229,17 @@
                 <p>Không có đơn hàng nào đang chờ giao</p>
             </div>
             <% } else { %>
-            <table class="table">
+            <div class="no-filter-result" id="noFilterResult">
+                <i class="fas fa-search"></i>
+                <p>Không có đơn hàng nào trong khoảng thời gian này</p>
+            </div>
+            <table class="table" id="ordersTable">
                 <thead>
                     <tr>
-                        <th>
-                            <div class="checkbox-wrapper">
+                        <th style="min-width: 120px; white-space: nowrap;">
+                            <div class="checkbox-wrapper" style="gap: 0.45rem; white-space: nowrap;">
                                 <input type="checkbox" id="selectAll" class="custom-checkbox" onchange="toggleSelectAll()">
+                                <label for="selectAll" style="cursor: pointer; font-size: 0.78rem; font-weight: 700; color: var(--gray-600); letter-spacing: 0.05em; user-select: none; margin: 0; white-space: nowrap;">TẤT CẢ</label>
                             </div>
                         </th>
                         <th>Mã Đơn</th>
@@ -164,9 +249,9 @@
                         <th>Ngày Đặt</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="ordersBody">
                     <% for (Order order : waitingOrders) { %>
-                    <tr class="order-row">
+                    <tr class="order-row" data-date="<%= order.getOrderDate() != null ? new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss").format(order.getOrderDate()) : "" %>">
                         <td>
                             <div class="checkbox-wrapper">
                                 <input type="checkbox" class="custom-checkbox order-checkbox" 
@@ -233,9 +318,144 @@
     </div>
 
     <script>
+        // ==================== Filter Logic ====================
+        var currentFilter = 'all';
+        var currentSort = 'asc'; // default: oldest first (original)
+
+        function getStartOfDay(date) {
+            var d = new Date(date);
+            d.setHours(0, 0, 0, 0);
+            return d;
+        }
+
+        function getStartOfWeek(date) {
+            var d = new Date(date);
+            var day = d.getDay(); // 0=Sun
+            var diff = d.getDate() - day + (day === 0 ? -6 : 1); // Monday
+            d.setDate(diff);
+            d.setHours(0, 0, 0, 0);
+            return d;
+        }
+
+        function getStartOfMonth(date) {
+            var d = new Date(date);
+            d.setDate(1);
+            d.setHours(0, 0, 0, 0);
+            return d;
+        }
+
+        function applyFilter(type, btnEl) {
+            // Update active button
+            document.querySelectorAll('.filter-btn').forEach(function(b) {
+                b.classList.remove('active');
+            });
+            btnEl.classList.add('active');
+            currentFilter = type;
+
+            var now = new Date();
+            var todayStart = getStartOfDay(now);
+            var weekStart  = getStartOfWeek(now);
+            var monthStart = getStartOfMonth(now);
+
+            var rows = Array.from(document.querySelectorAll('.order-row'));
+            var visibleRows = [];
+
+            rows.forEach(function(row) {
+                var dateStr = row.getAttribute('data-date');
+                var rowDate = dateStr ? new Date(dateStr) : null;
+                var show = false;
+
+                if (type === 'all' || type === 'newest') {
+                    show = true;
+                } else if (type === 'today' && rowDate) {
+                    show = rowDate >= todayStart;
+                } else if (type === 'week' && rowDate) {
+                    show = rowDate >= weekStart;
+                } else if (type === 'month' && rowDate) {
+                    show = rowDate >= monthStart;
+                }
+
+                row.style.display = show ? '' : 'none';
+                if (show) visibleRows.push({ row: row, date: rowDate });
+            });
+
+            // Sort if 'newest'
+            if (type === 'newest') {
+                var tbody = document.getElementById('ordersBody');
+                visibleRows.sort(function(a, b) {
+                    if (!a.date) return 1;
+                    if (!b.date) return -1;
+                    return b.date - a.date; // descending
+                });
+                visibleRows.forEach(function(item) {
+                    tbody.appendChild(item.row);
+                });
+            } else if (type === 'all') {
+                // Restore original order (ascending by order_date)
+                var tbody = document.getElementById('ordersBody');
+                visibleRows.sort(function(a, b) {
+                    if (!a.date) return 1;
+                    if (!b.date) return -1;
+                    return a.date - b.date;
+                });
+                visibleRows.forEach(function(item) {
+                    tbody.appendChild(item.row);
+                });
+            }
+
+            // Show/hide no-result message
+            var noResult = document.getElementById('noFilterResult');
+            var table    = document.getElementById('ordersTable');
+            if (noResult && table) {
+                if (visibleRows.length === 0) {
+                    noResult.style.display = 'block';
+                    table.style.display = 'none';
+                } else {
+                    noResult.style.display = 'none';
+                    table.style.display = '';
+                }
+            }
+
+            // Uncheck all hidden rows and update count
+            document.querySelectorAll('.order-row').forEach(function(row) {
+                if (row.style.display === 'none') {
+                    var cb = row.querySelector('.order-checkbox');
+                    if (cb) cb.checked = false;
+                }
+            });
+            updateSelectedCount();
+        }
+
+        function initFilterCounts() {
+            var now = new Date();
+            var todayStart = getStartOfDay(now);
+            var weekStart  = getStartOfWeek(now);
+            var monthStart = getStartOfMonth(now);
+
+            var total = 0, today = 0, week = 0, month = 0;
+            document.querySelectorAll('.order-row').forEach(function(row) {
+                var dateStr = row.getAttribute('data-date');
+                var rowDate = dateStr ? new Date(dateStr) : null;
+                total++;
+                if (rowDate) {
+                    if (rowDate >= todayStart) today++;
+                    if (rowDate >= weekStart)  week++;
+                    if (rowDate >= monthStart) month++;
+                }
+            });
+
+            var el;
+            el = document.getElementById('count-all');    if (el) el.textContent = total;
+            el = document.getElementById('count-newest'); if (el) el.textContent = total;
+            el = document.getElementById('count-today');  if (el) el.textContent = today;
+            el = document.getElementById('count-week');   if (el) el.textContent = week;
+            el = document.getElementById('count-month');  if (el) el.textContent = month;
+        }
+
+        // ==================== Checkbox Logic ====================
         function toggleSelectAll() {
             const selectAll = document.getElementById('selectAll');
-            const checkboxes = document.querySelectorAll('.order-checkbox');
+            const checkboxes = document.querySelectorAll('.order-row:not([style*="display: none"]) .order-checkbox');
             checkboxes.forEach(cb => cb.checked = selectAll.checked);
             updateSelectedCount();
         }
@@ -302,6 +522,7 @@
 
         // Initialize
         updateSelectedCount();
+        initFilterCounts();
     </script>
 </body>
 </html>

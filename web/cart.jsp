@@ -36,7 +36,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gio Hang | Sena Shop</title>
+    <title>Giỏ Hàng | Sena Shop</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
@@ -670,14 +670,14 @@
         <i class="fa-solid fa-apple-whole"></i> Sena Shop
     </a>
     <div class="nav-right">
-        <a href="wishlist" class="nav-icon-btn" title="Yeu Thich">
+        <a href="wishlist" class="nav-icon-btn" title="Yêu Thích">
             <i class="fa-regular fa-heart"></i>
             <% Integer wlCount = (Integer) session.getAttribute("wishlistCount"); %>
             <% if (wlCount != null && wlCount > 0) { %>
             <span class="wishlist-badge"><%= wlCount %></span>
             <% } %>
         </a>
-        <a href="view-cart" class="nav-icon-btn" title="Gio hang" style="background: var(--green-light); color: var(--green-dark);">
+        <a href="view-cart" class="nav-icon-btn" title="Giỏ hàng" style="background: var(--green-light); color: var(--green-dark);">
             <i class="fa-solid fa-basket-shopping"></i>
             <% Integer cartCount = (Integer) session.getAttribute("cartCount"); %>
             <% if (cartCount != null && cartCount > 0) { %>
@@ -690,10 +690,10 @@
 
 <div class="page-wrap">
     <div class="breadcrumb">
-        <a href="home.jsp">Trang Chu</a> / Gio Hang
+        <a href="home.jsp">Trang Chủ</a> / Giỏ Hàng
     </div>
 
-    <h1 class="page-title">Gio Hang Cua Ban</h1>
+    <h1 class="page-title">Giỏ Hàng Của Bạn</h1>
 
     <% if (message != null) { %>
     <div class="alert alert-success">
@@ -713,10 +713,10 @@
         <% if (cart.isEmpty()) { %>
             <div class="empty-cart">
                 <div class="empty-cart-icon"><i class="fa-solid fa-cart-shopping"></i></div>
-                <h2>Gio Hang Dang Trong</h2>
-                <p>Hay chon san pham ban yeu thich va them vao gio hang.</p>
+                <h2>Giỏ Hàng Đang Trống</h2>
+                <p>Hãy chọn sản phẩm bạn yêu thích và thêm vào giỏ hàng.</p>
                 <a href="home.jsp" class="btn btn-green">
-                    <i class="fa-solid fa-basket-shopping"></i> Tiep Tuc Mua Sam
+                    <i class="fa-solid fa-basket-shopping"></i> Tiếp Tục Mua Sắm
                 </a>
             </div>
         <% } else { %>
@@ -727,10 +727,10 @@
                     <span class="checkmark">
                         <i class="fa-solid fa-check"></i>
                     </span>
-                    <span class="select-info" style="margin-left:0.5rem;">Chon Tat Ca</span>
+                    <span class="select-info" style="margin-left:0.5rem;">Chọn Tất Cả</span>
                 </label>
                 <span class="select-info" id="selectedCountInfo">
-                    Da chon <strong id="selectedCountNum">0</strong> / <%= cart.getItems().size() %> san pham
+                    Đã chọn <strong id="selectedCountNum">0</strong> / <%= cart.getItems().size() %> sản phẩm
                 </span>
             </div>
 
@@ -741,11 +741,10 @@
                     <thead>
                         <tr>
                             <th style="width: 50px;"></th>
-                            <th>San Pham</th>
-                            <th>Anh</th>
-                            <th>Don Gia</th>
-                            <th>So Luong</th>
-                            <th>Tam Tinh</th>
+                            <th>Sản Phẩm</th>
+                            <th>Đơn Giá</th>
+                            <th>Số Lượng</th>
+                            <th>Tạm Tính</th>
                             <th style="width: 140px;"></th>
                         </tr>
                     </thead>
@@ -781,25 +780,17 @@
                                         <div class="cart-item-title"><%= item.getTitle() %></div>
                                         <div class="cart-item-meta">
                                             <% if (item.getSize() != null && !item.getSize().isEmpty()) { %>
-                                                <span>Kich co: <strong><%= item.getSize() %></strong></span>
+                                                <span>Kích cỡ: <strong><%= item.getSize() %></strong></span>
                                             <% } %>
                                         </div>
                                         <% if (item.getDiscountCode() != null && !item.getDiscountCode().isEmpty()) { %>
-                                            <div style="font-size: 0.8rem; color: var(--gray-600); margin-top: 0.25rem;">Ma giam gia: <strong><%= item.getDiscountCode() %></strong></div>
+                                            <div style="font-size: 0.8rem; color: var(--gray-600); margin-top: 0.25rem;">Mã giảm giá: <strong><%= item.getDiscountCode() %></strong></div>
                                         <% } %>
                                     </div>
                                 </div>
                             </td>
 
-                            <td>
-                                <div class="cart-item-image" style="width: 60px; height: 60px;">
-                                    <% if (item.getImage() != null && !item.getImage().trim().isEmpty()) { %>
-                                        <img src="<%= ImageUrlUtil.resolve(item.getImage(), request.getContextPath()) %>" alt="<%= item.getTitle() %>">
-                                    <% } else { %>
-                                        <span style="font-size: 1.2rem;">🍎</span>
-                                    <% } %>
-                                </div>
-                            </td>
+
 
                             <td style="font-weight: 600; color: var(--gray-800);">
                                 <%= nf.format((long) item.getUnitPrice()) %> d
@@ -843,30 +834,30 @@
                 <div class="summary-box">
                     <div class="summary-selected-info">
                         <i class="fa-solid fa-check-circle" style="color:var(--green);"></i>
-                        Da chon <strong id="summarySelectedCount">0</strong> san pham
+                        Đã chọn <strong id="summarySelectedCount">0</strong> sản phẩm
                     </div>
 
                     <div class="summary-row">
-                        <span class="label">Tong san pham:</span>
-                        <span class="value" id="summaryItemCount">0 san pham</span>
+                        <span class="label">Tổng sản phẩm:</span>
+                        <span class="value" id="summaryItemCount">0 sản phẩm</span>
                     </div>
 
                     <hr class="summary-divider">
 
                     <div class="summary-row total-row">
-                        <span class="label">Tong tien (da chon):</span>
+                        <span class="label">Tổng tiền (đã chọn):</span>
                         <span class="value" id="selectedTotalDisplay">0 d</span>
                     </div>
 
                     <div class="cart-actions">
                         <a href="home.jsp" class="btn btn-secondary">
-                            <i class="fa-solid fa-arrow-left"></i> Tiep Tuc Mua Sam
+                            <i class="fa-solid fa-arrow-left"></i> Tiếp Tục Mua Sắm
                         </a>
                         <button type="button" class="btn btn-danger" onclick="confirmClearCart()">
-                            <i class="fa-solid fa-trash"></i> Xoa Gio Hang
+                            <i class="fa-solid fa-trash"></i> Xóa Giỏ Hàng
                         </button>
                         <button type="submit" class="btn btn-orange" id="checkoutBtn">
-                            <i class="fa-solid fa-credit-card"></i> Mua Hang
+                            <i class="fa-solid fa-credit-card"></i> Mua Hàng
                         </button>
                     </div>
                 </div>
@@ -885,14 +876,14 @@
 
     // ---- Xoa san pham ----
     function confirmRemove(productId) {
-        if (confirm('Ban co chan chan muon xoa san pham nay khoi gio hang?')) {
+        if (confirm('Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng?')) {
             window.location.href = 'remove-from-cart?productId=' + productId;
         }
     }
 
     // ---- Xoa toan bo gio hang ----
     function confirmClearCart() {
-        if (confirm('Ban co chan chan muon xoa toan bo gio hang?')) {
+        if (confirm('Bạn có chắc chắn muốn xóa toàn bộ giỏ hàng?')) {
             window.location.href = '<%= request.getContextPath() %>/cart?action=clear';
         }
     }
@@ -908,7 +899,7 @@
         } else if (value > 1) {
             value--;
         } else {
-            if (confirm('Ban co chan chan muon xoa san pham nay khoi gio hang?')) {
+            if (confirm('Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng?')) {
                 window.location.href = 'remove-from-cart?productId=' + productId;
             }
             return;
@@ -1013,7 +1004,7 @@
         // Cap nhat so luong da chon
         document.getElementById('selectedCountNum').textContent = selectedCount;
         document.getElementById('summarySelectedCount').textContent = selectedCount;
-        document.getElementById('summaryItemCount').textContent = selectedCount + ' san pham';
+        document.getElementById('summaryItemCount').textContent = selectedCount + ' sản phẩm';
 
         // Tinh tong tien chi cua san pham da chon
         let total = 0;
@@ -1035,7 +1026,7 @@
         const checkboxes = document.querySelectorAll('.product-checkbox:checked');
         if (checkboxes.length === 0) {
             event.preventDefault();
-            alert('Vui long chon it nhat mot san pham de mua hang.');
+            alert('Vui lòng chọn ít nhất một sản phẩm để mua hàng.');
             return;
         }
 
