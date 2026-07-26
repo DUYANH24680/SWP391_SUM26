@@ -98,6 +98,8 @@ public class CheckoutCartServlet extends HttpServlet {
 
         // Parse per-shop voucher codes (shopVoucher_1, shopVoucher_2, ...)
         java.util.Map<Integer, String> shopVoucherCodes = new java.util.HashMap<>();
+        // Parse per-shop notes (note_1, note_2, ...)
+        java.util.Map<Integer, String> shopNotes = new java.util.HashMap<>();
         java.util.Enumeration<String> paramNames = req.getParameterNames();
         while (paramNames.hasMoreElements()) {
             String name = paramNames.nextElement();
@@ -108,6 +110,17 @@ public class CheckoutCartServlet extends HttpServlet {
                     int shopId = Integer.parseInt(shopIdStr);
                     if (code != null && !code.trim().isEmpty()) {
                         shopVoucherCodes.put(shopId, code.trim());
+                    }
+                } catch (NumberFormatException e) {
+                    // Ignore invalid shop ID
+                }
+            } else if (name.startsWith("note_")) {
+                String shopIdStr = name.replace("note_", "");
+                String noteValue = req.getParameter(name);
+                try {
+                    int shopId = Integer.parseInt(shopIdStr);
+                    if (noteValue != null && !noteValue.trim().isEmpty()) {
+                        shopNotes.put(shopId, noteValue.trim());
                     }
                 } catch (NumberFormatException e) {
                     // Ignore invalid shop ID
@@ -126,7 +139,7 @@ public class CheckoutCartServlet extends HttpServlet {
 
         PlaceOrderResult result = checkoutService.placeCartOrderFromSelected(
                 account.getId(), selectedProductIds,
-                recipientName, recipientPhone, address, paymentMethod, note,
+                recipientName, recipientPhone, address, paymentMethod, note, shopNotes,
                 shopVoucherCodes, platformVoucherCode);
 
         if (result.isSuccess()) {

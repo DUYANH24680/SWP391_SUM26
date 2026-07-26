@@ -104,6 +104,7 @@ public class Voucher {
         Timestamp now = new Timestamp(System.currentTimeMillis());
         if (startDate != null && now.before(startDate)) return false;
         if (endDate != null && now.after(endDate)) return false;
+        if (usedCount >= quantity) return false;
         if (orderTotal < minimumOrder) return false;
         return true;
     }

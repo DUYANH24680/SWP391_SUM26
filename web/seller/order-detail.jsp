@@ -582,14 +582,6 @@
                         <div class="pricing-label">Số lượng món hàng</div>
                         <div class="pricing-value"><%= sellerItemCount %> món</div>
                     </div>
-                    <div class="pricing-row">
-                        <div class="pricing-label">Phí hoa hồng sàn (tạm tính 5%)</div>
-                        <div class="pricing-value" style="color: #ef4444;">-<%= nf.format(sellerRevenue * 0.05) %> đ</div>
-                    </div>
-                    <div class="pricing-row">
-                        <div class="pricing-label"><strong>Doanh thu thực nhận của Shop (tạm tính)</strong></div>
-                        <div class="pricing-value pricing-total"><%= nf.format(sellerRevenue * 0.95) %> đ</div>
-                    </div>
                 </div>
             </div>
         </div>

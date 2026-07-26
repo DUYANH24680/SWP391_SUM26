@@ -87,24 +87,10 @@
         }
     }
 
-    double totalShopDiscount = 0.0;
-    java.util.Map<Integer, Double> shopAutoDiscountMap = new java.util.HashMap<>();
-    for (java.util.Map.Entry<Integer, Double> entry : shopSubtotalMap.entrySet()) {
-        int shopId = entry.getKey();
-        double subtotal = entry.getValue();
-        if (subtotal > 500000) {
-            double autoDiscount = subtotal * 0.05;
-            shopAutoDiscountMap.put(shopId, autoDiscount);
-            totalShopDiscount += autoDiscount;
-        } else {
-            shopAutoDiscountMap.put(shopId, 0.0);
-        }
-    }
-
     List<DeliveryAddress> addresses = (List<DeliveryAddress>) request.getAttribute("addresses");
     List<Voucher> vouchers = (List<Voucher>) request.getAttribute("vouchers");
 
-    double finalCost = totalCost - totalShopDiscount + shippingFee;
+    double finalCost = totalCost + shippingFee;
 
     java.text.NumberFormat nf = java.text.NumberFormat.getNumberInstance(java.util.Locale.forLanguageTag("vi"));
 %>
@@ -704,11 +690,6 @@
                             <label class="form-label" for="address">Địa chỉ giao hàng <span style="color:#e53e3e;">*</span></label>
                             <input type="text" class="form-input" id="address" name="address" required placeholder="Số nhà, ngõ, đường, phường/xã, quận/huyện, tỉnh thành" value="<%= Account.getAddress() != null ? Account.getAddress() : "" %>">
                         </div>
-
-                        <div class="form-group" style="margin-bottom:0;">
-                            <label class="form-label" for="note">Ghi chú cho shipper (nếu có)</label>
-                            <textarea class="form-textarea" id="note" name="note" rows="2" placeholder="Ví dụ: Giao ngoài giờ hành chính, gọi trước 15 phút..."></textarea>
-                        </div>
                     </div>
 
                     <!-- payment method -->
@@ -787,6 +768,15 @@
                                         <div class="voucher-msg" id="shopVoucherMsg_<%= shopId %>" style="font-size: 0.75rem;"></div>
                                         <div id="shopDiscount_<%= shopId %>" style="font-size: 0.78rem; color: #dc2626; font-weight: 600; display: none; margin-top: 0.25rem;"></div>
                                     </div>
+                                    <!-- Ghi chú riêng cho cửa hàng -->
+                                    <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px dashed var(--gray-200);">
+                                        <label class="form-label" for="note_<%= shopId %>" style="font-size: 0.8rem; margin-bottom: 0.25rem;">
+                                            <i class="fa-solid fa-comment-dots"></i> Ghi chú cho cửa hàng <%= shopName %>
+                                        </label>
+                                        <textarea class="form-textarea" id="note_<%= shopId %>" name="note_<%= shopId %>" rows="2" 
+                                                  placeholder="Ví dụ: Đóng gói cẩn thận, tách riêng trái cây chín và xanh..." 
+                                                  style="font-size: 0.8rem; padding: 0.5rem 0.75rem;"></textarea>
+                                    </div>
                                 </div>
                             <% } %>
                         </div>
@@ -812,31 +802,18 @@
                                 <span>Tiền hàng:</span>
                                 <strong id="totalCostValue"><%= nf.format((long) totalCost) %> đ</strong>
                             </div>
-                            <!-- Tổng shop discount -->
-                            <div class="bill-row discount" id="totalShopDiscountRow" style="<%= totalShopDiscount > 0 ? "display:flex;" : "display:none;" %>">
-                                <span>Tổng giảm Shop:</span>
-                                <strong id="totalShopDiscountValue">-<%= nf.format((long) totalShopDiscount) %> đ</strong>
+                            <div class="bill-row discount" id="totalShopDiscountRow" style="display:none;">
+                                <span>Giảm Shop:</span>
+                                <strong id="totalShopDiscountValue">-0 đ</strong>
                             </div>
-                            <!-- Per-shop discount breakdown -->
-                            <div id="perShopDiscountContainer">
-                                <% if (totalShopDiscount > 0) {
-                                     for (java.util.Map.Entry<Integer, Double> entry : shopAutoDiscountMap.entrySet()) {
-                                         if (entry.getValue() > 0) { %>
-                                            <div class="bill-row discount" style="display:flex;">
-                                                <span style="font-size:0.78rem; color:var(--gray-600); padding-left:0.5rem;">◦ Shop #<%= entry.getKey() %>:</span>
-                                                <strong>-<%= nf.format(entry.getValue().longValue()) %> đ</strong>
-                                            </div>
-                                         <% }
-                                     }
-                                } %>
-                            </div>
+                            <div id="perShopDiscountContainer"></div>
                             <div class="bill-row discount" id="platformDiscountRow" style="display:none;">
                                 <span>Giảm Sàn:</span>
                                 <strong id="platformDiscountValue">-0 đ</strong>
                             </div>
-                            <div class="bill-row discount" id="totalDiscountRow" style="<%= totalShopDiscount > 0 ? "display:flex;" : "display:none;" %>">
+                            <div class="bill-row discount" id="totalDiscountRow" style="display:none;">
                                 <span>Tổng giảm:</span>
-                                <strong id="totalDiscountValue">-<%= nf.format((long) totalShopDiscount) %> đ</strong>
+                                <strong id="totalDiscountValue">-0 đ</strong>
                             </div>
                             <div class="bill-row">
                                 <span>Phí vận chuyển:</span>
@@ -910,18 +887,7 @@
         var originalShipping = <%= shippingFee %>;
         var appliedShopVouchers = {};   // shopId -> voucherId
         var appliedPlatformVoucherId = null;
-        var lastShopDiscounts = {
-            <%
-            boolean firstD = true;
-            for (java.util.Map.Entry<Integer, Double> entry : shopAutoDiscountMap.entrySet()) {
-                if (entry.getValue() > 0) {
-                    if (!firstD) out.print(",");
-                    out.print("\"" + entry.getKey() + "\": " + entry.getValue());
-                    firstD = false;
-                }
-            }
-            %>
-        };
+        var lastShopDiscounts = {};
 
         // ======= VOUCHER DROPDOWN DATA =======
         var shopVouchersMap = {};
@@ -940,12 +906,25 @@
             <%
             java.util.List<Voucher> vList = entry.getValue();
             java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy");
+            java.text.SimpleDateFormat dfForJs = new java.text.SimpleDateFormat("yyyy-MM-dd");
             for (int i = 0; i < vList.size(); i++) {
                 Voucher v = vList.get(i);
                 String endStr = v.getEndDate() != null ? sdf.format(v.getEndDate()) : "Không giới hạn";
+                String endDateForJs = v.getEndDate() != null ? dfForJs.format(v.getEndDate()) : "";
+                String startStr = v.getStartDate() != null ? sdf.format(v.getStartDate()) : "";
+                String startDateForJs = v.getStartDate() != null ? dfForJs.format(v.getStartDate()) : "";
                 int remaining = v.getQuantity() - v.getUsedCount();
+                boolean isExpired = v.getEndDate() != null && new java.util.Date().after(v.getEndDate());
+                boolean isOutOfUsage = remaining <= 0;
+                boolean isNotStarted = v.getStartDate() != null && new java.util.Date().before(v.getStartDate());
+                boolean isDisabled = !v.isStatus() || isExpired || isOutOfUsage;
+                String disabledReason = "";
+                if (!v.isStatus()) disabledReason = "Đã khóa";
+                else if (isOutOfUsage) disabledReason = "Hết lượt";
+                else if (isExpired) disabledReason = "Đã hết hạn";
+                else if (isNotStarted) disabledReason = "Chưa đến hạn";
             %>
-            {code: "<%= v.getCode() %>", type: "<%= v.getType() %>", discPct: <%= v.getDiscountPercent() %>, maxDisc: <%= v.getMaxDiscount() %>, minOrder: <%= (long) v.getMinimumOrder() %>, endDate: "<%= endStr %>", remaining: <%= remaining %>, remainingPct: <%= v.getQuantity() > 0 ? (remaining * 100.0 / v.getQuantity()) : 0 %>}<%= i < vList.size() - 1 ? "," : "" %>
+            {code: "<%= v.getCode() %>", type: "<%= v.getType() %>", discPct: <%= v.getDiscountPercent() %>, maxDisc: <%= v.getMaxDiscount() %>, minOrder: <%= (long) v.getMinimumOrder() %>, endDate: "<%= endStr %>", endDateForJs: "<%= endDateForJs %>", startDateForJs: "<%= startDateForJs %>", remaining: <%= remaining %>, remainingPct: <%= v.getQuantity() > 0 ? (remaining * 100.0 / v.getQuantity()) : 0 %>, isDisabled: <%= isDisabled %>, disabledReason: "<%= disabledReason %>", isStatus: <%= v.isStatus() %>}<%= i < vList.size() - 1 ? "," : "" %>
             <% } %>
         ];
         <%
@@ -957,14 +936,19 @@
             <%
             if (vouchers != null) {
                 java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy");
+                java.text.SimpleDateFormat dfForJs = new java.text.SimpleDateFormat("yyyy-MM-dd");
                 boolean first = true;
                 for (Voucher v : vouchers) {
                     if (v.getShopId() == null) {
                         String endStr = v.getEndDate() != null ? sdf.format(v.getEndDate()) : "Không giới hạn";
+                        String endDateForJs = v.getEndDate() != null ? dfForJs.format(v.getEndDate()) : "";
                         int remaining = v.getQuantity() - v.getUsedCount();
+                        boolean isExpired = v.getEndDate() != null && new java.util.Date().after(v.getEndDate());
+                        boolean isOutOfUsage = remaining <= 0;
+                        boolean isDisabled = !v.isStatus() || isExpired || isOutOfUsage;
                         if (!first) out.print(",");
             %>
-            {code: "<%= v.getCode() %>", type: "<%= v.getType() %>", discPct: <%= v.getDiscountPercent() %>, maxDisc: <%= v.getMaxDiscount() %>, minOrder: <%= (long) v.getMinimumOrder() %>, endDate: "<%= endStr %>", remaining: <%= remaining %>, remainingPct: <%= v.getQuantity() > 0 ? (remaining * 100.0 / v.getQuantity()) : 0 %>}
+            {code: "<%= v.getCode() %>", type: "<%= v.getType() %>", discPct: <%= v.getDiscountPercent() %>, maxDisc: <%= v.getMaxDiscount() %>, minOrder: <%= (long) v.getMinimumOrder() %>, endDate: "<%= endStr %>", endDateForJs: "<%= endDateForJs %>", remaining: <%= remaining %>, remainingPct: <%= v.getQuantity() > 0 ? (remaining * 100.0 / v.getQuantity()) : 0 %>, isDisabled: <%= isDisabled %>}
             <%
                         first = false;
                     }
@@ -1012,7 +996,7 @@
 
             var shopSubtotals = getShopSubtotals();
 
-            var url = "${pageContext.request.contextPath}/checkout?action=checkVouchers";
+            var url = "<%= request.getContextPath() %>/checkout?action=checkVouchers";
             var params = "platformVoucherCode=" + encodeURIComponent(platformCode)
                        + "&totalSubtotal=" + originalTotal
                        + "&shopSubtotals=" + encodeURIComponent(JSON.stringify(shopSubtotals));
@@ -1026,8 +1010,16 @@
                 headers: { "Content-Type": "application/x-www-form-urlencoded" },
                 body: params
             })
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("HTTP error: " + response.status);
+                    }
+                    return response.json();
+                })
                 .then(data => {
+                    // Debug: log response
+                    console.log("Voucher response:", data);
+                    
                     // Update per-shop voucher messages
                     for (var shopId in shopCodes) {
                         var msgDiv = document.getElementById("shopVoucherMsg_" + shopId);
@@ -1041,27 +1033,29 @@
                             if (data[shopDiscountKey] && data[shopDiscountKey] > 0) {
                                 msgDiv.className = "voucher-msg success";
                                 msgDiv.innerHTML = '<i class="fa-solid fa-circle-check"></i> Áp dụng thành công!';
-                                discountDiv.style.display = "block";
-                                discountDiv.innerHTML = '<i class="fa-solid fa-tag"></i> Giảm: -' + formatCurrency(data[shopDiscountKey]);
+                                if (discountDiv) {
+                                    discountDiv.style.display = "block";
+                                    discountDiv.innerHTML = '<i class="fa-solid fa-tag"></i> Giảm: -' + formatCurrency(data[shopDiscountKey]);
+                                }
                                 appliedShopVouchers[shopId] = data["shop_" + shopId + "_id"];
                                 lastShopDiscounts[shopId] = data[shopDiscountKey];
                             } else if (data[shopMsgKey]) {
                                 msgDiv.className = "voucher-msg error";
                                 msgDiv.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> ' + data[shopMsgKey];
-                                discountDiv.style.display = "none";
+                                if (discountDiv) discountDiv.style.display = "none";
                                 delete appliedShopVouchers[shopId];
                                 delete lastShopDiscounts[shopId];
                             } else {
                                 msgDiv.className = "voucher-msg error";
                                 msgDiv.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> Mã không hợp lệ';
-                                discountDiv.style.display = "none";
+                                if (discountDiv) discountDiv.style.display = "none";
                                 delete appliedShopVouchers[shopId];
                                 delete lastShopDiscounts[shopId];
                             }
                         } else {
                             msgDiv.className = "voucher-msg";
                             msgDiv.innerText = "";
-                            discountDiv.style.display = "none";
+                            if (discountDiv) discountDiv.style.display = "none";
                             delete appliedShopVouchers[shopId];
                             delete lastShopDiscounts[shopId];
                         }
@@ -1084,6 +1078,11 @@
                             platformMsgDiv.className = "voucher-msg error";
                             platformMsgDiv.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> ' + (data.message || "Mã không hợp lệ");
                             appliedPlatformVoucherId = null;
+                        } else {
+                            // success=true but platformDiscount=0 and no error message — show generic error
+                            platformMsgDiv.className = "voucher-msg error";
+                            platformMsgDiv.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> Mã không hợp lệ hoặc không áp dụng được cho đơn hàng này.';
+                            appliedPlatformVoucherId = null;
                         }
                     } else {
                         appliedPlatformVoucherId = null;
@@ -1095,8 +1094,19 @@
                     console.error("Lỗi AJAX voucher:", err);
                     var platformMsgDiv = document.getElementById("platformVoucherMessage");
                     platformMsgDiv.className = "voucher-msg error";
-                    platformMsgDiv.innerText = "Lỗi khi kiểm tra mã giảm giá.";
-                    clearVoucherDisplay();
+                    platformMsgDiv.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> Lỗi kết nối: ' + err.message;
+                    // Also clear shop voucher messages
+                    for (var shopId in shopCodes) {
+                        var msgDiv = document.getElementById("shopVoucherMsg_" + shopId);
+                        var discountDiv = document.getElementById("shopDiscount_" + shopId);
+                        if (msgDiv) {
+                            msgDiv.className = "voucher-msg error";
+                            msgDiv.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> Lỗi kết nối';
+                        }
+                        if (discountDiv) {
+                            discountDiv.style.display = "none";
+                        }
+                    }
                 });
         }
 
@@ -1158,56 +1168,19 @@
         }
 
         function clearVoucherDisplay() {
-            var initialShopDiscount = <%= totalShopDiscount %>;
             var initialShipping = <%= shippingFee %>;
             var initialTotal = <%= totalCost %>;
 
-            if (initialShopDiscount > 0) {
-                document.getElementById("totalShopDiscountRow").style.display = "flex";
-                document.getElementById("totalShopDiscountValue").innerText = "-" + formatCurrency(initialShopDiscount);
-                
-                var container = document.getElementById("perShopDiscountContainer");
-                container.innerHTML = "";
-                <%
-                for (java.util.Map.Entry<Integer, Double> entry : shopAutoDiscountMap.entrySet()) {
-                    if (entry.getValue() > 0) {
-                %>
-                var div = document.createElement("div");
-                div.className = "bill-row discount";
-                div.style.display = "flex";
-                div.innerHTML = '<span style="font-size:0.78rem; color:var(--gray-600); padding-left:0.5rem;">◦ Shop #<%= entry.getKey() %>:</span><strong>-' + formatCurrency(<%= entry.getValue() %>) + '</strong>';
-                container.appendChild(div);
-                <%
-                    }
-                }
-                %>
-                
-                document.getElementById("totalDiscountRow").style.display = "flex";
-                document.getElementById("totalDiscountValue").innerText = "-" + formatCurrency(initialShopDiscount);
-                document.getElementById("finalCostValue").innerText = formatCurrency(initialTotal - initialShopDiscount + initialShipping);
-            } else {
-                document.getElementById("totalShopDiscountRow").style.display = "none";
-                document.getElementById("perShopDiscountContainer").innerHTML = "";
-                document.getElementById("totalDiscountRow").style.display = "none";
-                document.getElementById("finalCostValue").innerText = formatCurrency(initialTotal + initialShipping);
-            }
+            document.getElementById("totalShopDiscountRow").style.display = "none";
+            document.getElementById("perShopDiscountContainer").innerHTML = "";
+            document.getElementById("totalDiscountRow").style.display = "none";
+            document.getElementById("finalCostValue").innerText = formatCurrency(initialTotal + initialShipping);
 
             document.getElementById("platformDiscountRow").style.display = "none";
             appliedShopVouchers = {};
             appliedPlatformVoucherId = null;
             
-            lastShopDiscounts = {
-                <%
-                boolean firstD2 = true;
-                for (java.util.Map.Entry<Integer, Double> entry : shopAutoDiscountMap.entrySet()) {
-                    if (entry.getValue() > 0) {
-                        if (!firstD2) out.print(",");
-                        out.print("\"" + entry.getKey() + "\": " + entry.getValue());
-                        firstD2 = false;
-                    }
-                }
-                %>
-            };
+            lastShopDiscounts = {};
 
             var msgDivs = document.querySelectorAll("[id^='shopVoucherMsg_']");
             msgDivs.forEach(function(div) { div.className = "voucher-msg"; div.innerText = ""; });
@@ -1255,12 +1228,22 @@
                 var isEligible = totalAfterShop >= v.minOrder;
                 var typeLabel = v.type === "FREESHIP" ? "Freeship" : "Giảm " + v.discPct + "%";
                 var typeClass = v.type === "FREESHIP" ? "freeship" : "discount";
+                var isUnavailable = v.isDisabled || v.remaining <= 0 || (v.endDateForJs && new Date(v.endDateForJs) < new Date());
+                var unavailableReason = "";
+                if (v.remaining <= 0) unavailableReason = "Hết lượt sử dụng";
+                else if (v.endDateForJs && new Date(v.endDateForJs) < new Date()) unavailableReason = "Đã hết hạn";
+                else if (v.isDisabled) unavailableReason = "Đã khóa";
+                
+                var titleAttr = isUnavailable ? ' title="' + unavailableReason + '"' : (isEligible ? '' : ' title="Đơn hàng chưa đạt mức tối thiểu ' + formatCurrency(v.minOrder) + '"');
                 var isSelected = platformModalSelectedCode === v.code;
-                html += '<div class="voucher-modal-item' + (isSelected ? ' selected' : '') + (!isEligible ? ' disabled' : '') + '" data-code="' + v.code + '"' + titleAttr + '>'
+                html += '<div class="voucher-modal-item' + (isSelected ? ' selected' : '') + (!isEligible || isUnavailable ? ' disabled' : '') + '" data-code="' + v.code + '"' + titleAttr + '>'
                     + '<div class="voucher-modal-top">'
                     + '<span class="voucher-badge ' + typeClass + '">' + typeLabel + '</span>'
-                    + '<span class="voucher-modal-code">' + v.code + '</span>'
-                    + '</div>'
+                    + '<span class="voucher-modal-code">' + v.code + '</span>';
+                if (isUnavailable) {
+                    html += '<span class="voucher-badge" style="background:#fee2e2; color:#991b1b; font-size:0.65rem; padding:0.1rem 0.35rem;">' + unavailableReason + '</span>';
+                }
+                html += '</div>'
                     + '<div class="voucher-modal-desc"><i class="fa-solid fa-tag"></i> ' + (v.type === "FREESHIP" ? "Miễn phí vận chuyển" : "Giảm tối đa " + formatCurrency(v.maxDisc)) + '</div>'
                     + '<div class="voucher-modal-meta"><span>Đơn tối thiểu: ' + formatCurrency(v.minOrder) + '</span><span class="' + (v.remainingPct < 20 ? 'low' : '') + '">Còn ' + v.remaining + ' lượt</span><span>HSD: ' + v.endDate + '</span></div>'
                     + '</div>';
@@ -1326,13 +1309,23 @@
                 var isEligible = shopSubtotal >= v.minOrder;
                 var typeLabel = v.type === "FREESHIP" ? "Freeship" : "Giảm " + v.discPct + "%";
                 var typeClass = v.type === "FREESHIP" ? "freeship" : "discount";
-                var titleAttr = isEligible ? '' : ' title="Đơn hàng chưa đạt mức tối thiểu ' + formatCurrency(v.minOrder) + '"';
+                // Check if voucher is disabled (expired, out of usage, not started, or locked)
+                var isUnavailable = v.isDisabled || v.remaining <= 0 || (v.endDateForJs && new Date(v.endDateForJs) < new Date());
+                var unavailableReason = v.disabledReason || "";
+                if (v.remaining <= 0) unavailableReason = "Hết lượt sử dụng";
+                else if (v.endDateForJs && new Date(v.endDateForJs) < new Date()) unavailableReason = "Đã hết hạn";
+                else if (v.disabledReason) unavailableReason = v.disabledReason;
+                
+                var titleAttr = isUnavailable ? ' title="' + unavailableReason + '"' : (isEligible ? '' : ' title="Đơn hàng chưa đạt mức tối thiểu ' + formatCurrency(v.minOrder) + '"');
                 var isSelected = window.shopModalSelectedCode === v.code;
-                html += '<div class="voucher-modal-item' + (isSelected ? ' selected' : '') + (!isEligible ? ' disabled' : '') + '" data-shopid="' + shopId + '" data-code="' + v.code + '"' + titleAttr + '>'
+                html += '<div class="voucher-modal-item' + (isSelected ? ' selected' : '') + (!isEligible || isUnavailable ? ' disabled' : '') + '" data-shopid="' + shopId + '" data-code="' + v.code + '"' + titleAttr + '>'
                     + '<div class="voucher-modal-top">'
                     + '<span class="voucher-badge ' + typeClass + '">' + typeLabel + '</span>'
-                    + '<span class="voucher-modal-code">' + v.code + '</span>'
-                    + '</div>'
+                    + '<span class="voucher-modal-code">' + v.code + '</span>';
+                if (isUnavailable) {
+                    html += '<span class="voucher-badge" style="background:#fee2e2; color:#991b1b; font-size:0.65rem; padding:0.1rem 0.35rem;">' + unavailableReason + '</span>';
+                }
+                html += '</div>'
                     + '<div class="voucher-modal-desc"><i class="fa-solid fa-tag"></i> ' + (v.type === "FREESHIP" ? "Miễn phí vận chuyển" : "Giảm tối đa " + formatCurrency(v.maxDisc)) + '</div>'
                     + '<div class="voucher-modal-meta"><span>Đơn tối thiểu: ' + formatCurrency(v.minOrder) + '</span><span class="' + (v.remainingPct < 20 ? 'low' : '') + '">Còn ' + v.remaining + ' lượt</span><span>HSD: ' + v.endDate + '</span></div>'
                     + '</div>';
