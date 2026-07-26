@@ -113,6 +113,7 @@ public class ManageSellerServlet extends HttpServlet {
     }
 
     private void handleListView(HttpServletRequest req, String keyword, String filter) {
+        shopDAO.autoEndExpiredSuspensions();
         List<Shop> shops;
         if (keyword != null && !keyword.trim().isEmpty()) {
             shops = shopDAO.searchSellers(keyword.trim());

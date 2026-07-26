@@ -281,6 +281,30 @@ public class ShopDAO extends Utils.DbContext {
     }
 
     /**
+     * Auto end expired temporary suspensions (status = 0 -> status = 1)
+     * when suspend_until <= GETDATE() or when no active suspension exists in SellerActions.
+     */
+    public int autoEndExpiredSuspensions() {
+        String sql = "UPDATE Shops SET status = 1 WHERE status = 0 "
+                   + "AND NOT EXISTS ("
+                   + "   SELECT 1 FROM SellerActions sa "
+                   + "   WHERE sa.shop_id = Shops.id "
+                   + "     AND sa.action_type = 'temp_suspend' "
+                   + "     AND sa.suspend_until > GETDATE()"
+                   + ")";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            int rows = ps.executeUpdate();
+            if (rows > 0) {
+                System.out.println("[ShopDAO] autoEndExpiredSuspensions() restored " + rows + " shop(s) to active status=1");
+            }
+            return rows;
+        } catch (SQLException e) {
+            System.err.println("[ShopDAO] autoEndExpiredSuspensions() error: " + e.getMessage());
+            return 0;
+        }
+    }
+
+    /**
      * Count products for a shop.
      */
     public int countProductsByShopId(int shopId) {
