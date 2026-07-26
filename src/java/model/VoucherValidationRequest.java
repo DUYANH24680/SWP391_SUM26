@@ -8,6 +8,7 @@ public class VoucherValidationRequest {
     private String platformVoucherCode;
     private Map<Integer, Double> shopSubtotals;
     private double totalSubtotal;
+    private int customerId;
 
     public VoucherValidationRequest() {
         this.shopVoucherCodes = new HashMap<>();
@@ -44,5 +45,13 @@ public class VoucherValidationRequest {
 
     public void setTotalSubtotal(double totalSubtotal) {
         this.totalSubtotal = totalSubtotal;
+    }
+
+    public int getCustomerId() {
+        return customerId;
+    }
+
+    public void setCustomerId(int customerId) {
+        this.customerId = customerId;
     }
 }

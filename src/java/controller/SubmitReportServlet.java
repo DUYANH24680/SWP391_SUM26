@@ -128,17 +128,7 @@ public class SubmitReportServlet extends HttpServlet {
         }
 
         // DuyAnhNgo- Gọi ReportDAO (hàm hasPendingReport) kiểm tra xem Khách hàng này có đang có đơn tố cáo Cửa hàng này chờ xử lý không, tránh Spam
-        if (reportDAO.hasPendingReport(user.getId(), shopId)) {
-            if (isAjax) {
-                resp.setContentType("application/json");
-                resp.setCharacterEncoding("UTF-8");
-                resp.getWriter().write("{\"success\":false, \"message\":\"Bạn đã gửi báo cáo cho cửa hàng này rồi. Vui lòng đợi admin xử lý.\"}");
-            } else {
-                session.setAttribute("error", "Bạn đã gửi báo cáo cho cửa hàng này rồi. Vui lòng đợi admin xử lý.");
-                resp.sendRedirect(req.getContextPath() + "/submit-report" + (shopId > 0 ? "?shopId=" + shopId : ""));
-            }
-            return;
-        }
+        // (Đã loại bỏ điều kiện này theo yêu cầu để khách hàng có thể báo cáo nhiều lần cho cùng 1 shop)
 
         int priority = 2;
         try { priority = Integer.parseInt(priorityStr); } catch (Exception ignored) {}

@@ -2370,20 +2370,29 @@
                                                 </div>
                                             </div>
                                             <div class="btn-actions">
-                                                <form action="add-to-cart" method="POST" style="flex:1;">
-                                                    <input type="hidden" name="productId" value="<%= p.getId() %>">
-                                                    <input type="hidden" name="quantity" value="1">
-                                                    <button type="submit" class="btn-add-cart">
-                                                        <i class="fa-solid fa-cart-plus"></i> Giỏ Hàng
+                                                <% if (Account == null || Account.getRoleId() == 3) { %>
+                                                    <form action="add-to-cart" method="POST" style="flex:1;">
+                                                        <input type="hidden" name="productId" value="<%= p.getId() %>">
+                                                        <input type="hidden" name="quantity" value="1">
+                                                        <button type="submit" class="btn-add-cart">
+                                                            <i class="fa-solid fa-cart-plus"></i> Giỏ Hàng
+                                                        </button>
+                                                    </form>
+                                                    <form action="buy-now" method="POST" style="flex:1;">
+                                                        <input type="hidden" name="productId" value="<%= p.getId() %>">
+                                                        <input type="hidden" name="quantity" value="1">
+                                                        <button type="submit" class="btn-buy-now">
+                                                            <i class="fa-solid fa-bolt"></i> Mua Ngay
+                                                        </button>
+                                                    </form>
+                                                <% } else { %>
+                                                    <button class="btn-add-cart" disabled style="flex:1; opacity:0.5; cursor:not-allowed;" title="Admin/Seller không thể mua hàng">
+                                                        <i class="fa-solid fa-ban"></i> Giỏ Hàng
                                                     </button>
-                                                </form>
-                                                <form action="buy-now" method="POST" style="flex:1;">
-                                                    <input type="hidden" name="productId" value="<%= p.getId() %>">
-                                                    <input type="hidden" name="quantity" value="1">
-                                                    <button type="submit" class="btn-buy-now">
-                                                        <i class="fa-solid fa-bolt"></i> Mua Ngay
+                                                    <button class="btn-buy-now" disabled style="flex:1; opacity:0.5; cursor:not-allowed;" title="Admin/Seller không thể mua hàng">
+                                                        <i class="fa-solid fa-ban"></i> Mua Ngay
                                                     </button>
-                                                </form>
+                                                <% } %>
                                             </div>
                                         <% } else { %>
                                             <div class="footer-row">

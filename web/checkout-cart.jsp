@@ -752,6 +752,11 @@
                                 <span>Tiền hàng:</span>
                                 <strong id="totalCostValue"><%= nf.format((long) totalCost) %> đ</strong>
                             </div>
+                            <div class="bill-row discount" id="totalShopDiscountRow" style="display:none;">
+                                <span>Giảm Shop:</span>
+                                <strong id="totalShopDiscountValue">-0 đ</strong>
+                            </div>
+                            <div id="perShopDiscountContainer"></div>
                             <div class="bill-row discount" id="platformDiscountRow" style="display:none;">
                                 <span>Giảm Sàn:</span>
                                 <strong id="platformDiscountValue">-0 đ</strong>
@@ -1157,27 +1162,29 @@
                             if (data[shopDiscountKey] && data[shopDiscountKey] > 0) {
                                 msgDiv.className = "voucher-msg success";
                                 msgDiv.innerHTML = '<i class="fa-solid fa-circle-check"></i> Áp dụng thành công!';
-                                discountDiv.style.display = "block";
-                                discountDiv.innerHTML = '<i class="fa-solid fa-tag"></i> Giảm: -' + formatCurrency(data[shopDiscountKey]);
+                                if (discountDiv) {
+                                    discountDiv.style.display = "block";
+                                    discountDiv.innerHTML = '<i class="fa-solid fa-tag"></i> Giảm: -' + formatCurrency(data[shopDiscountKey]);
+                                }
                                 appliedShopVouchers[shopId] = data["shop_" + shopId + "_id"];
                                 lastShopDiscounts[shopId] = data[shopDiscountKey];
                             } else if (data[shopMsgKey]) {
                                 msgDiv.className = "voucher-msg error";
                                 msgDiv.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> ' + data[shopMsgKey];
-                                discountDiv.style.display = "none";
+                                if (discountDiv) discountDiv.style.display = "none";
                                 delete appliedShopVouchers[shopId];
                                 delete lastShopDiscounts[shopId];
                             } else {
                                 msgDiv.className = "voucher-msg error";
                                 msgDiv.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> Mã không hợp lệ';
-                                discountDiv.style.display = "none";
+                                if (discountDiv) discountDiv.style.display = "none";
                                 delete appliedShopVouchers[shopId];
                                 delete lastShopDiscounts[shopId];
                             }
                         } else {
                             msgDiv.className = "voucher-msg";
                             msgDiv.innerText = "";
-                            discountDiv.style.display = "none";
+                            if (discountDiv) discountDiv.style.display = "none";
                             delete appliedShopVouchers[shopId];
                             delete lastShopDiscounts[shopId];
                         }
@@ -1231,30 +1238,34 @@
             var totalShopDiscount = data.totalShopDiscount || 0;
             var platformDiscount = data.platformDiscount || 0;
             var totalDiscount = data.totalDiscount || 0;
-            var finalTotal = data.finalTotal || originalTotal;
+            var finalTotal = (data.finalTotal !== undefined && data.finalTotal !== null) ? data.finalTotal : originalTotal;
 
             // Total shop discount row
             var totalShopRow = document.getElementById("totalShopDiscountRow");
             var totalShopVal = document.getElementById("totalShopDiscountValue");
-            if (totalShopDiscount > 0) {
-                totalShopRow.style.display = "flex";
-                totalShopVal.innerText = "-" + formatCurrency(totalShopDiscount);
-            } else {
-                totalShopRow.style.display = "none";
+            if (totalShopRow && totalShopVal) {
+                if (totalShopDiscount > 0) {
+                    totalShopRow.style.display = "flex";
+                    totalShopVal.innerText = "-" + formatCurrency(totalShopDiscount);
+                } else {
+                    totalShopRow.style.display = "none";
+                }
             }
 
             // Per-shop discount breakdown
             var container = document.getElementById("perShopDiscountContainer");
-            container.innerHTML = "";
-            if (lastShopDiscounts) {
-                for (var shopId in lastShopDiscounts) {
-                    var discount = lastShopDiscounts[shopId];
-                    if (discount && discount > 0) {
-                        var div = document.createElement("div");
-                        div.className = "bill-row discount";
-                        div.style.display = "flex";
-                        div.innerHTML = '<span style="font-size:0.78rem; color:var(--gray-600); padding-left:0.5rem;">◦ Shop #' + shopId + ':</span><strong>-' + formatCurrency(discount) + '</strong>';
-                        container.appendChild(div);
+            if (container) {
+                container.innerHTML = "";
+                if (lastShopDiscounts) {
+                    for (var shopId in lastShopDiscounts) {
+                        var discount = lastShopDiscounts[shopId];
+                        if (discount && discount > 0) {
+                            var div = document.createElement("div");
+                            div.className = "bill-row discount";
+                            div.style.display = "flex";
+                            div.innerHTML = '<span style="font-size:0.78rem; color:var(--gray-600); padding-left:0.5rem;">◦ Shop #' + shopId + ':</span><strong>-' + formatCurrency(discount) + '</strong>';
+                            container.appendChild(div);
+                        }
                     }
                 }
             }
@@ -1262,21 +1273,25 @@
             // Platform discount row
             var platformRow = document.getElementById("platformDiscountRow");
             var platformVal = document.getElementById("platformDiscountValue");
-            if (platformDiscount > 0) {
-                platformRow.style.display = "flex";
-                platformVal.innerText = "-" + formatCurrency(platformDiscount);
-            } else {
-                platformRow.style.display = "none";
+            if (platformRow && platformVal) {
+                if (platformDiscount > 0) {
+                    platformRow.style.display = "flex";
+                    platformVal.innerText = "-" + formatCurrency(platformDiscount);
+                } else {
+                    platformRow.style.display = "none";
+                }
             }
 
             // Total discount
             var totalRow = document.getElementById("totalDiscountRow");
             var totalVal = document.getElementById("totalDiscountValue");
-            if (totalDiscount > 0) {
-                totalRow.style.display = "flex";
-                totalVal.innerText = "-" + formatCurrency(totalDiscount);
-            } else {
-                totalRow.style.display = "none";
+            if (totalRow && totalVal) {
+                if (totalDiscount > 0) {
+                    totalRow.style.display = "flex";
+                    totalVal.innerText = "-" + formatCurrency(totalDiscount);
+                } else {
+                    totalRow.style.display = "none";
+                }
             }
 
             // Final total
@@ -1288,12 +1303,17 @@
             var initialShipping = <%= shippingFee %>;
             var initialTotal = <%= totalCost %>;
 
-            document.getElementById("totalShopDiscountRow").style.display = "none";
-            document.getElementById("perShopDiscountContainer").innerHTML = "";
-            document.getElementById("totalDiscountRow").style.display = "none";
-            document.getElementById("finalCostValue").innerText = formatCurrency(initialTotal + initialShipping);
+            var totalShopRow = document.getElementById("totalShopDiscountRow");
+            if (totalShopRow) totalShopRow.style.display = "none";
+            var container = document.getElementById("perShopDiscountContainer");
+            if (container) container.innerHTML = "";
+            var totalRow = document.getElementById("totalDiscountRow");
+            if (totalRow) totalRow.style.display = "none";
+            var finalCostVal = document.getElementById("finalCostValue");
+            if (finalCostVal) finalCostVal.innerText = formatCurrency(initialTotal + initialShipping);
 
-            document.getElementById("platformDiscountRow").style.display = "none";
+            var platformRow = document.getElementById("platformDiscountRow");
+            if (platformRow) platformRow.style.display = "none";
             appliedShopVouchers = {};
             appliedPlatformVoucherId = null;
             

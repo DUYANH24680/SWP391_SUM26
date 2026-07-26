@@ -89,6 +89,10 @@ public class RegisterSellerServlet extends HttpServlet {
             forwardWithError(req, resp, "Bạn đã có một yêu cầu đang chờ duyệt. Vui lòng chờ Admin phê duyệt.", shopName, description, address);
             return;
         }
+        if (dao.isShopNameTaken(shopName)) {
+            forwardWithError(req, resp, "Tên cửa hàng này đã tồn tại. Vui lòng chọn một tên khác.", shopName, description, address);
+            return;
+        }
 
         // ---- Insert ----
         int newId = dao.insert(user.getId(), shopName.trim(), description, address);

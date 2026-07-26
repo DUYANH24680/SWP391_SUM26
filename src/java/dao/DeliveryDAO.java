@@ -252,9 +252,9 @@ public class DeliveryDAO extends DbContext {
      * Get delivery order by ID.
      */
     public DeliveryOrder getDeliveryById(int deliveryId) {
-        String sql = "SELECT d.delivery_id AS id, d.delivery_id, d.order_id, d.shipper_id, d.status, d.note, "
+        String sql = "SELECT d.delivery_id AS id, d.delivery_id, d.order_id, d.shipper_id, d.status, d.note, d.assigned_date, d.created_at, "
                    + "s.fullname AS shipper_name, s.phone AS shipper_phone, "
-                   + "o.status AS order_status, o.final_cost, "
+                   + "o.status AS order_status, o.final_cost, o.payment_status, o.payment_method, "
                    + "o.recipient_name, o.recipient_phone, o.address AS delivery_address "
                    + "FROM DeliveryOrders d "
                    + "LEFT JOIN Accounts s ON d.shipper_id = s.id "
@@ -279,9 +279,9 @@ public class DeliveryDAO extends DbContext {
      * Get delivery order by order ID.
      */
     public DeliveryOrder getDeliveryByOrderId(int orderId) {
-        String sql = "SELECT d.delivery_id AS id, d.delivery_id, d.order_id, d.shipper_id, d.status, d.note, "
+        String sql = "SELECT d.delivery_id AS id, d.delivery_id, d.order_id, d.shipper_id, d.status, d.note, d.assigned_date, d.created_at, "
                    + "s.fullname AS shipper_name, s.phone AS shipper_phone, "
-                   + "o.status AS order_status, o.final_cost, "
+                   + "o.status AS order_status, o.final_cost, o.payment_status, o.payment_method, "
                    + "o.recipient_name, o.recipient_phone, o.address AS delivery_address "
                    + "FROM DeliveryOrders d "
                    + "LEFT JOIN Accounts s ON d.shipper_id = s.id "
@@ -315,9 +315,9 @@ public class DeliveryDAO extends DbContext {
     public List<DeliveryOrder> getDeliveriesByShipperId(int shipperId, Integer status) {
         List<DeliveryOrder> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
-            "SELECT d.delivery_id AS id, d.delivery_id, d.order_id, d.shipper_id, d.status, d.note, "
+            "SELECT d.delivery_id AS id, d.delivery_id, d.order_id, d.shipper_id, d.status, d.note, d.assigned_date, d.created_at, "
           + "s.fullname AS shipper_name, s.phone AS shipper_phone, "
-          + "o.status AS order_status, o.final_cost, "
+          + "o.status AS order_status, o.final_cost, o.payment_status, o.payment_method, "
           + "o.recipient_name, o.recipient_phone, o.address AS delivery_address "
           + "FROM DeliveryOrders d "
           + "LEFT JOIN Accounts s ON d.shipper_id = s.id "
@@ -352,9 +352,9 @@ public class DeliveryDAO extends DbContext {
      */
     public List<DeliveryOrder> getAllDeliveries() {
         List<DeliveryOrder> list = new ArrayList<>();
-        String sql = "SELECT d.delivery_id AS id, d.delivery_id, d.order_id, d.shipper_id, d.status, d.note, "
+        String sql = "SELECT d.delivery_id AS id, d.delivery_id, d.order_id, d.shipper_id, d.status, d.note, d.assigned_date, d.created_at, "
                    + "s.fullname AS shipper_name, s.phone AS shipper_phone, "
-                   + "o.status AS order_status, o.final_cost, "
+                   + "o.status AS order_status, o.final_cost, o.payment_status, o.payment_method, "
                    + "o.recipient_name, o.recipient_phone, o.address AS delivery_address "
                    + "FROM DeliveryOrders d "
                    + "LEFT JOIN Accounts s ON d.shipper_id = s.id "
@@ -404,9 +404,9 @@ public class DeliveryDAO extends DbContext {
      */
     public List<DeliveryOrder> getDeliveryHistory(int shipperId) {
         List<DeliveryOrder> list = new ArrayList<>();
-        String sql = "SELECT d.delivery_id AS id, d.delivery_id, d.order_id, d.shipper_id, d.status, d.note, "
+        String sql = "SELECT d.delivery_id AS id, d.delivery_id, d.order_id, d.shipper_id, d.status, d.note, d.assigned_date, d.created_at, "
                    + "s.fullname AS shipper_name, s.phone AS shipper_phone, "
-                   + "o.status AS order_status, o.final_cost, "
+                   + "o.status AS order_status, o.final_cost, o.payment_status, o.payment_method, "
                    + "o.recipient_name, o.recipient_phone, o.address AS delivery_address "
                    + "FROM DeliveryOrders d "
                    + "LEFT JOIN Accounts s ON d.shipper_id = s.id "
@@ -435,9 +435,9 @@ public class DeliveryDAO extends DbContext {
      */
     public List<DeliveryOrder> getPendingDeliveries(int shipperId) {
         List<DeliveryOrder> list = new ArrayList<>();
-        String sql = "SELECT d.delivery_id AS id, d.delivery_id, d.order_id, d.shipper_id, d.status, d.note, "
+        String sql = "SELECT d.delivery_id AS id, d.delivery_id, d.order_id, d.shipper_id, d.status, d.note, d.assigned_date, d.created_at, "
                    + "s.fullname AS shipper_name, s.phone AS shipper_phone, "
-                   + "o.status AS order_status, o.final_cost, "
+                   + "o.status AS order_status, o.final_cost, o.payment_status, o.payment_method, "
                    + "o.recipient_name, o.recipient_phone, o.address AS delivery_address "
                    + "FROM DeliveryOrders d "
                    + "LEFT JOIN Accounts s ON d.shipper_id = s.id "
@@ -584,17 +584,15 @@ public class DeliveryDAO extends DbContext {
         }
         
         try {
-            Timestamp ca = rs.getTimestamp("created_at");
-            d.setCreatedAt(ca);
-            d.setAssignedDate(ca);
+            d.setAssignedDate(rs.getTimestamp("assigned_date"));
         } catch (SQLException e) {
-            try {
-                Timestamp aa = rs.getTimestamp("assigned_at");
-                d.setCreatedAt(aa);
-                d.setAssignedDate(aa);
-            } catch (SQLException ex) {
-                // skip
-            }
+            // skip
+        }
+        
+        try {
+            d.setCreatedAt(rs.getTimestamp("created_at"));
+        } catch (SQLException e) {
+            // skip
         }
         
         try {
@@ -618,6 +616,13 @@ public class DeliveryDAO extends DbContext {
             d.setRecipientName(rs.getString("recipient_name"));
             d.setRecipientPhone(rs.getString("recipient_phone"));
             d.setDeliveryAddress(rs.getString("delivery_address"));
+            
+            try {
+                d.setPaymentStatus(rs.getInt("payment_status"));
+                d.setPaymentMethod(rs.getString("payment_method"));
+            } catch (SQLException e) {
+                // Ignore if not present
+            }
         } catch (SQLException e) {
             // Order data might not be available
         }
@@ -692,17 +697,18 @@ public class DeliveryDAO extends DbContext {
      */
     public List<DeliveryOrder> getStaleAssignedDeliveries(int timeoutMinutes) {
         List<DeliveryOrder> list = new ArrayList<>();
-        String sql = "SELECT d.delivery_id AS id, d.delivery_id, d.order_id, d.shipper_id, d.status, d.note, "
+        String sql = "SELECT d.delivery_id AS id, d.delivery_id, d.order_id, d.shipper_id, d.status, d.note, d.assigned_date, d.created_at, "
                    + "s.fullname AS shipper_name, s.phone AS shipper_phone, "
-                   + "o.status AS order_status, o.final_cost, "
+                   + "o.status AS order_status, o.final_cost, o.payment_status, o.payment_method, "
                    + "o.recipient_name, o.recipient_phone, o.address AS delivery_address "
                    + "FROM DeliveryOrders d "
                    + "LEFT JOIN Accounts s ON d.shipper_id = s.id "
                    + "LEFT JOIN Orders o ON d.order_id = o.id "
-                   + "WHERE d.status = ?";
+                   + "WHERE d.status = ? AND DATEDIFF(MINUTE, d.assigned_date, GETDATE()) >= ?";
 
         try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
             ps.setInt(1, DeliveryOrder.STATUS_ASSIGNED);
+            ps.setInt(2, timeoutMinutes);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     list.add(mapDeliveryRow(rs));
@@ -761,5 +767,20 @@ public class DeliveryDAO extends DbContext {
             System.err.println("[DeliveryDAO] getDeliveryNotesForOrders error: " + e.getMessage());
         }
         return map;
+    }
+
+    /**
+     * Update payment status of an order
+     */
+    public boolean updateOrderPaymentStatus(int orderId, int paymentStatus) {
+        String sql = "UPDATE Orders SET payment_status = ? WHERE id = ?";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            ps.setInt(1, paymentStatus);
+            ps.setInt(2, orderId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("[DeliveryDAO] updateOrderPaymentStatus error: " + e.getMessage());
+            return false;
+        }
     }
 }

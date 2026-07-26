@@ -34,6 +34,11 @@ public class AddToCartServlet extends HttpServlet {
         }
 
         Account account = (Account) session.getAttribute("Account");
+        if (account.getRoleId() == 1 || account.getRoleId() == 2) {
+            session.setAttribute("error", "Tài khoản Admin và Seller không thể thực hiện chức năng mua hàng.");
+            redirectBack(request, response);
+            return;
+        }
         System.out.println("[AddToCartServlet] USER: id=" + account.getId()
                 + ", username=" + account.getUsername());
 

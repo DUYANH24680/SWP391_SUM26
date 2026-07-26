@@ -19,6 +19,7 @@ public class OrderTracking {
         public static final String DELIVERY_DELIVERING = "DELIVERY_DELIVERING";
         public static final String DELIVERY_COMPLETED = "DELIVERY_COMPLETED";
         public static final String DELIVERY_FAILED = "DELIVERY_FAILED";
+        public static final String PAYMENT_CONFIRMED = "PAYMENT_CONFIRMED";
     }
     
     private int trackingId;

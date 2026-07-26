@@ -40,6 +40,8 @@ public class DeliveryOrder {
     private String deliveryAddress;
     private String customerNote;
     private String shipperCompletionNote;
+    private int paymentStatus;
+    private String paymentMethod;
     
     public DeliveryOrder() {
     }
@@ -258,7 +260,7 @@ public class DeliveryOrder {
     }
     
     public boolean canBeDelivered() {
-        return status == STATUS_PICKING_UP || status == STATUS_DELIVERING;
+        return status == STATUS_PICKING_UP;
     }
     
     public boolean canBeConfirmed() {
@@ -283,5 +285,21 @@ public class DeliveryOrder {
 
     public void setShipperCompletionNote(String shipperCompletionNote) {
         this.shipperCompletionNote = shipperCompletionNote;
+    }
+
+    public int getPaymentStatus() {
+        return paymentStatus;
+    }
+
+    public void setPaymentStatus(int paymentStatus) {
+        this.paymentStatus = paymentStatus;
+    }
+
+    public String getPaymentMethod() {
+        return paymentMethod;
+    }
+
+    public void setPaymentMethod(String paymentMethod) {
+        this.paymentMethod = paymentMethod;
     }
 }

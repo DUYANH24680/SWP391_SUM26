@@ -671,7 +671,7 @@
                                         </c:if>
                                     </td>
                                     <td>
-                                        <a href="${pageContext.request.contextPath}/products?id=${p.id}" class="btn-detail">
+                                        <a href="${pageContext.request.contextPath}/product-info?id=${p.id}" class="btn-detail">
                                             <i class="fa-regular fa-eye"></i> Chi Tiet
                                         </a>
                                         <c:if test="${sessionScope.role == 'seller' && p.shopId == sessionScope.shopId}">

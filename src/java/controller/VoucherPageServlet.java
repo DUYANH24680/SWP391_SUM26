@@ -28,7 +28,7 @@ public class VoucherPageServlet extends HttpServlet {
             model.Account account = (model.Account) session.getAttribute("Account");
             // DuyAnhNgo- Chặn quyền: Nếu là Admin hoặc Seller thì đẩy về trang chủ (chỉ hiển thị Voucher cho Khách hàng xem)
             if (account != null && ("admin".equalsIgnoreCase(account.getRoleName()) || "seller".equalsIgnoreCase(account.getRoleName()))) {
-                response.sendRedirect(request.getContextPath() + "/home");
+                response.sendRedirect(request.getContextPath() + "/home.jsp");
                 return;
             }
         }
@@ -59,7 +59,7 @@ public class VoucherPageServlet extends HttpServlet {
 
         } catch (Exception e) {
             e.printStackTrace();
-            response.sendRedirect(request.getContextPath() + "/home");
+            response.sendRedirect(request.getContextPath() + "/home.jsp");
         } finally {
             voucherDAO.close();
             shopDAO.close();

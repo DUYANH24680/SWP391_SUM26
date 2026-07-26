@@ -324,10 +324,20 @@ public class CheckoutService {
                         shopVoucherErrorsMap.put(shopId, "Mã chưa đến hạn sử dụng.");
                     } else if (shopVoucher.getEndDate() != null && new java.util.Date().after(shopVoucher.getEndDate())) {
                         shopVoucherErrorsMap.put(shopId, "Mã đã hết hạn sử dụng.");
+                    } else if (voucherDAO.getUserUsageCount(request.getCustomerId(), shopVoucher.getId()) >= shopVoucher.getMaxUsagesPerUser()) {
+                        shopVoucherErrorsMap.put(shopId, "Bạn đã vượt quá số lần sử dụng tối đa cho mã này.");
                     } else if (shopSubtotal < shopVoucher.getMinimumOrder()) {
                         shopVoucherErrorsMap.put(shopId, "Đơn tối thiểu " + String.format("%,.0f", shopVoucher.getMinimumOrder()) + " đ để dùng mã này.");
                     } else {
-                        discount = shopVoucher.calculateDiscount(shopSubtotal);
+                        if ("FREESHIP".equalsIgnoreCase(shopVoucher.getType())) {
+                            double shopShipping = shopSubtotal >= 200000 ? 0.0 : 20000.0;
+                            discount = shopVoucher.calculateDiscount(shopShipping);
+                            if (discount > shopShipping) discount = shopShipping;
+                        } else {
+                            discount = shopVoucher.calculateDiscount(shopSubtotal);
+                            if (discount > shopSubtotal) discount = shopSubtotal;
+                        }
+                        
                         if (discount <= 0) {
                             shopVoucherErrorsMap.put(shopId, "Mã '" + voucherCode + "' không áp dụng được cho đơn này (giảm 0 đ).");
                             discount = 0.0;
@@ -335,10 +345,6 @@ public class CheckoutService {
                             shopVoucherIdMap.put(shopId, shopVoucher.getId());
                         }
                     }
-                }
-
-                if (discount > shopSubtotal) {
-                    discount = shopSubtotal;
                 }
 
                 shopDiscountMap.put(shopId, discount);
@@ -369,14 +375,23 @@ public class CheckoutService {
                     platformVoucherError = "Mã giảm giá sàn đã hết hạn sử dụng.";
                 } else if (platformVoucher.getShopId() != null) {
                     platformVoucherError = "Mã này là mã của Shop, không phải mã Sàn.";
+                } else if (voucherDAO.getUserUsageCount(request.getCustomerId(), platformVoucher.getId()) >= platformVoucher.getMaxUsagesPerUser()) {
+                    platformVoucherError = "Bạn đã vượt quá số lần sử dụng tối đa cho mã Sàn này.";
                 } else if (baseForPlatform <= 0) {
                     platformVoucherError = "Giá trị đơn hàng sau khi giảm shop bằng 0, không thể áp thêm mã Sàn.";
                 } else if (baseForPlatform < platformVoucher.getMinimumOrder()) {
                     platformVoucherError = "Giá trị sau khi giảm shop chưa đạt mức tối thiểu (" + String.format("%,.0f", platformVoucher.getMinimumOrder()) + " đ) cho mã sàn.";
                 } else {
-                    platformDiscount = platformVoucher.calculateDiscount(baseForPlatform);
-                    if (platformDiscount > baseForPlatform) {
-                        platformDiscount = baseForPlatform;
+                    if ("FREESHIP".equalsIgnoreCase(platformVoucher.getType())) {
+                        double totalShipping = 0.0;
+                        for (double sub : shopSubtotals.values()) {
+                            totalShipping += sub >= 200000 ? 0.0 : 20000.0;
+                        }
+                        platformDiscount = platformVoucher.calculateDiscount(totalShipping);
+                        if (platformDiscount > totalShipping) platformDiscount = totalShipping;
+                    } else {
+                        platformDiscount = platformVoucher.calculateDiscount(baseForPlatform);
+                        if (platformDiscount > baseForPlatform) platformDiscount = baseForPlatform;
                     }
                     if (platformDiscount <= 0) {
                         platformVoucherError = "Mã '" + platformCodeTrimmed + "' không áp dụng được cho đơn này (giảm 0 đ).";

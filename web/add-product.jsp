@@ -849,7 +849,7 @@
                                                                     <div class="form-group">
                                                                         <label class="form-label">Ngày hết hạn</label>
                                                                         <input type="date" name="expiredDate"
-                                                                            class="form-control">
+                                                                            class="form-control" min="<%= new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date(System.currentTimeMillis() + 86400000L)) %>">
                                                                         <span class="form-hint">Để trống nếu không có
                                                                             hạn sử dụng</span>
                                                                     </div>
@@ -882,36 +882,48 @@
                                         Upload ảnh sản phẩm
                                     </div>
 
-                                    <div class="form-group" style="margin-bottom:1.25rem;">
-                                        <label class="form-label">Ảnh chính <span class="required">*</span></label>
-                                        <div class="image-upload-area">
-                                            <div class="image-upload-icon"><i class="fa-solid fa-cloud-arrow-up"></i>
-                                            </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Ảnh sản phẩm <span class="required">*</span></label>
+                                        <div class="image-upload-area" id="uploadArea" onclick="document.getElementById('imageFilesInput').click()">
+                                            <div class="image-upload-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
                                             <div class="image-upload-text">
-                                                <strong>Click để chọn ảnh chính</strong>
-                                                <span>JPG, JPEG, PNG, WEBP &bull; Tối đa
-                                                    5MB</span>
+                                                <strong>Click để chọn ảnh sản phẩm</strong>
+                                                <span>JPG, JPEG, PNG, WEBP &bull; Tối đa 5MB mỗi ảnh &bull; Có thể chọn nhiều ảnh</span>
                                             </div>
-                                            <input type="file" name="images" accept=".jpg,.jpeg,.png,.webp"
-                                                style="display:block;margin:0.75rem auto 0;cursor:pointer;" required>
+                                            <input type="file" id="imageFilesInput" name="images"
+                                                accept=".jpg,.jpeg,.png,.webp" multiple required
+                                                style="display:none;" onchange="previewImages(this)">
                                         </div>
+                                        <div id="imagePreviewContainer" style="display:flex; flex-wrap:wrap; gap:0.6rem; margin-top:0.75rem;"></div>
+                                        <span class="form-hint">Ảnh đầu tiên sẽ là ảnh chính. Có thể chọn nhiều ảnh cùng lúc.</span>
                                     </div>
 
-                                    <div class="form-group">
-                                        <label class="form-label">Ảnh phụ</label>
-                                        <div class="image-upload-area">
-                                            <div class="image-upload-icon"><i class="fa-solid fa-images"></i></div>
-                                            <div class="image-upload-text">
-                                                <strong>Click để chọn nhiều ảnh phụ</strong>
-                                                <span>JPG, JPEG, PNG, WEBP &bull; Tối đa 5MB
-                                                    mỗi ảnh</span>
-                                            </div>
-                                            <input type="file" name="images" accept=".jpg,.jpeg,.png,.webp" multiple
-                                                style="display:block;margin:0.75rem auto 0;cursor:pointer;">
-                                        </div>
-                                        <span class="form-hint">Có thể chọn nhiều ảnh cùng
-                                            lúc. Ảnh đầu tiên sẽ là ảnh chính.</span>
-                                    </div>
+                                    <script>
+                                        function previewImages(input) {
+                                            const container = document.getElementById('imagePreviewContainer');
+                                            container.innerHTML = '';
+                                            const files = input.files;
+                                            for (let i = 0; i < files.length; i++) {
+                                                const reader = new FileReader();
+                                                reader.onload = (function(index) {
+                                                    return function(e) {
+                                                        const wrapper = document.createElement('div');
+                                                        wrapper.style.cssText = 'position:relative; width:80px; height:80px;';
+                                                        const img = document.createElement('img');
+                                                        img.src = e.target.result;
+                                                        img.style.cssText = 'width:80px; height:80px; object-fit:cover; border-radius:8px; border:2px solid #c8e6c9;';
+                                                        const badge = document.createElement('div');
+                                                        badge.textContent = index === 0 ? 'Chính' : 'Phụ ' + index;
+                                                        badge.style.cssText = 'position:absolute; bottom:0; left:0; right:0; background:rgba(0,0,0,0.55); color:#fff; font-size:0.6rem; font-weight:700; text-align:center; padding:2px; border-radius:0 0 6px 6px;';
+                                                        wrapper.appendChild(img);
+                                                        wrapper.appendChild(badge);
+                                                        container.appendChild(wrapper);
+                                                    };
+                                                })(i);
+                                                reader.readAsDataURL(files[i]);
+                                            }
+                                        }
+                                    </script>
 
                                 </div>
                             </div>

@@ -58,7 +58,7 @@ public class ManageVoucherServlet extends HttpServlet {
         // DuyAnhNgo- Chỉ cho phép Admin hoặc Seller truy cập trang quản lý Voucher
         if (!"admin".equalsIgnoreCase(role) && !"seller".equalsIgnoreCase(role)) {
             session.setAttribute("error", "Bạn không có quyền truy cập trang này.");
-            response.sendRedirect(request.getContextPath() + "/home");
+            response.sendRedirect(request.getContextPath() + "/home.jsp");
             return;
         }
 
@@ -78,7 +78,7 @@ public class ManageVoucherServlet extends HttpServlet {
                 // DuyAnhNgo- Nếu chưa tạo Shop hợp lệ, chặn không cho tạo Voucher
                 if (shop == null || shop.getStatus() != 1) {
                     session.setAttribute("error", "Bạn chưa có shop hợp lệ để tạo voucher.");
-                    response.sendRedirect(request.getContextPath() + "/seller-dashboard");
+                    response.sendRedirect(request.getContextPath() + "/seller/dashboard");
                     return;
                 }
                 // DuyAnhNgo- Chỉ lấy danh sách Voucher thuộc về Shop này
@@ -92,8 +92,13 @@ public class ManageVoucherServlet extends HttpServlet {
             request.getRequestDispatcher("/manage-vouchers.jsp").forward(request, response);
 
         } catch (Exception e) {
+            try {
+                java.io.PrintWriter pw = new java.io.PrintWriter(new java.io.FileWriter("C:\\uploads\\error.log", true));
+                e.printStackTrace(pw);
+                pw.close();
+            } catch (Exception ex) {}
             e.printStackTrace();
-            response.sendRedirect(request.getContextPath() + "/home");
+            response.sendRedirect(request.getContextPath() + "/home.jsp");
         } finally {
             voucherDAO.close();
         }
@@ -112,7 +117,7 @@ public class ManageVoucherServlet extends HttpServlet {
         String role = account.getRoleName();
 
         if (!"admin".equalsIgnoreCase(role) && !"seller".equalsIgnoreCase(role)) {
-            response.sendRedirect(request.getContextPath() + "/home");
+            response.sendRedirect(request.getContextPath() + "/home.jsp");
             return;
         }
 
@@ -136,20 +141,74 @@ public class ManageVoucherServlet extends HttpServlet {
                 String idStr = request.getParameter("id");
                 String code = request.getParameter("code");
                 String type = request.getParameter("type");
-                double discountPercent = Double.parseDouble(request.getParameter("discountPercent"));
-                double maxDiscount = Double.parseDouble(request.getParameter("maxDiscount"));
-                double minimumOrder = Double.parseDouble(request.getParameter("minimumOrder"));
-                Timestamp startDate = parseTimestamp(request.getParameter("startDate"));
-                Timestamp endDate = parseTimestamp(request.getParameter("endDate"));
-                int quantity = Integer.parseInt(request.getParameter("quantity"));
-                int maxUsagesPerUser = Integer.parseInt(request.getParameter("maxUsagesPerUser"));
-                boolean status = request.getParameter("status") != null;
-
+                
                 if (code == null || code.trim().isEmpty()) {
                     session.setAttribute("error", "Mã voucher không được để trống.");
                     response.sendRedirect("manage-vouchers");
                     return;
                 }
+
+                double discountPercent = 0;
+                double maxDiscount = 0;
+                double minimumOrder = 0;
+                int quantity = 0;
+                int maxUsagesPerUser = 0;
+                Timestamp startDate = null;
+                Timestamp endDate = null;
+
+                try {
+                    discountPercent = Double.parseDouble(request.getParameter("discountPercent"));
+                    maxDiscount = Double.parseDouble(request.getParameter("maxDiscount"));
+                    minimumOrder = Double.parseDouble(request.getParameter("minimumOrder"));
+                    quantity = Integer.parseInt(request.getParameter("quantity"));
+                    maxUsagesPerUser = Integer.parseInt(request.getParameter("maxUsagesPerUser"));
+                    startDate = parseTimestamp(request.getParameter("startDate"));
+                    endDate = parseTimestamp(request.getParameter("endDate"));
+                } catch (Exception e) {
+                    session.setAttribute("error", "Dữ liệu nhập vào không hợp lệ. Vui lòng điền đầy đủ các thông tin.");
+                    response.sendRedirect("manage-vouchers");
+                    return;
+                }
+
+                if (quantity < 1) {
+                    session.setAttribute("error", "Số lượng voucher phải lớn hơn 0.");
+                    response.sendRedirect("manage-vouchers");
+                    return;
+                }
+
+                if (maxUsagesPerUser < 1) {
+                    session.setAttribute("error", "Số lượt dùng tối đa mỗi người phải lớn hơn 0.");
+                    response.sendRedirect("manage-vouchers");
+                    return;
+                }
+
+                if (startDate == null || endDate == null) {
+                    session.setAttribute("error", "Vui lòng chọn đầy đủ ngày bắt đầu và ngày kết thúc.");
+                    response.sendRedirect("manage-vouchers");
+                    return;
+                }
+
+                if (!startDate.before(endDate)) {
+                    session.setAttribute("error", "Ngày kết thúc phải sau ngày bắt đầu.");
+                    response.sendRedirect("manage-vouchers");
+                    return;
+                }
+
+                if ("DISCOUNT".equals(type)) {
+                    if (discountPercent <= 0 || discountPercent > 100) {
+                        session.setAttribute("error", "Phần trăm giảm giá phải từ 1% đến 100%.");
+                        response.sendRedirect("manage-vouchers");
+                        return;
+                    }
+                } else if ("FREESHIP".equals(type)) {
+                    if (maxDiscount <= 0) {
+                        session.setAttribute("error", "Voucher Freeship cần mức Giảm tối đa > 0.");
+                        response.sendRedirect("manage-vouchers");
+                        return;
+                    }
+                }
+                
+                boolean status = request.getParameter("status") != null;
 
                 // DuyAnhNgo- Đóng gói dữ liệu từ các form input HTML vào đối tượng Voucher
                 Voucher v = new Voucher();

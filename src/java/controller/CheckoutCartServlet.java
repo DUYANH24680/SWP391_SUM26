@@ -46,6 +46,12 @@ public class CheckoutCartServlet extends HttpServlet {
         }
 
         Account account = (Account) session.getAttribute("Account");
+        if (account.getRoleId() == 1 || account.getRoleId() == 2) {
+            session.setAttribute("error", "Tài khoản Admin và Seller không thể thực hiện chức năng mua hàng.");
+            resp.sendRedirect(req.getContextPath() + "/home.jsp");
+            return;
+        }
+
         String selectedProductsParam = req.getParameter("selectedProducts");
         if (selectedProductsParam == null || selectedProductsParam.trim().isEmpty()) {
             resp.sendRedirect(req.getContextPath() + "/view-cart");
@@ -87,6 +93,11 @@ public class CheckoutCartServlet extends HttpServlet {
         }
 
         Account account = (Account) session.getAttribute("Account");
+        if (account.getRoleId() == 1 || account.getRoleId() == 2) {
+            session.setAttribute("error", "Tài khoản Admin và Seller không thể thực hiện chức năng mua hàng.");
+            resp.sendRedirect(req.getContextPath() + "/home.jsp");
+            return;
+        }
 
         String selectedProductsParam = req.getParameter("selectedProducts");
         String recipientName = req.getParameter("recipientName");

@@ -212,21 +212,31 @@
                     <% } %>
                     
                     <% if (delivery.canBeConfirmed()) { %>
-                    <form action="${pageContext.request.contextPath}/shipper/delivery-action" method="post" style="display:inline;">
-                        <input type="hidden" name="deliveryId" value="<%= delivery.getDeliveryId() %>">
-                        <input type="hidden" name="action" value="deliver">
-                        <div style="display: flex; gap: 0.5rem; align-items: end;">
-                            <div class="form-group" style="margin-bottom: 0;">
-                                <input type="text" name="note" class="form-textarea" placeholder="Ghi chú (tùy chọn)" style="min-height: 40px; width: 200px;">
-                            </div>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-check-circle"></i> Xác Nhận Đã Giao
+                        <% if (delivery.getPaymentStatus() == 0 && "COD".equalsIgnoreCase(delivery.getPaymentMethod())) { %>
+                        <form action="${pageContext.request.contextPath}/shipper/delivery-action" method="post" style="display:inline;">
+                            <input type="hidden" name="deliveryId" value="<%= delivery.getDeliveryId() %>">
+                            <input type="hidden" name="action" value="pay">
+                            <button type="submit" class="btn btn-primary" style="background-color: #2563eb;">
+                                <i class="fas fa-hand-holding-usd"></i> Xác Nhận Đã Thu Tiền
                             </button>
-                        </div>
-                    </form>
-                    <button onclick="showFailModal()" class="btn btn-danger">
-                        <i class="fas fa-times-circle"></i> Giao Thất Bại
-                    </button>
+                        </form>
+                        <% } else { %>
+                        <form action="${pageContext.request.contextPath}/shipper/delivery-action" method="post" style="display:inline;">
+                            <input type="hidden" name="deliveryId" value="<%= delivery.getDeliveryId() %>">
+                            <input type="hidden" name="action" value="deliver">
+                            <div style="display: flex; gap: 0.5rem; align-items: end;">
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <input type="text" name="note" class="form-textarea" placeholder="Ghi chú (tùy chọn)" style="min-height: 40px; width: 200px;">
+                                </div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-check-circle"></i> Xác Nhận Đã Giao
+                                </button>
+                            </div>
+                        </form>
+                        <% } %>
+                        <button onclick="showFailModal()" class="btn btn-danger">
+                            <i class="fas fa-times-circle"></i> Giao Thất Bại
+                        </button>
                     <% } %>
                 </div>
             </div>

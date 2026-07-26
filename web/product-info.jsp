@@ -278,6 +278,40 @@
             border-color: var(--green);
             box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.3);
         }
+
+        /* ===== PRODUCT DESCRIPTION BOX (below images) ===== */
+        .product-description-box {
+            background: var(--gray-50);
+            border: 1.5px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+        .desc-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.65rem 1rem;
+            background: var(--green-light);
+            border-bottom: 1px solid var(--green-mid);
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--green-dark);
+        }
+        .desc-header i { font-size: 0.9rem; }
+        .desc-body {
+            padding: 0.9rem 1rem;
+            font-size: 0.875rem;
+            color: var(--gray-600);
+            line-height: 1.7;
+            max-height: 160px;
+            overflow-y: auto;
+        }
+        .desc-body::-webkit-scrollbar { width: 5px; }
+        .desc-body::-webkit-scrollbar-track { background: transparent; }
+        .desc-body::-webkit-scrollbar-thumb { background: var(--gray-200); border-radius: 4px; }
         
         .info-panel { display: flex; flex-direction: column; gap: 1.25rem; }
         .product-title { font-size: 1.5rem; font-weight: 800; line-height: 1.3; }
@@ -725,6 +759,18 @@
                             </div>
                         <% } %>
                     </div>
+                <% } %>
+
+                <% if (product.getDescription() != null && !product.getDescription().trim().isEmpty()) { %>
+                <div class="product-description-box">
+                    <div class="desc-header">
+                        <i class="fa-solid fa-align-left"></i>
+                        <span>Mô tả sản phẩm</span>
+                    </div>
+                    <div class="desc-body">
+                        <%= product.getDescription().replace("\n", "<br>") %>
+                    </div>
+                </div>
                 <% } %>
             </div>
 

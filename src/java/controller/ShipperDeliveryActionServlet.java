@@ -75,6 +75,11 @@ public class ShipperDeliveryActionServlet extends HttpServlet {
                     successMsg = "Xác nhận giao hàng thành công!";
                     break;
                     
+                case "pay":
+                    error = deliveryService.confirmPayment(deliveryId, user.getId());
+                    successMsg = "Xác nhận thu tiền thành công!";
+                    break;
+                    
                 case "fail":
                     if (note == null || note.trim().isEmpty()) {
                         error = "Vui lòng cung cấp lý do giao hàng thất bại.";

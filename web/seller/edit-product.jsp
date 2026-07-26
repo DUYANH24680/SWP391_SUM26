@@ -721,7 +721,8 @@
                     <div class="form-group">
                         <label class="form-label">Ngày hết hạn</label>
                         <input type="date" name="expiredDate" class="form-control"
-                               value="<%= expiredDateStr %>">
+                               value="<%= expiredDateStr %>"
+                               min="<%= new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date(System.currentTimeMillis() + 86400000L)) %>">
                         <span class="form-hint">Để trống nếu không có hạn sử dụng</span>
                     </div>
 

@@ -1114,30 +1114,34 @@
             var totalShopDiscount = data.totalShopDiscount || 0;
             var platformDiscount = data.platformDiscount || 0;
             var totalDiscount = data.totalDiscount || 0;
-            var finalTotal = data.finalTotal || originalTotal;
+            var finalTotal = (data.finalTotal !== undefined && data.finalTotal !== null) ? data.finalTotal : originalTotal;
 
             // Total shop discount row
             var totalShopRow = document.getElementById("totalShopDiscountRow");
             var totalShopVal = document.getElementById("totalShopDiscountValue");
-            if (totalShopDiscount > 0) {
-                totalShopRow.style.display = "flex";
-                totalShopVal.innerText = "-" + formatCurrency(totalShopDiscount);
-            } else {
-                totalShopRow.style.display = "none";
+            if (totalShopRow && totalShopVal) {
+                if (totalShopDiscount > 0) {
+                    totalShopRow.style.display = "flex";
+                    totalShopVal.innerText = "-" + formatCurrency(totalShopDiscount);
+                } else {
+                    totalShopRow.style.display = "none";
+                }
             }
 
             // Per-shop discount breakdown
             var container = document.getElementById("perShopDiscountContainer");
-            container.innerHTML = "";
-            if (lastShopDiscounts) {
-                for (var shopId in lastShopDiscounts) {
-                    var discount = lastShopDiscounts[shopId];
-                    if (discount && discount > 0) {
-                        var div = document.createElement("div");
-                        div.className = "bill-row discount";
-                        div.style.display = "flex";
-                        div.innerHTML = '<span style="font-size:0.78rem; color:var(--gray-600); padding-left:0.5rem;">◦ Shop #' + shopId + ':</span><strong>-' + formatCurrency(discount) + '</strong>';
-                        container.appendChild(div);
+            if (container) {
+                container.innerHTML = "";
+                if (lastShopDiscounts) {
+                    for (var shopId in lastShopDiscounts) {
+                        var discount = lastShopDiscounts[shopId];
+                        if (discount && discount > 0) {
+                            var div = document.createElement("div");
+                            div.className = "bill-row discount";
+                            div.style.display = "flex";
+                            div.innerHTML = '<span style="font-size:0.78rem; color:var(--gray-600); padding-left:0.5rem;">◦ Shop #' + shopId + ':</span><strong>-' + formatCurrency(discount) + '</strong>';
+                            container.appendChild(div);
+                        }
                     }
                 }
             }
@@ -1145,21 +1149,25 @@
             // Platform discount row
             var platformRow = document.getElementById("platformDiscountRow");
             var platformVal = document.getElementById("platformDiscountValue");
-            if (platformDiscount > 0) {
-                platformRow.style.display = "flex";
-                platformVal.innerText = "-" + formatCurrency(platformDiscount);
-            } else {
-                platformRow.style.display = "none";
+            if (platformRow && platformVal) {
+                if (platformDiscount > 0) {
+                    platformRow.style.display = "flex";
+                    platformVal.innerText = "-" + formatCurrency(platformDiscount);
+                } else {
+                    platformRow.style.display = "none";
+                }
             }
 
             // Total discount
             var totalRow = document.getElementById("totalDiscountRow");
             var totalVal = document.getElementById("totalDiscountValue");
-            if (totalDiscount > 0) {
-                totalRow.style.display = "flex";
-                totalVal.innerText = "-" + formatCurrency(totalDiscount);
-            } else {
-                totalRow.style.display = "none";
+            if (totalRow && totalVal) {
+                if (totalDiscount > 0) {
+                    totalRow.style.display = "flex";
+                    totalVal.innerText = "-" + formatCurrency(totalDiscount);
+                } else {
+                    totalRow.style.display = "none";
+                }
             }
 
             // Final total
@@ -1171,12 +1179,17 @@
             var initialShipping = <%= shippingFee %>;
             var initialTotal = <%= totalCost %>;
 
-            document.getElementById("totalShopDiscountRow").style.display = "none";
-            document.getElementById("perShopDiscountContainer").innerHTML = "";
-            document.getElementById("totalDiscountRow").style.display = "none";
-            document.getElementById("finalCostValue").innerText = formatCurrency(initialTotal + initialShipping);
+            var totalShopRow = document.getElementById("totalShopDiscountRow");
+            if (totalShopRow) totalShopRow.style.display = "none";
+            var container = document.getElementById("perShopDiscountContainer");
+            if (container) container.innerHTML = "";
+            var totalRow = document.getElementById("totalDiscountRow");
+            if (totalRow) totalRow.style.display = "none";
+            var finalCostVal = document.getElementById("finalCostValue");
+            if (finalCostVal) finalCostVal.innerText = formatCurrency(initialTotal + initialShipping);
 
-            document.getElementById("platformDiscountRow").style.display = "none";
+            var platformRow = document.getElementById("platformDiscountRow");
+            if (platformRow) platformRow.style.display = "none";
             appliedShopVouchers = {};
             appliedPlatformVoucherId = null;
             

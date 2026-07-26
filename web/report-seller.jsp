@@ -371,27 +371,27 @@
                     <label class="form-label">Loại Vi Phạm <span>*</span></label>
                     <div class="radio-grid">
                         <label class="radio-item">
-                            <input type="radio" name="reportType" value="SellingRotten" checked>
+                            <input type="radio" name="reportType" value="SellingRotten" required>
                             Bán trái cây hỏng / thối
                         </label>
                         <label class="radio-item">
-                            <input type="radio" name="reportType" value="Chemicals">
+                            <input type="radio" name="reportType" value="Chemicals" required>
                             Trái cây ngâm hóa chất
                         </label>
                         <label class="radio-item">
-                            <input type="radio" name="reportType" value="UnderWeight">
+                            <input type="radio" name="reportType" value="UnderWeight" required>
                             Cân điêu / Thiếu ký
                         </label>
                         <label class="radio-item">
-                            <input type="radio" name="reportType" value="LateDelivery">
+                            <input type="radio" name="reportType" value="LateDelivery" required>
                             Giao trễ / Giao sai
                         </label>
                         <label class="radio-item">
-                            <input type="radio" name="reportType" value="BadAttitude">
+                            <input type="radio" name="reportType" value="BadAttitude" required>
                             Thái độ phục vụ kém
                         </label>
                         <label class="radio-item">
-                            <input type="radio" name="reportType" value="Other">
+                            <input type="radio" name="reportType" value="Other" required>
                             Khác
                         </label>
                     </div>
@@ -425,7 +425,7 @@
                 <!-- DESCRIPTION -->
                 <div class="form-group">
                     <label class="form-label" for="description">Mô Tả Chi Tiết <span>*</span></label>
-                    <textarea id="description" name="description" class="form-control" rows="4" placeholder="Nhập mô tả cụ thể về sự cố hoặc bằng chứng vi phạm của cửa hàng (tối thiểu 10 ký tự)..." required></textarea>
+                    <textarea id="description" name="description" class="form-control" rows="4" placeholder="Nhập mô tả cụ thể về sự cố hoặc bằng chứng vi phạm của cửa hàng (tối thiểu 10 ký tự)..." required minlength="10"></textarea>
                 </div>
 
                 <button type="submit" class="btn-submit">

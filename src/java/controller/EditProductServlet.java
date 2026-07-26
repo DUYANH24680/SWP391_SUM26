@@ -266,6 +266,17 @@ public class EditProductServlet extends HttpServlet {
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
                 sdf.setLenient(false);
                 Date utilDate = sdf.parse(expiredDateStr.trim());
+                
+                // Validate that the expiration date is strictly greater than today
+                Date today = new Date();
+                if (!utilDate.after(today)) {
+                    if (session != null) {
+                        session.setAttribute("error", "Ngày hết hạn phải lớn hơn ngày hôm nay.");
+                    }
+                    resp.sendRedirect(req.getContextPath() + "/edit-product?id=" + productId);
+                    return;
+                }
+                
                 expiredDate = new Timestamp(utilDate.getTime());
             } catch (ParseException e) {
                 if (session != null) {

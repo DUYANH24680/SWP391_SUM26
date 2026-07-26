@@ -58,6 +58,23 @@ public class ShopRequestDAO extends DbContext {
     }
 
     /**
+     * Check if a shop name is already taken by an existing shop or a pending request.
+     */
+    public boolean isShopNameTaken(String shopName) {
+        String sql = "SELECT (SELECT COUNT(1) FROM Shops WHERE shop_name = ?) + (SELECT COUNT(1) FROM ShopRequests WHERE shop_name = ? AND status = 0)";
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            ps.setString(1, shopName.trim());
+            ps.setString(2, shopName.trim());
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt(1) > 0;
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("ShopRequestDAO.isShopNameTaken error: " + e.getMessage(), e);
+        }
+        return false;
+    }
+
+    /**
      * Check if an account already has a shop (any status).
      */
     public boolean hasShop(int accountId) {

@@ -412,6 +412,34 @@ public class DeliveryService {
         }
     }
 
+    public String confirmPayment(int deliveryId, int shipperId) {
+        DeliveryDAO dao = new DeliveryDAO();
+        try {
+            DeliveryOrder delivery = dao.getDeliveryById(deliveryId);
+            if (delivery == null) {
+                return "Giao hàng không tồn tại.";
+            }
+            if (delivery.getShipperId() == null || delivery.getShipperId() != shipperId) {
+                return "Bạn không phải là shipper được giao cho đơn hàng này.";
+            }
+            if (delivery.getStatus() != DeliveryOrder.STATUS_DELIVERING) {
+                return "Chỉ có thể xác nhận thanh toán khi đang giao hàng.";
+            }
+            
+            boolean success = dao.updateOrderPaymentStatus(delivery.getOrderId(), 1); // 1 = Paid
+            if (!success) {
+                return "Xác nhận thanh toán thất bại. Vui lòng thử lại.";
+            }
+            
+            // Add tracking history for payment
+            dao.addTracking(delivery.getOrderId(), deliveryId, OrderTracking.Status.PAYMENT_CONFIRMED, "Shipper đã xác nhận thu tiền mặt (COD).", shipperId);
+            
+            return null;
+        } finally {
+            dao.close();
+        }
+    }
+
     public void close() {
         // No resources to close at service level
     }

@@ -384,13 +384,16 @@ public class OrderService {
             if (voucherCode != null && !voucherCode.trim().isEmpty()) {
                 Voucher voucher = voucherDAO.findByCode(voucherCode.trim());
                 if (voucher != null && voucher.isValid(shopSubtotal)) {
-                    discount = voucher.calculateDiscount(shopSubtotal);
+                    if ("FREESHIP".equalsIgnoreCase(voucher.getType())) {
+                        double shopShipping = shopSubtotal >= 200000 ? 0.0 : 20000.0;
+                        discount = voucher.calculateDiscount(shopShipping);
+                        if (discount > shopShipping) discount = shopShipping;
+                    } else {
+                        discount = voucher.calculateDiscount(shopSubtotal);
+                        if (discount > shopSubtotal) discount = shopSubtotal;
+                    }
                     shopVoucherIdMap.put(shopId, voucher.getId());
                 }
-            }
-
-            if (discount > shopSubtotal) {
-                discount = shopSubtotal;
             }
 
             shopDiscountMap.put(shopId, discount);
@@ -409,10 +412,18 @@ public class OrderService {
             Voucher voucher = voucherDAO.findByCode(platformVoucherCode);
             if (voucher != null && voucher.isValid(baseForPlatform)) {
                 platformVoucherId = voucher.getId();
-                platformDiscount = voucher.calculateDiscount(baseForPlatform);
-                // Ensure platform discount doesn't exceed base
-                if (platformDiscount > baseForPlatform) {
-                    platformDiscount = baseForPlatform;
+                
+                if ("FREESHIP".equalsIgnoreCase(voucher.getType())) {
+                    double totalShipping = 0.0;
+                    for (int shopId : itemsByShop.keySet()) {
+                        double shopSubtotal = shopTotalCostMap.get(shopId);
+                        totalShipping += shopSubtotal >= 200000 ? 0.0 : 20000.0;
+                    }
+                    platformDiscount = voucher.calculateDiscount(totalShipping);
+                    if (platformDiscount > totalShipping) platformDiscount = totalShipping;
+                } else {
+                    platformDiscount = voucher.calculateDiscount(baseForPlatform);
+                    if (platformDiscount > baseForPlatform) platformDiscount = baseForPlatform;
                 }
             }
         }
@@ -520,9 +531,11 @@ public class OrderService {
         // Increment voucher usage counts
         for (Integer vid : shopVoucherIdMap.values()) {
             voucherDAO.incrementUsedCount(vid);
+            voucherDAO.incrementUserUsage(customerId, vid);
         }
         if (platformVoucherId != null) {
             voucherDAO.incrementUsedCount(platformVoucherId);
+            voucherDAO.incrementUserUsage(customerId, platformVoucherId);
         }
 
         return orders;

@@ -111,6 +111,9 @@ public class Voucher {
 
     public double calculateDiscount(double orderTotal) {
         if (!isValid(orderTotal)) return 0.0;
+        if ("FREESHIP".equalsIgnoreCase(this.type)) {
+            return maxDiscount > 0 ? maxDiscount : 30000;
+        }
         double discount = orderTotal * (discountPercent / 100.0);
         if (maxDiscount > 0 && discount > maxDiscount) {
             discount = maxDiscount;
@@ -120,6 +123,9 @@ public class Voucher {
 
     public double calculateCartDiscount(double orderTotal) {
         if (!isValidForCart(orderTotal)) return 0.0;
+        if ("FREESHIP".equalsIgnoreCase(this.type)) {
+            return maxDiscount > 0 ? maxDiscount : 30000;
+        }
         double discount = orderTotal * (discountPercent / 100.0);
         if (maxDiscount > 0 && discount > maxDiscount) {
             discount = maxDiscount;

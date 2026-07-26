@@ -46,6 +46,11 @@ public class CheckoutServlet extends HttpServlet {
             return;
         }
         Account user = (Account) session.getAttribute("Account");
+        if (user.getRoleId() == 1 || user.getRoleId() == 2) {
+            session.setAttribute("error", "Tài khoản Admin và Seller không thể thực hiện chức năng mua hàng.");
+            resp.sendRedirect(req.getContextPath() + "/home.jsp");
+            return;
+        }
 
         String action = req.getParameter("action");
         if ("checkVoucher".equals(action)) {
@@ -53,7 +58,7 @@ public class CheckoutServlet extends HttpServlet {
             return;
         }
         if ("checkVouchers".equals(action)) {
-            handleCheckVouchers(req, resp);
+            handleCheckVouchers(req, resp, user);
             return;
         }
 
@@ -123,14 +128,19 @@ public class CheckoutServlet extends HttpServlet {
             return;
         }
 
-        // Handle AJAX voucher check
-        String action = req.getParameter("action");
-        if ("checkVouchers".equals(action)) {
-            handleCheckVouchers(req, resp);
+        Account user = (Account) session.getAttribute("Account");
+        if (user.getRoleId() == 1 || user.getRoleId() == 2) {
+            session.setAttribute("error", "Tài khoản Admin và Seller không thể thực hiện chức năng mua hàng.");
+            resp.sendRedirect(req.getContextPath() + "/home.jsp");
             return;
         }
 
-        Account user = (Account) session.getAttribute("Account");
+        // Handle AJAX voucher check
+        String action = req.getParameter("action");
+        if ("checkVouchers".equals(action)) {
+            handleCheckVouchers(req, resp, user);
+            return;
+        }
 
         String recipientName = req.getParameter("recipientName");
         String recipientPhone = req.getParameter("recipientPhone");
@@ -248,7 +258,7 @@ public class CheckoutServlet extends HttpServlet {
         }
     }
 
-    private void handleCheckVouchers(HttpServletRequest req, HttpServletResponse resp)
+    private void handleCheckVouchers(HttpServletRequest req, HttpServletResponse resp, Account user)
             throws IOException {
         try {
             String platformVoucherCode = req.getParameter("platformVoucherCode");
@@ -274,6 +284,7 @@ public class CheckoutServlet extends HttpServlet {
             request.setPlatformVoucherCode(platformVoucherCode);
             request.setShopSubtotals(shopSubtotals);
             request.setTotalSubtotal(totalSubtotal);
+            request.setCustomerId(user.getId());
 
             VoucherValidationResult result = checkoutService.validateBothVouchers(request);
 

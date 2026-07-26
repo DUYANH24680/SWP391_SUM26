@@ -32,6 +32,11 @@ public class CartServlet extends HttpServlet {
             resp.sendRedirect(req.getContextPath() + "/login");
             return;
         }
+        if (user.getRoleId() == 1 || user.getRoleId() == 2) {
+            session.setAttribute("error", "Tài khoản Admin và Seller không thể thực hiện chức năng mua hàng.");
+            resp.sendRedirect(req.getContextPath() + "/home.jsp");
+            return;
+        }
 
         String action = req.getParameter("action");
         if (ACTION_ADD.equals(action)) {
@@ -58,6 +63,11 @@ public class CartServlet extends HttpServlet {
         Account user = session != null ? (Account) session.getAttribute("Account") : null;
         if (user == null) {
             resp.sendRedirect(req.getContextPath() + "/login");
+            return;
+        }
+        if (user.getRoleId() == 1 || user.getRoleId() == 2) {
+            session.setAttribute("error", "Tài khoản Admin và Seller không thể thực hiện chức năng mua hàng.");
+            resp.sendRedirect(req.getContextPath() + "/home.jsp");
             return;
         }
 
