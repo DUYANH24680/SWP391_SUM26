@@ -94,6 +94,10 @@ public class VoucherValidationResult {
             if (platformVoucherId != null) {
                 sb.append(",\"platformVoucherId\":").append(platformVoucherId);
             }
+            // Always include platformVoucherError so client can display it
+            if (platformVoucherError != null && !platformVoucherError.isEmpty()) {
+                sb.append(",\"platformVoucherError\":\"").append(escapeJson(platformVoucherError)).append("\"");
+            }
 
             // Per-shop discounts
             sb.append(",\"shopDiscountsPerShop\":{");

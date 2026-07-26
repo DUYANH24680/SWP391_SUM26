@@ -154,7 +154,8 @@ public class OrderService {
 
     // Place Order Business Logic
     public Order placeOrder(int customerId, String recipientName, String recipientPhone, String address,
-                             String paymentMethod, String note, java.util.Map<Integer, String> shopVoucherCodes, String platformVoucherCode,
+                             String paymentMethod, String note, java.util.Map<Integer, String> shopNotes,
+                             java.util.Map<Integer, String> shopVoucherCodes, String platformVoucherCode,
                              Integer buyNowProductId, Integer buyNowQuantity) {
 
         if (recipientName == null || recipientName.trim().isEmpty() ||
@@ -201,6 +202,7 @@ public class OrderService {
                 address,
                 paymentMethod,
                 note,
+                shopNotes,
                 shopVoucherCodes,
                 platformVoucherCode,
                 productDAO,
@@ -224,7 +226,8 @@ public class OrderService {
 
     // Place order with full result details (order count, shop count)
     public PlaceOrderResult placeOrderWithDetails(int customerId, String recipientName, String recipientPhone, 
-            String address, String paymentMethod, String note, java.util.Map<Integer, String> shopVoucherCodes, String platformVoucherCode,
+            String address, String paymentMethod, String note, java.util.Map<Integer, String> shopNotes,
+            java.util.Map<Integer, String> shopVoucherCodes, String platformVoucherCode,
             Integer buyNowProductId, Integer buyNowQuantity) {
         
         if (recipientName == null || recipientName.trim().isEmpty() ||
@@ -271,6 +274,7 @@ public class OrderService {
                 address,
                 paymentMethod,
                 note,
+                shopNotes,
                 shopVoucherCodes,
                 platformVoucherCode,
                 productDAO,
@@ -326,6 +330,7 @@ public class OrderService {
             String address,
             String paymentMethod,
             String note,
+            java.util.Map<Integer, String> shopNotes,
             java.util.Map<Integer, String> shopVoucherCodes,
             String platformVoucherCode,
             ProductDAO productDAO,
@@ -384,10 +389,6 @@ public class OrderService {
                 }
             }
 
-            // Apply extra 5% discount for shop orders > 500k
-            if (shopSubtotal > 500000) {
-                discount += shopSubtotal * 0.05;
-            }
             if (discount > shopSubtotal) {
                 discount = shopSubtotal;
             }
@@ -486,7 +487,11 @@ public class OrderService {
             order.setFinalCost(finalCost);
             order.setPlatformDiscountAmount(platformDiscountForShop);
             order.setShopActualRevenue(shopActualRevenue);
-            order.setNote(note != null ? note.trim() : "");
+            // Use per-shop note if available, otherwise use global note
+            String orderNote = (shopNotes != null && shopNotes.containsKey(shopId)) 
+                ? shopNotes.get(shopId) 
+                : (note != null ? note.trim() : "");
+            order.setNote(orderNote);
 
             List<OrderDetail> details = new ArrayList<>();
             for (CartItem item : shopItems) {
@@ -536,7 +541,7 @@ public class OrderService {
         }
     }
 
-    public model.PlaceOrderResult placeCartOrder(int customerId, List<CartItem> selectedItems, String recipientName, String recipientPhone, String address, String paymentMethod, String note, java.util.Map<Integer, String> shopVoucherCodes, String platformVoucherCode) {
+    public model.PlaceOrderResult placeCartOrder(int customerId, List<CartItem> selectedItems, String recipientName, String recipientPhone, String address, String paymentMethod, String note, java.util.Map<Integer, String> shopNotes, java.util.Map<Integer, String> shopVoucherCodes, String platformVoucherCode) {
         if (selectedItems == null || selectedItems.isEmpty()) {
             return new model.PlaceOrderResult(false, "Không có sản phẩm nào được chọn.");
         }
@@ -559,6 +564,7 @@ public class OrderService {
                 address,
                 paymentMethod,
                 note,
+                shopNotes,
                 shopVoucherCodes,
                 platformVoucherCode,
                 productDAO,
