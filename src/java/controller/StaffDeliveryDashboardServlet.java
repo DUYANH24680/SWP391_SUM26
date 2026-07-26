@@ -60,6 +60,12 @@ public class StaffDeliveryDashboardServlet extends HttpServlet {
             req.setAttribute("pendingDeliveries", pendingDeliveries);
             req.setAttribute("completedDeliveries", completedDeliveries);
             req.setAttribute("recentDeliveries", recentDeliveries);
+            List<DeliveryOrder> staleDeliveries = deliveryService.getStaleAssignedDeliveries();
+            req.setAttribute("staleDeliveries", staleDeliveries);
+            req.setAttribute("availableShippers", deliveryService.getAvailableShippers());
+            if (staleDeliveries != null && !staleDeliveries.isEmpty()) {
+                req.setAttribute("staleNotification", "Có " + staleDeliveries.size() + " đơn mà shipper không nhận trong 1 giờ. Vui lòng chuyển giao lại.");
+            }
             
         } catch (Exception e) {
             System.err.println("[StaffDeliveryDashboardServlet] Error: " + e.getMessage());

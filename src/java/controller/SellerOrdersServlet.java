@@ -49,6 +49,17 @@ public class SellerOrdersServlet extends HttpServlet {
             return;
         }
 
+        Integer targetOrderId = null;
+        String orderIdParam = req.getParameter("orderId");
+        if (orderIdParam != null && !orderIdParam.trim().isEmpty()) {
+            try {
+                String clean = orderIdParam.replaceAll("[^0-9]", "");
+                if (!clean.isEmpty()) {
+                    targetOrderId = Integer.parseInt(clean);
+                }
+            } catch (NumberFormatException ignored) {}
+        }
+
         SellerOrderPageData data = orderService.getSellerOrderPageData(user.getId());
 
         if (data.isShopNotApproved()) {
@@ -58,6 +69,7 @@ public class SellerOrdersServlet extends HttpServlet {
             req.setAttribute("orders", data.getOrders());
             req.setAttribute("detailsMap", data.getDetailsMap());
             req.setAttribute("shop", data.getShop());
+            req.setAttribute("targetOrderId", targetOrderId);
         }
 
         req.getRequestDispatcher("/seller/orders.jsp").forward(req, resp);

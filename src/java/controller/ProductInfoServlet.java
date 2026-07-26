@@ -79,6 +79,7 @@ public class ProductInfoServlet extends HttpServlet {
                 try {
                     ShopDAO shopDAO = new ShopDAO();
                     try {
+                        shopDAO.autoEndExpiredSuspensions();
                         shopInfo = shopDAO.getShopById(product.getShopId());
                     } finally {
                         shopDAO.close();
@@ -86,6 +87,12 @@ public class ProductInfoServlet extends HttpServlet {
                 } catch (Exception ex) {
                     System.err.println("[ProductInfoServlet] load shop info failed: " + ex.getMessage());
                 }
+            }
+
+            if (shopInfo == null || (!shopInfo.isActive() && shopInfo.getStatus() != 2)) {
+                session.setAttribute("error", "Cửa hàng bán sản phẩm này hiện đang bị khóa hoặc tạm khóa.");
+                resp.sendRedirect(req.getContextPath() + "/home.jsp");
+                return;
             }
 
             // Load product images (anh chinh + anh phụ)

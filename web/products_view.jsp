@@ -556,8 +556,8 @@
                             <th>Da Ban</th>
                             <th>Gia</th>
                             <th>Trang Thai</th>
-                            <th>Ngay Tao</th>
                             <c:if test="${sessionScope.role == 'admin' || sessionScope.role == 'seller'}">
+                                <th>Ngay Tao</th>
                                 <th>Hanh Dong</th>
                             </c:if>
                         </tr>
@@ -566,7 +566,7 @@
                     <c:choose>
                         <c:when test="${not empty products}">
                             <c:forEach var="p" items="${products}">
-                                <tr>
+                                <tr onclick="if(!event.target.closest('a') && !event.target.closest('button')) window.location.href='info?id=${p.id}'" style="cursor: pointer;" title="Xem chi tiết sản phẩm">
                                     <td style="font-weight:600;color:var(--gray-600);">#${p.id}</td>
 
                                     <!-- Hinh anh -->
@@ -663,15 +663,13 @@
                                         </c:choose>
                                     </td>
 
-                                    <!-- Ngay tao -->
+                                    <!-- Ngay tao va Hanh dong -->
+                                    <c:if test="${sessionScope.role == 'admin' || sessionScope.role == 'seller'}">
                                     <td>
                                         <c:if test="${not empty p.createdAt}">
                                             <fmt:formatDate value="${p.createdAt}" pattern="dd/MM/yyyy" />
                                         </c:if>
                                     </td>
-
-                                    <!-- Hanh dong -->
-                                    <c:if test="${sessionScope.role == 'admin' || sessionScope.role == 'seller'}">
                                     <td>
                                         <a href="${pageContext.request.contextPath}/products?id=${p.id}" class="btn-detail">
                                             <i class="fa-regular fa-eye"></i> Chi Tiet
@@ -694,7 +692,7 @@
                         </c:when>
                         <c:otherwise>
                             <tr>
-                                <td colspan="${sessionScope.role == 'admin' || sessionScope.role == 'seller' ? 11 : 10}">
+                                <td colspan="${sessionScope.role == 'admin' || sessionScope.role == 'seller' ? 11 : 9}">
                                     <div class="empty-state">
                                         <i class="fa-regular fa-face-frown"></i>
                                         <c:choose>

@@ -41,21 +41,55 @@ public class MyOrdersServlet extends HttpServlet {
             } catch (NumberFormatException ignored) {}
         }
 
+        Integer targetOrderId = null;
+        String orderIdParam = req.getParameter("orderId");
+        if (orderIdParam != null && !orderIdParam.trim().isEmpty()) {
+            try {
+                String clean = orderIdParam.replaceAll("[^0-9]", "");
+                if (!clean.isEmpty()) {
+                    targetOrderId = Integer.parseInt(clean);
+                }
+            } catch (NumberFormatException ignored) {}
+        }
+
         int page = 1;
         String pageParam = req.getParameter("page");
         if (pageParam != null && !pageParam.trim().isEmpty()) {
             try {
                 page = Integer.parseInt(pageParam.trim());
             } catch (NumberFormatException ignored) {}
+        } else if (targetOrderId != null) {
+            // Find which page contains this target order
+            try {
+                java.util.List<model.Order> userOrders = orderService.getOrdersByCustomerId(user.getId());
+                if (userOrders != null) {
+                    if (activeStatus != null) {
+                        final int statusToKeep = activeStatus;
+                        userOrders.removeIf(o -> o.getStatus() != statusToKeep);
+                    }
+                    int foundIndex = -1;
+                    for (int i = 0; i < userOrders.size(); i++) {
+                        if (userOrders.get(i).getId() == targetOrderId) {
+                            foundIndex = i;
+                            break;
+                        }
+                    }
+                    if (foundIndex != -1) {
+                        page = (foundIndex / 5) + 1;
+                    }
+                }
+            } catch (Exception ignored) {}
         }
 
         MyOrdersPageData data = orderService.getMyOrdersPageData(user.getId(), activeStatus, page);
 
         req.setAttribute("orders", data.getOrders());
         req.setAttribute("detailsMap", data.getDetailsMap());
+        req.setAttribute("deliveryNotesMap", data.getDeliveryNotesMap());
         req.setAttribute("currentPage", data.getCurrentPage());
         req.setAttribute("totalPages", data.getTotalPages());
         req.setAttribute("activeStatus", data.getActiveStatus());
+        req.setAttribute("targetOrderId", targetOrderId);
 
         req.getRequestDispatcher("/my-orders.jsp").forward(req, resp);
     }

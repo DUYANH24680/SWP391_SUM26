@@ -15,13 +15,14 @@ public class ProductDAO extends DbContext {
      * @return List<Product>
      */
     public List<Product> getTopSellingProducts(int limit) {
+        new ShopDAO().autoEndExpiredSuspensions();
         String sql = "SELECT TOP (?) p.id, p.category_id, p.seller_id, p.shop_id, p.title, p.image, p.description, p.unit, "
                    + "p.stock_quantity, p.sold_quantity, p.original_price, p.sale_price, p.expired_date, "
                    + "p.average_rating, p.is_featured, p.status, p.isDelete, p.created_at, "
                    + "s.shop_name "
                    + "FROM Products p "
                    + "LEFT JOIN Shops s ON p.shop_id = s.id "
-                   + "WHERE p.isDelete = 0 AND p.status = 1 "
+                   + "WHERE p.isDelete = 0 AND p.status = 1 AND (s.status = 1 OR s.status = 2) "
                    + "ORDER BY p.sold_quantity DESC, p.average_rating DESC";
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -41,13 +42,14 @@ public class ProductDAO extends DbContext {
     }
 
     public List<Product> getAllProducts() {
+        new ShopDAO().autoEndExpiredSuspensions();
         String sql = "SELECT p.id, p.category_id, p.seller_id, p.shop_id, p.title, p.image, p.description, p.unit, "
                    + "p.stock_quantity, p.sold_quantity, p.original_price, p.sale_price, p.expired_date, "
                    + "p.average_rating, p.is_featured, p.status, p.isDelete, p.created_at, "
                    + "s.shop_name "
                    + "FROM Products p "
                    + "LEFT JOIN Shops s ON p.shop_id = s.id "
-                   + "WHERE p.isDelete = 0 AND p.status = 1 ORDER BY p.created_at DESC";
+                   + "WHERE p.isDelete = 0 AND p.status = 1 AND (s.status = 1 OR s.status = 2) ORDER BY p.created_at DESC";
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
@@ -65,7 +67,8 @@ public class ProductDAO extends DbContext {
     }
 
     public int countAllProducts() {
-        String sql = "SELECT COUNT(*) FROM Products WHERE isDelete = 0 AND status = 1";
+        new ShopDAO().autoEndExpiredSuspensions();
+        String sql = "SELECT COUNT(*) FROM Products p LEFT JOIN Shops s ON p.shop_id = s.id WHERE p.isDelete = 0 AND p.status = 1 AND (s.status = 1 OR s.status = 2)";
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
@@ -130,6 +133,7 @@ public class ProductDAO extends DbContext {
     }
 
     public List<Product> searchProducts(String keyword) {
+        new ShopDAO().autoEndExpiredSuspensions();
         // DuyAnhNgo- Logic SQL Tìm Kiếm: Truy vấn cơ sở dữ liệu để tìm sản phẩm
         // Sử dụng toán tử LIKE để tìm kiếm gần đúng theo tên (title) hoặc mô tả (description)
         String sql = "SELECT p.id, p.category_id, p.seller_id, p.shop_id, p.title, p.image, p.description, p.unit, "
@@ -138,7 +142,7 @@ public class ProductDAO extends DbContext {
                    + "s.shop_name "
                    + "FROM Products p "
                    + "LEFT JOIN Shops s ON p.shop_id = s.id "
-                   + "WHERE p.isDelete = 0 AND p.status = 1 "
+                   + "WHERE p.isDelete = 0 AND p.status = 1 AND (s.status = 1 OR s.status = 2) "
                    + "  AND (p.title LIKE ? OR p.description LIKE ?) "
                    + "ORDER BY p.created_at DESC";
         try (Connection conn = getConnection();
@@ -194,13 +198,14 @@ public class ProductDAO extends DbContext {
      * Su dung de hien thi danh sach san pham cua nguoi ban tren trang shop-products.
      */
     public List<Product> getProductsByShopId(int shopId) {
+        new ShopDAO().autoEndExpiredSuspensions();
         String sql = "SELECT p.id, p.category_id, p.seller_id, p.shop_id, p.title, p.image, p.description, p.unit, "
                    + "p.stock_quantity, p.sold_quantity, p.original_price, p.sale_price, p.expired_date, "
                    + "p.average_rating, p.is_featured, p.status, p.isDelete, p.created_at, "
                    + "s.shop_name "
                    + "FROM Products p "
                    + "LEFT JOIN Shops s ON p.shop_id = s.id "
-                   + "WHERE p.shop_id = ? AND p.isDelete = 0 AND p.status = 1 "
+                   + "WHERE p.shop_id = ? AND p.isDelete = 0 AND p.status = 1 AND (s.status = 1 OR s.status = 2) "
                    + "ORDER BY p.created_at DESC";
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -255,13 +260,14 @@ public class ProductDAO extends DbContext {
      * Lay danh sach san pham theo category_id (active, da duyet, con hang).
      */
     public List<Product> getProductsByCategoryId(int categoryId) {
+        new ShopDAO().autoEndExpiredSuspensions();
         String sql = "SELECT p.id, p.category_id, p.seller_id, p.shop_id, p.title, p.image, p.description, p.unit, "
                    + "p.stock_quantity, p.sold_quantity, p.original_price, p.sale_price, p.expired_date, "
                    + "p.average_rating, p.is_featured, p.status, p.isDelete, p.created_at, "
                    + "s.shop_name "
                    + "FROM Products p "
                    + "LEFT JOIN Shops s ON p.shop_id = s.id "
-                   + "WHERE p.category_id = ? AND p.isDelete = 0 AND p.status = 1 "
+                   + "WHERE p.category_id = ? AND p.isDelete = 0 AND p.status = 1 AND (s.status = 1 OR s.status = 2) "
                    + "ORDER BY p.created_at DESC";
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -903,6 +909,7 @@ public class ProductDAO extends DbContext {
     }
 
     public List<Product> filterProducts(String keyword, List<Integer> categoryIds, String status) {
+        new ShopDAO().autoEndExpiredSuspensions();
         StringBuilder sql = new StringBuilder(
                 "SELECT p.id, p.category_id, p.seller_id, p.shop_id, p.title, p.image, p.description, p.unit, "
               + "p.stock_quantity, p.sold_quantity, p.original_price, p.sale_price, p.expired_date, "
@@ -910,7 +917,7 @@ public class ProductDAO extends DbContext {
               + "s.shop_name "
               + "FROM Products p "
               + "LEFT JOIN Shops s ON p.shop_id = s.id "
-              + "WHERE p.isDelete = 0 AND p.status = 1 "
+              + "WHERE p.isDelete = 0 AND p.status = 1 AND (s.status = 1 OR s.status = 2) "
         );
 
         List<Object> params = new ArrayList<>();
@@ -975,7 +982,8 @@ public class ProductDAO extends DbContext {
             int page, 
             int pageSize) {
         
-        // DuyAnhNgo- Logic SQL: Tạo chuỗi SQL gốc lấy toàn bộ sản phẩm đang hoạt động (chưa xóa, đã duyệt)
+        new ShopDAO().autoEndExpiredSuspensions();
+        // DuyAnhNgo- Logic SQL: Tạo chuỗi SQL gốc lấy toàn bộ sản phẩm đang hoạt động (chưa xóa, đã duyệt, shop đang hoạt động)
         StringBuilder sql = new StringBuilder(
             "SELECT p.id, p.category_id, p.seller_id, p.shop_id, p.title, p.image, p.description, p.unit, "
           + "p.stock_quantity, p.sold_quantity, p.original_price, p.sale_price, p.expired_date, "
@@ -983,7 +991,7 @@ public class ProductDAO extends DbContext {
           + "s.shop_name "
           + "FROM Products p "
           + "LEFT JOIN Shops s ON p.shop_id = s.id "
-          + "WHERE p.isDelete = 0 AND p.status = 1 "
+          + "WHERE p.isDelete = 0 AND p.status = 1 AND (s.status = 1 OR s.status = 2) "
         );
         
         List<Object> params = new ArrayList<>();
@@ -1098,10 +1106,12 @@ public class ProductDAO extends DbContext {
             Double minRating, 
             String status) {
         
+        new ShopDAO().autoEndExpiredSuspensions();
         StringBuilder sql = new StringBuilder(
             "SELECT COUNT(*) "
           + "FROM Products p "
-          + "WHERE p.isDelete = 0 AND p.status = 1 "
+          + "LEFT JOIN Shops s ON p.shop_id = s.id "
+          + "WHERE p.isDelete = 0 AND p.status = 1 AND (s.status = 1 OR s.status = 2) "
         );
         
         List<Object> params = new ArrayList<>();
@@ -1174,7 +1184,8 @@ public class ProductDAO extends DbContext {
     // Group By category_id để đếm. Trả về Map (Ví dụ: Danh mục ID 1 -> có 5 sản phẩm).
     // Dùng để hiển thị con số nhỏ báo hiệu số lượng nằm bên cạnh mỗi tên danh mục trên Sidebar.
     public java.util.Map<Integer, Integer> getCategoryProductCounts() {
-        String sql = "SELECT category_id, COUNT(*) FROM Products WHERE isDelete = 0 AND status = 1 GROUP BY category_id";
+        new ShopDAO().autoEndExpiredSuspensions();
+        String sql = "SELECT p.category_id, COUNT(*) FROM Products p LEFT JOIN Shops s ON p.shop_id = s.id WHERE p.isDelete = 0 AND p.status = 1 AND (s.status = 1 OR s.status = 2) GROUP BY p.category_id";
         java.util.Map<Integer, Integer> map = new java.util.HashMap<>();
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);

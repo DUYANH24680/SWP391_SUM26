@@ -8,7 +8,9 @@ import Utils.DbContext;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * DeliveryDAO - Handles all DB operations for DeliveryOrders and OrderTracking tables.
@@ -682,5 +684,81 @@ public class DeliveryDAO extends DbContext {
         } catch (SQLException e) {
             System.err.println("[DeliveryDAO] closeResources error: " + e.getMessage());
         }
+    }
+    
+    /**
+     * Get deliveries assigned to shippers but not accepted after a timeout.
+     */
+    public List<DeliveryOrder> getStaleAssignedDeliveries(int timeoutMinutes) {
+        List<DeliveryOrder> list = new ArrayList<>();
+        String sql = "SELECT d.id, d.order_id, d.shipper_id, d.status, d.note, "
+                   + "s.fullname AS shipper_name, s.phone AS shipper_phone, "
+                   + "o.status AS order_status, o.final_cost, "
+                   + "o.recipient_name, o.recipient_phone, o.address AS delivery_address "
+                   + "FROM DeliveryOrders d "
+                   + "LEFT JOIN Accounts s ON d.shipper_id = s.id "
+                   + "LEFT JOIN Orders o ON d.order_id = o.id "
+                   + "WHERE d.status = ?";
+
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            ps.setInt(1, DeliveryOrder.STATUS_ASSIGNED);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapDeliveryRow(rs));
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[DeliveryDAO] getStaleAssignedDeliveries error: " + e.getMessage());
+        }
+        return list;
+    }
+
+    /**
+     * Reassign a delivery order to a different shipper.
+     */
+    public boolean reassignShipper(int deliveryId, int newShipperId, int staffId, String note) {
+        String sqlUpdate = "UPDATE DeliveryOrders SET shipper_id = ?, note = ? WHERE id = ?";
+
+        try (PreparedStatement ps = getConnection().prepareStatement(sqlUpdate)) {
+            ps.setInt(1, newShipperId);
+            ps.setString(2, note != null ? note : "");
+            ps.setInt(3, deliveryId);
+            int updated = ps.executeUpdate();
+            return updated > 0;
+        } catch (SQLException e) {
+            System.err.println("[DeliveryDAO] reassignShipper error: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Get delivery completion notes written by Shipper when confirming delivery.
+     */
+    public Map<Integer, String> getDeliveryNotesForOrders(List<Integer> orderIds) {
+        Map<Integer, String> map = new HashMap<>();
+        if (orderIds == null || orderIds.isEmpty()) return map;
+
+        StringBuilder sql = new StringBuilder(
+            "SELECT order_id, description FROM OrderTracking WHERE order_id IN ("
+        );
+        for (int i = 0; i < orderIds.size(); i++) {
+            if (i > 0) sql.append(",");
+            sql.append("?");
+        }
+        sql.append(") AND description IS NOT NULL");
+
+        try (PreparedStatement ps = getConnection().prepareStatement(sql.toString())) {
+            for (int i = 0; i < orderIds.size(); i++) {
+                ps.setInt(i + 1, orderIds.get(i));
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    map.put(rs.getInt("order_id"), rs.getString("description"));
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[DeliveryDAO] getDeliveryNotesForOrders error: " + e.getMessage());
+        }
+        return map;
     }
 }

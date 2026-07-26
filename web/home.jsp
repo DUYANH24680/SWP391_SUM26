@@ -2104,9 +2104,9 @@
                                 <p class="slide-sub">Chọn lọc từ những vườn cây tốt nhất thế giới.<br>Giao tận tay trong
                                     ngày.</p>
                                 <div class="slide-actions">
-                                    <a href="#" class="btn btn-white"><i class="fa-solid fa-bag-shopping"></i> Mua
+                                    <a href="#shop-section" class="btn btn-white"><i class="fa-solid fa-bag-shopping"></i> Mua
                                         Ngay</a>
-                                    <a href="#" class="btn btn-white-outline">Xem Tất Cả</a>
+                                    <a href="#shop-section" class="btn btn-white-outline">Xem Tất Cả</a>
                                 </div>
                             </div>
                             <div class="slide-emoji">🍎</div>
@@ -2122,8 +2122,8 @@
                                 <p class="slide-sub">Trồng theo tiêu chuẩn hữu cơ quốc tế.<br>An toàn cho cả gia đình.
                                 </p>
                                 <div class="slide-actions">
-                                    <a href="#" class="btn btn-white"><i class="fa-solid fa-leaf"></i> Kham Pha</a>
-                                    <a href="#" class="btn btn-white-outline">Ưu Đãi Hôm Nay</a>
+                                    <a href="#shop-section" class="btn btn-white"><i class="fa-solid fa-leaf"></i> Kham Pha</a>
+                                    <a href="#shop-section" class="btn btn-white-outline">Ưu Đãi Hôm Nay</a>
                                 </div>
                             </div>
                             <div class="slide-emoji">🍊</div>
@@ -2139,8 +2139,8 @@
                                 <p class="slide-sub">Tháng này: Xoài cát Hòa Lộc, Sầu riêng, Mít.<br>Thơm ngon đúng mùa.
                                 </p>
                                 <div class="slide-actions">
-                                    <a href="#" class="btn btn-white"><i class="fa-solid fa-box-open"></i> Dat Hang</a>
-                                    <a href="#" class="btn btn-white-outline">Xem Bộ Sưu Tập</a>
+                                    <a href="#shop-section" class="btn btn-white"><i class="fa-solid fa-box-open"></i> Dat Hang</a>
+                                    <a href="#shop-section" class="btn btn-white-outline">Xem Bộ Sưu Tập</a>
                                 </div>
                             </div>
                             <div class="slide-emoji">🥭</div>
@@ -2203,7 +2203,7 @@
                     </div>
 
                     <!-- ──── SHOP LAYOUT (FILTER + PRODUCTS) ──── -->
-                    <div class="section-head">
+                    <div class="section-head" id="shop-section">
                         <div class="section-title">
                             <span class="title-icon-green">🛍️</span>
                             Tất Cả Sản Phẩm
@@ -2842,7 +2842,7 @@
     <style>
         .floating-chat-btn {
             position: fixed;
-            bottom: <% if ("admin".equals(Account.getRoleName()) || "customer".equalsIgnoreCase(Account.getRoleName())) { out.print("100px"); } else { out.print("30px"); } %>;
+            bottom: <% if ("admin".equals(Account.getRoleName())) { out.print("100px"); } else { out.print("30px"); } %>;
             right: 30px;
             background-color: #3b82f6;
             color: white;

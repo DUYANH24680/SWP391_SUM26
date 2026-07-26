@@ -62,6 +62,7 @@ public class ProductServlet extends HttpServlet {
         Double maxPrice = null;
 
         try {
+            // Chuyển đổi giá trị tối thiểu và tối đa từ chuỗi (String) sang số thực (Double)
             if (minPriceStr != null && !minPriceStr.isBlank()) {
                 minPrice = Double.parseDouble(minPriceStr);
             }
@@ -70,13 +71,17 @@ public class ProductServlet extends HttpServlet {
                 maxPrice = Double.parseDouble(maxPriceStr);
             }
         } catch (NumberFormatException e) {
-            // bỏ qua nếu nhập sai
+            // Bỏ qua nếu người dùng nhập sai định dạng (ví dụ: nhập chữ thay vì số)
         }
+        
+        // In log ra cửa sổ Output/Console để dễ dàng debug và theo dõi
         System.out.println("[ProductServlet] === NEW REQUEST ===");
         System.out.println("[ProductServlet] role=" + role
                          + ", userId=" + (session != null ? session.getAttribute("userId") : "null")
                          + ", keyword=" + (keyword != null ? "\"" + keyword + "\"" : "null"));
 
+        // Truyền thông tin vai trò (role) của người dùng sang giao diện JSP (products_view.jsp)
+        // để JSP biết đường hiển thị hoặc ẩn các nút/cột tương ứng
         req.setAttribute("debugRole", role);
         req.setAttribute("role", role);
 
