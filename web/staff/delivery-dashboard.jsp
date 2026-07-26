@@ -13,6 +13,8 @@
     Integer pendingDeliveries = (Integer) request.getAttribute("pendingDeliveries");
     Integer completedDeliveries = (Integer) request.getAttribute("completedDeliveries");
     List<DeliveryOrder> recentDeliveries = (List<DeliveryOrder>) request.getAttribute("recentDeliveries");
+    List<DeliveryOrder> staleDeliveries = (List<DeliveryOrder>) request.getAttribute("staleDeliveries");
+    List<Account> availableShippers = (List<Account>) request.getAttribute("availableShippers");
     String message = (String) session.getAttribute("message");
     String error = (String) session.getAttribute("error");
     session.removeAttribute("message");
@@ -82,6 +84,9 @@
         .badge-red { background: #fee2e2; color: #991b1b; }
         .badge-purple { background: #f3e8ff; color: #7c3aed; }
         .badge-orange { background: #ffedd5; color: #ea580c; }
+        .form-input, .form-select { width: 100%; padding: 0.65rem 0.9rem; border: 1.5px solid var(--gray-200); border-radius: 10px; font-size: 0.9rem; background: #fff; }
+        .form-input:focus, .form-select:focus { border-color: var(--green); outline: none; }
+        .action-form { display: grid; gap: 0.5rem; }
         .empty-state { text-align: center; padding: 2rem; color: var(--gray-400); }
     </style>
 </head>
@@ -97,6 +102,7 @@
         </div>
         <div class="nav-right">
             <span class="nav-username"><%= user.getFullname() %></span>
+            <jsp:include page="/notification-icon.jsp" />
             <a href="${pageContext.request.contextPath}/logout" class="btn btn-sm" style="background: #fee2e2; color: #991b1b; text-decoration: none;">Đăng Xuất</a>
         </div>
     </nav>
@@ -167,6 +173,62 @@
                         <td><%= d.getShipperName() != null ? d.getShipperName() : "-" %></td>
                         <td><%= d.getAssignedDate() != null ? new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(d.getAssignedDate()) : "-" %></td>
                         <td><span class="badge <%= d.getStatusClass() %>"><%= d.getStatusLabel() %></span></td>
+                    </tr>
+                    <% } %>
+                </tbody>
+            </table>
+            <% } %>
+        </div>
+
+        <div class="card" style="margin-top: 1.5rem;">
+            <div class="card-header">
+                <h2 class="card-title"><i class="fas fa-exclamation-circle"></i> Đơn đã giao cho shipper hơn 1 giờ</h2>
+            </div>
+            <% if (staleDeliveries == null || staleDeliveries.isEmpty()) { %>
+            <div class="empty-state">
+                <i class="fas fa-check-circle" style="font-size: 2rem;"></i>
+                <p>Không có đơn nào cần chuyển giao lại.</p>
+            </div>
+            <% } else if (availableShippers == null || availableShippers.isEmpty()) { %>
+            <div class="empty-state">
+                <i class="fas fa-user-slash" style="font-size: 2rem;"></i>
+                <p>Không có shipper khả dụng để chuyển giao.</p>
+            </div>
+            <% } else { %>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Mã Đơn</th>
+                        <th>Shipper Hiện Tại</th>
+                        <th>Ngày Giao</th>
+                        <th>Trạng Thái</th>
+                        <th>Chuyển Giao</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% for (DeliveryOrder d : staleDeliveries) { %>
+                    <tr>
+                        <td>#<%= d.getDeliveryId() %></td>
+                        <td>#<%= d.getOrderId() %></td>
+                        <td><%= d.getShipperName() != null ? d.getShipperName() : "-" %></td>
+                        <td><%= d.getAssignedDate() != null ? new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(d.getAssignedDate()) : "-" %></td>
+                        <td><span class="badge <%= d.getStatusClass() %>"><%= d.getStatusLabel() %></span></td>
+                        <td>
+                            <form action="<%= request.getContextPath() %>/staff/reassign-delivery" method="post" class="action-form">
+                                <input type="hidden" name="deliveryId" value="<%= d.getDeliveryId() %>">
+                                <select name="newShipperId" class="form-select" required>
+                                    <option value="">Chọn shipper mới</option>
+                                    <% for (Account shipper : availableShippers) {
+                                        if (shipper.getId() == d.getShipperId()) continue;
+                                    %>
+                                    <option value="<%= shipper.getId() %>"><%= shipper.getFullname() %> - <%= shipper.getPhone() != null ? shipper.getPhone() : "-" %></option>
+                                    <% } %>
+                                </select>
+                                <input type="text" name="note" class="form-input" placeholder="Ghi chú (tùy chọn)">
+                                <button type="submit" class="btn btn-primary">Chuyển shipper</button>
+                            </form>
+                        </td>
                     </tr>
                     <% } %>
                 </tbody>

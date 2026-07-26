@@ -38,6 +38,8 @@ public class DeliveryOrder {
     private String recipientName;
     private String recipientPhone;
     private String deliveryAddress;
+    private String customerNote;
+    private String shipperCompletionNote;
     
     public DeliveryOrder() {
     }
@@ -265,5 +267,21 @@ public class DeliveryOrder {
     
     public boolean isCompleted() {
         return status == STATUS_DELIVERED || status == STATUS_FAILED;
+    }
+
+    public String getCustomerNote() {
+        return customerNote;
+    }
+
+    public void setCustomerNote(String customerNote) {
+        this.customerNote = customerNote;
+    }
+
+    public String getShipperCompletionNote() {
+        return shipperCompletionNote;
+    }
+
+    public void setShipperCompletionNote(String shipperCompletionNote) {
+        this.shipperCompletionNote = shipperCompletionNote;
     }
 }

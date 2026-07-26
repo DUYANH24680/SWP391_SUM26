@@ -211,6 +211,27 @@
         margin-top: 4px;
     }
     
+    .notif-delete-btn {
+        background: none;
+        border: none;
+        color: #9ca3af;
+        cursor: pointer;
+        padding: 6px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        transition: all 0.15s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        align-self: center;
+        flex-shrink: 0;
+    }
+    
+    .notif-delete-btn:hover {
+        background: #fee2e2;
+        color: #ef4444;
+    }
+    
     .notif-footer {
         padding: 10px 16px;
         border-top: 1px solid #e5e7eb;
@@ -363,6 +384,7 @@
             html += '<div class="notif-text">' + escapeHtml(n.content) + '</div>';
             html += '<div class="notif-time">' + n.timeAgo + '</div>';
             html += '</div>';
+            html += '<button type="button" class="notif-delete-btn" title="Xóa thông báo" onclick="deleteNotifItem(' + n.id + ', event)"><i class="fa-solid fa-trash-can"></i></button>';
             html += '</a>';
         });
         
@@ -370,17 +392,33 @@
     }
     
     function getNotifLink(n) {
-        if (!n.relatedId) return '#';
-        
-        switch (n.type) {
+        var cleanId = n.relatedId ? String(n.relatedId).replace(/[^0-9]/g, '') : '';
+        if (!cleanId && n.title) {
+            var matchTitle = n.title.match(/#(\d+)/);
+            if (matchTitle) cleanId = matchTitle[1];
+        }
+        if (!cleanId && n.content) {
+            var matchContent = n.content.match(/#(\d+)/);
+            if (matchContent) cleanId = matchContent[1];
+        }
+
+        var type = (n.type || '').toLowerCase();
+
+        switch (type) {
             case 'order_status':
-                return '<%= request.getContextPath() %>/my-orders';
+                return cleanId
+                    ? '<%= request.getContextPath() %>/my-orders?orderId=' + cleanId
+                    : '<%= request.getContextPath() %>/my-orders';
             case 'new_order':
-                return '<%= request.getContextPath() %>/seller/orders';
+                return cleanId
+                    ? '<%= request.getContextPath() %>/seller/orders?orderId=' + cleanId
+                    : '<%= request.getContextPath() %>/seller/orders';
             case 'staff_assign':
                 return '<%= request.getContextPath() %>/staff/orders-waiting';
             case 'delivery':
-                return '<%= request.getContextPath() %>/my-orders';
+                return cleanId
+                    ? '<%= request.getContextPath() %>/shipper/delivery-detail?id=' + cleanId
+                    : '<%= request.getContextPath() %>/shipper/my-deliveries';
             case 'product_approval':
                 return '<%= request.getContextPath() %>/seller/products';
             case 'seller_request':
@@ -388,16 +426,54 @@
             case 'voucher':
                 return '<%= request.getContextPath() %>/vouchers';
             default:
+                if (cleanId) {
+                    return '<%= request.getContextPath() %>/my-orders?orderId=' + cleanId;
+                }
                 return '#';
         }
     }
     
     function markNotifRead(id, event) {
+        var targetAnchor = (event && event.currentTarget) ? event.currentTarget : (event && event.target ? event.target.closest('a') : null);
+        var targetLink = targetAnchor ? targetAnchor.getAttribute('href') : '#';
+
         if (event) event.preventDefault();
-        
-        fetch('<%= request.getContextPath() %>/notifications?action=read&id=' + id, { method: 'POST' })
-            .then(response => response.json())
-            .then(data => {
+
+        // Fire-and-forget mark-as-read request
+        if (navigator.sendBeacon) {
+            navigator.sendBeacon('<%= request.getContextPath() %>/notifications?action=read&id=' + id);
+        } else {
+            fetch('<%= request.getContextPath() %>/notifications?action=read&id=' + id, { method: 'POST' });
+        }
+
+        if (targetLink && targetLink !== '#' && targetLink !== 'javascript:void(0)') {
+            window.location.href = targetLink;
+        }
+    }
+    
+    function deleteNotifItem(id, event) {
+        if (event) {
+            event.stopPropagation();
+            event.preventDefault();
+        }
+
+        const item = document.querySelector('[data-notif-id="' + id + '"]');
+        if (item) {
+            item.style.opacity = '0';
+            item.style.transform = 'scale(0.95)';
+            item.style.transition = 'all 0.2s ease';
+            setTimeout(function() {
+                item.remove();
+                const list = document.getElementById('notifList');
+                if (list && list.children.length === 0) {
+                    list.innerHTML = '<div class="notif-empty"><i class="fas fa-bell"></i><p>Không có thông báo nào</p></div>';
+                }
+            }, 200);
+        }
+
+        fetch('<%= request.getContextPath() %>/notifications?action=delete&id=' + id, { method: 'POST' })
+            .then(function(response) { return response.json(); })
+            .then(function(data) {
                 if (data.success && data.unreadCount !== undefined) {
                     const badge = document.getElementById('notifBadge');
                     if (data.unreadCount > 0) {
@@ -406,21 +482,9 @@
                     } else {
                         badge.classList.add('hidden');
                     }
-                    
-                    // Remove unread style from this item
-                    const item = document.querySelector('[data-notif-id="' + id + '"]');
-                    if (item) item.classList.remove('unread');
                 }
             })
-            .catch(err => console.log('Mark read error:', err));
-        
-        // Navigate to link if exists
-        if (event && event.target && event.target.closest('a')) {
-            const link = event.target.closest('a').href;
-            if (link && link !== '#') {
-                window.location.href = link;
-            }
-        }
+            .catch(function(err) { console.log('Delete notif error:', err); });
     }
     
     function markAllNotifRead(event) {
