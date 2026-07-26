@@ -24,8 +24,8 @@ public class DeliveryDAO extends DbContext {
      * Creates delivery order and initial tracking record.
      */
     public boolean assignShipper(int orderId, int shipperId, int assignedBy, String note) {
-        String sqlDelivery = "INSERT INTO DeliveryOrders (order_id, shipper_id, status, note) "
-                           + "VALUES (?, ?, ?, ?)";
+        String sqlDelivery = "INSERT INTO DeliveryOrders (order_id, shipper_id, assigned_by, status, note, assigned_date, created_at) "
+                           + "VALUES (?, ?, ?, ?, ?, GETDATE(), GETDATE())";
         String sqlOrderStatus = "UPDATE Orders SET status = 3 WHERE id = ?"; // 3 = Shipping
         
         Connection conn = null;
@@ -40,8 +40,9 @@ public class DeliveryDAO extends DbContext {
             psDelivery = conn.prepareStatement(sqlDelivery);
             psDelivery.setInt(1, orderId);
             psDelivery.setInt(2, shipperId);
-            psDelivery.setInt(3, DeliveryOrder.STATUS_ASSIGNED);
-            psDelivery.setString(4, note);
+            psDelivery.setInt(3, assignedBy);
+            psDelivery.setInt(4, DeliveryOrder.STATUS_ASSIGNED);
+            psDelivery.setString(5, note);
             int deliveryRows = psDelivery.executeUpdate();
             
             if (deliveryRows == 0) {
