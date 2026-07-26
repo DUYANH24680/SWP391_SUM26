@@ -2003,11 +2003,15 @@
                     <div class="nav-right">
                         <a href="wishlist" class="nav-icon-btn" title="Wishlist">
                             <i class="fa-solid fa-heart"></i>
+                            <% if (wishlistCount > 0) { %>
                             <span class="wishlist-badge"><%= wishlistCount %></span>
+                            <% } %>
                         </a>
                         <a href="cart" class="nav-icon-btn" title="Giỏ hàng">
                             <i class="fa-solid fa-basket-shopping"></i>
+                            <% if (cartCount > 0) { %>
                             <span class="cart-badge"><%= cartCount %></span>
+                            <% } %>
                         </a>
                         <jsp:include page="/notification-icon.jsp" />
 
